@@ -12,6 +12,7 @@ Phase 1.4 — Doc 4 (GoT 适配设计 v1.0) §3: ThoughtGraph 4 capabilities。
 - conflicts_with 具体冲突解决策略 (字段保留,语义 TBD)
 - 真实 LLM 调用 (1.4.j scheduler 负责)
 """
+
 from __future__ import annotations
 
 import uuid
@@ -62,7 +63,9 @@ class GraphCycleError(GraphError):
 
 # 终态 — 不再 READY
 _TERMINAL_STATUSES = {
-    NodeStatus.COMPLETED, NodeStatus.FAILED, NodeStatus.SKIPPED,
+    NodeStatus.COMPLETED,
+    NodeStatus.FAILED,
+    NodeStatus.SKIPPED,
 }
 
 
@@ -101,9 +104,7 @@ class ThoughtGraph:
         src_node = self._nodes[src]
         if dst not in src_node.outputs:
             new_outputs = src_node.outputs + (dst,)
-            self._nodes[src] = ThoughtNode(
-                **{**src_node.to_dict(), "outputs": new_outputs}
-            )
+            self._nodes[src] = ThoughtNode(**{**src_node.to_dict(), "outputs": new_outputs})
 
     def get_node(self, node_id: str) -> ThoughtNode:
         if node_id not in self._nodes:
@@ -169,9 +170,7 @@ class ThoughtGraph:
                 ready.append(nid)
         return ready
 
-    def topological_paths(
-        self, start: str, end: str, _seen: Optional[set[str]] = None
-    ) -> list[list[str]]:
+    def topological_paths(self, start: str, end: str, _seen: Optional[set[str]] = None) -> list[list[str]]:
         """所有从 start 到 end 的拓扑路径
 
         DFS 枚举所有路径,visited 集合防止环
@@ -242,10 +241,7 @@ class ThoughtGraph:
 
     def _downstream(self, node_id: str) -> list[str]:
         """节点的下游 (谁依赖了它)"""
-        return [
-            nid for nid, node in self._nodes.items()
-            if node_id in node.depends_on
-        ]
+        return [nid for nid, node in self._nodes.items() if node_id in node.depends_on]
 
     # === Capability 2: 并行 ===
 
@@ -310,9 +306,7 @@ class ThoughtGraph:
 
     # === Capability 4: 分叉 ===
 
-    def create_branch(
-        self, fork_node: str, branches: list[ThoughtNode]
-    ) -> str:
+    def create_branch(self, fork_node: str, branches: list[ThoughtNode]) -> str:
         """在 fork_node 后分叉,创建多个并行分支
 
         每个 branch 节点都被加入图,depends_on 包含 fork_node。
@@ -325,21 +319,23 @@ class ThoughtGraph:
             # 验证依赖包含 fork_node
             if fork_node not in branch.depends_on:
                 # 强制注入
-                self.add_node(ThoughtNode(
-                    node_id=branch.node_id,
-                    type=branch.type,
-                    name=branch.name,
-                    description=branch.description,
-                    depends_on=(fork_node,) + branch.depends_on,
-                    inputs=branch.inputs,
-                    outputs=branch.outputs,
-                    parallel_with=branch.parallel_with,
-                    conflicts_with=branch.conflicts_with,
-                    prompt_scenario=branch.prompt_scenario,
-                    output_schema=branch.output_schema,
-                    token_budget=branch.token_budget,
-                    timeout_s=branch.timeout_s,
-                ))
+                self.add_node(
+                    ThoughtNode(
+                        node_id=branch.node_id,
+                        type=branch.type,
+                        name=branch.name,
+                        description=branch.description,
+                        depends_on=(fork_node,) + branch.depends_on,
+                        inputs=branch.inputs,
+                        outputs=branch.outputs,
+                        parallel_with=branch.parallel_with,
+                        conflicts_with=branch.conflicts_with,
+                        prompt_scenario=branch.prompt_scenario,
+                        output_schema=branch.output_schema,
+                        token_budget=branch.token_budget,
+                        timeout_s=branch.timeout_s,
+                    )
+                )
             else:
                 self.add_node(branch)
 

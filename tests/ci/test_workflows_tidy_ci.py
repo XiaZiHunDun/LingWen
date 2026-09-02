@@ -1,4 +1,5 @@
 """Phase 12.08: CI workflow tidy — no duplicate e2e-live, coverage pages manual only."""
+
 from __future__ import annotations
 
 from pathlib import Path

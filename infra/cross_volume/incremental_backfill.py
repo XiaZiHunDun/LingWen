@@ -1,4 +1,5 @@
 """Phase 9.63 F54 + 9.68 F60: incremental CVG backfill after novel_writing workflow."""
+
 from __future__ import annotations
 
 import logging
@@ -138,9 +139,7 @@ def maybe_after_workflow(
     if chapter_num is None:
         logger.debug("incremental backfill skipped: chapter_num unresolved")
         return None
-    stats = run_incremental_backfill(
-        chapter_num, execute=True, backfiller=backfiller
-    )
+    stats = run_incremental_backfill(chapter_num, execute=True, backfiller=backfiller)
     logger.info(
         "incremental backfill ch=%s workflow=%s stats=%s",
         chapter_num,

@@ -1,16 +1,11 @@
 """F28: spec phase numbering annotation contract tests (doc-only closure)."""
+
 from __future__ import annotations
 
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-SPEC_845 = (
-    REPO_ROOT
-    / "docs"
-    / "superpowers"
-    / "specs"
-    / "2026-06-09-phase8.45-ui-completeness-design.md"
-)
+SPEC_845 = REPO_ROOT / "docs" / "superpowers" / "specs" / "2026-06-09-phase8.45-ui-completeness-design.md"
 PHASE_NUMBERING_NOTE = "Phase 编号以 c32015d 为准"
 
 

@@ -5,7 +5,7 @@ import tempfile
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
 from lingwen_core.agents.social_engine.conflict_alert import ConflictAlert
 from lingwen_core.agents.social_engine.writing_suggestion import WritingSuggestion
@@ -18,12 +18,14 @@ def test_conflict_alert_init():
         alert = ConflictAlert(rules_file)
         assert alert is not None
 
+
 def test_conflict_alert_default_config():
     """测试默认配置"""
     alert = ConflictAlert()
     config = alert.config
     assert "conflict_outbreak" in config
     assert "trust_sudden_change" in config
+
 
 def test_conflict_alert_check_outbreak():
     """测试冲突爆发检测"""
@@ -42,10 +44,12 @@ def test_conflict_alert_check_outbreak():
         outbreak_alerts = [a for a in alerts if a["type"] == "conflict_outbreak"]
         assert len(outbreak_alerts) >= 1
 
+
 def test_writing_suggestion_init():
     """测试写作建议初始化"""
     suggestion = WritingSuggestion()
     assert suggestion is not None
+
 
 def test_writing_suggestion_generate():
     """测试生成写作建议"""
@@ -63,12 +67,14 @@ def test_writing_suggestion_generate():
 
         assert isinstance(suggestions, list)
 
+
 def test_writing_suggestion_dialogue():
     """测试对话建议"""
     suggestion = WritingSuggestion()
     relationship = {"conflict": 0.7, "trust": 0.2, "type": "adversary"}
     dialog = suggestion.suggest_dialogue("铁蛋", "莫言", relationship)
     assert "冲突" in dialog or "争执" in dialog
+
 
 def test_writing_suggestion_allied_dialogue():
     """测试友好关系对话建议"""

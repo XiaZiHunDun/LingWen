@@ -2,6 +2,7 @@
 """
 事件总线测试
 """
+
 import time
 from datetime import datetime
 from unittest import TestCase
@@ -17,7 +18,7 @@ class TestEvent(TestCase):
         event = Event(
             name="CHAPTER_WRITTEN",
             source="content_writer",
-            data={"chapter_id": "ch001", "status": "draft_completed"}
+            data={"chapter_id": "ch001", "status": "draft_completed"},
         )
 
         self.assertEqual(event.name, "CHAPTER_WRITTEN")
@@ -43,8 +44,10 @@ class TestEventBus(TestCase):
 
     def _create_handler(self, name: str):
         """创建测试用handler"""
+
         def handler(event: Event):
             self.received_events.append((name, event))
+
         return handler
 
     def test_subscribe_and_publish(self):
@@ -88,6 +91,7 @@ class TestEventBus(TestCase):
 
     def test_filter_function(self):
         """测试事件过滤"""
+
         def filter_func(event: Event) -> bool:
             return event.data.get("allow", False)
 
@@ -139,8 +143,10 @@ class TestEventBus(TestCase):
 
     def test_get_handler_count(self):
         """测试获取handler数量"""
+
         def handler1(e):
             return None
+
         def handler2(e):
             return None
 
@@ -195,16 +201,19 @@ class TestGlobalEventBusSingleton(TestCase):
     def setUp(self):
         # 每个测试用例前都重置,避免上轮测试残留 handler 影响
         from lingwen_pipeline.hooks.event_bus import reset_global_event_bus
+
         reset_global_event_bus()
 
     def tearDown(self):
         # 清理:不留跨测试状态
         from lingwen_pipeline.hooks.event_bus import reset_global_event_bus
+
         reset_global_event_bus()
 
     def test_get_event_bus_returns_singleton(self):
         """get_event_bus() 多次调用返回同一实例"""
         from lingwen_pipeline.hooks.event_bus import get_event_bus
+
         a = get_event_bus()
         b = get_event_bus()
         self.assertIs(a, b)
@@ -212,6 +221,7 @@ class TestGlobalEventBusSingleton(TestCase):
     def test_reset_clears_handlers(self):
         """reset_global_event_bus() 必须清掉所有 handler"""
         from lingwen_pipeline.hooks.event_bus import get_event_bus, reset_global_event_bus
+
         bus = get_event_bus()
         received = []
 
@@ -234,6 +244,7 @@ class TestGlobalEventBusSingleton(TestCase):
     def test_reset_idempotent(self):
         """reset 在没有单例时也可调用(不应抛异常)"""
         from lingwen_pipeline.hooks.event_bus import reset_global_event_bus
+
         # 先 reset 一次,确保 None
         reset_global_event_bus()
         # 再 reset 一次,仍是 None,不应抛
@@ -275,4 +286,5 @@ class TestGlobalEventBusSingleton(TestCase):
 
 if __name__ == "__main__":
     import unittest
+
     unittest.main()

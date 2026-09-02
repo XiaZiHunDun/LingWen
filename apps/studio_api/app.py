@@ -147,6 +147,7 @@ def _default_storage() -> "RippleStorage":
         from infra.cross_volume.reference_graph import (
             CrossVolumeReferenceGraph,
         )
+
         storage._graph = CrossVolumeReferenceGraph(storage)
     _default_storage_instance = storage
     return _default_storage_instance
@@ -169,6 +170,7 @@ def create_app(
     Returns:
         Configured FastAPI application instance
     """
+
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         """Phase 6.4: 启动/停止 WS broadcast 任务"""

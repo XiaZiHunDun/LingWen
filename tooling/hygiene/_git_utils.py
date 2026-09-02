@@ -1,4 +1,5 @@
 """Shared git helpers for hygiene checkers."""
+
 from __future__ import annotations
 
 import subprocess

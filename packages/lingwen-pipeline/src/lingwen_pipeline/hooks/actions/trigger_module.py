@@ -52,15 +52,16 @@ class TriggerModuleAction(BaseAction):
                 return self._execute_via_import(module_name, method_name, params, context)
             else:
                 return ActionResult(
-                    success=False,
-                    error="trigger_module requires either 'module' or 'command' parameter"
+                    success=False, error="trigger_module requires either 'module' or 'command' parameter"
                 )
 
         except Exception as e:
             logger.error(f"TriggerModuleAction failed: {e}")
             return ActionResult(success=False, error=str(e))
 
-    def _execute_via_cli(self, cli_command: str, params: Dict[str, Any], context: Dict[str, Any]) -> ActionResult:
+    def _execute_via_cli(
+        self, cli_command: str, params: Dict[str, Any], context: Dict[str, Any]
+    ) -> ActionResult:
         """通过CLI命令执行"""
         project_root = Path(__file__).parent.parent.parent.parent
         lingwen_py = project_root / "lingwen.py"
@@ -78,22 +79,21 @@ class TriggerModuleAction(BaseAction):
 
         try:
             result = subprocess.run(
-                cmd_parts,
-                capture_output=True,
-                text=True,
-                timeout=params.get("timeout", 120)
+                cmd_parts, capture_output=True, text=True, timeout=params.get("timeout", 120)
             )
             return ActionResult(
                 success=(result.returncode == 0),
                 output=result.stdout,
-                error=result.stderr if result.returncode != 0 else None
+                error=result.stderr if result.returncode != 0 else None,
             )
         except subprocess.TimeoutExpired:
             return ActionResult(success=False, error=f"Command timed out after {params.get('timeout', 120)}s")
         except Exception as e:
             return ActionResult(success=False, error=str(e))
 
-    def _execute_via_import(self, module_name: str, method_name: str, params: Dict[str, Any], context: Dict[str, Any]) -> ActionResult:
+    def _execute_via_import(
+        self, module_name: str, method_name: str, params: Dict[str, Any], context: Dict[str, Any]
+    ) -> ActionResult:
         """通过直接导入模块执行"""
         try:
             # 动态导入模块
@@ -102,8 +102,7 @@ class TriggerModuleAction(BaseAction):
             # 获取方法
             if not hasattr(module, method_name):
                 return ActionResult(
-                    success=False,
-                    error=f"Module {module_name} does not have method {method_name}"
+                    success=False, error=f"Module {module_name} does not have method {method_name}"
                 )
 
             method = getattr(module, method_name)
@@ -114,10 +113,7 @@ class TriggerModuleAction(BaseAction):
             # 调用方法
             result = method(**method_params)
 
-            return ActionResult(
-                success=True,
-                output=str(result)
-            )
+            return ActionResult(success=True, output=str(result))
 
         except ImportError as e:
             return ActionResult(success=False, error=f"Failed to import module {module_name}: {e}")

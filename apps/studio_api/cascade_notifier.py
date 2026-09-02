@@ -14,6 +14,7 @@ Async broadcast handling (Phase 9.16 fix): ConnectionManager.broadcast 是
 Pattern 跟 dashboard/cvg_ws.broadcast 1:1 — loop.is_running() 走
 asyncio.ensure_future, else loop.run_until_complete.
 """
+
 import asyncio
 import logging
 from typing import TYPE_CHECKING, Any, Callable, Optional
@@ -89,6 +90,7 @@ def _broadcast_envelope(envelope: dict[str, Any]) -> None:
 def notify_cascade_update(payload: "CascadeUpdatePayload") -> None:
     """record_ripple cascade hook 完成后调, 推 cascade.update WS event."""
     from apps.studio_api.protocols import CascadeUpdatePayload as _CascadeUpdatePayload
+
     if not isinstance(payload, _CascadeUpdatePayload):
         try:
             payload = _CascadeUpdatePayload.model_validate(payload)
@@ -109,6 +111,7 @@ def notify_cascade_update(payload: "CascadeUpdatePayload") -> None:
 def notify_audit_created(payload: "AuditCreatedPayload") -> None:
     """Phase 9.62 F53: record_audit 完成后推 audit.created WS event."""
     from apps.studio_api.protocols import AuditCreatedPayload as _AuditCreatedPayload
+
     if not isinstance(payload, _AuditCreatedPayload):
         try:
             payload = _AuditCreatedPayload.model_validate(payload)
@@ -116,14 +119,13 @@ def notify_audit_created(payload: "AuditCreatedPayload") -> None:
             # Pydantic 验证失败 — 返回数据格式不正确
             logger.warning("cascade_notifier: invalid audit payload, skip: %s", e)
             return
-    _broadcast_envelope(
-        {"type": "audit.created", "payload": payload.model_dump(mode="json")}
-    )
+    _broadcast_envelope({"type": "audit.created", "payload": payload.model_dump(mode="json")})
 
 
 def notify_cascade_cancel(payload: "CascadeCancelPayload") -> None:
     """Phase 9.21: 推 cascade.cancel WS event (跟 cascade.update 1:1)."""
     from apps.studio_api.protocols import CascadeCancelPayload as _CascadeCancelPayload
+
     if not isinstance(payload, _CascadeCancelPayload):
         try:
             payload = _CascadeCancelPayload.model_validate(payload)

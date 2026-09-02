@@ -18,6 +18,7 @@ Reference:
 - packages/lingwen-core/src/lingwen_core/agents/master_controller.py (lines 174-396)
 - packages/lingwen-core/src/lingwen_core/agents/decision_queue.py (lines 175-355)
 """
+
 from __future__ import annotations
 
 import logging
@@ -34,6 +35,7 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 # === Protocol (duck-typed) ===
+
 
 @runtime_checkable
 class MasterControllerLike(Protocol):
@@ -97,15 +99,14 @@ class MasterControllerLike(Protocol):
         """恢复 DECISION 暂停的工作流(Phase 5)"""
         ...
 
-    def get_active_workflow_status(
-        self, since: Optional[datetime] = None
-    ) -> dict[str, Any]:
+    def get_active_workflow_status(self, since: Optional[datetime] = None) -> dict[str, Any]:
         """当前活跃工作流状态(is_active / workflow_name / paused / ...).
         Phase 8.16: since 透传 (additive kwarg, default None 走旧 path)."""
         ...
 
 
 # === Adapter ===
+
 
 class MasterControllerAdapter:
     """把真 MasterController 包成 dashboard 友好的接口。
@@ -147,9 +148,7 @@ class MasterControllerAdapter:
         option: str,
         resolved_by: str = "human",
     ) -> HumanDecision:
-        return self._controller.resolve_decision(
-            decision_id, option, resolved_by=resolved_by
-        )
+        return self._controller.resolve_decision(decision_id, option, resolved_by=resolved_by)
 
     # === 补全方法 ===
 
@@ -177,6 +176,7 @@ class MasterControllerAdapter:
                 DecisionStatus,
                 HumanDecision,
             )
+
             cancelled = HumanDecision(
                 decision_id=cancelled.decision_id,
                 decision_kind=cancelled.decision_kind,
@@ -221,9 +221,7 @@ class MasterControllerAdapter:
         option: str,
         resolved_by: str = "human",
     ) -> dict[str, Any]:
-        result = self._controller.resume_workflow(
-            decision_id, option, resolved_by=resolved_by
-        )
+        result = self._controller.resume_workflow(decision_id, option, resolved_by=resolved_by)
         d = _workflow_result_to_dict(result)
         # 额外返回 resolved_decision 序列化
         if "resolved_decision" in result:
@@ -239,9 +237,7 @@ class MasterControllerAdapter:
         )
         return d
 
-    def get_active_workflow_status(
-        self, since: Optional[datetime] = None
-    ) -> dict[str, Any]:
+    def get_active_workflow_status(self, since: Optional[datetime] = None) -> dict[str, Any]:
         """读 MC._last_* 缓存(Phase 5 run_workflow 写入).
         Phase 8.16: since 透传到 3 _extract_cost_* helper (additive kwarg).
         """
@@ -344,9 +340,7 @@ class MasterControllerAdapter:
         }
 
 
-def _extract_total_cost(
-    controller: Any, since: Optional[datetime] = None
-) -> float:
+def _extract_total_cost(controller: Any, since: Optional[datetime] = None) -> float:
     """Phase 8.5: 拿 master.cost_tracker.total_cost() 填字段, 0.0 if 未注入.
     Phase 8.16: 加 since 透传 (additive kwarg, default None 走旧 path).
 
@@ -363,9 +357,7 @@ def _extract_total_cost(
         return 0.0
 
 
-def _extract_cost_by_scenario(
-    controller: Any, since: Optional[datetime] = None
-) -> dict[str, float]:
+def _extract_cost_by_scenario(controller: Any, since: Optional[datetime] = None) -> dict[str, float]:
     """Phase 8.7: 跟 _extract_total_cost 同模式 — 拿 controller.cost_tracker 调 cost_by_scenario().
     Phase 8.16: 加 since 透传 (additive kwarg, default None 走旧 path).
 
@@ -387,9 +379,7 @@ def _extract_cost_by_scenario(
         return {}
 
 
-def _extract_cost_by_tier(
-    controller: Any, since: Optional[datetime] = None
-) -> dict[str, float]:
+def _extract_cost_by_tier(controller: Any, since: Optional[datetime] = None) -> dict[str, float]:
     """Phase 8.13: 跟 _extract_cost_by_scenario 同模式 — 拿 controller.cost_tracker 调 cost_by_tier().
     Phase 8.16: 加 since 透传 (additive kwarg, default None 走旧 path).
 
@@ -408,19 +398,14 @@ def _extract_cost_by_tier(
     if cost_tracker is None:
         return {}
     try:
-        return {
-            tier.value: float(amt)
-            for tier, amt in cost_tracker.cost_by_tier(since=since).items()
-        }
+        return {tier.value: float(amt) for tier, amt in cost_tracker.cost_by_tier(since=since).items()}
     except (AttributeError, RuntimeError, ValueError, TypeError) as exc:
         # cost_tracker 方法不存在 / 调用失败 / 返回值异常
         logger.warning("cost_tracker.cost_by_tier() failed: %s", exc)
         return {}
 
 
-def _extract_cost_by_day(
-    controller: Any, since: Optional[datetime] = None
-) -> dict[str, float]:
+def _extract_cost_by_day(controller: Any, since: Optional[datetime] = None) -> dict[str, float]:
     """Phase 8.23: 跟 _extract_cost_by_tier 同模式 — 拿 controller.cost_tracker 调 cost_by_day().
 
     Mirrors _extract_cost_by_scenario silent-degrade pattern: returns empty
@@ -458,10 +443,7 @@ def _extract_cost_by_day_per_tier(
         return {}
     try:
         raw = cost_tracker.cost_by_day_per_tier(since=since)
-        return {
-            day: {str(tier): float(amt) for tier, amt in tiers.items()}
-            for day, tiers in raw.items()
-        }
+        return {day: {str(tier): float(amt) for tier, amt in tiers.items()} for day, tiers in raw.items()}
     except (AttributeError, RuntimeError, ValueError, TypeError) as exc:
         # cost_tracker 方法不存在 / 调用失败 / 返回值异常
         logger.warning("cost_tracker.cost_by_day_per_tier() failed: %s", exc)
@@ -518,6 +500,7 @@ def _extract_budget_per_window(controller: Any, scope: str) -> dict[str, Any]:
         dict with keys (status, budget_usd, used_usd, used_pct) or {} if no budget or budget_service missing
     """
     from datetime import datetime, timedelta, timezone
+
     try:
         service = getattr(controller, "budget_service", None)
         if service is None:
@@ -593,6 +576,7 @@ def _extract_budget_by_tier(master: Any) -> dict[str, dict[str, Any] | None]:
 
 # === 序列化 helpers ===
 
+
 def _workflow_result_to_dict(result: dict[str, Any]) -> dict[str, Any]:
     """run_workflow/resume_workflow 结果 → FastAPI 友好 dict
 
@@ -605,18 +589,14 @@ def _workflow_result_to_dict(result: dict[str, Any]) -> dict[str, Any]:
     summary = result.get("summary")
     summary_dict = _summary_to_dict(summary) if summary is not None else None
     executions = result.get("executions") or {}
-    executions_dict = {
-        nid: _execution_to_dict(ex) for nid, ex in executions.items()
-    }
+    executions_dict = {nid: _execution_to_dict(ex) for nid, ex in executions.items()}
     from infra.cross_volume.incremental_backfill import backfill_stats_to_dict
 
     return {
         "summary": summary_dict,
         "executions": executions_dict,
         "pending_decisions": result.get("pending_decisions", []),
-        "incremental_backfill": backfill_stats_to_dict(
-            result.get("incremental_backfill")
-        ),
+        "incremental_backfill": backfill_stats_to_dict(result.get("incremental_backfill")),
         "production_summary": result.get("production_summary"),
     }
 
@@ -645,6 +625,7 @@ def _summary_to_dict(summary: Any) -> dict[str, Any]:
     # 用 dataclasses.asdict 简化
     try:
         from dataclasses import asdict, is_dataclass
+
         if is_dataclass(summary):
             d = asdict(summary)
             # paused_nodes 可能是 tuple → 保持 tuple (JSON 序列化无碍)
@@ -671,6 +652,7 @@ def _execution_to_dict(execution: Any) -> dict[str, Any]:
         return {}
     try:
         from dataclasses import asdict, is_dataclass
+
         if is_dataclass(execution):
             d = asdict(execution)
             # datetime → isoformat
@@ -705,6 +687,7 @@ def _execution_to_dict(execution: Any) -> dict[str, Any]:
 
 class RippleListItemResponse(BaseModel):
     """Phase 9.13: ripple list item (跟 DecisionResponse 1:1 mirror)."""
+
     ripple_id: str
     dimension: str  # placeholder, real value via JOIN in future
     relationship_type: str
@@ -720,6 +703,7 @@ class RippleListItemResponse(BaseModel):
 
 class RippleDetailResponse(RippleListItemResponse):
     """Phase 9.13: ripple detail (extends list item, 跟 DecisionDetailResponse 1:1)."""
+
     evidence: str = ""
     source_payload: dict[str, Any] = Field(default_factory=dict)
     target_payload: dict[str, Any] = Field(default_factory=dict)
@@ -728,6 +712,7 @@ class RippleDetailResponse(RippleListItemResponse):
 
 class RippleActionResponse(BaseModel):
     """Phase 9.13: apply/reject action response."""
+
     ripple_id: str
     status: str
     actor: str
@@ -736,6 +721,7 @@ class RippleActionResponse(BaseModel):
 
 class RippleStatsResponse(BaseModel):
     """Phase 9.13: ripple stats (count by status + volume, 跟 DecisionStats 1:1)."""
+
     total: int
     by_status: dict[str, int]
     by_volume: dict[str, int] = Field(default_factory=dict)
@@ -764,8 +750,10 @@ __all__ = [
 
 # === Phase 9.14: ripple audit + rollback schemas ===
 
+
 class RippleAuditEntryResponse(BaseModel):
     """Phase 9.14: 1 row of ripple_audit table (newest first list item)."""
+
     id: int
     ripple_id: str
     action: Literal["created", "applied", "rejected", "failed", "rolled_back"]
@@ -779,6 +767,7 @@ class RippleAuditEntryResponse(BaseModel):
 
 class RippleRollbackRequest(BaseModel):
     """Phase 9.14: POST /rollback body (reason required)."""
+
     actor: str = "user"
     origin: Literal["ui", "cli", "system"] = "ui"
     reason: str = Field(..., min_length=1, max_length=500)
@@ -789,6 +778,7 @@ class RippleActionRequest(BaseModel):
 
     既有 Phase 9.13 既有的 /apply /reject 不传 body 仍 work (全 Optional 字段)。
     """
+
     actor: str | None = None
     origin: Literal["ui", "cli", "system"] | None = None
     reason: str | None = None
@@ -796,8 +786,10 @@ class RippleActionRequest(BaseModel):
 
 # === Phase 9.15: cascade BFS + dry-run preview schemas (T4) ===
 
+
 class CascadeNodeResponse(BaseModel):
     """Phase 9.15: ReferenceNode in cascade BFS result (1:1 mirror)."""
+
     id: str
     dimension: str
     volume: int
@@ -809,6 +801,7 @@ class CascadeNodeResponse(BaseModel):
 
 class CascadeEdgeResponse(BaseModel):
     """Phase 9.15: ReferenceEdge in cascade BFS result (1:1 mirror)."""
+
     id: str
     from_node_id: str
     to_node_id: str
@@ -822,6 +815,7 @@ class CascadeResponse(BaseModel):
 
     Mirrors CascadedRipple dataclass (infra/cross_volume/reference_graph.py).
     """
+
     trigger_ripple_id: str
     cascade_nodes: list[CascadeNodeResponse]
     cascade_edges: list[CascadeEdgeResponse]
@@ -836,6 +830,7 @@ class CascadePreviewResponse(BaseModel):
 
     Aggregate counts from the persisted BFS result; no LLM calls.
     """
+
     ripple_id: str
     affected_chapter_count: int = 0
     affected_character_count: int = 0
@@ -848,6 +843,7 @@ class CascadePreviewResponse(BaseModel):
 
 # === Phase 9.20: cascade_runs table row response ===
 
+
 class CascadeRunResponse(BaseModel):
     """Phase 9.20: cascade_runs table row → API response.
 
@@ -859,6 +855,7 @@ class CascadeRunResponse(BaseModel):
     Reuses CascadeNodeResponse / CascadeEdgeResponse for node/edge payload
     serialization (1:1 with Phase 9.15 CascadeResponse).
     """
+
     id: int
     ripple_id: str
     max_depth: int
@@ -903,6 +900,7 @@ def _cvg_node_to_dict(node: Any) -> dict:
     fields it knows and ignore extras (created_at / created_by / confidence).
     """
     from dataclasses import asdict, is_dataclass
+
     if is_dataclass(node):
         d = asdict(node)
         if isinstance(d.get("created_at"), datetime):
@@ -918,6 +916,7 @@ def _cvg_edge_to_dict(edge: Any) -> dict:
     for circular-import rationale).
     """
     from dataclasses import asdict, is_dataclass
+
     if is_dataclass(edge):
         d = asdict(edge)
         if isinstance(d.get("created_at"), datetime):
@@ -927,6 +926,7 @@ def _cvg_edge_to_dict(edge: Any) -> dict:
 
 
 # === Phase 9.17: cascade update WS payload schema ===
+
 
 class CascadeUpdatePayload(BaseModel):
     """Phase 9.17: WS cascade.update payload schema (跟 RippleRollbackRequest 1:1 风格).
@@ -938,6 +938,7 @@ class CascadeUpdatePayload(BaseModel):
     双路径: cascade_notifier.notify_cascade_update 既接受 typed CascadeUpdatePayload
     instance, 也接受 dict (走 model_validate fallback 兜底, 0 改旧 caller).
     """
+
     ripple_id: str = Field(..., min_length=1)
     cascade_node_count: int = Field(..., ge=0)
     cascade_edge_count: int = Field(..., ge=0)
@@ -953,6 +954,7 @@ class CascadeCancelPayload(BaseModel):
     cascade_notifier.notify_cascade_cancel 双路径: typed instance 直接用, dict
     走 model_validate fallback 兜底 (0 改旧 caller, backward compat).
     """
+
     run_id: int = Field(..., ge=1)
     ripple_id: str = Field(..., min_length=1)
     status: Literal["cancelled"] = "cancelled"
@@ -961,11 +963,13 @@ class CascadeCancelPayload(BaseModel):
 
 class CascadeCancelRequest(BaseModel):
     """Phase 9.21: POST cancel endpoint request body (optional reason)."""
+
     reason: str = ""
 
 
 class AuditCreatedPayload(BaseModel):
     """Phase 9.62 F53: WS audit.created payload (1:1 RippleAuditEntryResponse)."""
+
     id: int
     ripple_id: str
     action: Literal["created", "applied", "rejected", "failed", "rolled_back"]

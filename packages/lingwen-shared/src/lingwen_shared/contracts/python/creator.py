@@ -19,6 +19,7 @@ Conventions (v16.1 lessons):
 - Optional fields use ``Optional[T] = None`` defaults.
 - Self-referencing types resolve via ``from __future__ import annotations``.
 """
+
 from __future__ import annotations
 
 from typing import Any, Literal, Optional

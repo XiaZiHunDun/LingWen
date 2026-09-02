@@ -1,4 +1,5 @@
 """Phase 9.44 F33: cascade_broadcast_log SQLite persistence tests."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock

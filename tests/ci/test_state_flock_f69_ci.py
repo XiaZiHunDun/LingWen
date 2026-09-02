@@ -1,4 +1,5 @@
 """Phase 9.75 F69: CI contract — state flock tests stabilized."""
+
 from __future__ import annotations
 
 from pathlib import Path

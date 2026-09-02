@@ -4,6 +4,7 @@ Phase 18.3 示范：每路由 < 30 行，仅做 HTTP 解析 + use-case 调用 + 
 
 这是 Phase 18.10 重构其他 12 个路由文件的样板。
 """
+
 from __future__ import annotations
 
 from typing import Annotated

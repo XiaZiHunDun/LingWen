@@ -10,6 +10,7 @@ Doc 1 §3.4 — Ripple 4 状态机 + 平复模式校验。
 
 3 平复模式:STRONG (100% 恢复) / WEAK (60-80% + 新稳态) / UNRESOLVED (接受但不关闭)
 """
+
 from __future__ import annotations
 
 import pytest
@@ -26,6 +27,7 @@ from infra.world_model.lifecycle import (
 
 # === Helpers ===
 
+
 def _ripple(state: RippleState = RippleState.OPEN) -> Ripple:
     return Ripple(
         ripple_id="r1",
@@ -37,6 +39,7 @@ def _ripple(state: RippleState = RippleState.OPEN) -> Ripple:
 
 
 # === TestRippleStateMachine ===
+
 
 class TestRippleStateMachine:
     def test_valid_transitions_is_frozen_mapping(self):
@@ -82,6 +85,7 @@ class TestRippleStateMachine:
 
 # === TestRippleConstants ===
 
+
 class TestRippleConstants:
     def test_max_open_ripplots_is_10(self):
         # Doc 1 §3.4: 累计未平复 Ripple > 10 → 崩塌风险 > 0.7
@@ -97,6 +101,7 @@ class TestRippleConstants:
 
 
 # === TestResolutionMode ===
+
 
 class TestResolutionMode:
     def test_three_modes_defined(self):

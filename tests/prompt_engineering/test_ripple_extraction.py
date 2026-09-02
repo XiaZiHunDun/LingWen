@@ -14,6 +14,7 @@ JSON 容忍:
 - 纯 JSON:`{"new_ripples": [...], "resolved_ripples": [...]}`
 - markdown 包装:` ```json\\n{...}\\n``` `
 """
+
 from __future__ import annotations
 
 import pytest
@@ -27,6 +28,7 @@ from lingwen_prompt.extraction import (
 
 # === TestParsePlainJSON ===
 
+
 class TestParsePlainJSON:
     """纯 JSON 输入(无 markdown 包装)"""
 
@@ -38,12 +40,12 @@ class TestParsePlainJSON:
         assert result.notes == ""
 
     def test_single_new_ripple(self):
-        raw = '''{
+        raw = """{
             "new_ripples": [
                 {"ripple_id": "r1", "origin_event": "林尘身世", "origin_ch": 10}
             ],
             "resolved_ripples": []
-        }'''
+        }"""
         result = parse_ripple_extraction(raw)
         assert len(result.new_ripples) == 1
         r = result.new_ripples[0]
@@ -52,25 +54,25 @@ class TestParsePlainJSON:
         assert r.origin_ch == 10
 
     def test_multiple_new_ripples(self):
-        raw = '''{
+        raw = """{
             "new_ripples": [
                 {"ripple_id": "r1", "origin_event": "e1", "origin_ch": 10},
                 {"ripple_id": "r2", "origin_event": "e2", "origin_ch": 20},
                 {"ripple_id": "r3", "origin_event": "e3", "origin_ch": 30}
             ],
             "resolved_ripples": []
-        }'''
+        }"""
         result = parse_ripple_extraction(raw)
         assert len(result.new_ripples) == 3
         assert {r.ripple_id for r in result.new_ripples} == {"r1", "r2", "r3"}
 
     def test_single_resolved_ripple(self):
-        raw = '''{
+        raw = """{
             "new_ripples": [],
             "resolved_ripples": [
                 {"ripple_id": "r1", "resolution_ch": 200, "mode": "strong"}
             ]
-        }'''
+        }"""
         result = parse_ripple_extraction(raw)
         assert len(result.resolved_ripples) == 1
         r = result.resolved_ripples[0]
@@ -79,7 +81,7 @@ class TestParsePlainJSON:
         assert r.mode == "strong"
 
     def test_full_with_optional_fields(self):
-        raw = '''{
+        raw = """{
             "new_ripples": [
                 {
                     "ripple_id": "r1",
@@ -94,7 +96,7 @@ class TestParsePlainJSON:
                 {"ripple_id": "r0", "resolution_ch": 100, "mode": "weak"}
             ],
             "notes": "本章挖坑 1 个,平复 1 个"
-        }'''
+        }"""
         result = parse_ripple_extraction(raw)
         assert len(result.new_ripples) == 1
         r = result.new_ripples[0]
@@ -108,45 +110,47 @@ class TestParsePlainJSON:
 
 # === TestParseMarkdownWrapped ===
 
+
 class TestParseMarkdownWrapped:
     """markdown ```json ... ``` 包装 → 自动 strip"""
 
     def test_strips_json_markdown_block(self):
-        raw = '''```json
+        raw = """```json
 {
     "new_ripples": [
         {"ripple_id": "r1", "origin_event": "e", "origin_ch": 10}
     ],
     "resolved_ripples": []
 }
-```'''
+```"""
         result = parse_ripple_extraction(raw)
         assert len(result.new_ripples) == 1
         assert result.new_ripples[0].ripple_id == "r1"
 
     def test_strips_plain_code_block(self):
         """无 json 标识的 ``` 包装也处理"""
-        raw = '''```
+        raw = """```
 {"new_ripples": [], "resolved_ripples": []}
-```'''
+```"""
         result = parse_ripple_extraction(raw)
         assert result.new_ripples == ()
         assert result.resolved_ripples == ()
 
     def test_strips_with_surrounding_text(self):
         """LLM 经常在 JSON 前后加说明文字"""
-        raw = '''以下是提取结果:
+        raw = """以下是提取结果:
 
 ```json
 {"new_ripples": [{"ripple_id": "r1", "origin_event": "e", "origin_ch": 10}], "resolved_ripples": []}
 ```
 
-如有疑问请联系。'''
+如有疑问请联系。"""
         result = parse_ripple_extraction(raw)
         assert len(result.new_ripples) == 1
 
 
 # === TestParseErrors ===
+
 
 class TestParseErrors:
     """解析错误情况"""
@@ -181,6 +185,7 @@ class TestParseErrors:
 
 # === TestDataclasses ===
 
+
 class TestDataclasses:
     """dataclass 不可变 + 字段语义"""
 
@@ -209,6 +214,7 @@ class TestDataclasses:
 
 # === TestImportContract ===
 
+
 class TestImportContract:
     """Public API 完整性"""
 
@@ -220,6 +226,7 @@ class TestImportContract:
             RippleExtractionResult,
             parse_ripple_extraction,
         )
+
         assert ExtractedRipple is not None
         assert ExtractedResolution is not None
         assert RippleExtractionResult is not None

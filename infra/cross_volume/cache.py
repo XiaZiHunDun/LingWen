@@ -1,4 +1,5 @@
 """Phase 9.42 F31: query_impact LRU + TTL cache for CVG reference graph."""
+
 from __future__ import annotations
 
 import logging

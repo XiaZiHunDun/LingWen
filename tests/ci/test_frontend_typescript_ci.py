@@ -1,4 +1,5 @@
 """Phase 9.49 F38: TypeScript strict full rollout contract tests."""
+
 from __future__ import annotations
 
 import json

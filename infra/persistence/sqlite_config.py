@@ -19,6 +19,7 @@ typed as ``ConnectionPort``; ``conn.execute(...)`` works on the
 ``SqliteConnection`` wrapper because ``__getattr__`` delegates to the
 underlying ``sqlite3.Connection``.
 """
+
 from __future__ import annotations
 
 from lingwen_shared.ports.storage import ConnectionPort

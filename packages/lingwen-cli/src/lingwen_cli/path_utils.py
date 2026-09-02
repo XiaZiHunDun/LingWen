@@ -7,6 +7,7 @@ ripple.db path from $LINGWEN_PROJECT_ROOT (preferred) or CWD fallback
 When db 不存在 (env 设 or CWD fallback), exit 2 with [ERROR] message —
 silent cwd-coupling is what broke the cron job (Phase 13.0 audit R4).
 """
+
 from __future__ import annotations
 
 import os
@@ -36,9 +37,7 @@ def resolve_project_db_path() -> Path:
         db_path = project_root / DEFAULT_RIPPLE_DB
         if not db_path.exists():
             _emit_error_and_exit(
-                f"{db_path} 不存在 "
-                f"(LINGWEN_PROJECT_ROOT={env_value}); "
-                f"set env 到有效项目根或 init 一个"
+                f"{db_path} 不存在 (LINGWEN_PROJECT_ROOT={env_value}); set env 到有效项目根或 init 一个"
             )
         return db_path
     # CWD fallback (1-version deprecation)
@@ -50,7 +49,6 @@ def resolve_project_db_path() -> Path:
     )
     if not cwd_db.exists():
         _emit_error_and_exit(
-            f"{cwd_db} 不存在 (CWD fallback) — "
-            f"export LINGWEN_PROJECT_ROOT=<valid project root>"
+            f"{cwd_db} 不存在 (CWD fallback) — export LINGWEN_PROJECT_ROOT=<valid project root>"
         )
     return cwd_db.resolve()

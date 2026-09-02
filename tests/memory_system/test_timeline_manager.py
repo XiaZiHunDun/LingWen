@@ -1,4 +1,5 @@
 """TimelineManager 测试"""
+
 from datetime import datetime
 from pathlib import Path
 
@@ -39,7 +40,7 @@ class TestTimelineManager:
             timestamp="2026-05-19T10:00:00",
             description="主角进入王宫",
             chapter=1,
-            metadata={"location": "王宫", "characters": ["李逍遥"]}
+            metadata={"location": "王宫", "characters": ["李逍遥"]},
         )
 
         assert event["event_id"] == "evt_001"
@@ -51,18 +52,10 @@ class TestTimelineManager:
     def test_add_multiple_events(self, manager):
         """测试添加多个事件"""
         manager.add_event(
-            event_id="evt_001",
-            timestamp="2026-05-19T10:00:00",
-            description="事件1",
-            chapter=1,
-            metadata={}
+            event_id="evt_001", timestamp="2026-05-19T10:00:00", description="事件1", chapter=1, metadata={}
         )
         manager.add_event(
-            event_id="evt_002",
-            timestamp="2026-05-19T11:00:00",
-            description="事件2",
-            chapter=2,
-            metadata={}
+            event_id="evt_002", timestamp="2026-05-19T11:00:00", description="事件2", chapter=2, metadata={}
         )
 
         events = manager.get_all_events()
@@ -77,27 +70,24 @@ class TestTimelineManager:
             timestamp="2026-05-19T08:00:00",
             description="早期事件",
             chapter=1,
-            metadata={}
+            metadata={},
         )
         manager.add_event(
             event_id="evt_002",
             timestamp="2026-05-19T10:00:00",
             description="中期事件",
             chapter=5,
-            metadata={}
+            metadata={},
         )
         manager.add_event(
             event_id="evt_003",
             timestamp="2026-05-19T14:00:00",
             description="晚期事件",
             chapter=10,
-            metadata={}
+            metadata={},
         )
 
-        events = manager.get_events_in_range(
-            start_time="2026-05-19T09:00:00",
-            end_time="2026-05-19T12:00:00"
-        )
+        events = manager.get_events_in_range(start_time="2026-05-19T09:00:00", end_time="2026-05-19T12:00:00")
 
         assert len(events) == 1
         assert events[0]["event_id"] == "evt_002"
@@ -109,20 +99,17 @@ class TestTimelineManager:
             timestamp="2026-05-19T09:00:00",
             description="边界事件1",
             chapter=1,
-            metadata={}
+            metadata={},
         )
         manager.add_event(
             event_id="evt_002",
             timestamp="2026-05-19T10:00:00",
             description="边界事件2",
             chapter=2,
-            metadata={}
+            metadata={},
         )
 
-        events = manager.get_events_in_range(
-            start_time="2026-05-19T09:00:00",
-            end_time="2026-05-19T10:00:00"
-        )
+        events = manager.get_events_in_range(start_time="2026-05-19T09:00:00", end_time="2026-05-19T10:00:00")
 
         assert len(events) == 2
 
@@ -133,21 +120,21 @@ class TestTimelineManager:
             timestamp="2026-05-19T10:00:00",
             description="第1章事件",
             chapter=1,
-            metadata={}
+            metadata={},
         )
         manager.add_event(
             event_id="evt_002",
             timestamp="2026-05-19T11:00:00",
             description="第1章事件2",
             chapter=1,
-            metadata={}
+            metadata={},
         )
         manager.add_event(
             event_id="evt_003",
             timestamp="2026-05-19T12:00:00",
             description="第5章事件",
             chapter=5,
-            metadata={}
+            metadata={},
         )
 
         events = manager.get_events_by_chapter(1)
@@ -157,11 +144,7 @@ class TestTimelineManager:
     def test_get_events_by_chapter_not_found(self, manager):
         """测试查询不存在的章节"""
         manager.add_event(
-            event_id="evt_001",
-            timestamp="2026-05-19T10:00:00",
-            description="事件",
-            chapter=1,
-            metadata={}
+            event_id="evt_001", timestamp="2026-05-19T10:00:00", description="事件", chapter=1, metadata={}
         )
 
         events = manager.get_events_by_chapter(999)
@@ -175,18 +158,10 @@ class TestTimelineManager:
     def test_get_all_events(self, manager):
         """测试获取所有事件"""
         manager.add_event(
-            event_id="evt_001",
-            timestamp="2026-05-19T10:00:00",
-            description="事件1",
-            chapter=1,
-            metadata={}
+            event_id="evt_001", timestamp="2026-05-19T10:00:00", description="事件1", chapter=1, metadata={}
         )
         manager.add_event(
-            event_id="evt_002",
-            timestamp="2026-05-19T11:00:00",
-            description="事件2",
-            chapter=2,
-            metadata={}
+            event_id="evt_002", timestamp="2026-05-19T11:00:00", description="事件2", chapter=2, metadata={}
         )
 
         events = manager.get_all_events()
@@ -200,7 +175,7 @@ class TestTimelineManager:
             timestamp="2026-05-19T15:00:00",
             description="持久化测试",
             chapter=20,
-            metadata={"key": "value"}
+            metadata={"key": "value"},
         )
 
         # 创建新实例模拟重启
@@ -215,27 +190,17 @@ class TestTimelineManager:
     def test_get_events_in_range_no_matches(self, manager):
         """测试时间范围内没有匹配事件"""
         manager.add_event(
-            event_id="evt_001",
-            timestamp="2026-05-19T10:00:00",
-            description="事件",
-            chapter=1,
-            metadata={}
+            event_id="evt_001", timestamp="2026-05-19T10:00:00", description="事件", chapter=1, metadata={}
         )
 
-        events = manager.get_events_in_range(
-            start_time="2026-05-20T00:00:00",
-            end_time="2026-05-20T23:59:59"
-        )
+        events = manager.get_events_in_range(start_time="2026-05-20T00:00:00", end_time="2026-05-20T23:59:59")
 
         assert len(events) == 0
 
     def test_add_event_without_optional_fields(self, manager):
         """测试添加事件时不提供可选字段"""
         event = manager.add_event(
-            event_id="evt_minimal",
-            timestamp="2026-05-19T10:00:00",
-            description="最小事件",
-            chapter=1
+            event_id="evt_minimal", timestamp="2026-05-19T10:00:00", description="最小事件", chapter=1
         )
 
         assert event["event_id"] == "evt_minimal"
@@ -245,16 +210,9 @@ class TestTimelineManager:
     def test_get_events_in_range_invalid_format(self, manager):
         """测试时间格式无效时返回空列表"""
         manager.add_event(
-            event_id="evt_001",
-            timestamp="2026-05-19T10:00:00",
-            description="事件",
-            chapter=1,
-            metadata={}
+            event_id="evt_001", timestamp="2026-05-19T10:00:00", description="事件", chapter=1, metadata={}
         )
 
-        events = manager.get_events_in_range(
-            start_time="invalid",
-            end_time="also_invalid"
-        )
+        events = manager.get_events_in_range(start_time="invalid", end_time="also_invalid")
 
         assert events == []

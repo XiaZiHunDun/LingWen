@@ -30,18 +30,20 @@ from lingwen_llm.port_adapter import LLMServiceAdapter
 @dataclass
 class EmotionalPoint:
     """情感点"""
+
     chapter: int
-    text: str                          # 情感描写原文
-    type: str                          # 类型：climax（高潮）/ subtle（细水长流）/ burst（爆发）
-    quality: str                       # 质量：organic（有机）/ formulaic（模式化）/ fake（虚假）
-    authenticity_score: float          # 真实感评分 0-1
-    trigger_type: str                  # 触发类型：sacrifice（牺牲）/ confession（告白）/ reunion（团聚）/ loss（失去）等
-    suggestion: str = ""               # 改进建议
+    text: str  # 情感描写原文
+    type: str  # 类型：climax（高潮）/ subtle（细水长流）/ burst（爆发）
+    quality: str  # 质量：organic（有机）/ formulaic（模式化）/ fake（虚假）
+    authenticity_score: float  # 真实感评分 0-1
+    trigger_type: str  # 触发类型：sacrifice（牺牲）/ confession（告白）/ reunion（团聚）/ loss（失去）等
+    suggestion: str = ""  # 改进建议
 
 
 @dataclass
 class EmotionalResonanceReport:
     """情感共鸣分析报告"""
+
     chapter: int
     emotional_points: List[EmotionalPoint] = field(default_factory=list)
     total_points: int = 0
@@ -61,7 +63,9 @@ class EmotionalResonanceReport:
             self.organic_count = sum(1 for p in self.emotional_points if p.quality == "organic")
             self.formulaic_count = sum(1 for p in self.emotional_points if p.quality == "formulaic")
             self.fake_count = sum(1 for p in self.emotional_points if p.quality == "fake")
-            self.authenticity_avg = sum(p.authenticity_score for p in self.emotional_points) / len(self.emotional_points)
+            self.authenticity_avg = sum(p.authenticity_score for p in self.emotional_points) / len(
+                self.emotional_points
+            )
 
     def to_dict(self) -> dict:
         return {
@@ -81,10 +85,10 @@ class EmotionalResonanceReport:
                     "quality": p.quality,
                     "authenticity_score": p.authenticity_score,
                     "trigger_type": p.trigger_type,
-                    "suggestion": p.suggestion
+                    "suggestion": p.suggestion,
                 }
                 for p in self.emotional_points
-            ]
+            ],
         }
 
 
@@ -93,20 +97,50 @@ class EmotionalResonanceChecker:
 
     # 模式化煽情关键词（检测器辅助判断）
     FORMULAIC_TRIGGERS = [
-        "热泪盈眶", "眼眶湿润", "泣不成声", "泪如雨下", "痛哭流涕",
-        "义正言辞", "慷慨激昂", "振振有词", "侃侃而谈",
-        "深情厚谊", "情深意重", "刻骨铭心", "此生不渝",
-        "咬牙切齿", "怒发冲冠", "怒不可遏",
-        "毫无疑问", "母庸质疑", "必须承认", "不得不承认"
+        "热泪盈眶",
+        "眼眶湿润",
+        "泣不成声",
+        "泪如雨下",
+        "痛哭流涕",
+        "义正言辞",
+        "慷慨激昂",
+        "振振有词",
+        "侃侃而谈",
+        "深情厚谊",
+        "情深意重",
+        "刻骨铭心",
+        "此生不渝",
+        "咬牙切齿",
+        "怒发冲冠",
+        "怒不可遏",
+        "毫无疑问",
+        "母庸质疑",
+        "必须承认",
+        "不得不承认",
     ]
 
     # 有机情感关键词（检测器辅助判断）
     ORGANIC_TRIGGERS = [
-        "沉默", "无言", "欲言又止", "欲言又止",
-        "苦笑", "轻笑", "苦笑", "强笑",
-        "叹息", "长叹", "默然", "愣住",
-        "攥紧", "松开", "握紧", "松开",
-        "别过脸", "低下头", "避开目光", "不敢看"
+        "沉默",
+        "无言",
+        "欲言又止",
+        "欲言又止",
+        "苦笑",
+        "轻笑",
+        "苦笑",
+        "强笑",
+        "叹息",
+        "长叹",
+        "默然",
+        "愣住",
+        "攥紧",
+        "松开",
+        "握紧",
+        "松开",
+        "别过脸",
+        "低下头",
+        "避开目光",
+        "不敢看",
     ]
 
     def __init__(self, llm_service: Optional[LLMServiceAdapter] = None):
@@ -120,7 +154,7 @@ class EmotionalResonanceChecker:
         ch_file = self.chapters_dir / f"ch{chapter_num:03d}.md"
         if not ch_file.exists():
             return None
-        return ch_file.read_text(encoding='utf-8')
+        return ch_file.read_text(encoding="utf-8")
 
     def load_chapters(self, chapter_nums: List[int]) -> Dict[int, str]:
         """批量加载章节"""
@@ -132,10 +166,7 @@ class EmotionalResonanceChecker:
         return result
 
     async def check_emotional_resonance(
-        self,
-        chapter_num: int,
-        content: str,
-        context_chapters: Optional[Dict[int, str]] = None
+        self, chapter_num: int, content: str, context_chapters: Optional[Dict[int, str]] = None
     ) -> EmotionalResonanceReport:
         """
         检测章节情感共鸣质量
@@ -247,7 +278,7 @@ class EmotionalResonanceChecker:
         response = await self.llm.generate(
             prompt=prompt,
             system="你是一个专业的小说情感共鸣分析专家，擅长识别模式化煽情和提升真实情感。",
-            model="default"
+            model="default",
         )
         report.llm_calls = 1
 
@@ -256,7 +287,7 @@ class EmotionalResonanceChecker:
             try:
                 data = json.loads(response)
             except json.JSONDecodeError:
-                json_match = re.search(r'\{.*\}', response, re.DOTALL)
+                json_match = re.search(r"\{.*\}", response, re.DOTALL)
                 if json_match:
                     data = json.loads(json_match.group())
                 else:
@@ -275,15 +306,21 @@ class EmotionalResonanceChecker:
                     quality=pt.get("quality", "formulaic"),
                     authenticity_score=pt.get("authenticity_score", 0.5),
                     trigger_type=pt.get("trigger_type", "unknown"),
-                    suggestion=pt.get("suggestion", "")
+                    suggestion=pt.get("suggestion", ""),
                 )
                 report.emotional_points.append(point)
 
             # 更新统计
             report.total_points = summary.get("total_points", len(report.emotional_points))
-            report.organic_count = summary.get("organic_count", sum(1 for p in report.emotional_points if p.quality == "organic"))
-            report.formulaic_count = summary.get("formulaic_count", sum(1 for p in report.emotional_points if p.quality == "formulaic"))
-            report.fake_count = summary.get("fake_count", sum(1 for p in report.emotional_points if p.quality == "fake"))
+            report.organic_count = summary.get(
+                "organic_count", sum(1 for p in report.emotional_points if p.quality == "organic")
+            )
+            report.formulaic_count = summary.get(
+                "formulaic_count", sum(1 for p in report.emotional_points if p.quality == "formulaic")
+            )
+            report.fake_count = summary.get(
+                "fake_count", sum(1 for p in report.emotional_points if p.quality == "fake")
+            )
             report.authenticity_avg = summary.get("authenticity_avg", report.authenticity_avg)
 
             # 计算分数：有机情感占比高则得分高
@@ -295,7 +332,7 @@ class EmotionalResonanceChecker:
 
             # 如果有虚假情感警告，降低分数
             if report.fake_count > 0:
-                report.score *= (1 - report.fake_count * 0.1)
+                report.score *= 1 - report.fake_count * 0.1
 
             report.score = max(0, min(1, report.score))
 
@@ -305,21 +342,14 @@ class EmotionalResonanceChecker:
         return report
 
     async def check_chapters_batch(
-        self,
-        chapter_nums: List[int],
-        parallel: bool = True,
-        max_workers: int = 5
+        self, chapter_nums: List[int], parallel: bool = True, max_workers: int = 5
     ) -> Dict[int, EmotionalResonanceReport]:
         """批量检测情感共鸣"""
         reports = {}
         contents = self.load_chapters(chapter_nums)
 
         async def _run_one(ch: int) -> None:
-            context = {
-                c: contents[c]
-                for c in contents
-                if abs(c - ch) <= 5 and c != ch
-            }
+            context = {c: contents[c] for c in contents if abs(c - ch) <= 5 and c != ch}
             try:
                 reports[ch] = await self.check_emotional_resonance(ch, contents[ch], context)
             except Exception as e:
@@ -340,10 +370,7 @@ class EmotionalResonanceChecker:
 
         return reports
 
-    def generate_summary_report(
-        self,
-        reports: Dict[int, EmotionalResonanceReport]
-    ) -> dict:
+    def generate_summary_report(self, reports: Dict[int, EmotionalResonanceReport]) -> dict:
         """生成汇总报告"""
         total_points = sum(r.total_points for r in reports.values())
         organic = sum(r.organic_count for r in reports.values())
@@ -362,31 +389,31 @@ class EmotionalResonanceChecker:
             "authenticity_avg": avg_authenticity,
             "avg_score": avg_score,
             "quality_grade": (
-                "A（优秀）" if avg_score >= 0.85 else
-                "B（良好）" if avg_score >= 0.70 else
-                "C（一般）" if avg_score >= 0.50 else
-                "D（需改进）"
+                "A（优秀）"
+                if avg_score >= 0.85
+                else "B（良好）"
+                if avg_score >= 0.70
+                else "C（一般）"
+                if avg_score >= 0.50
+                else "D（需改进）"
             ),
-            "chapters": {
-                ch: r.to_dict()
-                for ch, r in reports.items()
-            }
+            "chapters": {ch: r.to_dict() for ch, r in reports.items()},
         }
 
     def save_report(self, report_data: dict, output_file: Path):
         """保存报告"""
         output_file.parent.mkdir(parents=True, exist_ok=True)
-        output_file.write_text(json.dumps(report_data, ensure_ascii=False, indent=2), encoding='utf-8')
+        output_file.write_text(json.dumps(report_data, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"情感共鸣分析报告已保存: {output_file}")
 
 
 def parse_chapter_range(chapters_str: str) -> List[int]:
     """解析章节范围字符串"""
     chapters = []
-    for part in chapters_str.split(','):
+    for part in chapters_str.split(","):
         part = part.strip()
-        if '-' in part:
-            start, end = map(int, part.split('-'))
+        if "-" in part:
+            start, end = map(int, part.split("-"))
             chapters.extend(range(start, end + 1))
         else:
             chapters.append(int(part))
@@ -398,12 +425,12 @@ def main():
 
 
 async def _async_main():
-    parser = argparse.ArgumentParser(description='LLM情感共鸣分析器 - S4情感共鸣检测')
-    parser.add_argument('--chapters', type=str, default='1-360', help='章节范围')
-    parser.add_argument('--parallel', action='store_true', default=True, help='并行处理')
-    parser.add_argument('--sequential', dest='parallel', action='store_false', help='顺序处理')
-    parser.add_argument('--output', type=str, help='报告输出路径')
-    parser.add_argument('--workers', type=int, default=5, help='并行工作线程数')
+    parser = argparse.ArgumentParser(description="LLM情感共鸣分析器 - S4情感共鸣检测")
+    parser.add_argument("--chapters", type=str, default="1-360", help="章节范围")
+    parser.add_argument("--parallel", action="store_true", default=True, help="并行处理")
+    parser.add_argument("--sequential", dest="parallel", action="store_false", help="顺序处理")
+    parser.add_argument("--output", type=str, help="报告输出路径")
+    parser.add_argument("--workers", type=int, default=5, help="并行工作线程数")
 
     args = parser.parse_args()
     chapters = parse_chapter_range(args.chapters)
@@ -414,11 +441,7 @@ async def _async_main():
     print("=" * 60)
 
     checker = EmotionalResonanceChecker()
-    reports = await checker.check_chapters_batch(
-        chapters,
-        parallel=args.parallel,
-        max_workers=args.workers
-    )
+    reports = await checker.check_chapters_batch(chapters, parallel=args.parallel, max_workers=args.workers)
 
     # 生成汇总报告
     summary = checker.generate_summary_report(reports)
@@ -441,5 +464,5 @@ async def _async_main():
     print("=" * 60)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

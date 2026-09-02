@@ -18,6 +18,7 @@ The previous location (``tests/persistence/test_sqlite_storage_adapter.py``)
 either has a back-compat re-routed copy or has been deleted; the canonical
 tests live here.
 """
+
 from __future__ import annotations
 
 import sqlite3
@@ -47,9 +48,7 @@ def test_storage_adapter_satisfies_protocol() -> None:
     storage = SqliteStorageAdapter(":memory:")
 
     for method in ("with_connection", "with_transaction", "markdown_roundtrip"):
-        assert callable(getattr(storage, method)), (
-            f"StoragePort requires a callable `{method}` method"
-        )
+        assert callable(getattr(storage, method)), f"StoragePort requires a callable `{method}` method"
 
 
 def test_default_timeout_is_5_seconds() -> None:
@@ -80,17 +79,11 @@ def test_with_connection_returns_row_data(tmp_path: Path) -> None:
     storage = SqliteStorageAdapter(str(db))
 
     storage.with_transaction(
-        lambda conn: conn.execute(
-            "CREATE TABLE foo (id INTEGER PRIMARY KEY, name TEXT)"
-        )
+        lambda conn: conn.execute("CREATE TABLE foo (id INTEGER PRIMARY KEY, name TEXT)")
     )
-    storage.with_transaction(
-        lambda conn: conn.execute("INSERT INTO foo (name) VALUES (?)", ("alice",))
-    )
+    storage.with_transaction(lambda conn: conn.execute("INSERT INTO foo (name) VALUES (?)", ("alice",)))
 
-    rows = storage.with_connection(
-        lambda conn: list(conn.execute("SELECT name FROM foo").fetchall())
-    )
+    rows = storage.with_connection(lambda conn: list(conn.execute("SELECT name FROM foo").fetchall()))
 
     assert len(rows) == 1
     assert rows[0]["name"] == "alice"
@@ -106,18 +99,12 @@ def test_with_connection_does_not_commit(tmp_path: Path) -> None:
     db = tmp_path / "test.db"
     storage = SqliteStorageAdapter(str(db))
 
-    storage.with_connection(
-        lambda conn: conn.execute("CREATE TABLE unflushed (val INTEGER)")
-    )
-    storage.with_connection(
-        lambda conn: conn.execute("INSERT INTO unflushed VALUES (1)")
-    )
+    storage.with_connection(lambda conn: conn.execute("CREATE TABLE unflushed (val INTEGER)"))
+    storage.with_connection(lambda conn: conn.execute("INSERT INTO unflushed VALUES (1)"))
 
     # Fresh storage instance → fresh connection → no commit visible.
     other = SqliteStorageAdapter(str(db))
-    rows = other.with_connection(
-        lambda conn: list(conn.execute("SELECT val FROM unflushed").fetchall())
-    )
+    rows = other.with_connection(lambda conn: list(conn.execute("SELECT val FROM unflushed").fetchall()))
     assert rows == []
 
 
@@ -131,16 +118,10 @@ def test_with_transaction_commits_on_success(tmp_path: Path) -> None:
     db = tmp_path / "test.db"
     storage = SqliteStorageAdapter(str(db))
 
-    storage.with_connection(
-        lambda conn: conn.execute("CREATE TABLE bar (val INTEGER)")
-    )
-    storage.with_transaction(
-        lambda conn: conn.execute("INSERT INTO bar (val) VALUES (?)", (42,))
-    )
+    storage.with_connection(lambda conn: conn.execute("CREATE TABLE bar (val INTEGER)"))
+    storage.with_transaction(lambda conn: conn.execute("INSERT INTO bar (val) VALUES (?)", (42,)))
 
-    rows = storage.with_connection(
-        lambda conn: list(conn.execute("SELECT val FROM bar").fetchall())
-    )
+    rows = storage.with_connection(lambda conn: list(conn.execute("SELECT val FROM bar").fetchall()))
     assert rows[0]["val"] == 42
 
 
@@ -149,9 +130,7 @@ def test_with_transaction_rolls_back_on_error(tmp_path: Path) -> None:
     db = tmp_path / "test.db"
     storage = SqliteStorageAdapter(str(db))
 
-    storage.with_connection(
-        lambda conn: conn.execute("CREATE TABLE baz (val INTEGER)")
-    )
+    storage.with_connection(lambda conn: conn.execute("CREATE TABLE baz (val INTEGER)"))
 
     def bad_fn(conn):
         conn.execute("INSERT INTO baz (val) VALUES (?)", (1,))
@@ -161,9 +140,7 @@ def test_with_transaction_rolls_back_on_error(tmp_path: Path) -> None:
         storage.with_transaction(bad_fn)
 
     # The INSERT must have been rolled back.
-    rows = storage.with_connection(
-        lambda conn: list(conn.execute("SELECT val FROM baz").fetchall())
-    )
+    rows = storage.with_connection(lambda conn: list(conn.execute("SELECT val FROM baz").fetchall()))
     assert rows == []
 
 
@@ -172,9 +149,7 @@ def test_with_transaction_returns_callback_return_value(tmp_path: Path) -> None:
     db = tmp_path / "test.db"
     storage = SqliteStorageAdapter(str(db))
 
-    storage.with_connection(
-        lambda conn: conn.execute("CREATE TABLE t (x INTEGER)")
-    )
+    storage.with_connection(lambda conn: conn.execute("CREATE TABLE t (x INTEGER)"))
 
     def fn(conn):
         conn.execute("INSERT INTO t VALUES (?)", (7,))
@@ -245,9 +220,7 @@ def test_markdown_roundtrip_list_chapters_missing_dir(tmp_path: Path, monkeypatc
     assert md.list_chapters("does-not-exist") == []
 
 
-def test_markdown_roundtrip_list_chapters_returns_sorted_paths(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_markdown_roundtrip_list_chapters_returns_sorted_paths(tmp_path: Path, monkeypatch) -> None:
     """list_chapters returns absolute paths sorted by filename."""
     monkeypatch.chdir(tmp_path)
     project = "demo"
@@ -318,8 +291,7 @@ def test_factory_registers_at_module_load(restore_default_factory) -> None:
     """
     factory = get_default_storage_factory()
     assert factory is not None, (
-        "Factory should be registered after importing "
-        "lingwen_storage.sqlite_storage_adapter"
+        "Factory should be registered after importing lingwen_storage.sqlite_storage_adapter"
     )
 
 
@@ -346,9 +318,7 @@ def test_get_default_storage_constructs_via_factory(restore_default_factory) -> 
 def test_get_default_storage_raises_when_no_factory(restore_default_factory) -> None:
     """get_default_storage() raises RuntimeError if no factory is registered."""
     set_default_storage_factory(None)
-    with pytest.raises(
-        RuntimeError, match="StoragePort default factory not registered"
-    ):
+    with pytest.raises(RuntimeError, match="StoragePort default factory not registered"):
         get_default_storage()
 
 
@@ -366,4 +336,3 @@ def test_default_factory_returns_sqlite_storage_adapter(restore_default_factory)
     assert callable(storage.with_connection)
     assert callable(storage.with_transaction)
     assert callable(storage.markdown_roundtrip)
-

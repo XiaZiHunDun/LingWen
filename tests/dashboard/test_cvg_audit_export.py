@@ -1,4 +1,5 @@
 """Phase 9.60 F51: ripple audit export CSV/JSON."""
+
 from __future__ import annotations
 
 import csv
@@ -30,6 +31,7 @@ def storage_with_ripple(tmp_path):
 def client(storage_with_ripple, monkeypatch):
     storage, _ = storage_with_ripple
     from apps.studio_api import app as app_module
+
     monkeypatch.setattr(app_module, "_default_storage", lambda: storage)
     return TestClient(create_app())
 

@@ -1,4 +1,5 @@
 """Persist last-used creator settings merge strategy per project and globally."""
+
 from __future__ import annotations
 
 import json
@@ -91,11 +92,7 @@ def save_global_merge_preferences(
     pillars_snap = pillars_merge_snapshot_id.strip() if pillars_merge_snapshot_id else None
     if not pillars_snap:
         pillars_snap = legacy
-    outline_snap = (
-        global_outline_merge_snapshot_id.strip()
-        if global_outline_merge_snapshot_id
-        else None
-    )
+    outline_snap = global_outline_merge_snapshot_id.strip() if global_outline_merge_snapshot_id else None
     if not outline_snap:
         outline_snap = legacy
     data = {
@@ -144,11 +141,7 @@ def save_merge_preferences(
     pillars_snap = pillars_merge_snapshot_id.strip() if pillars_merge_snapshot_id else None
     if not pillars_snap:
         pillars_snap = legacy
-    outline_snap = (
-        global_outline_merge_snapshot_id.strip()
-        if global_outline_merge_snapshot_id
-        else None
-    )
+    outline_snap = global_outline_merge_snapshot_id.strip() if global_outline_merge_snapshot_id else None
     if not outline_snap:
         outline_snap = legacy
     data = {
@@ -372,7 +365,11 @@ def _preset_row(raw: dict[str, Any], *, builtin: bool, scope: str = "project") -
         except ValueError:
             version_label = str(raw.get("version_label")).strip()[:32] or None
     depends_on_raw = raw.get("depends_on") or []
-    depends_on = [str(dep).strip() for dep in depends_on_raw if str(dep).strip()] if isinstance(depends_on_raw, list) else []
+    depends_on = (
+        [str(dep).strip() for dep in depends_on_raw if str(dep).strip()]
+        if isinstance(depends_on_raw, list)
+        else []
+    )
     return {
         "id": str(raw["id"]),
         "name": str(raw.get("name", raw["id"])),
@@ -395,7 +392,9 @@ def list_factory_merge_preset_packages() -> list[dict[str, Any]]:
 def list_merge_preset_packages(project_root: Path | str) -> list[dict[str, Any]]:
     """List built-in, project-saved, and factory merge strategy preset packages."""
     builtin = [_preset_row(row, builtin=True, scope="builtin") for row in _BUILTIN_MERGE_PRESET_PACKAGES]
-    custom = [_preset_row(row, builtin=False, scope="project") for row in _load_custom_preset_packages(project_root)]
+    custom = [
+        _preset_row(row, builtin=False, scope="project") for row in _load_custom_preset_packages(project_root)
+    ]
     factory = list_factory_merge_preset_packages()
     return builtin + custom + factory
 
@@ -608,7 +607,9 @@ def import_merge_preset_packages(
         path = _custom_preset_packages_path(project_root)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(
-            json.dumps({"schema_version": _PRESET_PACKAGES_VERSION, "packages": []}, ensure_ascii=False, indent=2)
+            json.dumps(
+                {"schema_version": _PRESET_PACKAGES_VERSION, "packages": []}, ensure_ascii=False, indent=2
+            )
             + "\n",
             encoding="utf-8",
         )
@@ -695,8 +696,7 @@ def _conflicts_from_packages(packages: list[dict[str, Any]]) -> list[dict[str, A
     """Detect conflicts on a package list (builtin + factory + custom rows)."""
     by_id = {pkg["id"]: pkg for pkg in packages}
     adjacency: dict[str, list[str]] = {
-        pkg["id"]: [dep for dep in (pkg.get("depends_on") or []) if dep in by_id]
-        for pkg in packages
+        pkg["id"]: [dep for dep in (pkg.get("depends_on") or []) if dep in by_id] for pkg in packages
     }
     conflicts: list[dict[str, Any]] = []
 
@@ -1122,7 +1122,9 @@ def detect_factory_merge_preset_conflicts(project_root: Path | str) -> dict[str,
     conflicts: list[dict[str, Any]] = []
     seen: set[str] = set()
 
-    def _append_conflict(*, package_id: str, factory_package_id: str, project_pkg: dict, factory_pkg: dict) -> None:
+    def _append_conflict(
+        *, package_id: str, factory_package_id: str, project_pkg: dict, factory_pkg: dict
+    ) -> None:
         key = f"{package_id}:{factory_package_id}"
         if key in seen:
             return
@@ -1352,4 +1354,3 @@ def preview_merge_preset_changelog_diff(
         "change_count": len(changes),
         "changes": changes,
     }
-

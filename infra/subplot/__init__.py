@@ -15,6 +15,7 @@ Doc 3 (主线/支线模型 v1.0) 实施层第一期。
 - 3-volume / L1/L2/L3 大纲 (属于 outline_master)
 - 5-limit 紧急豁免 (climax periods may allow 6)
 """
+
 from .data_structures import (
     MAX_ACTIVE_SUBPLOTS,
     Plot,

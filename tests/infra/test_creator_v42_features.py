@@ -1,4 +1,5 @@
 """Tests for creator v4.2 deviation jump, P0-only logic check, summary pulse sync."""
+
 from __future__ import annotations
 
 import pytest

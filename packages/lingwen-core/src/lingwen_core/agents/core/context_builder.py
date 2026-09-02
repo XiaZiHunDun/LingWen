@@ -82,8 +82,12 @@ class ContextBuilder:
             },
             "master_constraints": {
                 "core_tone": payload.master_setting.get("master_constraints", {}).get("core_tone", ""),
-                "pacing_strategy": payload.master_setting.get("master_constraints", {}).get("pacing_strategy", ""),
-                "forbidden_patterns": payload.master_setting.get("master_constraints", {}).get("forbidden_patterns", []),
+                "pacing_strategy": payload.master_setting.get("master_constraints", {}).get(
+                    "pacing_strategy", ""
+                ),
+                "forbidden_patterns": payload.master_setting.get("master_constraints", {}).get(
+                    "forbidden_patterns", []
+                ),
             },
             "anti_patterns": [
                 {"text": ap.get("text", ""), "source": ap.get("source_table", "unknown")}
@@ -98,7 +102,7 @@ class ContextBuilder:
             states[char["name"]] = {
                 "location": char.get("current_location"),
                 "emotion": char.get("emotion_state"),
-                "alive": char.get("alive", True)
+                "alive": char.get("alive", True),
             }
         return states
 
@@ -112,8 +116,4 @@ class ContextBuilder:
 
     def _get_default_style_guide(self) -> Dict:
         """获取默认文风指南"""
-        return {
-            "tone": "简洁有力",
-            "dialogue_ratio": "30%",
-            "description_style": "白描为主"
-        }
+        return {"tone": "简洁有力", "dialogue_ratio": "30%", "description_style": "白描为主"}

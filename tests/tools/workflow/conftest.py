@@ -9,6 +9,7 @@ The lib_module.sys = sys patch (lines 30-31) is a real workaround for the
 upstream bug where lib/state.py uses `sys.path.insert(...)` in advance_step
 without importing sys at module level.
 """
+
 import json
 import sys
 from pathlib import Path
@@ -36,6 +37,7 @@ def mock_env(tmp_path, monkeypatch):
     monkeypatch.setattr("infra.tools.workflow.lib.db.LOCKFILE", locks_dir / "workflow.lock")
 
     import infra.tools.workflow.lib as lib_module
+
     lib_module.sys = sys
 
     return tmp_path
@@ -45,6 +47,7 @@ def mock_env(tmp_path, monkeypatch):
 def init_db(mock_env):
     """Initialize database with schema"""
     from infra.tools.workflow.lib import init_sqlite
+
     init_sqlite()
     return mock_env
 
@@ -62,11 +65,11 @@ def sample_workflow_json(mock_env):
                 "agent": "writer-a",
                 "status": "completed",
                 "heartbeat_at": "2026-05-20T10:00:00",
-                "dispatched_at": "2026-05-20T09:00:00"
+                "dispatched_at": "2026-05-20T09:00:00",
             }
-        }
+        },
     }
     json_path = mock_env / "workflow_state.json"
-    with open(json_path, 'w', encoding='utf-8') as f:
+    with open(json_path, "w", encoding="utf-8") as f:
         json.dump(data, f)
     return json_path

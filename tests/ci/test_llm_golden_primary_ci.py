@@ -1,4 +1,5 @@
 """Phase 11.14: LLM Golden primary revision blocking CI contract."""
+
 from __future__ import annotations
 
 from pathlib import Path

@@ -1,4 +1,5 @@
 """Tests for creator v5.5 outline jump, batch status color, studio badge hint."""
+
 from __future__ import annotations
 
 from lingwen_creator.content.ui_profile import resolve_creator_ui_profile

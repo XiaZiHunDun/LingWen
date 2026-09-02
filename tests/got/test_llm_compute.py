@@ -11,6 +11,7 @@ API:
 - 失败 → ComputeResult(fail=True, error=...)
 - 成功 → ComputeResult(output=str, cost_tokens=估算)
 """
+
 from __future__ import annotations
 
 import json
@@ -53,7 +54,9 @@ class _StubProvider(AIProvider):
         return [self.generate(p) for p in prompts]
 
 
-def _make_router(responses: dict[ModelTier, str | Exception]) -> tuple[TieredRouter, dict[ModelTier, _StubProvider]]:
+def _make_router(
+    responses: dict[ModelTier, str | Exception],
+) -> tuple[TieredRouter, dict[ModelTier, _StubProvider]]:
     providers: dict[ModelTier, _StubProvider] = {}
     for tier, resp in responses.items():
         if isinstance(resp, Exception):
@@ -75,13 +78,18 @@ def _node(node_id: str = "n1", scenario: Optional[str] = "chapter_writing") -> T
 
 # === TestLLMComputeFnBasic ===
 
+
 class TestLLMComputeFnBasic:
     """基本调用:scenario 路由 + 返回 ComputeResult"""
 
     def test_call_returns_compute_result(self):
-        router, _ = _make_router({
-            ModelTier.HAIKU: "h", ModelTier.SONNET: "s-out", ModelTier.OPUS: "o",
-        })
+        router, _ = _make_router(
+            {
+                ModelTier.HAIKU: "h",
+                ModelTier.SONNET: "s-out",
+                ModelTier.OPUS: "o",
+            }
+        )
         compute = LLMComputeFn(router)
         result = compute(_node(), {"ch": 100})
         assert isinstance(result, ComputeResult)
@@ -90,9 +98,13 @@ class TestLLMComputeFnBasic:
         assert result.cost_tokens > 0  # 估算了 token
 
     def test_routes_by_node_scenario(self):
-        router, providers = _make_router({
-            ModelTier.HAIKU: "h", ModelTier.SONNET: "s", ModelTier.OPUS: "o",
-        })
+        router, providers = _make_router(
+            {
+                ModelTier.HAIKU: "h",
+                ModelTier.SONNET: "s",
+                ModelTier.OPUS: "o",
+            }
+        )
         compute = LLMComputeFn(router)
         # chapter_writing → SONNET
         compute(_node(scenario="chapter_writing"), {})
@@ -105,9 +117,13 @@ class TestLLMComputeFnBasic:
         assert len(providers[ModelTier.HAIKU].calls) == 1
 
     def test_prompt_includes_node_info(self):
-        router, providers = _make_router({
-            ModelTier.HAIKU: "h", ModelTier.SONNET: "s", ModelTier.OPUS: "o",
-        })
+        router, providers = _make_router(
+            {
+                ModelTier.HAIKU: "h",
+                ModelTier.SONNET: "s",
+                ModelTier.OPUS: "o",
+            }
+        )
         compute = LLMComputeFn(router)
         node = _node(node_id="abc", scenario="chapter_writing")
         compute(node, {"key": "value"})
@@ -117,9 +133,13 @@ class TestLLMComputeFnBasic:
         assert "测试节点" in prompt or "node_abc" in prompt
 
     def test_prompt_includes_inputs(self):
-        router, providers = _make_router({
-            ModelTier.HAIKU: "h", ModelTier.SONNET: "s", ModelTier.OPUS: "o",
-        })
+        router, providers = _make_router(
+            {
+                ModelTier.HAIKU: "h",
+                ModelTier.SONNET: "s",
+                ModelTier.OPUS: "o",
+            }
+        )
         compute = LLMComputeFn(router)
         compute(_node(), {"chapter": 100, "title": "觉醒"})
         prompt = providers[ModelTier.SONNET].calls[0]
@@ -130,15 +150,18 @@ class TestLLMComputeFnBasic:
 
 # === TestLLMComputeFnFailure ===
 
+
 class TestLLMComputeFnFailure:
     """失败处理:抛错 → ComputeResult(fail=True, error=...)"""
 
     def test_all_tiers_fail_returns_failed_result(self):
-        router, _ = _make_router({
-            ModelTier.HAIKU: ValueError("haiku fail"),
-            ModelTier.SONNET: ValueError("sonnet fail"),
-            ModelTier.OPUS: ValueError("opus fail"),
-        })
+        router, _ = _make_router(
+            {
+                ModelTier.HAIKU: ValueError("haiku fail"),
+                ModelTier.SONNET: ValueError("sonnet fail"),
+                ModelTier.OPUS: ValueError("opus fail"),
+            }
+        )
         compute = LLMComputeFn(router)
         result = compute(_node(scenario="subplot_suggest"), {})
         # 所有 tier 失败 → 返回 fail, 不抛异常 (compute_fn 协议)
@@ -147,11 +170,13 @@ class TestLLMComputeFnFailure:
         assert "fail" in result.error.lower() or "error" in result.error.lower()
 
     def test_downgrade_on_partial_failure(self):
-        router, providers = _make_router({
-            ModelTier.HAIKU: "haiku-recovered",
-            ModelTier.SONNET: ValueError("sonnet down"),
-            ModelTier.OPUS: ValueError("opus down"),
-        })
+        router, providers = _make_router(
+            {
+                ModelTier.HAIKU: "haiku-recovered",
+                ModelTier.SONNET: ValueError("sonnet down"),
+                ModelTier.OPUS: ValueError("opus down"),
+            }
+        )
         compute = LLMComputeFn(router)
         # subplot_suggest 原本是 OPUS,失败 → 降级 → HAIKU 成功
         result = compute(_node(scenario="subplot_suggest"), {})
@@ -164,13 +189,18 @@ class TestLLMComputeFnFailure:
 
 # === TestLLMComputeFnScenario ===
 
+
 class TestLLMComputeFnScenario:
     """scenario 处理:None/未知 → 错误"""
 
     def test_none_scenario_raises(self):
-        router, _ = _make_router({
-            ModelTier.HAIKU: "h", ModelTier.SONNET: "s", ModelTier.OPUS: "o",
-        })
+        router, _ = _make_router(
+            {
+                ModelTier.HAIKU: "h",
+                ModelTier.SONNET: "s",
+                ModelTier.OPUS: "o",
+            }
+        )
         compute = LLMComputeFn(router)
         result = compute(_node(scenario=None), {})
         # scenario is None → 失败 (无法路由)
@@ -178,9 +208,13 @@ class TestLLMComputeFnScenario:
         assert "scenario" in result.error.lower()
 
     def test_unknown_scenario_fails(self):
-        router, _ = _make_router({
-            ModelTier.HAIKU: "h", ModelTier.SONNET: "s", ModelTier.OPUS: "o",
-        })
+        router, _ = _make_router(
+            {
+                ModelTier.HAIKU: "h",
+                ModelTier.SONNET: "s",
+                ModelTier.OPUS: "o",
+            }
+        )
         compute = LLMComputeFn(router)
         result = compute(_node(scenario="unknown_scenario"), {})
         assert result.fail is True
@@ -188,13 +222,18 @@ class TestLLMComputeFnScenario:
 
 # === TestLLMComputeFnCostTracker ===
 
+
 class TestLLMComputeFnCostTracker:
     """注入 CostTracker 时,自动记录"""
 
     def test_records_to_cost_tracker(self):
-        router, _ = _make_router({
-            ModelTier.HAIKU: "h", ModelTier.SONNET: "s-out", ModelTier.OPUS: "o",
-        })
+        router, _ = _make_router(
+            {
+                ModelTier.HAIKU: "h",
+                ModelTier.SONNET: "s-out",
+                ModelTier.OPUS: "o",
+            }
+        )
         tracker = CostTracker()
         compute = LLMComputeFn(router, cost_tracker=tracker)
         compute(_node(scenario="chapter_writing"), {"ch": 100})
@@ -207,11 +246,13 @@ class TestLLMComputeFnCostTracker:
 
     def test_records_after_successful_downgrade(self):
         """降级成功后,LLMComputeFn 记录 1 条 (用 primary tier 估算成本)"""
-        router, _ = _make_router({
-            ModelTier.HAIKU: "haiku-recovered",
-            ModelTier.SONNET: ValueError("sonnet fail"),
-            ModelTier.OPUS: ValueError("opus fail"),
-        })
+        router, _ = _make_router(
+            {
+                ModelTier.HAIKU: "haiku-recovered",
+                ModelTier.SONNET: ValueError("sonnet fail"),
+                ModelTier.OPUS: ValueError("opus fail"),
+            }
+        )
         tracker = CostTracker()
         compute = LLMComputeFn(router, cost_tracker=tracker)
         compute(_node(scenario="subplot_suggest"), {})
@@ -223,9 +264,13 @@ class TestLLMComputeFnCostTracker:
 
     def test_no_tracker_no_error(self):
         """不传 cost_tracker 也不报错"""
-        router, _ = _make_router({
-            ModelTier.HAIKU: "h", ModelTier.SONNET: "s", ModelTier.OPUS: "o",
-        })
+        router, _ = _make_router(
+            {
+                ModelTier.HAIKU: "h",
+                ModelTier.SONNET: "s",
+                ModelTier.OPUS: "o",
+            }
+        )
         compute = LLMComputeFn(router, cost_tracker=None)
         result = compute(_node(), {})
         assert result.fail is False
@@ -233,13 +278,18 @@ class TestLLMComputeFnCostTracker:
 
 # === TestLLMComputeFnCustomPrompt ===
 
+
 class TestLLMComputeFnCustomPrompt:
     """自定义 prompt_builder"""
 
     def test_custom_prompt_builder(self):
-        router, providers = _make_router({
-            ModelTier.HAIKU: "h", ModelTier.SONNET: "s", ModelTier.OPUS: "o",
-        })
+        router, providers = _make_router(
+            {
+                ModelTier.HAIKU: "h",
+                ModelTier.SONNET: "s",
+                ModelTier.OPUS: "o",
+            }
+        )
 
         def my_builder(node, inputs):
             return f"PROMPT for {node.node_id}: {inputs.get('key', '')}"
@@ -252,18 +302,25 @@ class TestLLMComputeFnCustomPrompt:
 
 # === TestLLMComputeFnImport ===
 
+
 class TestLLMComputeFnImport:
     """Public API"""
 
     def test_top_level_imports(self):
         from infra.got import LLMComputeFn
+
         assert LLMComputeFn is not None
 
     def test_callable(self):
         from infra.got import LLMComputeFn
-        router, _ = _make_router({
-            ModelTier.HAIKU: "h", ModelTier.SONNET: "s", ModelTier.OPUS: "o",
-        })
+
+        router, _ = _make_router(
+            {
+                ModelTier.HAIKU: "h",
+                ModelTier.SONNET: "s",
+                ModelTier.OPUS: "o",
+            }
+        )
         compute = LLMComputeFn(router)
         # 必须可调用 (满足 ComputeFn 协议)
         assert callable(compute)

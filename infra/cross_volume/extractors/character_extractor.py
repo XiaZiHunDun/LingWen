@@ -1,4 +1,5 @@
 """Phase 9.11: CharacterExtractor — regex 中文名 + alias_map + blacklist + threshold."""
+
 import logging
 import re
 from pathlib import Path

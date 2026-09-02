@@ -1,4 +1,5 @@
 """Phase 9.98 F90: ci_records helpers."""
+
 from __future__ import annotations
 
 import json
@@ -48,24 +49,26 @@ class TestCiRecordsF90:
     def test_stub_template_shape(self, tmp_path):
         stub = tmp_path / "stub.json"
         stub.write_text(
-            json.dumps({
-                "record_id": "e2e-live-first-green-stub",
-                "workflow": "test.yml",
-                "trigger": "push",
-                "branch": "master",
-                "github_run_id": "0000000000",
-                "github_run_url": "https://github.com/XiaZiHunDun/LingWen/actions/runs/0000000000",
-                "job_name": "Playwright live-backend (5 specs)",
-                "tests_passed": 5,
-                "summary_phrase": "Playwright live-backend — passed",
-                "local_parity": {
-                    "script": "novel-factory/scripts/verify-e2e-live-ci.sh",
-                    "passed": True,
-                    "verified_at": "2026-06-11T12:00:00Z",
-                },
-                "operator": "stub-example",
-                "recorded_at": "2026-06-11T12:00:00Z",
-            }),
+            json.dumps(
+                {
+                    "record_id": "e2e-live-first-green-stub",
+                    "workflow": "test.yml",
+                    "trigger": "push",
+                    "branch": "master",
+                    "github_run_id": "0000000000",
+                    "github_run_url": "https://github.com/XiaZiHunDun/LingWen/actions/runs/0000000000",
+                    "job_name": "Playwright live-backend (5 specs)",
+                    "tests_passed": 5,
+                    "summary_phrase": "Playwright live-backend — passed",
+                    "local_parity": {
+                        "script": "novel-factory/scripts/verify-e2e-live-ci.sh",
+                        "passed": True,
+                        "verified_at": "2026-06-11T12:00:00Z",
+                    },
+                    "operator": "stub-example",
+                    "recorded_at": "2026-06-11T12:00:00Z",
+                }
+            ),
             encoding="utf-8",
         )
         data = json.loads(stub.read_text(encoding="utf-8"))

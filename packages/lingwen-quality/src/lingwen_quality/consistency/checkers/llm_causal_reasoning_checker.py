@@ -45,8 +45,8 @@ class LLMCausalReasoningChecker(BaseChecker):
     - 夸张修辞
     - 尚未发生但可能发生的矛盾
     """
-    _checker_type = CheckerType.LLM_CAUSAL_REASONING
 
+    _checker_type = CheckerType.LLM_CAUSAL_REASONING
 
     SYSTEM_PROMPT = """你是一个小说一致性检测专家。
     检测以下文本是否存在以下类型的逻辑矛盾：
@@ -88,10 +88,7 @@ class LLMCausalReasoningChecker(BaseChecker):
         self.enabled = enabled
 
     def check(
-        self,
-        chapter_content: str,
-        chapter_num: int,
-        context: Optional[Dict[str, Any]] = None
+        self, chapter_content: str, chapter_num: int, context: Optional[Dict[str, Any]] = None
     ) -> List[Issue]:
         """
         执行检查
@@ -165,8 +162,8 @@ class LLMCausalReasoningChecker(BaseChecker):
         lines = []
         for name, info in profiles.items():
             if isinstance(info, dict):
-                desc = info.get('description', '未知')
-                gender = info.get('gender', '未知')
+                desc = info.get("description", "未知")
+                gender = info.get("gender", "未知")
                 lines.append(f"{name}: {desc}（性别：{gender}）")
             else:
                 lines.append(f"{name}: {info}")
@@ -221,9 +218,7 @@ class LLMCausalReasoningChecker(BaseChecker):
             raise RuntimeError("MINIMAX_API_KEY environment variable not set")
 
         # 创建MiniMax Provider
-        config = {
-            "minimax": ProviderConfig(api_key=api_key, model="MiniMax-M2.7")
-        }
+        config = {"minimax": ProviderConfig(api_key=api_key, model="MiniMax-M2.7")}
         router = AIRouter(config=config, primary_provider="minimax", enable_failover=False)
 
         # 调用MiniMax（失败或 JSON 解析失败时重试一次）
@@ -268,7 +263,7 @@ class LLMCausalReasoningChecker(BaseChecker):
             "causal_chain": "causal_chain_break",
             "emotional_proportion": "emotional_proportion",
             "physical_impossible": "physical_impossible",
-            "world_rule_violation": "world_rule_violation"
+            "world_rule_violation": "world_rule_violation",
         }
 
         issue_type = type_mapping.get(contradiction.get("type", ""), "llm_detected")
@@ -280,7 +275,7 @@ class LLMCausalReasoningChecker(BaseChecker):
         # 尝试提取段落号
         paragraph = None
         if "第" in location_text and "段" in location_text:
-            match = re.search(r'第(\d+)段', location_text)
+            match = re.search(r"第(\d+)段", location_text)
             if match:
                 paragraph = int(match.group(1))
 
@@ -296,5 +291,5 @@ class LLMCausalReasoningChecker(BaseChecker):
             suggestion=contradiction.get("suggestion", ""),
             confidence=ConfidenceLevel.MEDIUM,
             confidence_score=0.7,  # LLM检测的置信度
-            needs_llm_review=False  # 不需要再次复核，因为已经是LLM检测
+            needs_llm_review=False,  # 不需要再次复核，因为已经是LLM检测
         )

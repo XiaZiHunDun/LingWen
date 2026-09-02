@@ -3,6 +3,7 @@
 Reads from projects/<slug>/golden-set/chapters/ch{NNN}.md in the LingWen
 project tree.
 """
+
 from __future__ import annotations
 
 import os

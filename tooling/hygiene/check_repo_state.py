@@ -1,4 +1,5 @@
 """Hygiene check: lint repo state for hygiene violations."""
+
 from __future__ import annotations
 
 import sys
@@ -32,9 +33,7 @@ def find_hygiene_violations(repo_root: Path = REPO_ROOT) -> list[str]:
     violations: list[str] = []
     for f in git_ls_files(repo_root, tool="check_repo_state"):
         parts = Path(f).parts
-        if any(part in FORBIDDEN_PARTS for part in parts) or any(
-            d in parts for d in FORBIDDEN_DIRS
-        ):
+        if any(part in FORBIDDEN_PARTS for part in parts) or any(d in parts for d in FORBIDDEN_DIRS):
             violations.append(f"FORBIDDEN_PATH: {f}")
         full = repo_root / f
         if full.name in PLACEHOLDER_NAMES:

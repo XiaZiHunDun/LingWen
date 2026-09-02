@@ -15,6 +15,7 @@ Phase 1.4 — Doc 4 (GoT 适配设计 v1.0) §6: 调度执行。
 - 并发执行 (Phase 4,顺序执行足够 PoC)
 - 检查点 (Phase 1.5+ 持久化)
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -35,6 +36,7 @@ from infra.got.graph import (
 
 # === Exceptions ===
 
+
 class SchedulerError(Exception):
     """Scheduler 基类异常"""
 
@@ -47,8 +49,7 @@ class HumanInterventionRequired(SchedulerError):
         self.backtrack_count = backtrack_count
         self.last_error = last_error
         super().__init__(
-            f"node {node_id!r} failed after {backtrack_count} backtracks; "
-            f"last error: {last_error}"
+            f"node {node_id!r} failed after {backtrack_count} backtracks; last error: {last_error}"
         )
 
 
@@ -63,6 +64,7 @@ class MaxStepsExceeded(SchedulerError):
 
 # === Compute result shape ===
 
+
 @dataclass
 class ComputeResult:
     """compute_fn 返回值
@@ -70,6 +72,7 @@ class ComputeResult:
     简化协议:output / cost_tokens / fail / error
     真实 LLM 场景下,output 是生成的内容,fail 表示生成失败
     """
+
     output: Any = None
     cost_tokens: int = 0
     fail: bool = False
@@ -77,6 +80,7 @@ class ComputeResult:
 
 
 # === Execution summary ===
+
 
 @dataclass(frozen=True)
 class ExecutionSummary:
@@ -92,6 +96,7 @@ class ExecutionSummary:
     - paused: Phase 5 — 是否因 DECISION 节点暂停
     - paused_nodes: Phase 5 — 暂停的 DECISION 节点 ID (按发现顺序)
     """
+
     completed: int = 0
     failed: int = 0
     total_cost_tokens: int = 0
@@ -114,6 +119,7 @@ def _default_compute(node: ThoughtNode, inputs: dict[str, Any]) -> ComputeResult
 
 # === GoTScheduler ===
 
+
 class GoTScheduler:
     """GoT 调度器 — 执行 ThoughtGraph
 
@@ -123,8 +129,8 @@ class GoTScheduler:
         mermaid = sched.visualize()
     """
 
-    BACKTRACK_SOFT_LIMIT = 2   # 软回溯 ≤ 2 次
-    BACKTRACK_HARD_LIMIT = 3   # 硬回溯 ≥ 3 次 → HumanInterventionRequired
+    BACKTRACK_SOFT_LIMIT = 2  # 软回溯 ≤ 2 次
+    BACKTRACK_HARD_LIMIT = 3  # 硬回溯 ≥ 3 次 → HumanInterventionRequired
 
     def __init__(
         self,
@@ -244,6 +250,7 @@ class GoTScheduler:
         委托给 infra.got.visualizer.render_mermaid_from_scheduler
         """
         from infra.got.visualizer import render_mermaid_from_scheduler
+
         return render_mermaid_from_scheduler(self)
 
     def resume(
@@ -270,14 +277,12 @@ class GoTScheduler:
             raise KeyError(f"node {decision_node_id!r} not found in graph")
         if not self._graph.has_execution(decision_node_id):
             raise ValueError(
-                f"node {decision_node_id!r} has no execution record; "
-                f"call run() first to enter paused state"
+                f"node {decision_node_id!r} has no execution record; call run() first to enter paused state"
             )
         current = self._graph.get_execution(decision_node_id)
         if current.status != NodeStatus.WAITING:
             raise ValueError(
-                f"node {decision_node_id!r} is {current.status.value}, "
-                f"cannot resume (expected waiting)"
+                f"node {decision_node_id!r} is {current.status.value}, cannot resume (expected waiting)"
             )
         updated = NodeExecution(
             node_id=current.node_id,
@@ -311,9 +316,7 @@ class GoTScheduler:
         # 2. 缓存检查
         inputs_hash = self._cache.hash_inputs(inputs)
         if self._cache.has(node.node_id, inputs_hash):
-            cached = self._cache.get_or_compute(
-                node.node_id, inputs_hash, lambda: None
-            )
+            cached = self._cache.get_or_compute(node.node_id, inputs_hash, lambda: None)
             return (
                 NodeExecution(
                     node_id=node.node_id,
@@ -354,9 +357,7 @@ class GoTScheduler:
                 cost_tokens=result.cost_tokens,
             )
             # 存缓存 (仅成功结果)
-            self._cache.get_or_compute(
-                node.node_id, inputs_hash, lambda: result.output
-            )
+            self._cache.get_or_compute(node.node_id, inputs_hash, lambda: result.output)
 
         self._graph.record_execution(node.node_id, exec_)
         return exec_, False

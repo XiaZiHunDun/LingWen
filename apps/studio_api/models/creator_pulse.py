@@ -2,6 +2,7 @@
 
 Models unchanged — only relocated for code organization.
 """
+
 from __future__ import annotations
 
 from typing import Optional
@@ -21,9 +22,11 @@ class CreatorVolumePulseRow(BaseModel):
     deviation_count: int = 0
     headline: str = ""
 
+
 class CreatorVolumePulseSummary(BaseModel):
     name: str
     excerpt: str = ""
+
 
 class CreatorVolumePulse(BaseModel):
     volume_count: int = 0

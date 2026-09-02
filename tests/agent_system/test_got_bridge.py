@@ -10,6 +10,7 @@ MasterController + GoT 整合。本测试验证:
 - build_got_scheduler: 加载 YAML + 构造 GoTScheduler
 - MasterController.run_workflow: 委托给 GoT bridge
 """
+
 from __future__ import annotations
 
 from typing import Any, Optional
@@ -29,6 +30,7 @@ from infra.got.data_structures import NodeStatus, NodeType, ThoughtNode
 from infra.got.scheduler import ComputeResult, ExecutionSummary
 
 # === Test fixtures: stub MasterController ===
+
 
 class _StubMaster:
     """最小 MasterController stub — 不连 API,不读状态"""
@@ -59,7 +61,9 @@ class _StubMaster:
 
     # Phase 8.6.2: 5 *_with_usage methods — 供 test_got_bridge 验证 tuple return path
     # 返回 max(len(content)) fallback 模拟真实 LLM usage (含 input/output tokens)
-    def write_chapter_with_usage(self, chapter_num, outline, characters, memory_context, style_guide, use_llm):
+    def write_chapter_with_usage(
+        self, chapter_num, outline, characters, memory_context, style_guide, use_llm
+    ):
         self.calls.append(("write_chapter_with_usage", {"chapter_num": chapter_num, "use_llm": use_llm}))
         return (
             {"content": f"ch{chapter_num} text", "word_count": 100, "suggestions": []},
@@ -67,7 +71,9 @@ class _StubMaster:
         )
 
     def audit_chapter_with_usage(self, chapter_num, content, characters, timeline, use_llm):
-        self.calls.append(("audit_chapter_with_usage", {"chapter_num": chapter_num, "content_len": len(content)}))
+        self.calls.append(
+            ("audit_chapter_with_usage", {"chapter_num": chapter_num, "content_len": len(content)})
+        )
         return (
             {"chapter": chapter_num, "issues": [], "scores": {"S1": 80}},
             {"input_tokens": 80, "output_tokens": 40},
@@ -91,12 +97,39 @@ class _StubMaster:
         if not content_a or not content_b:
             winner = labels[0] if content_a else labels[1]
             content = content_a or content_b
-            return {"content": content, "winner": winner, "scores_a": {}, "scores_b": {}, "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0, "fallback": "empty_content"}
+            return {
+                "content": content,
+                "winner": winner,
+                "scores_a": {},
+                "scores_b": {},
+                "scores_total_a": 0.0,
+                "scores_total_b": 0.0,
+                "scores_delta": 0.0,
+                "fallback": "empty_content",
+            }
         if content_a == content_b:
-            return {"content": content_a, "winner": labels[0], "scores_a": {}, "scores_b": {}, "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0, "fallback": "identical"}
+            return {
+                "content": content_a,
+                "winner": labels[0],
+                "scores_a": {},
+                "scores_b": {},
+                "scores_total_a": 0.0,
+                "scores_total_b": 0.0,
+                "scores_delta": 0.0,
+                "fallback": "identical",
+            }
         winner_label = labels[0] if len(content_a) >= len(content_b) else labels[1]
         content = content_a if winner_label == labels[0] else content_b
-        return {"content": content, "winner": winner_label, "scores_a": {}, "scores_b": {}, "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0, "fallback": "llm_fail"}
+        return {
+            "content": content,
+            "winner": winner_label,
+            "scores_a": {},
+            "scores_b": {},
+            "scores_total_a": 0.0,
+            "scores_total_b": 0.0,
+            "scores_delta": 0.0,
+            "fallback": "llm_fail",
+        }
 
     # Phase 8.7: stub polish_merge_synthesis_with_usage — 跟 5 *_with_usage methods 同模式
     # 返 (max(len) fallback dict, hardcoded 100/50). _handler_polish_merge 改调此方法.
@@ -108,8 +141,11 @@ class _StubMaster:
             {
                 "content": chosen,
                 "winner": winner,
-                "scores_a": {}, "scores_b": {},
-                "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0,
+                "scores_a": {},
+                "scores_b": {},
+                "scores_total_a": 0.0,
+                "scores_total_b": 0.0,
+                "scores_delta": 0.0,
                 "fallback": "stub_max_len",
             },
             {"input_tokens": 100, "output_tokens": 50},
@@ -132,11 +168,13 @@ def _node(node_id: str, scenario: Optional[str]) -> ThoughtNode:
 
 # === TestScenarioCoverage ===
 
+
 class TestScenarioCoverage:
     """12 SCENARIOS 全部覆盖 AgentComputeFn"""
 
     def test_all_12_scenarios_registered(self):
         from lingwen_prompt.scenarios import SCENARIOS
+
         assert len(SCENARIOS) == 12
         for s in SCENARIOS:
             assert s in SCENARIO_HANDLERS, f"scenario {s!r} not in SCENARIO_HANDLERS"
@@ -157,6 +195,7 @@ class TestScenarioCoverage:
 
 
 # === TestAgentComputeFnBasic ===
+
 
 class TestAgentComputeFnBasic:
     """基本调用:scenario → handler → ComputeResult"""
@@ -206,6 +245,7 @@ class TestAgentComputeFnBasic:
 
 # === TestAgentComputeFnFailure ===
 
+
 class TestAgentComputeFnFailure:
     """失败处理:无 scenario / 未注册 / handler 抛错 / 业务失败"""
 
@@ -231,9 +271,11 @@ class TestAgentComputeFnFailure:
 
     def test_handler_exception_caught_as_fail(self):
         master = _StubMaster()
+
         # Phase 8.6.2: handler 调 write_chapter_with_usage, 强行让该 variant 抛错
         def boom(*args, **kwargs):
             raise RuntimeError("upstream error")
+
         master.write_chapter_with_usage = boom
 
         compute = AgentComputeFn(master)
@@ -255,6 +297,7 @@ class TestAgentComputeFnFailure:
 
 # === TestAgentComputeFnProtocol ===
 
+
 class TestAgentComputeFnProtocol:
     """满足 ComputeFn 协议 (与 GoTScheduler 兼容)"""
 
@@ -273,6 +316,7 @@ class TestAgentComputeFnProtocol:
 
 # === TestBuildGoTScheduler ===
 
+
 class TestBuildGoTScheduler:
     """build_got_scheduler 工厂:加载 workflow + 构造 scheduler"""
 
@@ -283,6 +327,7 @@ class TestBuildGoTScheduler:
         assert len(graph.node_ids()) == 7
         # scheduler 是 GoTScheduler 实例
         from infra.got.scheduler import GoTScheduler
+
         assert isinstance(scheduler, GoTScheduler)
 
     def test_scheduler_compute_fn_is_agent_compute(self):
@@ -290,10 +335,12 @@ class TestBuildGoTScheduler:
         scheduler, _ = build_got_scheduler(master, "novel_writing")
         # 内部 compute_fn 是 AgentComputeFn 实例
         from lingwen_core.agents.got_bridge import AgentComputeFn
+
         assert isinstance(scheduler._compute_fn, AgentComputeFn)
 
 
 # === TestE2EWorkflow ===
+
 
 class TestE2EWorkflow:
     """E2E: 加载 novel_writing + 跑 write_chapter → review_chapter 链"""
@@ -361,6 +408,7 @@ class TestE2EWorkflow:
 
 # === TestPolishHandlerRouting (Phase 7.4 NEW) ===
 
+
 class TestPolishHandlerRouting:
     """Phase 7.4: _handler_polish 拆为 _make_polish_handler 工厂, 按 scenario 路由"""
 
@@ -369,9 +417,11 @@ class TestPolishHandlerRouting:
         master = _StubMaster()
         # Phase 8.6.2: 工厂调 polish_emotional_pacing_with_usage, stub 该方法
         master.emotional_pacing_calls = []
+
         def _stub_emotional_with_usage(chapter_num, content):
             master.emotional_pacing_calls.append(content)
             return content + " [emotional]", {"input_tokens": 0, "output_tokens": 0}
+
         master.polish_emotional_pacing_with_usage = _stub_emotional_with_usage
 
         compute = AgentComputeFn(master)
@@ -388,9 +438,11 @@ class TestPolishHandlerRouting:
         master = _StubMaster()
         # Phase 8.6.2: 工厂调 polish_ai_trace_removal_with_usage, stub 该方法
         master.ai_trace_calls = []
+
         def _stub_ai_trace_with_usage(chapter_num, content):
             master.ai_trace_calls.append(content)
             return content + " [ai_removed]", {"input_tokens": 0, "output_tokens": 0}
+
         master.polish_ai_trace_removal_with_usage = _stub_ai_trace_with_usage
 
         compute = AgentComputeFn(master)
@@ -413,6 +465,7 @@ class TestPolishHandlerRouting:
 
 
 # === TestPolishMergeHandler (Phase 7.4 NEW) ===
+
 
 class TestPolishMergeHandler:
     """Phase 7.4: _handler_polish_merge 按 max(len) 合并多个上游 content"""
@@ -453,22 +506,26 @@ class TestPolishMergeHandler:
 
 # === TestPolishMergeHandlerScored (Phase 7.5 NEW) ===
 
+
 class TestPolishMergeHandlerScored:
     """Phase 7.5: _handler_polish_merge 调 master.polish_merge_synthesis (LLM S1-S8)"""
 
     def test_handler_returns_winner_with_score_fields(self):
         """2 上游走 LLM 评分路径, 返回 dict 含 winner / scores_total_* 字段"""
+
         # 构造 _StubMaster with LLM-模拟 chat response
         class _ScoringStub(_StubMaster):
             def __init__(self):
                 super().__init__()
                 # 加 polish_merge_synthesis 方法
                 from lingwen_core.agents.agents.polisher.prompts import _S1_S8_NAMES  # noqa
+
                 self._llm_response = {
                     "scores_A": {"S1": 9, "S2": 9, "S3": 9, "S4": 9, "S5": 9, "S6": 9, "S7": 9, "S8": 9},
                     "scores_B": {"S1": 5, "S2": 5, "S3": 5, "S4": 5, "S5": 5, "S6": 5, "S7": 5, "S8": 5},
                     "reason": "A wins",
                 }
+
             def polish_merge_synthesis_with_usage(self, content_a, content_b, *, labels=("A", "B")):
                 # Phase 8.7: handler 改调 _with_usage variant, 模拟 LLM 评分
                 # 返 (scored_dict, usage_dict) tuple (跟其他 5 *_with_usage methods 同模式)
@@ -512,6 +569,7 @@ class TestPolishMergeHandlerScored:
 
 
 # === TestPolishVariantResilience (Phase 7.4 fixup M1 NEW) ===
+
 
 class TestPolishVariantResilience:
     """Phase 7.4 fixup M1: polish_emotional_pacing + polish_ai_trace_removal 加
@@ -557,7 +615,8 @@ class TestPolishVariantResilience:
     def test_polish_emotional_pacing_survives_dialogue_llm_failure(self):
         """dialogue_llm 抛错 → emotional_pacing 仍返 str, content 走 fallback"""
         master = self._make_master_with_broken_polisher(
-            dialogue_raises=True, pacing_raises=False,
+            dialogue_raises=True,
+            pacing_raises=False,
         )
         result = master.polish_emotional_pacing("raw text")
         # 韧性契约: dialogue 失败 → content 不变, pacing 继续 → 加 [pacing_ok]
@@ -568,7 +627,8 @@ class TestPolishVariantResilience:
     def test_polish_emotional_pacing_survives_pacing_llm_failure(self):
         """pacing_llm 抛错 → emotional_pacing 仍返 str, dialogue 结果保留"""
         master = self._make_master_with_broken_polisher(
-            dialogue_raises=False, pacing_raises=True,
+            dialogue_raises=False,
+            pacing_raises=True,
         )
         result = master.polish_emotional_pacing("raw text")
         # 韧性契约: dialogue 成功 + pacing 失败 → 保留 dialogue 后的内容
@@ -579,7 +639,8 @@ class TestPolishVariantResilience:
     def test_polish_emotional_pacing_survives_both_llm_failures(self):
         """双 LLM 全失败 → 返原 content (str), 不抛"""
         master = self._make_master_with_broken_polisher(
-            dialogue_raises=True, pacing_raises=True,
+            dialogue_raises=True,
+            pacing_raises=True,
         )
         result = master.polish_emotional_pacing("raw text")
         # 韧性契约: 双失败 → 走 fallback → 返原 content
@@ -589,7 +650,8 @@ class TestPolishVariantResilience:
     def test_polish_ai_trace_removal_survives_dialogue_llm_failure(self):
         """ai_trace_removal: remove_ai_gloss 规则先跑 (从不出错), dialogue 失败时仍返 str"""
         master = self._make_master_with_broken_polisher(
-            dialogue_raises=True, pacing_raises=True,  # pacing 不被调
+            dialogue_raises=True,
+            pacing_raises=True,  # pacing 不被调
         )
         result = master.polish_ai_trace_removal("首先 raw text")
         # 韧性契约: remove_ai_gloss 成功 (规则) + dialogue 失败 → 返规则结果
@@ -602,7 +664,8 @@ class TestPolishVariantResilience:
     def test_polish_ai_trace_removal_happy_path(self):
         """ai_trace_removal 正常路径: remove_ai_gloss + dialogue_llm 都成功"""
         master = self._make_master_with_broken_polisher(
-            dialogue_raises=False, pacing_raises=True,
+            dialogue_raises=False,
+            pacing_raises=True,
         )
         result = master.polish_ai_trace_removal("首先 raw")
         # 规则去掉 "首先" → dialogue 加 [dialogue_ok]
@@ -612,6 +675,7 @@ class TestPolishVariantResilience:
 
 
 # === TestPolishHandlerTypoContract (Phase 7.4 fixup L3 NEW) ===
+
 
 class TestPolishHandlerTypoContract:
     """Phase 7.4 fixup L3: 锁住 _make_polish_handler(method_name) 契约 —
@@ -635,6 +699,7 @@ class TestPolishHandlerTypoContract:
 
 
 # === TestCostTrackerWiring (Phase 8.5 NEW) ===
+
 
 class TestCostTrackerWiring:
     """Phase 8.5: AgentComputeFn 加 cost_tracker kwarg, handler 成功后估 token +
@@ -756,7 +821,9 @@ class TestCostTrackerWiring:
                 "winner": "emotional_pacing",
                 "scores_a": {f"S{i}": 8 for i in range(1, 9)},
                 "scores_b": {f"S{i}": 5 for i in range(1, 9)},
-                "scores_total_a": 7.0, "scores_total_b": 4.5, "scores_delta": 0.25,
+                "scores_total_a": 7.0,
+                "scores_total_b": 4.5,
+                "scores_delta": 0.25,
             },
             {"input_tokens": 100, "output_tokens": 50},
         )
@@ -787,8 +854,10 @@ class TestCostTrackerWiring:
             {
                 "content": "winner content",
                 "winner": "emotional_pacing",
-                "scores_a": {}, "scores_b": {},
-                "scores_total_a": 7.0, "scores_total_b": 4.5,
+                "scores_a": {},
+                "scores_b": {},
+                "scores_total_a": 7.0,
+                "scores_total_b": 4.5,
                 "scores_delta": 0.25,
             },
             {"input_tokens": 200, "output_tokens": 100},
@@ -815,6 +884,7 @@ class TestCostTrackerWiring:
 
 
 # === Phase 8.8 Task 2: AgentComputeFn 集中 check_budget (tuple+dict 双路径) ===
+
 
 class TestBudgetEnforcement:
     """Phase 8.8 T2: AgentComputeFn 集中调 cost_tracker.check_budget(master._current_budget_usd).
@@ -889,9 +959,7 @@ class TestBudgetEnforcement:
     def test_no_budget_set_skips_check(self) -> None:
         """_current_budget_usd=None → check_budget(None) 立即 return, 不抛"""
         master, compute = self._make_compute_with_budget(budget_usd=None)
-        original = self._stub_chapter_writing(
-            ({"content": "x"}, {"input_tokens": 100, "output_tokens": 50})
-        )
+        original = self._stub_chapter_writing(({"content": "x"}, {"input_tokens": 100, "output_tokens": 50}))
         try:
             node = _node("n1", "chapter_writing")
             result = compute(node, {"chapter_num": 1})

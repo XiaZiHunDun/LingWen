@@ -8,6 +8,7 @@ MasterController.run_workflow 委托给 GoT bridge + GoTScheduler。
 - initial_inputs 注入到起点节点
 - 老 API (advance_step/dispatch_task) 不受影响,GoT 是新入口
 """
+
 from __future__ import annotations
 
 from typing import Any, Optional
@@ -15,6 +16,7 @@ from typing import Any, Optional
 import pytest
 
 # === Stub MasterController (避免连真实 API) ===
+
 
 class _StubMaster:
     """最小 MasterController stub — 只实现 run_workflow 依赖的方法"""
@@ -44,12 +46,39 @@ class _StubMaster:
         if not content_a or not content_b:
             winner = labels[0] if content_a else labels[1]
             content = content_a or content_b
-            return {"content": content, "winner": winner, "scores_a": {}, "scores_b": {}, "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0, "fallback": "empty_content"}
+            return {
+                "content": content,
+                "winner": winner,
+                "scores_a": {},
+                "scores_b": {},
+                "scores_total_a": 0.0,
+                "scores_total_b": 0.0,
+                "scores_delta": 0.0,
+                "fallback": "empty_content",
+            }
         if content_a == content_b:
-            return {"content": content_a, "winner": labels[0], "scores_a": {}, "scores_b": {}, "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0, "fallback": "identical"}
+            return {
+                "content": content_a,
+                "winner": labels[0],
+                "scores_a": {},
+                "scores_b": {},
+                "scores_total_a": 0.0,
+                "scores_total_b": 0.0,
+                "scores_delta": 0.0,
+                "fallback": "identical",
+            }
         winner_label = labels[0] if len(content_a) >= len(content_b) else labels[1]
         content = content_a if winner_label == labels[0] else content_b
-        return {"content": content, "winner": winner_label, "scores_a": {}, "scores_b": {}, "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0, "fallback": "llm_fail"}
+        return {
+            "content": content,
+            "winner": winner_label,
+            "scores_a": {},
+            "scores_b": {},
+            "scores_total_a": 0.0,
+            "scores_total_b": 0.0,
+            "scores_delta": 0.0,
+            "fallback": "llm_fail",
+        }
 
     # Phase 8.7: stub polish_merge_synthesis_with_usage — 跟 5 *_with_usage methods 同模式
     # 返 (max(len) fallback dict, hardcoded 100/50). _handler_polish_merge 改调此方法.
@@ -61,8 +90,11 @@ class _StubMaster:
             {
                 "content": chosen,
                 "winner": winner,
-                "scores_a": {}, "scores_b": {},
-                "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0,
+                "scores_a": {},
+                "scores_b": {},
+                "scores_total_a": 0.0,
+                "scores_total_b": 0.0,
+                "scores_delta": 0.0,
                 "fallback": "stub_max_len",
             },
             {"input_tokens": 100, "output_tokens": 50},
@@ -73,6 +105,7 @@ class _StubMaster:
 
 
 # === 真实 MasterController + stub Agent methods (通过 monkeypatch) ===
+
 
 class _StubAgents:
     """模拟 MasterController 的 5 个 Agent — 直接给 controller 注入"""
@@ -103,7 +136,9 @@ class _StubAgents:
         return content + " (ai_removed)"
 
     # Phase 8.6.2: 5 *_with_usage methods (handler 调 variant 拿真实 usage)
-    def write_chapter_with_usage(self, chapter_num, outline, characters, memory_context, style_guide, use_llm):
+    def write_chapter_with_usage(
+        self, chapter_num, outline, characters, memory_context, style_guide, use_llm
+    ):
         self.calls.append(("write_chapter_with_usage", {"chapter_num": chapter_num}))
         return (
             {
@@ -146,12 +181,39 @@ class _StubAgents:
         if not content_a or not content_b:
             winner = labels[0] if content_a else labels[1]
             content = content_a or content_b
-            return {"content": content, "winner": winner, "scores_a": {}, "scores_b": {}, "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0, "fallback": "empty_content"}
+            return {
+                "content": content,
+                "winner": winner,
+                "scores_a": {},
+                "scores_b": {},
+                "scores_total_a": 0.0,
+                "scores_total_b": 0.0,
+                "scores_delta": 0.0,
+                "fallback": "empty_content",
+            }
         if content_a == content_b:
-            return {"content": content_a, "winner": labels[0], "scores_a": {}, "scores_b": {}, "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0, "fallback": "identical"}
+            return {
+                "content": content_a,
+                "winner": labels[0],
+                "scores_a": {},
+                "scores_b": {},
+                "scores_total_a": 0.0,
+                "scores_total_b": 0.0,
+                "scores_delta": 0.0,
+                "fallback": "identical",
+            }
         winner_label = labels[0] if len(content_a) >= len(content_b) else labels[1]
         content = content_a if winner_label == labels[0] else content_b
-        return {"content": content, "winner": winner_label, "scores_a": {}, "scores_b": {}, "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0, "fallback": "llm_fail"}
+        return {
+            "content": content,
+            "winner": winner_label,
+            "scores_a": {},
+            "scores_b": {},
+            "scores_total_a": 0.0,
+            "scores_total_b": 0.0,
+            "scores_delta": 0.0,
+            "fallback": "llm_fail",
+        }
 
     # Phase 8.7: stub polish_merge_synthesis_with_usage — 跟 5 *_with_usage methods 同模式
     # 返 (max(len) fallback dict, hardcoded 100/50). _handler_polish_merge 改调此方法.
@@ -163,8 +225,11 @@ class _StubAgents:
             {
                 "content": chosen,
                 "winner": winner,
-                "scores_a": {}, "scores_b": {},
-                "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0,
+                "scores_a": {},
+                "scores_b": {},
+                "scores_total_a": 0.0,
+                "scores_total_b": 0.0,
+                "scores_delta": 0.0,
                 "fallback": "stub_max_len",
             },
             {"input_tokens": 100, "output_tokens": 50},
@@ -187,6 +252,7 @@ def _make_controller_with_stubs(monkeypatch) -> tuple[Any, _StubAgents]:
     # StateManager 在 __init__ 内部用 `from ..state.state_manager import StateManager` 导入
     # 需要 patch 它在原模块中的位置
     import lingwen_pipeline.state.state_manager as sm_mod
+
     monkeypatch.setattr(sm_mod, "StateManager", lambda *a, **kw: None)
 
     controller = mc_mod.MasterController.__new__(mc_mod.MasterController)
@@ -210,7 +276,13 @@ def _make_controller_with_stubs(monkeypatch) -> tuple[Any, _StubAgents]:
         {
             "check_character_consistency": staticmethod(lambda content, characters: []),
             "detect_ai_gloss": staticmethod(lambda content: []),
-            "generate_audit_report": staticmethod(lambda chapter_num, issues, scores: {"chapter": chapter_num, "issues": issues, "scores": scores}),
+            "generate_audit_report": staticmethod(
+                lambda chapter_num, issues, scores: {
+                    "chapter": chapter_num,
+                    "issues": issues,
+                    "scores": scores,
+                }
+            ),
             # Phase 8.6.2: handler 调 audit_chapter_with_usage (调 self.auditor.audit_chapter_with_usage)
             "audit_chapter_with_usage": stub.audit_chapter_with_usage,
         },
@@ -221,8 +293,14 @@ def _make_controller_with_stubs(monkeypatch) -> tuple[Any, _StubAgents]:
         {
             "remove_ai_gloss": stub.polish_chapter,
             "polish_chapter_with_usage": stub.polish_chapter_with_usage,
-            "optimize_dialogue_llm_with_usage": lambda content: (content + " (dialogue)", {"input_tokens": 100, "output_tokens": 50}),
-            "adjust_pacing_llm_with_usage": lambda content: (content + " (pacing)", {"input_tokens": 100, "output_tokens": 50}),
+            "optimize_dialogue_llm_with_usage": lambda content: (
+                content + " (dialogue)",
+                {"input_tokens": 100, "output_tokens": 50},
+            ),
+            "adjust_pacing_llm_with_usage": lambda content: (
+                content + " (pacing)",
+                {"input_tokens": 100, "output_tokens": 50},
+            ),
             # Phase 8.7: 加 polish_merge_synthesis_with_usage (虽然实际 handler 调 master, 但 stub 完整保)
             "polish_merge_synthesis_with_usage": lambda content_a, content_b, *, labels=("A", "B"): (
                 content_a if len(content_a) >= len(content_b) else content_b,
@@ -240,7 +318,9 @@ def _make_controller_with_stubs(monkeypatch) -> tuple[Any, _StubAgents]:
     # write_chapter 还会调 self.context_builder / self.relationship_tracker /
     # self.writing_suggestion
     controller.context_builder = type("cb", (), {"build_writing_context": staticmethod(lambda **kw: {})})()
-    controller.writing_suggestion = type("ws", (), {"generate_suggestions": staticmethod(lambda *a, **kw: [])})()
+    controller.writing_suggestion = type(
+        "ws", (), {"generate_suggestions": staticmethod(lambda *a, **kw: [])}
+    )()
     controller.relationship_tracker = type("rt", (), {"get_network": staticmethod(lambda: {})})()
     # audit_chapter 调 auditor.check_character_consistency + detect_ai_gloss + llm_audit
     # run_workflow 不直接调 audit, 走 AgentComputeFn bridge 调 audit_chapter
@@ -255,44 +335,72 @@ def _make_controller_with_stubs(monkeypatch) -> tuple[Any, _StubAgents]:
     # AgentComputeFn → master.write_chapter (real method, 内含 router + LLM)
     # 这里让 master.write_chapter 走 stub (避免触发真实 LLM)
     import types
+
     controller.write_chapter = types.MethodType(
-        lambda self, chapter_num, outline, characters, memory_context, style_guide, use_llm: stub.write_chapter(
-            chapter_num, outline, characters, memory_context, style_guide, use_llm,
+        lambda self, chapter_num, outline, characters, memory_context, style_guide, use_llm: (
+            stub.write_chapter(
+                chapter_num,
+                outline,
+                characters,
+                memory_context,
+                style_guide,
+                use_llm,
+            )
         ),
         controller,
     )
     controller.audit_chapter = types.MethodType(
         lambda self, chapter_num, content, characters, timeline, use_llm: stub.audit_chapter(
-            chapter_num, content, characters, timeline, use_llm,
+            chapter_num,
+            content,
+            characters,
+            timeline,
+            use_llm,
         ),
         controller,
     )
     controller.polish_chapter = types.MethodType(
-        lambda self, content: stub.polish_chapter(content), controller,
+        lambda self, content: stub.polish_chapter(content),
+        controller,
     )
     # Phase 7.4: stub 新增的 2 个 variant entry methods
     controller.polish_emotional_pacing = types.MethodType(
-        lambda self, content: stub.polish_emotional_pacing(content), controller,
+        lambda self, content: stub.polish_emotional_pacing(content),
+        controller,
     )
     controller.polish_ai_trace_removal = types.MethodType(
-        lambda self, content: stub.polish_ai_trace_removal(content), controller,
+        lambda self, content: stub.polish_ai_trace_removal(content),
+        controller,
     )
     # Phase 8.6.2: 5 *_with_usage methods — handler 调 variant 拿真实 usage
     controller.write_chapter_with_usage = types.MethodType(
-        lambda self, chapter_num, outline, characters, memory_context, style_guide, use_llm: stub.write_chapter_with_usage(
-            chapter_num, outline, characters, memory_context, style_guide, use_llm,
+        lambda self, chapter_num, outline, characters, memory_context, style_guide, use_llm: (
+            stub.write_chapter_with_usage(
+                chapter_num,
+                outline,
+                characters,
+                memory_context,
+                style_guide,
+                use_llm,
+            )
         ),
         controller,
     )
     controller.audit_chapter_with_usage = types.MethodType(
         lambda self, chapter_num, content, characters, timeline, use_llm: stub.audit_chapter_with_usage(
-            chapter_num, content, characters, timeline, use_llm,
+            chapter_num,
+            content,
+            characters,
+            timeline,
+            use_llm,
         ),
         controller,
     )
     controller.polish_chapter_with_usage = types.MethodType(
         lambda self, chapter_num, content, style_guide=None: stub.polish_chapter_with_usage(
-            chapter_num, content, style_guide=style_guide,
+            chapter_num,
+            content,
+            style_guide=style_guide,
         ),
         controller,
     )
@@ -307,17 +415,21 @@ def _make_controller_with_stubs(monkeypatch) -> tuple[Any, _StubAgents]:
     # Phase 7.5: stub polish_merge_synthesis
     controller.polish_merge_synthesis = types.MethodType(
         lambda self, content_a, content_b, *, labels=("A", "B"): stub.polish_merge_synthesis(
-            content_a, content_b, labels=labels,
+            content_a,
+            content_b,
+            labels=labels,
         ),
         controller,
     )
     controller.generate_outline = types.MethodType(
-        lambda self, settings, requirements: stub.generate_outline(settings, requirements), controller,
+        lambda self, settings, requirements: stub.generate_outline(settings, requirements),
+        controller,
     )
     return controller, stub
 
 
 # === TestMasterControllerRunWorkflow ===
+
 
 class TestMasterControllerRunWorkflow:
     """MasterController.run_workflow API 验证"""
@@ -391,6 +503,7 @@ class TestMasterControllerRunWorkflow:
 
 
 # === TestMasterControllerRunWorkflowBackwardCompat ===
+
 
 class TestMasterControllerRunWorkflowBackwardCompat:
     """run_workflow 不破坏老 API (advance_step/dispatch_task)"""

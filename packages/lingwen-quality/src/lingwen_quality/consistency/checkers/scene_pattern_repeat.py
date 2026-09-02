@@ -25,8 +25,8 @@ class ScenePatternRepeatChecker(BaseChecker):
     - 战斗场景：战斗、交锋、对峙
     - 室内对话：房间、室内、厅堂
     """
-    _checker_type = CheckerType.SCENE_PATTERN
 
+    _checker_type = CheckerType.SCENE_PATTERN
 
     # 场景标签模式
     SCENE_TAGS = {
@@ -45,10 +45,7 @@ class ScenePatternRepeatChecker(BaseChecker):
         super().__init__(self._checker_type)
 
     def check(
-        self,
-        chapter_content: str,
-        chapter_num: int,
-        context: Optional[Dict[str, Any]] = None
+        self, chapter_content: str, chapter_num: int, context: Optional[Dict[str, Any]] = None
     ) -> List[Issue]:
         """
         检查场景模式重复

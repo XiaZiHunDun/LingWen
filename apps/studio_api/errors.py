@@ -16,6 +16,7 @@ read response.json()["detail"] keep working.
 The actual conversion of 227 inline `raise HTTPException` calls happens in
 Phase 15.0 T5; here in T1.2 we only define the classes.
 """
+
 from __future__ import annotations
 
 from typing import Optional

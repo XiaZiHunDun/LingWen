@@ -76,8 +76,12 @@ class StoryContractInjector:
             },
             "master_constraints": {
                 "core_tone": payload.master_setting.get("master_constraints", {}).get("core_tone", ""),
-                "pacing_strategy": payload.master_setting.get("master_constraints", {}).get("pacing_strategy", ""),
-                "forbidden_patterns": payload.master_setting.get("master_constraints", {}).get("forbidden_patterns", []),
+                "pacing_strategy": payload.master_setting.get("master_constraints", {}).get(
+                    "pacing_strategy", ""
+                ),
+                "forbidden_patterns": payload.master_setting.get("master_constraints", {}).get(
+                    "forbidden_patterns", []
+                ),
             },
             "anti_patterns": [
                 {"text": ap.get("text", ""), "source": ap.get("source_table", "unknown")}
@@ -89,8 +93,12 @@ class StoryContractInjector:
             result["chapter_brief"] = {
                 "chapter_number": payload.chapter_brief.get("chapter_number"),
                 "tone": payload.chapter_brief.get("chapter_constraints", {}).get("tone", ""),
-                "pacing_strategy": payload.chapter_brief.get("chapter_constraints", {}).get("pacing_strategy", ""),
-                "forbidden_patterns": payload.chapter_brief.get("chapter_constraints", {}).get("forbidden_patterns", []),
+                "pacing_strategy": payload.chapter_brief.get("chapter_constraints", {}).get(
+                    "pacing_strategy", ""
+                ),
+                "forbidden_patterns": payload.chapter_brief.get("chapter_constraints", {}).get(
+                    "forbidden_patterns", []
+                ),
             }
 
         return result

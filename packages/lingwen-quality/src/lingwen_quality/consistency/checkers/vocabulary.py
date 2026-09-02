@@ -9,6 +9,7 @@ CONCRETE_ACTION (18 项) 都硬编码在 BattleVisualizationChecker 类体里。
 修复:词汇表迁出至本模块,BattleVisualizationChecker 通过类属性引用
 (保持原有 API,调用方零改动)。新增 checker 直接 import。
 """
+
 from __future__ import annotations
 
 from typing import List

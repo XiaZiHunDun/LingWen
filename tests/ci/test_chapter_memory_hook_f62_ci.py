@@ -1,4 +1,5 @@
 """Phase 9.70 F62: CI contract — chapter memory RAG hook."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -13,9 +14,7 @@ class TestChapterMemoryHookF62Contract:
         assert mod.is_file()
 
     def test_runbook_documents_memory_rag(self):
-        text = (NOVEL_FACTORY / "docs" / "chapter-production-runbook.md").read_text(
-            encoding="utf-8"
-        )
+        text = (NOVEL_FACTORY / "docs" / "chapter-production-runbook.md").read_text(encoding="utf-8")
         assert "LINGWEN_MEMORY_RAG" in text
         assert "describe_memory_rag_hook" in text
 

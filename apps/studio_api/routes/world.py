@@ -1,4 +1,5 @@
 """Phase 117: World visualization API routes."""
+
 import json
 from pathlib import Path
 from typing import Optional
@@ -16,15 +17,14 @@ def _world_db_path() -> Path:
 def _get_world_db():
     """Open world DB connection. Creates schema if missing."""
     from infra.world_db.schema import get_connection, init_schema
+
     path = _world_db_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     conn = get_connection(path)
     # init_schema uses executescript(DDL) without IF NOT EXISTS, so it
     # errors if the tables already exist. Skip re-init when a sentinel
     # table is present.
-    if not conn.execute(
-        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='character'"
-    ).fetchone():
+    if not conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='character'").fetchone():
         init_schema(conn)
     return conn
 
@@ -36,12 +36,14 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
     @app.get("/api/world/characters")
     def list_characters(canon_level: Optional[str] = Query(default=None)):
         from infra.world_db.queries.characters import list_characters
+
         conn = _get_world_db()
         return {"characters": list_characters(conn, canon_level=canon_level)}
 
     @app.get("/api/world/characters/{cid}")
     def get_character(cid: int):
         from infra.world_db.queries.characters import get_character
+
         conn = _get_world_db()
         char = get_character(conn, cid)
         if not char:
@@ -51,27 +53,34 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
     @app.get("/api/world/factions")
     def list_factions():
         from infra.world_db.queries.factions import list_factions
+
         conn = _get_world_db()
         return {"factions": list_factions(conn)}
 
     @app.get("/api/world/relationships")
-    def list_relationships(source_kind: Optional[str] = None,
-                           source_id: Optional[int] = None):
+    def list_relationships(source_kind: Optional[str] = None, source_id: Optional[int] = None):
         from infra.world_db.queries.relationships import list_relationships
+
         conn = _get_world_db()
-        return {"relationships": list_relationships(
-            conn, source_kind=source_kind, source_id=source_id,
-        )}
+        return {
+            "relationships": list_relationships(
+                conn,
+                source_kind=source_kind,
+                source_id=source_id,
+            )
+        }
 
     @app.get("/api/world/lore")
     def list_lore(category: Optional[str] = None):
         from infra.world_db.queries.lore import list_lore
+
         conn = _get_world_db()
         return {"lore": list_lore(conn, category=category)}
 
     @app.get("/api/world/timeline")
     def list_timeline():
         from infra.world_db.queries.timeline import list_timeline
+
         conn = _get_world_db()
         return {"events": list_timeline(conn)}
 
@@ -123,27 +132,25 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
         out_dir.mkdir(parents=True, exist_ok=True)
         file_count = 0
         for char in list_characters(conn):
-            (out_dir / f"{char['slug']}.md").write_text(
-                serialize_character_markdown(char), encoding="utf-8"
-            )
+            (out_dir / f"{char['slug']}.md").write_text(serialize_character_markdown(char), encoding="utf-8")
             file_count += 1
         events = list_timeline(conn)
         if events:
-            (out_dir / "timeline.md").write_text(
-                serialize_timeline_markdown(events), encoding="utf-8"
-            )
+            (out_dir / "timeline.md").write_text(serialize_timeline_markdown(events), encoding="utf-8")
             file_count += 1
         return {"files_written": file_count, "output_dir": str(out_dir)}
 
     @app.get("/api/world/proposals")
     def list_proposals(status: Optional[str] = None):
         from infra.world_db.queries.proposals import list_proposals
+
         conn = _get_world_db()
         return {"proposals": list_proposals(conn, status=status)}
 
     @app.post("/api/world/proposals")
     def post_proposal(payload: dict = Body(...)):
         from infra.world_db.queries.proposals import create_proposal
+
         conn = _get_world_db()
         pid = create_proposal(conn, payload)
         return {"id": pid}
@@ -160,6 +167,7 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
             get_proposal,
             update_proposal_status,
         )
+
         conn = _get_world_db()
         prop = get_proposal(conn, pid)
         if not prop:
@@ -197,6 +205,7 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
             get_proposal,
             update_proposal_status,
         )
+
         conn = _get_world_db()
         prop = get_proposal(conn, pid)
         if not prop:
@@ -236,9 +245,7 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
         chapter_texts = payload.get("chapter_texts") or []
         if not character_slug or not isinstance(character_slug, str):
             raise HTTPException(400, detail="character_slug is required")
-        if not isinstance(chapter_texts, list) or not all(
-            isinstance(t, str) for t in chapter_texts
-        ):
+        if not isinstance(chapter_texts, list) or not all(isinstance(t, str) for t in chapter_texts):
             raise HTTPException(400, detail="chapter_texts must be a list[str]")
 
         proposals = await extract_proposals_from_chapters(
@@ -303,6 +310,7 @@ class _AgentRateLimiter:
 
     def allow(self, key: str, *, now: float | None = None) -> bool:
         import time
+
         if now is None:
             now = time.monotonic()
         self._evict(now)

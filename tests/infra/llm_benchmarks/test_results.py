@@ -1,4 +1,5 @@
 """Tests for infra.llm_benchmarks.results."""
+
 from __future__ import annotations
 
 import pytest
@@ -30,9 +31,7 @@ def _sample_call() -> CallResult:
 
 
 def test_write_call_result_creates_file(tmp_path, monkeypatch):
-    monkeypatch.setattr(
-        "infra.llm_benchmarks.results._results_root", lambda: tmp_path
-    )
+    monkeypatch.setattr("infra.llm_benchmarks.results._results_root", lambda: tmp_path)
     p = write_call_result("test-run", _sample_call())
     assert p.exists()
     assert p.suffix == ".json"
@@ -40,11 +39,11 @@ def test_write_call_result_creates_file(tmp_path, monkeypatch):
 
 
 def test_read_run_results_round_trip(tmp_path, monkeypatch):
-    monkeypatch.setattr(
-        "infra.llm_benchmarks.results._results_root", lambda: tmp_path
-    )
+    monkeypatch.setattr("infra.llm_benchmarks.results._results_root", lambda: tmp_path)
     write_call_result("test-run", _sample_call())
-    write_call_result("test-run", _sample_call())  # second call (overwrites due to same name? no, gets unique id)
+    write_call_result(
+        "test-run", _sample_call()
+    )  # second call (overwrites due to same name? no, gets unique id)
 
     results = read_run_results("test-run")
     assert len(results) >= 1
@@ -52,9 +51,7 @@ def test_read_run_results_round_trip(tmp_path, monkeypatch):
 
 
 def test_list_runs_returns_sorted_by_mtime_desc(tmp_path, monkeypatch):
-    monkeypatch.setattr(
-        "infra.llm_benchmarks.results._results_root", lambda: tmp_path
-    )
+    monkeypatch.setattr("infra.llm_benchmarks.results._results_root", lambda: tmp_path)
     (tmp_path / "run-old").mkdir()
     (tmp_path / "run-new").mkdir()
     runs = list_runs()

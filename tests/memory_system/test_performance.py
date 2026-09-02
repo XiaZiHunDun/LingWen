@@ -62,7 +62,7 @@ class TestCacheStats:
         stats.record_miss()
         assert stats.hits == 2
         assert stats.total_requests == 3
-        assert stats.hit_rate == pytest.approx(2/3)
+        assert stats.hit_rate == pytest.approx(2 / 3)
 
     def test_to_dict(self):
         """测试转换为字典"""
@@ -193,7 +193,7 @@ class TestLRUCache:
         stats = cache.get_stats()
         assert stats.hits == 2
         assert stats.misses == 1
-        assert stats.hit_rate == pytest.approx(2/3)
+        assert stats.hit_rate == pytest.approx(2 / 3)
 
 
 class TestCacheManager:
@@ -359,11 +359,7 @@ class TestCachedVectorSearch:
 
         cached = CachedVectorSearch(mock_client, enabled=False)
 
-        results = cached.search(
-            collection_name="test",
-            query_vector=[1.0, 2.0, 3.0],
-            top_k=5
-        )
+        results = cached.search(collection_name="test", query_vector=[1.0, 2.0, 3.0], top_k=5)
 
         assert results == [{"id": "1", "score": 0.9}]
         mock_client.search.assert_called_once()
@@ -376,11 +372,7 @@ class TestCachedVectorSearch:
         cache = LRUCache(max_size=10)
         cached = CachedVectorSearch(mock_client, cache)
 
-        results = cached.search(
-            collection_name="chapters_seg",
-            query_vector=[1.0, 2.0, 3.0],
-            top_k=5
-        )
+        results = cached.search(collection_name="chapters_seg", query_vector=[1.0, 2.0, 3.0], top_k=5)
 
         assert results == [{"id": "2", "score": 0.8}]
         mock_client.search.assert_called_once()

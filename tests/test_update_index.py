@@ -38,14 +38,14 @@ class TestGetChapterInfo:
         test_file = chapter_files[0]
 
         # 手动调用函数逻辑（因为脚本没有封装成模块）
-        with open(test_file, 'r', encoding='utf-8') as f:
+        with open(test_file, "r", encoding="utf-8") as f:
             content = f.read()
 
         result = {
             "filename": test_file.name,
             "word_count": len(content),
-            "char_count": len(content.replace('\n', '').replace(' ', '')),
-            "lines": content.count('\n'),
+            "char_count": len(content.replace("\n", "").replace(" ", "")),
+            "lines": content.count("\n"),
         }
 
         # 验证返回结构
@@ -79,11 +79,12 @@ class TestUpdateChapterIndex:
         # 创建测试章节文件
         for i in range(1, 4):
             ch_file = self.test_chapters_dir / f"ch{str(i).zfill(3)}.md"
-            ch_file.write_text(f"# 第{i}章测试内容\n\n这是第{i}章的测试内容。", encoding='utf-8')
+            ch_file.write_text(f"# 第{i}章测试内容\n\n这是第{i}章的测试内容。", encoding="utf-8")
 
     def teardown_method(self):
         """清理测试目录"""
         import shutil
+
         shutil.rmtree(self.test_content_root, ignore_errors=True)
 
     def test_update_chapter_index_creates_index_file(self):
@@ -94,28 +95,30 @@ class TestUpdateChapterIndex:
         chapters = []
         for f in sorted(self.test_chapters_dir.glob("ch*.md")):
             if f.is_file():
-                with open(f, 'r', encoding='utf-8') as cf:
+                with open(f, "r", encoding="utf-8") as cf:
                     content = cf.read()
-                chapters.append({
-                    "chapter": f.stem,
-                    "filename": f.name,
-                    "word_count": len(content),
-                    "char_count": len(content.replace('\n', '').replace(' ', '')),
-                    "lines": content.count('\n'),
-                })
+                chapters.append(
+                    {
+                        "chapter": f.stem,
+                        "filename": f.name,
+                        "word_count": len(content),
+                        "char_count": len(content.replace("\n", "").replace(" ", "")),
+                        "lines": content.count("\n"),
+                    }
+                )
 
         index_data = {
             "updated_at": "2026-05-20 12:00:00",
             "total_chapters": len(chapters),
-            "chapters": chapters
+            "chapters": chapters,
         }
 
-        with open(index_file, 'w', encoding='utf-8') as f:
+        with open(index_file, "w", encoding="utf-8") as f:
             json.dump(index_data, f, ensure_ascii=False, indent=2)
 
         # 验证
         assert index_file.exists()
-        with open(index_file, 'r', encoding='utf-8') as f:
+        with open(index_file, "r", encoding="utf-8") as f:
             loaded = json.load(f)
 
         assert loaded["total_chapters"] == 3
@@ -132,15 +135,12 @@ class TestUpdateChapterIndex:
             if f.is_file():
                 chapters.append({"chapter": f.stem})
 
-        index_data = {
-            "total_chapters": len(chapters),
-            "chapters": chapters
-        }
+        index_data = {"total_chapters": len(chapters), "chapters": chapters}
 
-        with open(index_file, 'w', encoding='utf-8') as f:
+        with open(index_file, "w", encoding="utf-8") as f:
             json.dump(index_data, f, ensure_ascii=False, indent=2)
 
-        with open(index_file, 'r', encoding='utf-8') as f:
+        with open(index_file, "r", encoding="utf-8") as f:
             loaded = json.load(f)
 
         chapters_sorted = [c["chapter"] for c in loaded["chapters"]]
@@ -159,6 +159,7 @@ class TestQueryChapter:
     def teardown_method(self):
         """清理测试目录"""
         import shutil
+
         shutil.rmtree(self.test_content_root, ignore_errors=True)
 
     def test_query_chapter_exists(self):
@@ -166,7 +167,7 @@ class TestQueryChapter:
         # 创建测试文件
         ch_file = self.test_chapters_dir / "ch001.md"
         test_content = "# 第一章\n\n这是测试内容。"
-        ch_file.write_text(test_content, encoding='utf-8')
+        ch_file.write_text(test_content, encoding="utf-8")
 
         # 模拟query_chapter逻辑
         chapter_name = "ch001"
@@ -174,14 +175,14 @@ class TestQueryChapter:
 
         assert chapter_file.exists()
 
-        with open(chapter_file, 'r', encoding='utf-8') as f:
+        with open(chapter_file, "r", encoding="utf-8") as f:
             content = f.read()
 
         info = {
             "filename": chapter_file.name,
             "word_count": len(content),
-            "char_count": len(content.replace('\n', '').replace(' ', '')),
-            "lines": content.count('\n'),
+            "char_count": len(content.replace("\n", "").replace(" ", "")),
+            "lines": content.count("\n"),
         }
 
         assert info["filename"] == "ch001.md"
@@ -205,11 +206,12 @@ class TestQueryRange:
         # 创建测试文件 ch001-ch005
         for i in range(1, 6):
             ch_file = self.test_chapters_dir / f"ch{str(i).zfill(3)}.md"
-            ch_file.write_text(f"第{i}章内容", encoding='utf-8')
+            ch_file.write_text(f"第{i}章内容", encoding="utf-8")
 
     def teardown_method(self):
         """清理测试目录"""
         import shutil
+
         shutil.rmtree(self.test_content_root, ignore_errors=True)
 
     def test_query_range_partial(self):
@@ -250,12 +252,12 @@ class TestChapterNumberParsing:
         """测试章节号解析逻辑"""
         # 测试 "ch001" -> 1
         chapter_str = "ch001"
-        num = int(chapter_str.replace('ch', ''))
+        num = int(chapter_str.replace("ch", ""))
         assert num == 1
 
         # 测试 "ch360" -> 360
         chapter_str = "ch360"
-        num = int(chapter_str.replace('ch', ''))
+        num = int(chapter_str.replace("ch", ""))
         assert num == 360
 
     def test_format_chapter_number(self):
@@ -271,5 +273,5 @@ class TestChapterNumberParsing:
         assert formatted == "360"
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v', '--tb=short'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v", "--tb=short"])

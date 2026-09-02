@@ -1,4 +1,5 @@
 """Project-scoped chapter range helpers for CLI."""
+
 from __future__ import annotations
 
 from infra.paths import ProjectPaths

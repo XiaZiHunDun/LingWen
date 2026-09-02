@@ -30,14 +30,30 @@ class RuleBasedDetector:
             "name": "死亡后活动",
             "description": "角色已死亡但仍在活动/说话",
             "death_patterns": [
-                r"死了", r"去世", r"死亡", r"断气", r"咽气",
-                r"停止呼吸", r"心脏停止了", r"已经没有.*气息",
-                r"的尸体", r"遗体", r"遗骸",
+                r"死了",
+                r"去世",
+                r"死亡",
+                r"断气",
+                r"咽气",
+                r"停止呼吸",
+                r"心脏停止了",
+                r"已经没有.*气息",
+                r"的尸体",
+                r"遗体",
+                r"遗骸",
             ],
             "action_patterns": [
-                r"他/她/它.*说", r"他/她/它.*做", r"他/她/它.*想",
-                r"他/她/它.*走向", r"他/她/它.*拿起", r"他/她/它.*看着",
-                r"走到", r"拿起", r"看着", r"说道", r"问道",
+                r"他/她/它.*说",
+                r"他/她/它.*做",
+                r"他/她/它.*想",
+                r"他/她/它.*走向",
+                r"他/她/它.*拿起",
+                r"他/她/它.*看着",
+                r"走到",
+                r"拿起",
+                r"看着",
+                r"说道",
+                r"问道",
             ],
             "severity": "P0",
         },
@@ -46,12 +62,23 @@ class RuleBasedDetector:
             "name": "离开后无尸体矛盾",
             "description": "角色离开后没有回来，但后面提及其尸体",
             "departure_patterns": [
-                r"出去了", r"离开了", r"走了", r"消失", r"不见踪影",
-                r"再也没有回来", r"没有回来", r"不知去向", r"失踪",
+                r"出去了",
+                r"离开了",
+                r"走了",
+                r"消失",
+                r"不见踪影",
+                r"再也没有回来",
+                r"没有回来",
+                r"不知去向",
+                r"失踪",
             ],
             "body_patterns": [
-                r"没有埋葬", r"那具尸体", r"在.*尸体.*旁", r"怕.*尸体",
-                r"埋葬.*老人", r"老人的尸体",
+                r"没有埋葬",
+                r"那具尸体",
+                r"在.*尸体.*旁",
+                r"怕.*尸体",
+                r"埋葬.*老人",
+                r"老人的尸体",
             ],
             "severity": "P0",
         },
@@ -102,9 +129,7 @@ class RuleBasedDetector:
 
         return []
 
-    def _check_death_action(
-        self, content: str, chapter_num: int, rule: Dict
-    ) -> List[Contradiction]:
+    def _check_death_action(self, content: str, chapter_num: int, rule: Dict) -> List[Contradiction]:
         """检测死亡后活动矛盾"""
         contradictions = []
 
@@ -130,15 +155,17 @@ class RuleBasedDetector:
                     context_end = min(len(content), action_pos + 50)
                     content[context_start:context_end]
 
-                    contradictions.append(Contradiction(
-                        entity_name="UNKNOWN",
-                        attribute_name="生死状态",
-                        values=[],
-                        severity=rule["severity"],
-                        contradiction_type="death_action",
-                        description=f"检测到角色死亡后仍有活动：'{death_text}' 后出现 '{action_text}'",
-                        suggestion="如果角色已死亡，不应描述其后续活动。请检查是描述了其他角色还是存在错误。",
-                    ))
+                    contradictions.append(
+                        Contradiction(
+                            entity_name="UNKNOWN",
+                            attribute_name="生死状态",
+                            values=[],
+                            severity=rule["severity"],
+                            contradiction_type="death_action",
+                            description=f"检测到角色死亡后仍有活动：'{death_text}' 后出现 '{action_text}'",
+                            suggestion="如果角色已死亡，不应描述其后续活动。请检查是描述了其他角色还是存在错误。",
+                        )
+                    )
                     break
 
         return contradictions
@@ -168,15 +195,17 @@ class RuleBasedDetector:
                 break
 
         if has_departure and has_body:
-            contradictions.append(Contradiction(
-                entity_name="UNKNOWN",
-                attribute_name="状态",
-                values=[],
-                severity=rule["severity"],
-                contradiction_type="left_no_return",
-                description="角色'离开后没有回来'，但后面提及'尸体'，矛盾点在于：没回来怎会有尸体？",
-                suggestion="如果角色'离开后没回来'，不应该有尸体存在。请检查描述是否匹配。",
-            ))
+            contradictions.append(
+                Contradiction(
+                    entity_name="UNKNOWN",
+                    attribute_name="状态",
+                    values=[],
+                    severity=rule["severity"],
+                    contradiction_type="left_no_return",
+                    description="角色'离开后没有回来'，但后面提及'尸体'，矛盾点在于：没回来怎会有尸体？",
+                    suggestion="如果角色'离开后没回来'，不应该有尸体存在。请检查描述是否匹配。",
+                )
+            )
 
         return contradictions
 
@@ -211,22 +240,21 @@ class RuleBasedDetector:
         if previous_chapters:
             for char_name, (current_age, current_ch) in current_ages.items():
                 for prev_ch, prev_content in reversed(previous_chapters):
-                    prev_match = re.search(
-                        rf"{re.escape(char_name)}(?:是|的|被|为)?(\d+)岁",
-                        prev_content
-                    )
+                    prev_match = re.search(rf"{re.escape(char_name)}(?:是|的|被|为)?(\d+)岁", prev_content)
                     if prev_match:
                         prev_age = int(prev_match.group(1))
                         if current_age < prev_age:
-                            contradictions.append(Contradiction(
-                                entity_name=char_name,
-                                attribute_name="年龄",
-                                values=[],
-                                severity=rule["severity"],
-                                contradiction_type="age_regression",
-                                description=f"角色{char_name}的年龄从第{prev_ch}章的{prev_age}岁回退到第{current_ch}章的{current_age}岁",
-                                suggestion="年龄通常只增不减。请检查是角色设定变化还是描述错误。",
-                            ))
+                            contradictions.append(
+                                Contradiction(
+                                    entity_name=char_name,
+                                    attribute_name="年龄",
+                                    values=[],
+                                    severity=rule["severity"],
+                                    contradiction_type="age_regression",
+                                    description=f"角色{char_name}的年龄从第{prev_ch}章的{prev_age}岁回退到第{current_ch}章的{current_age}岁",
+                                    suggestion="年龄通常只增不减。请检查是角色设定变化还是描述错误。",
+                                )
+                            )
                         break
 
         return contradictions

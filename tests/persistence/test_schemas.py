@@ -2,6 +2,7 @@
 
 覆盖 6 个 schema 都能 apply_schema 成功 + unknown 抛 KeyError.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -19,9 +20,7 @@ def _table_list(conn):
 
 
 class TestApplySchema:
-    @pytest.mark.parametrize(
-        "name", ["ripple", "cost", "budget", "reading", "workflow", "relationship"]
-    )
+    @pytest.mark.parametrize("name", ["ripple", "cost", "budget", "reading", "workflow", "relationship"])
     def test_apply_schema_creates_tables(self, name):
         conn = get_connection(":memory:")
         try:

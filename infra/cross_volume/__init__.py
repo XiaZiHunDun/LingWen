@@ -11,6 +11,7 @@
 - EdgeInferrer: 8-rel-type cross-chapter edge inferrer (Phase 9.12)
 - ModelTier: HAIKU/SONNET/OPUS tier enum (re-exported from lingwen_llm.providers) (Phase 9.12)
 """
+
 from lingwen_llm.providers.model_tiers import ModelTier  # re-export for convenience
 
 from infra.cross_volume.cache import QueryImpactCache

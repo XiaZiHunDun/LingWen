@@ -3,6 +3,7 @@
 Migrated from infra/creator_volume_templates.py in Phase 126 v16.2.1.
 New location: packages/lingwen-creator/src/lingwen_creator/volume/templates.py
 """
+
 from __future__ import annotations
 
 import json

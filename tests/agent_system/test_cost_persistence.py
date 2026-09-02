@@ -9,6 +9,7 @@ Doc 4 §11 Phase 8.5: SQLite 持久化 CostRecord (mirror ReadingPowerDB pattern
 - 幂等性: init_db 调多次不报错
 - 路径: 默认 db_path 在 infra/.state/cost_tracker.db
 """
+
 from __future__ import annotations
 
 import sqlite3
@@ -28,9 +29,7 @@ class TestCostTrackerDB:
         db = CostTrackerDB(db_path=tmp_path / "test.db")
         db.init_db()
         with sqlite3.connect(str(tmp_path / "test.db")) as conn:
-            cursor = conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name='cost_records'"
-            )
+            cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='cost_records'")
             assert cursor.fetchone() is not None, "cost_records table should exist after init_db()"
 
     def test_record_persists_to_db(self, tmp_path: Path) -> None:
@@ -68,9 +67,9 @@ class TestCostTrackerDB:
         db = CostTrackerDB(db_path=tmp_path / "test.db")
         db.init_db()
         db.record("chapter_writing", ModelTier.SONNET, 1000, 500)  # 0.0105
-        db.record("chapter_writing", ModelTier.SONNET, 100, 50)    # 0.00105
-        db.record("chapter_review", ModelTier.SONNET, 200, 100)    # 0.0021
-        db.record("chapter_review", ModelTier.SONNET, 300, 150)    # 0.00315
+        db.record("chapter_writing", ModelTier.SONNET, 100, 50)  # 0.00105
+        db.record("chapter_review", ModelTier.SONNET, 200, 100)  # 0.0021
+        db.record("chapter_review", ModelTier.SONNET, 300, 150)  # 0.00315
         groups = db.cost_by_scenario()
         assert set(groups.keys()) == {"chapter_writing", "chapter_review"}
         assert groups["chapter_writing"] == pytest.approx(0.0105 + 0.00105, abs=1e-9)
@@ -82,7 +81,7 @@ class TestCostTrackerDB:
         db.init_db()
         db.record("hook_extraction", ModelTier.HAIKU, 1000, 500)  # 0.0035
         db.record("chapter_writing", ModelTier.SONNET, 1000, 500)  # 0.0105
-        db.record("chapter_review", ModelTier.SONNET, 200, 100)    # 0.0021
+        db.record("chapter_review", ModelTier.SONNET, 200, 100)  # 0.0021
         groups = db.cost_by_tier()
         assert set(groups.keys()) == {ModelTier.HAIKU, ModelTier.SONNET}
         assert groups[ModelTier.HAIKU] == pytest.approx(0.0035, abs=1e-9)
@@ -145,7 +144,7 @@ class TestCostTrackerDBSinceFilter:
         db = CostTrackerDB(db_path=tmp_path / "test.db")
         db.init_db()
         db.record("chapter_writing", ModelTier.SONNET, 1000, 500)  # 0.0105
-        db.record("hook_extraction", ModelTier.HAIKU, 100, 50)     # 0.00035
+        db.record("hook_extraction", ModelTier.HAIKU, 100, 50)  # 0.00035
         one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
         by_scenario = db.cost_by_scenario(since=one_hour_ago)
         assert by_scenario == {
@@ -173,8 +172,7 @@ class TestCostTrackerDBTimestampIndex:
         db.init_db()
         with sqlite3.connect(str(tmp_path / "test.db")) as conn:
             cursor = conn.execute(
-                "SELECT name FROM sqlite_master "
-                "WHERE type='index' AND name='idx_cost_records_timestamp'"
+                "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_cost_records_timestamp'"
             )
             assert cursor.fetchone() is not None, (
                 "idx_cost_records_timestamp index should exist after init_db()"
@@ -189,8 +187,7 @@ class TestCostTrackerDBTimestampIndex:
         db.init_db()
         with sqlite3.connect(str(tmp_path / "test.db")) as conn:
             cursor = conn.execute(
-                "SELECT name FROM sqlite_master "
-                "WHERE type='index' AND name='idx_cost_records_timestamp'"
+                "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_cost_records_timestamp'"
             )
             assert cursor.fetchone() is not None
             # 旧 data 不丢 (用 index 访问, 此 conn 0 row_factory 默认 tuple)
@@ -216,8 +213,8 @@ class TestCostTrackerDBCostByDay:
                    VALUES (?, ?, ?, ?, ?, ?)""",
                 [
                     ("chapter_writing", "sonnet", 1000, 500, 0.0105, "2026-06-01T10:00:00+00:00"),
-                    ("hook_extraction", "haiku",  100,  50,  0.00035, "2026-06-01T14:00:00+00:00"),
-                    ("chapter_review",  "sonnet", 500,  250, 0.00525, "2026-06-02T09:00:00+00:00"),
+                    ("hook_extraction", "haiku", 100, 50, 0.00035, "2026-06-01T14:00:00+00:00"),
+                    ("chapter_review", "sonnet", 500, 250, 0.00525, "2026-06-02T09:00:00+00:00"),
                 ],
             )
         by_day = db.cost_by_day()
@@ -256,8 +253,8 @@ class TestCostTrackerDBCostByDayPerTier:
                    VALUES (?, ?, ?, ?, ?, ?)""",
                 [
                     ("chapter_writing", "sonnet", 1000, 500, 0.0105, "2026-06-01T10:00:00+00:00"),
-                    ("hook_extraction", "haiku",  100,  50,  0.00035, "2026-06-01T14:00:00+00:00"),
-                    ("chapter_review",  "sonnet", 500,  250, 0.00525, "2026-06-02T09:00:00+00:00"),
+                    ("hook_extraction", "haiku", 100, 50, 0.00035, "2026-06-01T14:00:00+00:00"),
+                    ("chapter_review", "sonnet", 500, 250, 0.00525, "2026-06-02T09:00:00+00:00"),
                 ],
             )
         by_day_tier = db.cost_by_day_per_tier()

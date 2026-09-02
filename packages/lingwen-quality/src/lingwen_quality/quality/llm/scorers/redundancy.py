@@ -33,10 +33,7 @@ class RedundancyScorer(BaseScorer):
                 word_counts[word] = word_counts.get(word, 0) + 1
 
         # 找出过度重复的词
-        excessive_repetition = [
-            word for word, count in word_counts.items()
-            if count >= 5
-        ]
+        excessive_repetition = [word for word, count in word_counts.items() if count >= 5]
 
         if excessive_repetition:
             score -= len(excessive_repetition) * 5
@@ -55,16 +52,14 @@ class RedundancyScorer(BaseScorer):
         # 限制分数范围
         score = max(0, min(100, score))
 
-        return ScoredResult(
-            score=score,
-            reason="; ".join(reasons) if reasons else "冗余检测完成，无明显冗余"
-        )
+        return ScoredResult(score=score, reason="; ".join(reasons) if reasons else "冗余检测完成，无明显冗余")
 
     def _check_consecutive_repetition(self, content: str) -> bool:
         """检查连续重复"""
         import re
+
         # 检查连续3个相同字符
-        return bool(re.search(r'(.)\1{2,}', content))
+        return bool(re.search(r"(.)\1{2,}", content))
 
     def _check_sentence_repetition(self, content: str) -> bool:
         """检查句式重复"""

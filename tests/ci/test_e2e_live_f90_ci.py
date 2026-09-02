@@ -1,4 +1,5 @@
 """Phase 9.98 F90: CI contract — e2e-live first-green JSON record tooling."""
+
 from __future__ import annotations
 
 import json
@@ -37,11 +38,7 @@ class TestE2eLiveF90:
 
     def test_v9_roadmap_f90(self):
         roadmap = (
-            NOVEL_FACTORY
-            / "docs"
-            / "superpowers"
-            / "plans"
-            / "2026-06-11-followup-roadmap-v9-post-9.90.md"
+            NOVEL_FACTORY / "docs" / "superpowers" / "plans" / "2026-06-11-followup-roadmap-v9-post-9.90.md"
         )
         assert "F90" in roadmap.read_text(encoding="utf-8")
 

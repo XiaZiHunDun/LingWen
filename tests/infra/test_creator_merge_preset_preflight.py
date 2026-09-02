@@ -1,4 +1,5 @@
 """Tests for merge preset import preflight and batch fix apply."""
+
 from __future__ import annotations
 
 import pytest

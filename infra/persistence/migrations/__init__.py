@@ -5,6 +5,7 @@ typed as ``ConnectionPort`` (from ``lingwen_shared.ports.storage``).
 ``conn.cursor()`` works because ``SqliteConnection.__getattr__`` delegates
 to the underlying ``sqlite3.Connection``.
 """
+
 from pathlib import Path
 from typing import List, Tuple
 
@@ -52,10 +53,7 @@ def apply_migration(conn: ConnectionPort, version: int, description: str, sql_fi
         sql = f.read()
     try:
         cursor.executescript(sql)
-        cursor.execute(
-            "INSERT INTO migrations (version, description) VALUES (?, ?)",
-            (version, description)
-        )
+        cursor.execute("INSERT INTO migrations (version, description) VALUES (?, ?)", (version, description))
         conn.commit()
     except Exception as e:
         conn.rollback()

@@ -46,9 +46,7 @@ class CompressionOverflowError(CompressorError):
     def __init__(self, total_tokens: int, max_tokens: int) -> None:
         self.total_tokens = total_tokens
         self.max_tokens = max_tokens
-        super().__init__(
-            f"Compression overflow: {total_tokens} tokens > {max_tokens} limit"
-        )
+        super().__init__(f"Compression overflow: {total_tokens} tokens > {max_tokens} limit")
 
 
 @dataclass
@@ -178,9 +176,7 @@ class ChapterCompressor:
             return result
 
         # 需要压缩 — 按章节分配 token 预算
-        return self._apply_compression(
-            result_chapters, foreshadow_items, total_original
-        )
+        return self._apply_compression(result_chapters, foreshadow_items, total_original)
 
     def _apply_compression(
         self,
@@ -227,11 +223,11 @@ class ChapterCompressor:
                 self._truncate_chapter(ch, head_budget // head_count)
 
             # 中间章节: 用摘要替代
-            for ch in chapters[head_count:head_count + middle_count]:
+            for ch in chapters[head_count : head_count + middle_count]:
                 self._summary_replace(ch, middle_budget // max(1, middle_count))
 
             # 尾部章节: 保留原文
-            for ch in chapters[head_count + middle_count:]:
+            for ch in chapters[head_count + middle_count :]:
                 self._truncate_chapter(ch, tail_budget // max(1, tail_count))
         else:
             # 6+ 章: head/tail 保留原文，中间全部用摘要
@@ -247,11 +243,9 @@ class ChapterCompressor:
 
             middle_chapters = chapters[head_count : n - tail_count]
             for ch in middle_chapters:
-                self._summary_replace(
-                    ch, middle_budget // max(1, len(middle_chapters))
-                )
+                self._summary_replace(ch, middle_budget // max(1, len(middle_chapters)))
 
-            for ch in chapters[n - tail_count:]:
+            for ch in chapters[n - tail_count :]:
                 self._truncate_chapter(ch, tail_budget // tail_count)
 
         total_compressed = sum(ch.compressed_tokens for ch in chapters)
@@ -262,9 +256,7 @@ class ChapterCompressor:
             foreshadow_items=foreshadow_items,
         )
 
-    def _truncate_chapter(
-        self, ch: CompressedChapter, max_tokens: int
-    ) -> None:
+    def _truncate_chapter(self, ch: CompressedChapter, max_tokens: int) -> None:
         """截断章节到指定 token 数，保留关键标记"""
         if ch.original_tokens <= max_tokens:
             return
@@ -300,20 +292,15 @@ class ChapterCompressor:
         ch.compressed_tokens = self._estimate_tokens(ch.content)
         ch.was_compressed = True
 
-    def _summary_replace(
-        self, ch: CompressedChapter, max_tokens: int
-    ) -> None:
+    def _summary_replace(self, ch: CompressedChapter, max_tokens: int) -> None:
         """用摘要替代章节内容"""
         summary = ch.summary or f"第{ch.chapter_num}章（内容已压缩）"
         max_chars = max_tokens * self.CHARS_PER_TOKEN
 
         if len(summary) > max_chars:
-            summary = summary[:max_chars - 3] + "..."
+            summary = summary[: max_chars - 3] + "..."
 
-        ch.content = (
-            f"{SENTINEL_PREFIX}ch{ch.chapter_num}_summary{SENTINEL_SUFFIX}\n"
-            f"{summary}"
-        )
+        ch.content = f"{SENTINEL_PREFIX}ch{ch.chapter_num}_summary{SENTINEL_SUFFIX}\n{summary}"
         ch.compressed_tokens = self._estimate_tokens(ch.content)
         ch.was_compressed = True
 

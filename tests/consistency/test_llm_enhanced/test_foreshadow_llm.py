@@ -77,4 +77,4 @@ def test_foreshadow_llm_region_positions():
         assert "start" in region
         assert "end" in region
         assert region["start"] < region["end"]
-        assert content[region["start"]:region["end"]] == region["text"]
+        assert content[region["start"] : region["end"]] == region["text"]

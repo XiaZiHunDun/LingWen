@@ -1,4 +1,5 @@
 """Phase 9.67 F59: CI contract — chapter production runbook + golden path."""
+
 from __future__ import annotations
 
 from pathlib import Path

@@ -1,16 +1,12 @@
 """Unit tests for the grimp-evasion hygiene check."""
+
 from __future__ import annotations
 
 import subprocess
 import sys
 from pathlib import Path
 
-SCRIPT = (
-    Path(__file__).resolve().parents[2]
-    / "tooling"
-    / "hygiene"
-    / "check_no_grimp_evasion.py"
-)
+SCRIPT = Path(__file__).resolve().parents[2] / "tooling" / "hygiene" / "check_no_grimp_evasion.py"
 
 
 def test_check_passes_on_clean_port_adapter() -> None:
@@ -21,9 +17,7 @@ def test_check_passes_on_clean_port_adapter() -> None:
         text=True,
         cwd=str(SCRIPT.parent.parent.parent),
     )
-    assert result.returncode == 0, (
-        f"Hygiene check failed:\nstdout={result.stdout}\nstderr={result.stderr}"
-    )
+    assert result.returncode == 0, f"Hygiene check failed:\nstdout={result.stdout}\nstderr={result.stderr}"
     assert "grimp-evasion-free" in result.stdout
 
 

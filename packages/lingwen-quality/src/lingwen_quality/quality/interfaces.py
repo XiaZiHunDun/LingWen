@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional, Protocol
 
 class QualitySource(Enum):
     """质量issue来源类型"""
+
     RULE_BASED = "rule_based"
     LLM_ANALYZER = "llm_analyzer"
     MIXED = "mixed"
@@ -20,6 +21,7 @@ class QualitySource(Enum):
 
 class UnifiedSeverity(Enum):
     """统一严重程度"""
+
     P0 = "P0"  # 致命：逻辑硬伤，影响阅读
     P1 = "P1"  # 严重：一致性冲突，需要修改
     P2 = "P2"  # 中等：轻微不一致，建议修改
@@ -28,14 +30,15 @@ class UnifiedSeverity(Enum):
 
 class QualityDimension(Enum):
     """质量维度枚举"""
+
     S1_PLOT_COMPLETENESS = "S1"  # 剧情完整性
     S2_LOGIC_CONSISTENCY = "S2"  # 逻辑自洽
-    S3_WRITING_STYLE = "S3"      # 文笔风格
+    S3_WRITING_STYLE = "S3"  # 文笔风格
     S4_EMOTIONAL_RESONANCE = "S4"  # 情感共鸣
-    S5_PACING_CONTROL = "S5"     # 节奏控制
-    S6_READABILITY = "S6"        # 可读性
+    S5_PACING_CONTROL = "S5"  # 节奏控制
+    S6_READABILITY = "S6"  # 可读性
     S7_PROTAGONIST_CHARM = "S7"  # 主角魅力
-    S8_CHARACTER_ARC = "S8"      # 人物弧光
+    S8_CHARACTER_ARC = "S8"  # 人物弧光
     S9_CHARACTER_CONSISTENCY = "S9"  # 角色一致性
     S10_WORLDVIEW_CONSISTENCY = "S10"  # 世界观一致性
     S11_FORESHADOW_RECOVERY = "S11"  # 伏笔回收率
@@ -66,6 +69,7 @@ class QualityChecker(Protocol):
 @dataclass
 class UnifiedLocation:
     """统一位置信息"""
+
     chapter: int
     paragraph: Optional[int] = None
     line: Optional[int] = None
@@ -89,6 +93,7 @@ class UnifiedIssue:
     字段尽量精简，只包含所有检测器共同的字段。
     领域特定数据存储在 metadata 中。
     """
+
     id: str
     severity: UnifiedSeverity
     source: QualitySource
@@ -130,6 +135,7 @@ class UnifiedIssue:
 @dataclass
 class DomainSpecificReport:
     """LLM领域特定数据容器"""
+
     report_type: str  # e.g., "foreshadow", "emotional_resonance", "pacing"
     chapter: int
     score: float
@@ -142,6 +148,7 @@ class UnifiedQualityReport:
     """
     统一质量报告 - 整合rule-based和LLM分析结果
     """
+
     chapter: int
     check_time: datetime = field(default_factory=datetime.now)
     issues: List[UnifiedIssue] = field(default_factory=list)

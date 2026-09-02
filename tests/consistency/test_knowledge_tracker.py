@@ -35,8 +35,9 @@ class TestKnowledgeTracker:
 
         # 检测到苏琳听到了秘密但没有反应
         assert len(issues) > 0, f"Expected issues but got 0. Content:\n{chapter_content}"
-        assert any(i.issue_type == "knowledge_unacknowledged" for i in issues), \
+        assert any(i.issue_type == "knowledge_unacknowledged" for i in issues), (
             f"Expected knowledge_unacknowledged issue type, got: {[i.issue_type for i in issues]}"
+        )
 
     def test_knowledge_tracker_no_issue_when_acknowledged(self):
         """当角色正确回应秘密时，不应有问题"""

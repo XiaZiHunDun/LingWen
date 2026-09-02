@@ -3,6 +3,7 @@
 GET /api/budgets → 3 tier dict
 PUT /api/budgets/{day,week} → 接受 usd 持久化
 """
+
 from __future__ import annotations
 
 import sqlite3
@@ -88,9 +89,7 @@ class TestDashboardBudgetEndpoints:
         response = client.put("/api/budgets/day", json={"usd": -1})
         assert response.status_code == 422
 
-    def test_get_budgets_when_none_set_returns_null_per_tier(
-        self, tmp_path: Path
-    ) -> None:
+    def test_get_budgets_when_none_set_returns_null_per_tier(self, tmp_path: Path) -> None:
         """0 budget 全 null/empty, 0 错"""
         client, _ = _make_test_client(tmp_path)
         response = client.get("/api/budgets")

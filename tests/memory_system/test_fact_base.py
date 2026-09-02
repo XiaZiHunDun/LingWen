@@ -1,4 +1,5 @@
 """FactBase 测试"""
+
 from pathlib import Path
 
 import pytest

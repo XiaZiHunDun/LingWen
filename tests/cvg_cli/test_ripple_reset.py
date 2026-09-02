@@ -7,6 +7,7 @@
 Pattern: 1:1 with test_ripple_audit.py:Phase 9.14 — parse_args + Command.execute
 + monkeypatch.setattr storage factory. 0 启动 dashboard / 0 真实 project path.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -44,13 +45,21 @@ def storage_with_ripple(tmp_path):
     """Storage with 1 applied + 1 pending ripple, isolated tmp DB."""
     storage = RippleStorage(db_path=tmp_path / "cli_reset.db")
     applied = CrossVolumeRipple(
-        id="rip-applied-1", trigger_volume=1, trigger_chapter=1,
-        affected_nodes=(), affected_edges=(), proposed_actions=(),
+        id="rip-applied-1",
+        trigger_volume=1,
+        trigger_chapter=1,
+        affected_nodes=(),
+        affected_edges=(),
+        proposed_actions=(),
         status="applied",
     )
     pending = CrossVolumeRipple(
-        id="rip-pending-1", trigger_volume=1, trigger_chapter=2,
-        affected_nodes=(), affected_edges=(), proposed_actions=(),
+        id="rip-pending-1",
+        trigger_volume=1,
+        trigger_chapter=2,
+        affected_nodes=(),
+        affected_edges=(),
+        proposed_actions=(),
         status="pending",
     )
     storage.append_ripple(applied)

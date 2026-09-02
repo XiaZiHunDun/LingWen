@@ -19,6 +19,7 @@ Phase 15.0 T2.8: 直接实例化已弃用, 请使用 infra.persistence.registry.
 v16.5 #N.3: Migrated to SqliteStorageAdapter from lingwen_storage.
 Public API unchanged.
 """
+
 from __future__ import annotations
 
 import warnings
@@ -73,6 +74,7 @@ class CostTrackerDB:
 
     def init_db(self) -> None:
         """初始化表 + 索引 (CREATE IF NOT EXISTS — 幂等)"""
+
         def _do(conn) -> None:
             conn.executescript("""
                 CREATE TABLE IF NOT EXISTS cost_records (
@@ -91,6 +93,7 @@ class CostTrackerDB:
                 CREATE INDEX IF NOT EXISTS idx_cost_records_timestamp
                     ON cost_records(timestamp);
             """)
+
         self._storage.with_transaction(_do)
 
     def record(
@@ -166,8 +169,7 @@ class CostTrackerDB:
                     "SELECT COALESCE(SUM(cost_usd), 0.0) as total FROM cost_records"
                 ).fetchone()
             return conn.execute(
-                "SELECT COALESCE(SUM(cost_usd), 0.0) as total "
-                "FROM cost_records WHERE timestamp >= ?",
+                "SELECT COALESCE(SUM(cost_usd), 0.0) as total FROM cost_records WHERE timestamp >= ?",
                 (since.isoformat(),),
             ).fetchone()
 
@@ -243,9 +245,7 @@ class CostTrackerDB:
         rows = self._storage.with_connection(_do)
         return {r["day"]: float(r["total"]) for r in rows}
 
-    def cost_by_day_per_tier(
-        self, since: Optional[datetime] = None
-    ) -> dict[str, dict[str, float]]:
+    def cost_by_day_per_tier(self, since: Optional[datetime] = None) -> dict[str, dict[str, float]]:
         """Phase 9.28 F12: cross-dim day × tier aggregation for per-tier trend chart.
 
         Returns nested dict: { 'YYYY-MM-DD': { 'haiku': usd, 'sonnet': usd, ... }, ... }

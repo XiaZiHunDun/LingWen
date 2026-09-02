@@ -3,6 +3,7 @@
 仿 v16.1 T1 (`tests/test_lingwen_shared_layout.py`) — uv sync 不验证 member 目录,
 需要显式 gate 测试 package layout 与 import path 正确性。
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -25,6 +26,7 @@ def test_package_pyproject_has_hyphen_name() -> None:
 def test_module_imports_with_underscore_name() -> None:
     """Python module name 必须是 underscore ('lingwen_creator'),不是 hyphen."""
     import lingwen_creator  # noqa: F401
+
     assert lingwen_creator.__name__ == "lingwen_creator"
 
 

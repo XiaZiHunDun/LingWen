@@ -9,6 +9,7 @@ In production, the application startup imports ``infra.llm_service`` (or any
 module that transitively imports it), so this conftest mirrors that bootstrap
 just for the test environment.
 """
+
 from __future__ import annotations
 
 # Trigger factory registration: infra.llm_service registers itself as the

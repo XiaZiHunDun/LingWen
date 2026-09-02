@@ -14,6 +14,7 @@ MVP 范围:
 - 压缩 / 增量
 - 并发锁 (单进程使用,后续 Phase 加)
 """
+
 from __future__ import annotations
 
 import json

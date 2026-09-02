@@ -1,4 +1,5 @@
 """story-contract subparser — generate story contract with anti-trope constraints."""
+
 import argparse
 
 

@@ -9,6 +9,7 @@ Phase 1.4.e — RED tests for ThoughtCache.
   - 命中 → 返回缓存
   - 未命中 → 调 compute_fn 存结果 → 返回
 """
+
 from __future__ import annotations
 
 import pytest

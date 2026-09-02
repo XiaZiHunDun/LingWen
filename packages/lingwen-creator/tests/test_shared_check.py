@@ -1,4 +1,5 @@
 """Phase 126 v16.2.0: tests for shared/check.py migrated utilities."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -30,7 +31,8 @@ def companion_project(tmp_path):
     (tmp_path / "03_内容仓库" / "04_正文").mkdir(parents=True)
     (tmp_path / "03_内容仓库" / "角色设定").mkdir(parents=True)
     (tmp_path / "03_内容仓库" / "角色设定" / "character_profiles.json").write_text(
-        "{}", encoding="utf-8",
+        "{}",
+        encoding="utf-8",
     )
     (tmp_path / "config").mkdir()
     (tmp_path / "config" / "project.yaml").write_text(

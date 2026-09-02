@@ -1,4 +1,5 @@
 """Phase 9.20 Task 2: cascade runs endpoint + ?persist=true query param."""
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -21,8 +22,13 @@ def client_with_storage(tmp_path, monkeypatch):
     g.add_edge(ReferenceEdge(id="e12", from_node_id="n1", to_node_id="n2"))
     storage._graph = g
     ripple = CrossVolumeRipple(
-        id="rip-1", trigger_volume=1, trigger_chapter=1,
-        affected_nodes=("n1",), affected_edges=(), proposed_actions=(), status="pending",
+        id="rip-1",
+        trigger_volume=1,
+        trigger_chapter=1,
+        affected_nodes=("n1",),
+        affected_edges=(),
+        proposed_actions=(),
+        status="pending",
     )
     storage.append_ripple(ripple)
 

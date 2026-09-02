@@ -1,4 +1,5 @@
 """Phase 9.73 F65: chapter production pilot (0 real LLM in default CI)."""
+
 from __future__ import annotations
 
 import json
@@ -207,13 +208,19 @@ class TestPilotRecordF72:
 
         monkeypatch.delenv("LINGWEN_REAL_LLM", raising=False)
         out = tmp_path / "preflight.json"
-        code = mod.main([
-            "--preflight-only",
-            "--chapter-num", "360",
-            "--state-dir", str(tmp_path),
-            "--save-record", str(out),
-            "--operator", "cli-test",
-        ])
+        code = mod.main(
+            [
+                "--preflight-only",
+                "--chapter-num",
+                "360",
+                "--state-dir",
+                str(tmp_path),
+                "--save-record",
+                str(out),
+                "--operator",
+                "cli-test",
+            ]
+        )
         assert code in (0, 1)
         assert out.is_file()
         record = json_mod.loads(out.read_text(encoding="utf-8"))

@@ -8,6 +8,7 @@ Verifies:
 - 锁在异常路径上正确释放
 - _lock_path 与 db_path 在同一目录(.lock 后缀)
 """
+
 import fcntl
 import multiprocessing
 import os
@@ -32,7 +33,7 @@ def db(tmp_path):
     inst = WorkflowDB(str(db_path))
     yield inst, db_path
     # cleanup lock file (may remain if test crashed mid-flock)
-    lock = db_path.with_suffix('.lock')
+    lock = db_path.with_suffix(".lock")
     if lock.exists():
         try:
             lock.unlink()
@@ -95,27 +96,15 @@ def _probe_flock_peak(db_path_str: str, hold_s: float = 0.05) -> int:
         )
         conn.execute("INSERT OR IGNORE INTO flock_probe (k, v) VALUES ('active', 0)")
         conn.execute("INSERT OR IGNORE INTO flock_probe (k, v) VALUES ('peak', 0)")
-        active = conn.execute(
-            "SELECT v FROM flock_probe WHERE k = 'active'"
-        ).fetchone()[0] + 1
-        conn.execute(
-            "UPDATE flock_probe SET v = ? WHERE k = 'active'", (active,)
-        )
-        peak = conn.execute(
-            "SELECT v FROM flock_probe WHERE k = 'peak'"
-        ).fetchone()[0]
+        active = conn.execute("SELECT v FROM flock_probe WHERE k = 'active'").fetchone()[0] + 1
+        conn.execute("UPDATE flock_probe SET v = ? WHERE k = 'active'", (active,))
+        peak = conn.execute("SELECT v FROM flock_probe WHERE k = 'peak'").fetchone()[0]
         if active > peak:
-            conn.execute(
-                "UPDATE flock_probe SET v = ? WHERE k = 'peak'", (active,)
-            )
+            conn.execute("UPDATE flock_probe SET v = ? WHERE k = 'peak'", (active,))
         time.sleep(hold_s)
-        conn.execute(
-            "UPDATE flock_probe SET v = v - 1 WHERE k = 'active'"
-        )
+        conn.execute("UPDATE flock_probe SET v = v - 1 WHERE k = 'active'")
     with inst._get_conn() as conn:
-        return conn.execute(
-            "SELECT v FROM flock_probe WHERE k = 'peak'"
-        ).fetchone()[0]
+        return conn.execute("SELECT v FROM flock_probe WHERE k = 'peak'").fetchone()[0]
 
 
 class TestTransactionFlock:
@@ -137,9 +126,7 @@ class TestTransactionFlock:
 
         inst = WorkflowDB(str(db_path))
         with inst._get_conn() as conn:
-            row = conn.execute(
-                "SELECT v FROM flock_probe WHERE k = 'peak'"
-            ).fetchone()
+            row = conn.execute("SELECT v FROM flock_probe WHERE k = 'peak'").fetchone()
         assert row is not None, "flock_probe table missing"
         assert row[0] == 1, f"flock overlap detected: peak={row[0]}"
 
@@ -173,7 +160,7 @@ class TestTransactionFlock:
         """transaction() 期间应创建 lock 文件"""
         db_path = tmp_path / "wf.db"
         inst = WorkflowDB(str(db_path))
-        lock = db_path.with_suffix('.lock')
+        lock = db_path.with_suffix(".lock")
 
         with inst.transaction() as conn:
             conn.execute("SELECT 1").fetchone()

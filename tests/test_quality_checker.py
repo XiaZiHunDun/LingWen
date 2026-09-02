@@ -2,6 +2,7 @@
 """
 质量检查器测试
 """
+
 import os
 
 # 添加父目录到 path 以便导入
@@ -22,16 +23,16 @@ class TestChineseToArabic:
 
     def test_simple_digits(self):
         """测试简单中文数字"""
-        assert chinese_to_arabic('一') == 1
-        assert chinese_to_arabic('二') == 2
-        assert chinese_to_arabic('三') == 3
-        assert chinese_to_arabic('十') == 10
+        assert chinese_to_arabic("一") == 1
+        assert chinese_to_arabic("二") == 2
+        assert chinese_to_arabic("三") == 3
+        assert chinese_to_arabic("十") == 10
 
     def test_compound_digits(self):
         """测试复合中文数字"""
-        assert chinese_to_arabic('十一') == 11
-        assert chinese_to_arabic('二十') == 20
-        assert chinese_to_arabic('三十五') == 35
+        assert chinese_to_arabic("十一") == 11
+        assert chinese_to_arabic("二十") == 20
+        assert chinese_to_arabic("三十五") == 35
 
 
 class TestExtractChapterNum:
@@ -39,14 +40,14 @@ class TestExtractChapterNum:
 
     def test_extract_chinese_chapter(self):
         """测试提取中文章节号"""
-        assert extract_chapter_num('# 第十二章 测试') == 12
-        assert extract_chapter_num('# 第三十五章 测试') == 35
+        assert extract_chapter_num("# 第十二章 测试") == 12
+        assert extract_chapter_num("# 第三十五章 测试") == 35
 
     def test_extract_arabic_returns_none(self):
         """测试阿拉伯数字章节号返回None（当前实现仅支持中文）"""
         # 当前实现仅支持中文数字，阿拉伯数字返回None
-        assert extract_chapter_num('# 第1章 测试') is None
-        assert extract_chapter_num('# 第12章 测试') is None
+        assert extract_chapter_num("# 第1章 测试") is None
+        assert extract_chapter_num("# 第12章 测试") is None
 
 
 class TestNamingChecker:
@@ -56,7 +57,7 @@ class TestNamingChecker:
         """测试检查正常命名的章节"""
         # 创建临时章节文件
         chapter_file = tmp_path / "ch001.md"
-        chapter_file.write_text("# 第1章 测试标题\n\n内容\n\n**本章完**", encoding='utf-8')
+        chapter_file.write_text("# 第1章 测试标题\n\n内容\n\n**本章完**", encoding="utf-8")
 
         issues = check_naming(str(tmp_path), (1, 1))
 
@@ -68,7 +69,7 @@ class TestNamingChecker:
         # 创建文件名为 ch001 但内容是第2章
         # 注意：需要使用中文数字，检查器不支持阿拉伯数字
         chapter_file = tmp_path / "ch001.md"
-        chapter_file.write_text("# 第十二章 错误标题\n\n内容\n\n**本章完**", encoding='utf-8')
+        chapter_file.write_text("# 第十二章 错误标题\n\n内容\n\n**本章完**", encoding="utf-8")
 
         issues = check_naming(str(tmp_path), (1, 1))
 
@@ -86,7 +87,7 @@ class TestContentIntegrityChecker:
         # 需要足够多的内容（>100字符）才能通过 EMPTY_CHAPTER 检查
         # 然后才检测到 MISSING_END_MARK 问题
         content = "# 第2章 无标记\n\n" + "这是测试内容。" * 50  # 约300字符
-        chapter_file.write_text(content, encoding='utf-8')
+        chapter_file.write_text(content, encoding="utf-8")
 
         issues = check_integrity(str(tmp_path), (2, 2))
 
@@ -97,7 +98,7 @@ class TestContentIntegrityChecker:
     def test_detects_short_content(self, tmp_path):
         """测试检测字数不足"""
         chapter_file = tmp_path / "ch003.md"
-        chapter_file.write_text("# 第3章\n\n短", encoding='utf-8')
+        chapter_file.write_text("# 第3章\n\n短", encoding="utf-8")
 
         issues = check_integrity(str(tmp_path), (3, 3))
 

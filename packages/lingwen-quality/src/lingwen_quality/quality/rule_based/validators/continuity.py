@@ -46,9 +46,7 @@ class ContinuityValidator(BaseValidator):
 
         passed = len(issues) == 0
         return ValidationResult(
-            passed=passed,
-            issues=issues,
-            severity=IssueSeverity.P0 if issues else IssueSeverity.P2
+            passed=passed, issues=issues, severity=IssueSeverity.P0 if issues else IssueSeverity.P2
         )
 
     def _extract_character_names(self, content: str, characters: List[Dict]) -> Set[str]:

@@ -1,4 +1,5 @@
 """Phase 9.59 F50: impact_score API field + sort/filter."""
+
 from __future__ import annotations
 
 import pytest
@@ -18,6 +19,7 @@ def storage(tmp_path):
 @pytest.fixture
 def client(storage, monkeypatch):
     from apps.studio_api import app as app_module
+
     monkeypatch.setattr(app_module, "_default_storage", lambda: storage)
     return TestClient(create_app())
 

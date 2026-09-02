@@ -1,4 +1,5 @@
 """Phase 17.16 守卫:角色池 registry.yaml 自动生成 + SKILL.md 存在。"""
+
 from pathlib import Path
 
 import yaml
@@ -37,6 +38,4 @@ def test_writer_skill_md_present():
     """Each writer entry should have a SKILL.md in its skill dir."""
     p = REPO / "content" / "roles" / "writer" / "skills"
     for letter in "abcdefghij":
-        assert (p / f"writer-{letter}" / "SKILL.md").exists(), (
-            f"Missing writer-{letter}/SKILL.md"
-        )
+        assert (p / f"writer-{letter}" / "SKILL.md").exists(), f"Missing writer-{letter}/SKILL.md"

@@ -9,6 +9,7 @@
 TDD contract: ALL real ReferenceNode fields (title, chapter, payload, created_by, confidence)
 are used. id is auto-generated uuid (do NOT pass node_id from LLM).
 """
+
 import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -30,10 +31,7 @@ def load_fixture(name: str) -> str:
 def make_mock_router(fixture_names: list[str]) -> MagicMock:
     """Return mock router that returns fixtures in order. Default usage 100/50."""
     router = MagicMock()
-    responses = [
-        (load_fixture(n), {"input_tokens": 100, "output_tokens": 50})
-        for n in fixture_names
-    ]
+    responses = [(load_fixture(n), {"input_tokens": 100, "output_tokens": 50}) for n in fixture_names]
     router.generate_with_usage.side_effect = responses
     return router
 
@@ -57,12 +55,14 @@ def make_fallback_backfiller() -> MagicMock:
 class TestLLMScannerCore:
     def test_scan_chapter_returns_nodes_all_4_dims(self, tmp_path):
         """4 dim fixtures → returned nodes cover all 4 dimensions."""
-        router = make_mock_router([
-            "character_ch001.json",
-            "foreshadow_ch001.json",
-            "setting_ch001.json",
-            "plot_point_ch001.json",
-        ])
+        router = make_mock_router(
+            [
+                "character_ch001.json",
+                "foreshadow_ch001.json",
+                "setting_ch001.json",
+                "plot_point_ch001.json",
+            ]
+        )
         cache = LLMCache(cache_path=tmp_path / "cache.json")
         cost = CostTracker()
         fb = make_fallback_backfiller()
@@ -78,12 +78,14 @@ class TestLLMScannerCore:
     def test_scan_chapter_passes_prompt_to_router(self, tmp_path):
         """4 router calls, each prompt contains the chapter content."""
         content = "林轩和林雨在青云山相遇, 发现九转玄功"
-        router = make_mock_router([
-            "character_ch001.json",
-            "foreshadow_ch001.json",
-            "setting_ch001.json",
-            "plot_point_ch001.json",
-        ])
+        router = make_mock_router(
+            [
+                "character_ch001.json",
+                "foreshadow_ch001.json",
+                "setting_ch001.json",
+                "plot_point_ch001.json",
+            ]
+        )
         cache = LLMCache(cache_path=tmp_path / "cache.json")
         cost = CostTracker()
         fb = make_fallback_backfiller()
@@ -112,12 +114,14 @@ class TestLLMScannerCore:
 
     def test_4_dims_run_serially(self, tmp_path):
         """First call's prompt must mention 'character' (the first dim scanned)."""
-        router = make_mock_router([
-            "character_ch001.json",
-            "foreshadow_ch001.json",
-            "setting_ch001.json",
-            "plot_point_ch001.json",
-        ])
+        router = make_mock_router(
+            [
+                "character_ch001.json",
+                "foreshadow_ch001.json",
+                "setting_ch001.json",
+                "plot_point_ch001.json",
+            ]
+        )
         cache = LLMCache(cache_path=tmp_path / "cache.json")
         cost = CostTracker()
         fb = make_fallback_backfiller()
@@ -135,12 +139,14 @@ class TestLLMScannerCore:
 
     def test_cost_tracker_records_llm_calls(self, tmp_path):
         """Each successful LLM call records one CostRecord with scenario='cvg_llm_scan'."""
-        router = make_mock_router([
-            "character_ch001.json",
-            "foreshadow_ch001.json",
-            "setting_ch001.json",
-            "plot_point_ch001.json",
-        ])
+        router = make_mock_router(
+            [
+                "character_ch001.json",
+                "foreshadow_ch001.json",
+                "setting_ch001.json",
+                "plot_point_ch001.json",
+            ]
+        )
         cache = LLMCache(cache_path=tmp_path / "cache.json")
         cost = CostTracker()
         fb = make_fallback_backfiller()
@@ -181,11 +187,13 @@ class TestLLMScannerCache:
         cache.put(cache_key, {"input_tokens": 0, "output_tokens": 0, "parsed": parsed})
 
         # Build scanner AFTER pre-warm
-        router = make_mock_router([
-            "foreshadow_ch001.json",
-            "setting_ch001.json",
-            "plot_point_ch001.json",
-        ])
+        router = make_mock_router(
+            [
+                "foreshadow_ch001.json",
+                "setting_ch001.json",
+                "plot_point_ch001.json",
+            ]
+        )
         scanner = LLMScanner(router, cache, fb, cost, model_tier=ModelTier.SONNET)
         scanner.model_id = model_id  # align with pre-warm key
 
@@ -196,12 +204,14 @@ class TestLLMScannerCache:
 
     def test_cache_miss_calls_llm_and_writes(self, tmp_path):
         """4 router calls → cache should have 4 entries after."""
-        router = make_mock_router([
-            "character_ch001.json",
-            "foreshadow_ch001.json",
-            "setting_ch001.json",
-            "plot_point_ch001.json",
-        ])
+        router = make_mock_router(
+            [
+                "character_ch001.json",
+                "foreshadow_ch001.json",
+                "setting_ch001.json",
+                "plot_point_ch001.json",
+            ]
+        )
         cache_path = tmp_path / "cache.json"
         cache = LLMCache(cache_path=cache_path)
         cost = CostTracker()
@@ -220,12 +230,14 @@ class TestLLMScannerCache:
         """scan1 writes to cache_path, scan2 reads from same path → 0 router calls in scan2."""
         cache_path = tmp_path / "cache.json"
         # scan1: writes
-        router1 = make_mock_router([
-            "character_ch001.json",
-            "foreshadow_ch001.json",
-            "setting_ch001.json",
-            "plot_point_ch001.json",
-        ])
+        router1 = make_mock_router(
+            [
+                "character_ch001.json",
+                "foreshadow_ch001.json",
+                "setting_ch001.json",
+                "plot_point_ch001.json",
+            ]
+        )
         cache1 = LLMCache(cache_path=cache_path)
         cost1 = CostTracker()
         fb1 = make_fallback_backfiller()
@@ -263,18 +275,24 @@ class TestLLMScannerRetry:
         ]
         # Other 3 dims succeed first time
         for _ in range(3):
-            side_effects.append((
-                load_fixture("foreshadow_ch001.json"),
+            side_effects.append(
+                (
+                    load_fixture("foreshadow_ch001.json"),
+                    {"input_tokens": 100, "output_tokens": 50},
+                )
+            )
+        side_effects.append(
+            (
+                load_fixture("setting_ch001.json"),
                 {"input_tokens": 100, "output_tokens": 50},
-            ))
-        side_effects.append((
-            load_fixture("setting_ch001.json"),
-            {"input_tokens": 100, "output_tokens": 50},
-        ))
-        side_effects.append((
-            load_fixture("plot_point_ch001.json"),
-            {"input_tokens": 100, "output_tokens": 50},
-        ))
+            )
+        )
+        side_effects.append(
+            (
+                load_fixture("plot_point_ch001.json"),
+                {"input_tokens": 100, "output_tokens": 50},
+            )
+        )
         router.generate_with_usage.side_effect = side_effects
 
         cache = LLMCache(cache_path=tmp_path / "cache.json")

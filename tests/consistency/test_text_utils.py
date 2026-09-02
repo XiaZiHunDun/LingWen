@@ -1,4 +1,5 @@
 """R2-011: split_chinese_sentences 行为测试 + 等价性回归"""
+
 from lingwen_quality.consistency.checkers.battle_visualization import BattleVisualizationChecker
 from lingwen_quality.consistency.checkers.text_utils import split_chinese_sentences
 from lingwen_quality.consistency.checkers.vocabulary import (
@@ -33,15 +34,13 @@ class TestSplitChineseSentences:
         用 20 条随机样本验证。
         """
         import random
+
         random.seed(42)
         chinese_chars = "的一是了我不在人们有这个"
         for _ in range(20):
             # 随机生成 1-50 句的中文段落
             n = random.randint(1, 50)
-            sentences = [
-                "".join(random.choices(chinese_chars, k=random.randint(3, 10)))
-                for _ in range(n)
-            ]
+            sentences = ["".join(random.choices(chinese_chars, k=random.randint(3, 10))) for _ in range(n)]
             text = "。".join(sentences) + "。"
 
             ours = split_chinese_sentences(text)

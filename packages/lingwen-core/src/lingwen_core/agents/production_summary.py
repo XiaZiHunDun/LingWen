@@ -1,4 +1,5 @@
 """Phase 9.74 F66: per-run chapter production summary for Dashboard observability."""
+
 from __future__ import annotations
 
 from typing import Any, Mapping

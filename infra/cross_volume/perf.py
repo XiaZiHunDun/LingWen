@@ -1,4 +1,5 @@
 """Phase 9.42 F31: lazy per-volume graph loading helpers."""
+
 from __future__ import annotations
 
 import logging

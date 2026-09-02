@@ -12,6 +12,7 @@ params:
     timeout: 超时秒数（默认 120）
     env:    额外环境变量 dict（可选）
 """
+
 from __future__ import annotations
 
 import logging
@@ -60,7 +61,9 @@ class RunScriptAction(BaseAction):
         cmd = self._build_command(script_path, args, use_python)
         logger.info(
             "RunScriptAction: cmd=%s cwd=%s timeout=%ds",
-            " ".join(cmd), cwd, timeout,
+            " ".join(cmd),
+            cwd,
+            timeout,
         )
 
         env = os.environ.copy()

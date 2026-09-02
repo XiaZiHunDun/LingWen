@@ -1,4 +1,5 @@
 """Tests for creator v4.8 deviation click highlight, batch inline summary, unified issue highlight."""
+
 from __future__ import annotations
 
 from lingwen_creator.content.ui_profile import resolve_creator_ui_profile

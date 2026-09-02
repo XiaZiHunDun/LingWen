@@ -79,42 +79,42 @@ class AnthropicProvider(AIProvider):
                     messages=messages,
                     temperature=temperature,
                     max_tokens=max_tokens,
-                    **kwargs
+                    **kwargs,
                 )
                 # Handle different block types (text, thinking, etc.)
                 for block in response.content:
-                    if hasattr(block, 'text') and block.text:
+                    if hasattr(block, "text") and block.text:
                         return block.text
                 # Fallback: try to get text from first content block
-                if hasattr(response.content[0], 'text'):
+                if hasattr(response.content[0], "text"):
                     return response.content[0].text
                 return str(response.content[0])
 
             except anthropic.APITimeoutError:
                 last_error = TimeoutError(f"Request timed out after {self.config.timeout}s")
                 if attempt < self.config.max_retries - 1:
-                    time.sleep(2 ** attempt)  # 指数退避
+                    time.sleep(2**attempt)  # 指数退避
                     continue
                 raise last_error
 
             except anthropic.APIConnectionError as e:
                 last_error = NetworkError(f"Connection failed: {e}")
                 if attempt < self.config.max_retries - 1:
-                    time.sleep(2 ** attempt)
+                    time.sleep(2**attempt)
                     continue
                 raise last_error
 
             except anthropic.RateLimitError as e:
                 last_error = APIError(f"Rate limit exceeded: {e}")
                 if attempt < self.config.max_retries - 1:
-                    time.sleep(2 ** attempt)
+                    time.sleep(2**attempt)
                     continue
                 raise last_error
 
             except anthropic.APIError as e:
                 last_error = APIError(f"Anthropic API error: {e}")
                 if attempt < self.config.max_retries - 1:
-                    time.sleep(2 ** attempt)
+                    time.sleep(2**attempt)
                     continue
                 raise last_error
 
@@ -124,9 +124,7 @@ class AnthropicProvider(AIProvider):
 
         raise last_error or AIProviderError("Max retries exceeded")
 
-    def generate_with_usage(
-        self, prompt: str, **kwargs
-    ) -> tuple[str, dict[str, int]]:
+    def generate_with_usage(self, prompt: str, **kwargs) -> tuple[str, dict[str, int]]:
         """生成文本 + 返回 SDK 原生 usage (Anthropic).
 
         跟 generate() 区别: 同时返回 response.usage.input_tokens / output_tokens
@@ -162,17 +160,19 @@ class AnthropicProvider(AIProvider):
                     messages=messages,
                     temperature=temperature,
                     max_tokens=max_tokens,
-                    **kwargs
+                    **kwargs,
                 )
                 # Extract text (跟 generate() 同)
                 for block in response.content:
-                    if hasattr(block, 'text') and block.text:
+                    if hasattr(block, "text") and block.text:
                         text = block.text
                         break
                 else:
-                    text = (response.content[0].text
-                            if hasattr(response.content[0], 'text')
-                            else str(response.content[0]))
+                    text = (
+                        response.content[0].text
+                        if hasattr(response.content[0], "text")
+                        else str(response.content[0])
+                    )
                 usage = {
                     "input_tokens": response.usage.input_tokens,
                     "output_tokens": response.usage.output_tokens,
@@ -182,28 +182,28 @@ class AnthropicProvider(AIProvider):
             except anthropic.APITimeoutError:
                 last_error = TimeoutError(f"Request timed out after {self.config.timeout}s")
                 if attempt < self.config.max_retries - 1:
-                    time.sleep(2 ** attempt)
+                    time.sleep(2**attempt)
                     continue
                 raise last_error
 
             except anthropic.APIConnectionError as e:
                 last_error = NetworkError(f"Connection failed: {e}")
                 if attempt < self.config.max_retries - 1:
-                    time.sleep(2 ** attempt)
+                    time.sleep(2**attempt)
                     continue
                 raise last_error
 
             except anthropic.RateLimitError as e:
                 last_error = APIError(f"Rate limit exceeded: {e}")
                 if attempt < self.config.max_retries - 1:
-                    time.sleep(2 ** attempt)
+                    time.sleep(2**attempt)
                     continue
                 raise last_error
 
             except anthropic.APIError as e:
                 last_error = APIError(f"Anthropic API error: {e}")
                 if attempt < self.config.max_retries - 1:
-                    time.sleep(2 ** attempt)
+                    time.sleep(2**attempt)
                     continue
                 raise last_error
 
@@ -247,7 +247,7 @@ class AnthropicProvider(AIProvider):
                 last_error = AIProviderError(f"Unexpected error: {e}")
                 raise last_error
             if attempt < self.config.max_retries - 1:
-                time.sleep(2 ** attempt)
+                time.sleep(2**attempt)
                 continue
             raise last_error or AIProviderError("Max retries exceeded")
 
@@ -261,8 +261,7 @@ class AnthropicProvider(AIProvider):
             AIProviderError: 不支持嵌入操作
         """
         raise AIProviderError(
-            "Anthropic Provider does not support embedding. "
-            "Use OpenAIProvider for embedding operations."
+            "Anthropic Provider does not support embedding. Use OpenAIProvider for embedding operations."
         )
 
     def batch_generate(self, prompts: List[str], **kwargs) -> List[str]:

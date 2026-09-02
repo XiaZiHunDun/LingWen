@@ -27,6 +27,7 @@ Regression-tested by:
 - ``tests/persistence/test_sqlite_storage_adapter.py`` if it still exists
   (back-compat shim path).
 """
+
 from __future__ import annotations
 
 import os
@@ -107,9 +108,7 @@ class FileSystemMarkdownRoundtrip:
         """
         target = Path(path)
         target.parent.mkdir(parents=True, exist_ok=True)
-        fd, tmp_path = tempfile.mkstemp(
-            dir=target.parent, prefix=f".{target.name}.", suffix=".tmp"
-        )
+        fd, tmp_path = tempfile.mkstemp(dir=target.parent, prefix=f".{target.name}.", suffix=".tmp")
         try:
             with os.fdopen(fd, "w", encoding="utf-8") as f:
                 f.write(body)

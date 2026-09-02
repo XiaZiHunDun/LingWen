@@ -18,11 +18,7 @@ class LLMEnhancedCharacterChecker(LLMEnhancedChecker):
         from ...llm_service.base import LLMService
         from ..character_checker import CharacterChecker
 
-        super().__init__(
-            base_checker=CharacterChecker(),
-            llm_service=LLMService(),
-            checker_type="character"
-        )
+        super().__init__(base_checker=CharacterChecker(), llm_service=LLMService(), checker_type="character")
 
     def _find_uncertain_regions(self, content: str, context: dict) -> List[dict]:
         """找出需要LLM判断的角色相关段落"""
@@ -38,12 +34,14 @@ class LLMEnhancedCharacterChecker(LLMEnhancedChecker):
 
         for pattern in character_patterns:
             for m in re.finditer(pattern, content):
-                uncertain.append({
-                    "type": "character_uncertain",
-                    "text": m.group(),
-                    "start": m.start(),
-                    "end": m.end(),
-                    "context": content[max(0, m.start()-50):m.end()+50]
-                })
+                uncertain.append(
+                    {
+                        "type": "character_uncertain",
+                        "text": m.group(),
+                        "start": m.start(),
+                        "end": m.end(),
+                        "context": content[max(0, m.start() - 50) : m.end() + 50],
+                    }
+                )
 
         return uncertain

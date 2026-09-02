@@ -19,8 +19,8 @@ from .base_checker import BaseChecker
 
 class SpatialTransitionChecker(BaseChecker):
     """空间位置突兀转移检测器"""
-    _checker_type = CheckerType.SPATIAL_TRANSITION
 
+    _checker_type = CheckerType.SPATIAL_TRANSITION
 
     SUDDEN_TRANSITION_PATTERNS = [
         r"突然出现在([^，。、。！\n]+)",
@@ -34,26 +34,49 @@ class SpatialTransitionChecker(BaseChecker):
     ]
 
     TRANSITION_WORDS = [
-        "穿过", "走过", "经过", "来到", "走进", "进入",
-        "离开", "走出", "前往", "迂回", "绕到",
-        "腾空而起", "御剑飞行", "瞬移", "传送",
-        "转身", "迈步", "步行", "奔跑", "冲刺",
-        "腾跃", "跳跃", "攀爬", "降落",
+        "穿过",
+        "走过",
+        "经过",
+        "来到",
+        "走进",
+        "进入",
+        "离开",
+        "走出",
+        "前往",
+        "迂回",
+        "绕到",
+        "腾空而起",
+        "御剑飞行",
+        "瞬移",
+        "传送",
+        "转身",
+        "迈步",
+        "步行",
+        "奔跑",
+        "冲刺",
+        "腾跃",
+        "跳跃",
+        "攀爬",
+        "降落",
     ]
 
     COMMON_CHARACTERS = [
-        "林夜", "苏琳", "莫言", "陈", "王",
-        "剑尘子", "星陨", "月华", "暗皇",
+        "林夜",
+        "苏琳",
+        "莫言",
+        "陈",
+        "王",
+        "剑尘子",
+        "星陨",
+        "月华",
+        "暗皇",
     ]
 
     def __init__(self):
         super().__init__(self._checker_type)
 
     def check(
-        self,
-        chapter_content: str,
-        chapter_num: int,
-        context: Optional[Dict[str, Any]] = None
+        self, chapter_content: str, chapter_num: int, context: Optional[Dict[str, Any]] = None
     ) -> List[Issue]:
         """
         检测空间突兀转移
@@ -77,7 +100,7 @@ class SpatialTransitionChecker(BaseChecker):
                 match_start = m.start()
 
                 # 获取匹配前的100个字符作为前文
-                before_text = chapter_content[max(0, match_start - 100):match_start]
+                before_text = chapter_content[max(0, match_start - 100) : match_start]
 
                 # 检查前文是否有过渡词
                 if self._has_transition_word(before_text):
@@ -92,20 +115,19 @@ class SpatialTransitionChecker(BaseChecker):
                     prev_location = character_locations[character]
 
                 # 创建问题
-                issues.append(self._create_issue(
-                    character=character or "未知角色",
-                    prev_location=prev_location or "未知地点",
-                    new_location=new_location,
-                    evidence=m.group(),
-                    chapter_num=chapter_num
-                ))
+                issues.append(
+                    self._create_issue(
+                        character=character or "未知角色",
+                        prev_location=prev_location or "未知地点",
+                        new_location=new_location,
+                        evidence=m.group(),
+                        chapter_num=chapter_num,
+                    )
+                )
 
         return issues
 
-    def _get_character_locations(
-        self,
-        context: Optional[Dict[str, Any]]
-    ) -> Dict[str, str]:
+    def _get_character_locations(self, context: Optional[Dict[str, Any]]) -> Dict[str, str]:
         """从context获取角色位置"""
         if not context:
             return {}
@@ -136,12 +158,7 @@ class SpatialTransitionChecker(BaseChecker):
         return None
 
     def _create_issue(
-        self,
-        character: str,
-        prev_location: str,
-        new_location: str,
-        evidence: str,
-        chapter_num: int
+        self, character: str, prev_location: str, new_location: str, evidence: str, chapter_num: int
     ) -> Issue:
         """创建空间转移问题"""
         return Issue(
@@ -153,5 +170,5 @@ class SpatialTransitionChecker(BaseChecker):
             description=f"角色'{character}'从'{prev_location}'直接出现在'{new_location}'，无过渡描述",
             location=IssueLocation(chapter=chapter_num),
             evidence=f"匹配: {evidence[:50]}",
-            suggestion="需要加入过渡描述（走过、穿过、来到等）"
+            suggestion="需要加入过渡描述（走过、穿过、来到等）",
         )

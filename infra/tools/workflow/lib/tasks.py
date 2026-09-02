@@ -6,6 +6,7 @@ v16.5 #N.4: drop direct ``import sqlite3``; use ``SqliteStorageAdapter``
 for connection management. The agent_tasks schema and CRUD queries
 are unchanged.
 """
+
 from datetime import datetime
 from typing import Dict, List, Optional
 
@@ -42,11 +43,14 @@ def dispatch_task(task_name: str, agent: str, desc: str = "") -> str:
     try:
         try:
             conn.execute("BEGIN IMMEDIATE")
-            conn.execute("""
+            conn.execute(
+                """
                 INSERT OR REPLACE INTO agent_tasks
                 (task_id, task_name, agent, status, dispatched_at, heartbeat_at, task_id_external, created_at)
                 VALUES (?, ?, ?, 'pending', ?, ?, NULL, ?)
-            """, (task_name, task_name, agent, timestamp, timestamp, timestamp))
+            """,
+                (task_name, task_name, agent, timestamp, timestamp, timestamp),
+            )
             conn.commit()
             task_id = task_name
         except Exception as e:
@@ -56,11 +60,7 @@ def dispatch_task(task_name: str, agent: str, desc: str = "") -> str:
         conn.close()
 
     # 触发事件
-    events._trigger_event("MANUAL_TRIGGER", {
-        "agent": agent,
-        "task": task_name,
-        "desc": desc
-    })
+    events._trigger_event("MANUAL_TRIGGER", {"agent": agent, "task": task_name, "desc": desc})
 
     return task_id
 
@@ -84,16 +84,19 @@ def verify_task(task_name: str, task_id: str, status: str = "completed") -> bool
     try:
         try:
             conn.execute("BEGIN IMMEDIATE")
-            conn.execute("""
+            conn.execute(
+                """
                 UPDATE agent_tasks
                 SET status = ?, heartbeat_at = ?, task_id_external = ?
                 WHERE task_id = ?
-            """, (status, timestamp, task_id, task_name))
+            """,
+                (status, timestamp, task_id, task_name),
+            )
             conn.commit()
             return True
         except Exception as e:
             conn.rollback()
-            print(f"ERROR: {e}", file=__import__('sys').stderr)
+            print(f"ERROR: {e}", file=__import__("sys").stderr)
             return False
     finally:
         conn.close()
@@ -112,10 +115,7 @@ def get_task_status(task_name: str) -> Optional[Dict]:
 
     conn = _open_conn()
     try:
-        cur = conn.execute(
-            "SELECT * FROM agent_tasks WHERE task_id = ?",
-            (task_name,)
-        )
+        cur = conn.execute("SELECT * FROM agent_tasks WHERE task_id = ?", (task_name,))
         row = cur.fetchone()
         return dict(row) if row else None
     finally:
@@ -137,8 +137,7 @@ def list_tasks(status: Optional[str] = None) -> List[Dict]:
     try:
         if status:
             cur = conn.execute(
-                "SELECT * FROM agent_tasks WHERE status = ? ORDER BY created_at DESC",
-                (status,)
+                "SELECT * FROM agent_tasks WHERE status = ? ORDER BY created_at DESC", (status,)
             )
         else:
             cur = conn.execute("SELECT * FROM agent_tasks ORDER BY created_at DESC")

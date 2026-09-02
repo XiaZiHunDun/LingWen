@@ -17,6 +17,7 @@ Doc 4 (GoT 适配设计 v1.0) §10 Phase 4: 决策面板 (Decision Panel)
 - 自动决策 (auto-decide on timeout) — Phase 4.5+
 - 决策历史回放 (audit log) — Phase 4.4
 """
+
 from __future__ import annotations
 
 import json
@@ -36,25 +37,26 @@ logger = logging.getLogger(__name__)
 
 # === Enums ===
 
+
 class DecisionKind(str, Enum):
     """7 种决策点类型 (per Doc 4 §10)"""
 
-    OUTLINE_JUDGMENT = "outline_judgment"               # 大纲审核
-    VOLUME_JUDGMENT = "volume_judgment"                 # 卷/阶段定稿
+    OUTLINE_JUDGMENT = "outline_judgment"  # 大纲审核
+    VOLUME_JUDGMENT = "volume_judgment"  # 卷/阶段定稿
     CHAPTER_ITERATION_JUDGMENT = "chapter_iteration_judgment"  # 章节迭代
-    PUBLISH_JUDGMENT = "publish_judgment"               # 发布定级
-    SUBPLOT_OPEN = "subplot_open"                       # 支线开
-    SUBPLOT_CLOSE = "subplot_close"                     # 支线收
-    STYLE_PICK = "style_pick"                           # 风格/角色挑选
+    PUBLISH_JUDGMENT = "publish_judgment"  # 发布定级
+    SUBPLOT_OPEN = "subplot_open"  # 支线开
+    SUBPLOT_CLOSE = "subplot_close"  # 支线收
+    STYLE_PICK = "style_pick"  # 风格/角色挑选
 
 
 class DecisionStatus(str, Enum):
     """决策状态机 (4 终态)"""
 
-    PENDING = "pending"           # 等待人工
-    RESOLVED = "resolved"         # 已决定 (terminal)
-    DEFERRED = "deferred"         # 推迟 (re-activatable, 暂视作 terminal 排除 pending)
-    CANCELLED = "cancelled"       # 取消 (terminal)
+    PENDING = "pending"  # 等待人工
+    RESOLVED = "resolved"  # 已决定 (terminal)
+    DEFERRED = "deferred"  # 推迟 (re-activatable, 暂视作 terminal 排除 pending)
+    CANCELLED = "cancelled"  # 取消 (terminal)
 
 
 # 终态集合 (不再参与 pending 排序)
@@ -62,6 +64,7 @@ _TERMINAL_STATUSES = {DecisionStatus.RESOLVED, DecisionStatus.CANCELLED}
 
 
 # === HumanDecision dataclass ===
+
 
 @dataclass(frozen=True)
 class HumanDecision:
@@ -139,6 +142,7 @@ class HumanDecision:
 
 # === Factory ===
 
+
 def create_decision(
     decision_kind: DecisionKind,
     node_id: str,
@@ -174,6 +178,7 @@ def create_decision(
 
 
 # === HumanDecisionQueue ===
+
 
 class HumanDecisionQueue:
     """人工决策队列 — 内存 + 可选 JSON 持久化
@@ -246,10 +251,7 @@ class HumanDecisionQueue:
         1. priority 越大越前
         2. 同 priority: due_at 越小越前 (None 排最后)
         """
-        pending = [
-            d for d in self._decisions.values()
-            if d.status == DecisionStatus.PENDING
-        ]
+        pending = [d for d in self._decisions.values() if d.status == DecisionStatus.PENDING]
         return sorted(
             pending,
             key=lambda d: (
@@ -298,13 +300,9 @@ class HumanDecisionQueue:
         """
         current = self.get(decision_id)
         if current.status != DecisionStatus.PENDING:
-            raise ValueError(
-                f"decision {decision_id!r} is {current.status.value}, cannot resolve"
-            )
+            raise ValueError(f"decision {decision_id!r} is {current.status.value}, cannot resolve")
         if current.options and option not in current.options:
-            raise ValueError(
-                f"option {option!r} not in {list(current.options)}"
-            )
+            raise ValueError(f"option {option!r} not in {list(current.options)}")
         updated = HumanDecision(
             decision_id=current.decision_id,
             decision_kind=current.decision_kind,
@@ -332,9 +330,7 @@ class HumanDecisionQueue:
         """推迟决策 (PENDING → DEFERRED)"""
         current = self.get(decision_id)
         if current.status != DecisionStatus.PENDING:
-            raise ValueError(
-                f"decision {decision_id!r} is {current.status.value}, cannot defer"
-            )
+            raise ValueError(f"decision {decision_id!r} is {current.status.value}, cannot defer")
         updated = HumanDecision(
             decision_id=current.decision_id,
             decision_kind=current.decision_kind,
@@ -358,9 +354,7 @@ class HumanDecisionQueue:
         """取消决策 (任意状态 → CANCELLED)"""
         current = self.get(decision_id)
         if current.status in _TERMINAL_STATUSES:
-            raise ValueError(
-                f"decision {decision_id!r} is already {current.status.value}"
-            )
+            raise ValueError(f"decision {decision_id!r} is already {current.status.value}")
         updated = HumanDecision(
             decision_id=current.decision_id,
             decision_kind=current.decision_kind,

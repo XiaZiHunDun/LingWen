@@ -8,6 +8,7 @@ parameter typing (no direct sqlite3 import). The SqliteStorageAdapter
 already sets ``row_factory = sqlite3.Row`` and ``PRAGMA foreign_keys = ON``;
 callers do not need to set them again.
 """
+
 from pathlib import Path
 
 from lingwen_shared.ports.storage import ConnectionPort

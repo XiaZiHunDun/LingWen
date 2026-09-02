@@ -30,10 +30,7 @@ class DialogueScorer(BaseScorer):
         if not dialogues:
             score -= 20
             reasons.append("缺少对话内容")
-            return ScoredResult(
-                score=max(0, min(100, score)),
-                reason="; ".join(reasons)
-            )
+            return ScoredResult(score=max(0, min(100, score)), reason="; ".join(reasons))
 
         # 检查对话数量
         dialogue_ratio = len(" ".join(dialogues)) / len(content)
@@ -64,10 +61,7 @@ class DialogueScorer(BaseScorer):
         # 限制分数范围
         score = max(0, min(100, score))
 
-        return ScoredResult(
-            score=score,
-            reason="; ".join(reasons) if reasons else "对话质量评分完成"
-        )
+        return ScoredResult(score=score, reason="; ".join(reasons) if reasons else "对话质量评分完成")
 
     def _extract_dialogues(self, content: str) -> List[str]:
         """提取对话内容"""
@@ -105,10 +99,7 @@ class DialogueScorer(BaseScorer):
         """检查是否揭示角色信息"""
         # 检查对话中是否包含角色背景、情感、意图
         revelation_markers = ["因为", "所以", "我想", "我感觉", "其实"]
-        return any(
-            any(marker in dialogue for marker in revelation_markers)
-            for dialogue in dialogues
-        )
+        return any(any(marker in dialogue for marker in revelation_markers) for dialogue in dialogues)
 
     def _check_information_content(self, dialogues: List[str]) -> bool:
         """检查对话是否有信息量"""

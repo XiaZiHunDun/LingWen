@@ -5,6 +5,7 @@ typed as ``ConnectionPort`` (from ``lingwen_shared.ports.storage``). The
 ``apply_schema`` function still calls ``conn.execute(stmt)`` directly,
 which works for any backend that conforms to ``ConnectionPort``.
 """
+
 from lingwen_shared.ports.storage import ConnectionPort
 
 SCHEMAS: dict[str, list[str]] = {

@@ -7,13 +7,14 @@ Agent系统端到端测试
 2. Agent间数据传递和状态共享
 3. 社交引擎关系追踪
 """
+
 import os
 import sys
 import tempfile
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
 from lingwen_core.agents.social_engine.event_effect_calculator import EventEffectCalculator
 from lingwen_core.agents.social_engine.relationship_tracker import RelationshipTracker
@@ -50,8 +51,7 @@ class TestCompleteWorkflow:
         """测试完整工作流基本路径"""
         # 1. 生成大纲
         outline = self.controller.generate_outline(
-            settings={"title": "测试小说", "genre": "玄幻"},
-            requirements={"total_chapters": 10}
+            settings={"title": "测试小说", "genre": "玄幻"}, requirements={"total_chapters": 10}
         )
         assert outline["title"] == "测试小说"
         assert len(outline["chapters"]) == 10
@@ -65,7 +65,7 @@ class TestCompleteWorkflow:
                 "first_appearance": 1,
                 "background": "普通少年",
                 "abilities": ["剑法"],
-                "voice_pattern": "简洁"
+                "voice_pattern": "简洁",
             },
             {
                 "name": "莫言",
@@ -74,8 +74,8 @@ class TestCompleteWorkflow:
                 "first_appearance": 1,
                 "background": "魔教长老",
                 "abilities": ["暗器"],
-                "voice_pattern": "阴冷"
-            }
+                "voice_pattern": "阴冷",
+            },
         ]
         characters = self.controller.generate_characters(outline, character_reqs)
         assert len(characters) == 2
@@ -92,7 +92,7 @@ class TestCompleteWorkflow:
             characters=characters,
             memory_context=memory_context,
             style_guide=style_guide,
-            use_llm=True  # LLM mode returns content
+            use_llm=True,  # LLM mode returns content
         )
         # LLM模式返回content和word_count，fallback模式返回prompt
         if "content" in write_result:
@@ -108,10 +108,7 @@ class TestCompleteWorkflow:
         # 4. 审核章节
         chapter_content = "铁蛋冷静地站在原地，莫言阴险地笑着。铁蛋突然暴怒起来，这不符合他冷静的性格。"
         audit_result = self.controller.audit_chapter(
-            chapter_num=1,
-            content=chapter_content,
-            characters=characters,
-            timeline=[]
+            chapter_num=1, content=chapter_content, characters=characters, timeline=[]
         )
         assert "issues" in audit_result
         assert len(audit_result["issues"]) >= 1
@@ -126,31 +123,33 @@ class TestCompleteWorkflow:
         """测试Agent间数据传递和状态共享"""
         # 1. 生成大纲
         outline = self.controller.generate_outline(
-            settings={"title": "数据传递测试", "genre": "都市"},
-            requirements={"total_chapters": 5}
+            settings={"title": "数据传递测试", "genre": "都市"}, requirements={"total_chapters": 5}
         )
 
         # 2. 生成角色（使用"冷静"性格，因opposite_words中有对应反义词）
-        characters = self.controller.generate_characters(outline, [
-            {
-                "name": "林夜",
-                "role": "protagonist",
-                "personality": ["冷静", "务实"],
-                "first_appearance": 1,
-                "background": "公司职员",
-                "abilities": [],
-                "voice_pattern": "简洁"
-            },
-            {
-                "name": "苏晴",
-                "role": "supporting",
-                "personality": ["温柔", "细心"],
-                "first_appearance": 1,
-                "background": "医生",
-                "abilities": ["医术"],
-                "voice_pattern": "柔和"
-            }
-        ])
+        characters = self.controller.generate_characters(
+            outline,
+            [
+                {
+                    "name": "林夜",
+                    "role": "protagonist",
+                    "personality": ["冷静", "务实"],
+                    "first_appearance": 1,
+                    "background": "公司职员",
+                    "abilities": [],
+                    "voice_pattern": "简洁",
+                },
+                {
+                    "name": "苏晴",
+                    "role": "supporting",
+                    "personality": ["温柔", "细心"],
+                    "first_appearance": 1,
+                    "background": "医生",
+                    "abilities": ["医术"],
+                    "voice_pattern": "柔和",
+                },
+            ],
+        )
 
         # 3. 验证角色数据被正确生成
         protagonist = next(c for c in characters if c["role"] == "protagonist")
@@ -159,11 +158,7 @@ class TestCompleteWorkflow:
 
         # 4. 使用角色数据写章节
         write_result = self.controller.write_chapter(
-            chapter_num=1,
-            outline=outline,
-            characters=characters,
-            memory_context={},
-            style_guide={}
+            chapter_num=1, outline=outline, characters=characters, memory_context={}, style_guide={}
         )
 
         # 5. 验证上下文包含角色信息
@@ -176,18 +171,13 @@ class TestCompleteWorkflow:
         # opposite_words中"冷静"对应"暴怒"、"疯狂"、"失控"
         content_with_inconsistency = "林夜是个冷静的人，但他在关键时刻突然暴怒起来。"
         audit_result = self.controller.audit_chapter(
-            chapter_num=1,
-            content=content_with_inconsistency,
-            characters=characters,
-            timeline=[]
+            chapter_num=1, content=content_with_inconsistency, characters=characters, timeline=[]
         )
         assert len(audit_result["issues"]) >= 1
 
     def test_social_engine_relationship_tracking(self):
         """测试社交引擎关系追踪"""
-        tracker = RelationshipTracker(
-            os.path.join(self.state_dir, "relationships.json")
-        )
+        tracker = RelationshipTracker(os.path.join(self.state_dir, "relationships.json"))
 
         # 1. 添加角色
         tracker.add_character("铁蛋", "protagonist")
@@ -226,9 +216,7 @@ class TestCompleteWorkflow:
 
     def test_event_affects_relationship(self):
         """测试事件对关系的影响"""
-        tracker = RelationshipTracker(
-            os.path.join(self.state_dir, "relationships.json")
-        )
+        tracker = RelationshipTracker(os.path.join(self.state_dir, "relationships.json"))
         calculator = EventEffectCalculator()
 
         # 1. 初始化角色和关系（使用ally关系以支持对称更新）
@@ -271,29 +259,27 @@ class TestCompleteWorkflow:
 
         # 2. 生成大纲和角色
         outline = self.controller.generate_outline(
-            settings={"title": "上下文整合测试", "genre": "玄幻"},
-            requirements={"total_chapters": 3}
+            settings={"title": "上下文整合测试", "genre": "玄幻"}, requirements={"total_chapters": 3}
         )
-        characters = self.controller.generate_characters(outline, [
-            {
-                "name": "铁蛋",
-                "role": "protagonist",
-                "personality": ["冷静"],
-                "first_appearance": 1,
-                "background": "少年",
-                "abilities": ["剑法"],
-                "voice_pattern": "简洁"
-            }
-        ])
+        characters = self.controller.generate_characters(
+            outline,
+            [
+                {
+                    "name": "铁蛋",
+                    "role": "protagonist",
+                    "personality": ["冷静"],
+                    "first_appearance": 1,
+                    "background": "少年",
+                    "abilities": ["剑法"],
+                    "voice_pattern": "简洁",
+                }
+            ],
+        )
 
         # 3. 带有伏笔和最近事件的memory_context
         memory_context = {
-            "pending_foreshadows": [
-                {"type": "mystery", "hint": "神秘剑客", "chapter": 1}
-            ],
-            "recent_events": [
-                {"type": "battle", "chapter": 1}
-            ]
+            "pending_foreshadows": [{"type": "mystery", "hint": "神秘剑客", "chapter": 1}],
+            "recent_events": [{"type": "battle", "chapter": 1}],
         }
 
         # 4. 写章节
@@ -302,7 +288,7 @@ class TestCompleteWorkflow:
             outline=outline,
             characters=characters,
             memory_context=memory_context,
-            style_guide={"tone": "紧张"}
+            style_guide={"tone": "紧张"},
         )
 
         # 5. 验证上下文整合
@@ -375,35 +361,34 @@ class TestCompleteWorkflow:
         """测试审核时时间线验证"""
         # 1. 生成大纲和角色
         outline = self.controller.generate_outline(
-            settings={"title": "时间线测试", "genre": "穿越"},
-            requirements={"total_chapters": 10}
+            settings={"title": "时间线测试", "genre": "穿越"}, requirements={"total_chapters": 10}
         )
-        characters = self.controller.generate_characters(outline, [
-            {
-                "name": "铁蛋",
-                "role": "protagonist",
-                "personality": ["冷静"],
-                "first_appearance": 1,
-                "background": "现代人",
-                "abilities": ["知识"],
-                "voice_pattern": "现代"
-            }
-        ])
+        characters = self.controller.generate_characters(
+            outline,
+            [
+                {
+                    "name": "铁蛋",
+                    "role": "protagonist",
+                    "personality": ["冷静"],
+                    "first_appearance": 1,
+                    "background": "现代人",
+                    "abilities": ["知识"],
+                    "voice_pattern": "现代",
+                }
+            ],
+        )
 
         # 2. 定义时间线
         timeline = [
             {"chapter": 1, "event": "穿越"},
             {"chapter": 2, "event": "遇到林夜"},
-            {"chapter": 3, "event": "学习剑法"}
+            {"chapter": 3, "event": "学习剑法"},
         ]
 
         # 3. 审核一致性内容（应该无问题）
         consistent_content = "铁蛋在第三章学习了剑法，这是他穿越后的第三个月。"
         audit_result = self.controller.audit_chapter(
-            chapter_num=3,
-            content=consistent_content,
-            characters=characters,
-            timeline=timeline
+            chapter_num=3, content=consistent_content, characters=characters, timeline=timeline
         )
         # 时间线顺序正确时，不应有严重问题
         assert "issues" in audit_result
@@ -411,21 +396,12 @@ class TestCompleteWorkflow:
         # 4. 审核矛盾内容
         inconsistent_content = "铁蛋在第一章就学会了剑法，但根据时间线他第三章才学习。"
         audit_result_2 = self.controller.audit_chapter(
-            chapter_num=4,
-            content=inconsistent_content,
-            characters=characters,
-            timeline=timeline
+            chapter_num=4, content=inconsistent_content, characters=characters, timeline=timeline
         )
         # LLM 产出条数/严重度会波动，断言语义而非数量对比
         assert len(audit_result_2["issues"]) >= 1
-        issue_blob = " ".join(
-            f"{i.get('type', '')} {i.get('issue', '')}"
-            for i in audit_result_2["issues"]
-        )
-        assert any(
-            kw in issue_blob
-            for kw in ("时间线", "逻辑", "矛盾", "第一章", "第三章")
-        )
+        issue_blob = " ".join(f"{i.get('type', '')} {i.get('issue', '')}" for i in audit_result_2["issues"])
+        assert any(kw in issue_blob for kw in ("时间线", "逻辑", "矛盾", "第一章", "第三章"))
 
     def test_polisher_dialogue_optimization(self):
         """测试润色器对话优化"""
@@ -458,7 +434,7 @@ class TestContextBuilderIntegration:
             characters=[{"name": "铁蛋", "personality": ["冷静"]}],
             memory_context={},
             relationship_network={"characters": [], "relationships": [], "events": []},
-            style_guide={"tone": "简洁"}
+            style_guide={"tone": "简洁"},
         )
 
         assert context["chapter_outline"]["num"] == 1
@@ -474,7 +450,7 @@ class TestContextBuilderIntegration:
         memory_context = {
             "pending_foreshadows": [
                 {"type": "mystery", "hint": "神秘剑客"},
-                {"type": "romance", "hint": "前世姻缘"}
+                {"type": "romance", "hint": "前世姻缘"},
             ]
         }
 
@@ -482,7 +458,7 @@ class TestContextBuilderIntegration:
             chapter_outline={"num": 5, "title": "第五章", "events": [], "word_count_target": 2000},
             characters=[],
             memory_context=memory_context,
-            relationship_network={"characters": [], "relationships": [], "events": []}
+            relationship_network={"characters": [], "relationships": [], "events": []},
         )
 
         assert len(context["active_foreshadow"]) == 2

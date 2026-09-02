@@ -3,6 +3,7 @@
 Migrated from infra/creator_template_approvals.py in Phase 126 v16.2.1.
 New location: packages/lingwen-creator/src/lingwen_creator/volume/template_approvals.py
 """
+
 from __future__ import annotations
 
 import json
@@ -402,10 +403,7 @@ def list_template_approval_history(
         if str(row.get("status", "")).lower() in {"approved", "rejected"}
     ]
     chain_cfg = _approval_chain_config(project_root)
-    return [
-        _public_approval_row(row, include_chain_log=True, chain_cfg=chain_cfg)
-        for row in rows[:limit]
-    ]
+    return [_public_approval_row(row, include_chain_log=True, chain_cfg=chain_cfg) for row in rows[:limit]]
 
 
 def _approval_chain_config(project_root: Path | str) -> dict[str, Any]:
@@ -426,9 +424,8 @@ def _notify_approval_event(
     except Exception:
         pass
     sla = load_approval_sla_config(project_root)
-    send_email = (
-        (event == "submitted" and sla.get("email_on_submit"))
-        or (event == "rejected" and sla.get("email_on_reject"))
+    send_email = (event == "submitted" and sla.get("email_on_submit")) or (
+        event == "rejected" and sla.get("email_on_reject")
     )
     if send_email:
         try:
@@ -468,8 +465,7 @@ def approve_template_approval(
     drift = check_approval_snapshot_drift(project_root, approval_id)
     if drift.get("drifted") and not force:
         raise ValueError(
-            "approval volumes snapshot drifted from current template; "
-            "re-submit approval or pass force=true",
+            "approval volumes snapshot drifted from current template; re-submit approval or pass force=true",
         )
     store = _load_store(project_root)
     aid = str(approval_id).strip()
@@ -561,7 +557,14 @@ def batch_approve_template_approvals(
                 resolve_note=resolve_note,
                 force=force,
             )
-            results.append({"id": aid, "ok": True, "status": row.get("status"), "chain_advanced": row.get("chain_advanced")})
+            results.append(
+                {
+                    "id": aid,
+                    "ok": True,
+                    "status": row.get("status"),
+                    "chain_advanced": row.get("chain_advanced"),
+                }
+            )
         except ValueError as exc:
             results.append({"id": aid, "ok": False, "error": str(exc)})
     approved = sum(1 for row in results if row.get("ok"))

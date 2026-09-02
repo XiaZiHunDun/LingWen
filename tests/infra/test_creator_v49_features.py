@@ -1,4 +1,5 @@
 """Tests for creator v4.9 inline dismiss, deviation-summary link, issue keyboard nav."""
+
 from __future__ import annotations
 
 from lingwen_creator.content.ui_profile import resolve_creator_ui_profile

@@ -59,6 +59,7 @@ def test_settings_merge_preferences_module_exists():
 def test_settings_package_layout():
     """All 3 modules must be importable via package."""
     from lingwen_creator.settings import docs, history, merge_preferences
+
     assert docs.__file__.endswith("settings/docs.py")
     assert history.__file__.endswith("settings/history.py")
     assert merge_preferences.__file__.endswith("settings/merge_preferences.py")
@@ -87,11 +88,12 @@ def test_settings_no_stale_infra_imports():
     All OTHER infra imports are stale and should fail this test.
     """
     import subprocess
+
     # Wider grep to catch indented lazy imports too (the exact pattern H1 missed)
     result = subprocess.run(
-        ["grep", "-rn", "from infra.creator_",
-         "packages/lingwen-creator/src/lingwen_creator/settings/"],
-        capture_output=True, text=True,
+        ["grep", "-rn", "from infra.creator_", "packages/lingwen-creator/src/lingwen_creator/settings/"],
+        capture_output=True,
+        text=True,
     )
     lines = [line for line in result.stdout.split("\n") if line.strip()]
     # Allowlist the 4 known-intentional lazy imports (function-body circular-dep avoidance)
@@ -102,6 +104,4 @@ def test_settings_no_stale_infra_imports():
         "packages/lingwen-creator/src/lingwen_creator/settings/history.py:97:",
     }
     stale = [line for line in lines if not any(line.startswith(a) for a in allowed)]
-    assert stale == [], (
-        "Found stale infra imports (not in allowlist):\n" + "\n".join(stale)
-    )
+    assert stale == [], "Found stale infra imports (not in allowlist):\n" + "\n".join(stale)

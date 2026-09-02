@@ -8,6 +8,7 @@ Phase 18.2 — 章节审核用例。
 
 execute() 返回 ChapterReviewedEvent，payload 含 issue_count + issues 列表。
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

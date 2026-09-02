@@ -6,13 +6,14 @@ Locks down:
 - build_router respects primary_provider from config
 - build_social_engine derives relationship_state_file from state_dir
 """
+
 import os
 import sys
 from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
 from lingwen_core.agents.agent_config import (
     MasterControllerConfig,

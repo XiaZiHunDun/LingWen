@@ -1,4 +1,5 @@
 """Phase 12.09: pytest baseline >= 3000 collected."""
+
 from __future__ import annotations
 
 import subprocess

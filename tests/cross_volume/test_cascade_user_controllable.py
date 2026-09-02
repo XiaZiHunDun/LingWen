@@ -1,4 +1,5 @@
 """Phase 9.19: user-controllable cascade depth tests."""
+
 from __future__ import annotations
 
 import pytest
@@ -27,8 +28,12 @@ def cvg_storage(tmp_path):
     g.add_edge(ReferenceEdge(id="e23", from_node_id="n2", to_node_id="n3"))
     storage._graph = g
     ripple = CrossVolumeRipple(
-        id="rip-1", trigger_volume=1, trigger_chapter=1,
-        affected_nodes=("n1",), affected_edges=(), proposed_actions=(),
+        id="rip-1",
+        trigger_volume=1,
+        trigger_chapter=1,
+        affected_nodes=("n1",),
+        affected_edges=(),
+        proposed_actions=(),
         status="pending",
     )
     storage.append_ripple(ripple)
@@ -45,6 +50,7 @@ class TestPreviewCascade:
     def test_preview_cascade_no_persist(self, cvg_storage):
         """Calling preview_cascade does NOT write to ripple_cascade table."""
         import sqlite3
+
         cvg_storage.preview_cascade("rip-1", max_depth=1)
         with cvg_storage._connect() as conn:
             rows = conn.execute(

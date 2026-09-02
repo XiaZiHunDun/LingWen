@@ -3,6 +3,7 @@
 
 Phase 9.15: trigger_cascade stub replaced with real BFS (CascadedRipple).
 """
+
 from dataclasses import FrozenInstanceError
 
 import pytest

@@ -17,22 +17,24 @@ PERFORMANCE_PATH = CONTEXT_DIR / "checker_performance.json"
 
 # 误报率阈值
 FALSE_POSITIVE_RATE_THRESHOLD = 0.3  # 30% 误报率阈值
-CONFIDENCE_WEIGHT_THRESHOLD = 0.6   # 置信度权重阈值
+CONFIDENCE_WEIGHT_THRESHOLD = 0.6  # 置信度权重阈值
 
 
 @dataclass
 class InspectionResult:
     """自检结果"""
+
     checker_type: str
     false_positive_rate: float
     avg_confidence_score: float
     total_issues: int
     recommendations: List[str]  # 建议列表
-    should_auto_fix: bool      # 是否应自动修复
+    should_auto_fix: bool  # 是否应自动修复
 
 
 class CheckerInspector:
     """检查器自检器（单例）"""
+
     _instance = None
 
     def __new__(cls):
@@ -62,23 +64,19 @@ class CheckerInspector:
         if not PERFORMANCE_PATH.exists():
             return self._default_performance()
         try:
-            with open(PERFORMANCE_PATH, 'r', encoding='utf-8') as f:
+            with open(PERFORMANCE_PATH, "r", encoding="utf-8") as f:
                 return json.load(f)
         except (json.JSONDecodeError, OSError, IOError) as e:
             logging.warning(f"Failed to load performance data: {e}")
             return self._default_performance()
 
     def _default_performance(self) -> Dict[str, Any]:
-        return {
-            "checkers": {},
-            "last_full_inspection": None,
-            "auto_fix_enabled": True
-        }
+        return {"checkers": {}, "last_full_inspection": None, "auto_fix_enabled": True}
 
     def _save_performance(self):
         """保存性能数据"""
         PERFORMANCE_PATH.parent.mkdir(exist_ok=True)
-        with open(PERFORMANCE_PATH, 'w', encoding='utf-8') as f:
+        with open(PERFORMANCE_PATH, "w", encoding="utf-8") as f:
             json.dump(self.performance_data, f, ensure_ascii=False, indent=2)
 
     def record_issue_result(self, checker_type: str, is_false_positive: bool, confidence_score: float = 0.5):
@@ -90,7 +88,7 @@ class CheckerInspector:
                 "true_positive_count": 0,
                 "false_positive_rate": 0.0,
                 "avg_confidence_score": 0.5,
-                "last_updated": None
+                "last_updated": None,
             }
 
         stats = self.performance_data["checkers"][checker_type]
@@ -126,7 +124,7 @@ class CheckerInspector:
                 avg_confidence_score=0.5,
                 total_issues=0,
                 recommendations=["无数据"],
-                should_auto_fix=False
+                should_auto_fix=False,
             )
 
         fp_rate = stats.get("false_positive_rate", 0.0)
@@ -138,12 +136,16 @@ class CheckerInspector:
 
         # 检查误报率阈值
         if fp_rate > FALSE_POSITIVE_RATE_THRESHOLD:
-            recommendations.append(f"误报率 {fp_rate:.1%} 超过阈值 {FALSE_POSITIVE_RATE_THRESHOLD:.1%}，建议加入白名单")
+            recommendations.append(
+                f"误报率 {fp_rate:.1%} 超过阈值 {FALSE_POSITIVE_RATE_THRESHOLD:.1%}，建议加入白名单"
+            )
             should_auto_fix = True
 
         # 检查置信度分数
         if avg_confidence < CONFIDENCE_WEIGHT_THRESHOLD:
-            recommendations.append(f"平均置信度 {avg_confidence:.2f} 低于阈值 {CONFIDENCE_WEIGHT_THRESHOLD:.2f}，降低灵敏度")
+            recommendations.append(
+                f"平均置信度 {avg_confidence:.2f} 低于阈值 {CONFIDENCE_WEIGHT_THRESHOLD:.2f}，降低灵敏度"
+            )
 
         # 检查绝对数量
         if stats.get("false_positive_count", 0) > 10:
@@ -155,7 +157,7 @@ class CheckerInspector:
             avg_confidence_score=avg_confidence,
             total_issues=total,
             recommendations=recommendations,
-            should_auto_fix=should_auto_fix
+            should_auto_fix=should_auto_fix,
         )
 
     def inspect_all_checkers(self) -> List[InspectionResult]:
@@ -174,9 +176,11 @@ class CheckerInspector:
         recommendations = []
         for result in self.inspect_all_checkers():
             if result.should_auto_fix:
-                recommendations.append({
-                    "checker_type": result.checker_type,
-                    "false_positive_rate": result.false_positive_rate,
-                    "recommendations": result.recommendations
-                })
+                recommendations.append(
+                    {
+                        "checker_type": result.checker_type,
+                        "false_positive_rate": result.false_positive_rate,
+                        "recommendations": result.recommendations,
+                    }
+                )
         return recommendations

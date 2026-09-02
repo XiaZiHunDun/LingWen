@@ -6,6 +6,7 @@ v16.5 #N.4: drop direct ``import sqlite3``; use ``SqliteStorageAdapter``
 for connection management. The JSON fallback path and step-transition
 validator are unchanged.
 """
+
 import json
 import logging
 import sys
@@ -51,14 +52,11 @@ def get_state(key: str, fallback: str = "") -> str:
         # R3-003: 显式 BEGIN 让读事务与写事务 (BEGIN IMMEDIATE) 互斥
         conn.execute("BEGIN")
         try:
-            cur = conn.execute(
-                "SELECT value FROM workflow_state WHERE key = ?",
-                (key,)
-            )
+            cur = conn.execute("SELECT value FROM workflow_state WHERE key = ?", (key,))
             row = cur.fetchone()
             conn.commit()  # 释放 SHARED 锁
-            if row and row['value']:
-                return row['value']
+            if row and row["value"]:
+                return row["value"]
         except Exception:
             try:
                 conn.rollback()
@@ -73,12 +71,12 @@ def get_state(key: str, fallback: str = "") -> str:
     # SQLite无数据时fallback到JSON
     if db.WORKFLOW_FILE.exists():
         try:
-            with open(db.WORKFLOW_FILE, 'r', encoding='utf-8') as f:
+            with open(db.WORKFLOW_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
             val = data
-            for k in key.split('.'):
-                if k == '':
+            for k in key.split("."):
+                if k == "":
                     continue
                 if k.isdigit() and isinstance(val, list):
                     val = val[int(k)]
@@ -111,10 +109,13 @@ def set_state(key: str, value: str) -> bool:
         conn.execute("PRAGMA journal_mode=WAL")
         try:
             conn.execute("BEGIN IMMEDIATE")
-            conn.execute("""
+            conn.execute(
+                """
                 INSERT OR REPLACE INTO workflow_state (key, value, updated_at)
                 VALUES (?, ?, CURRENT_TIMESTAMP)
-            """, (key, value))
+            """,
+                (key, value),
+            )
             conn.commit()
             return True
         except Exception as e:
@@ -139,12 +140,12 @@ def get_json(key: str, fallback: Any = None) -> Any:
         return fallback
 
     try:
-        with open(db.WORKFLOW_FILE, 'r', encoding='utf-8') as f:
+        with open(db.WORKFLOW_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
 
         val = data
-        for k in key.split('.'):
-            if k == '':
+        for k in key.split("."):
+            if k == "":
                 continue
             if k.isdigit() and isinstance(val, list):
                 val = val[int(k)]
@@ -186,21 +187,18 @@ def advance_step(target_step: str) -> Tuple[bool, str]:
     set_state("current_step", target_step)
 
     # 触发事件
-    events._trigger_event("STEP_COMPLETED", {
-        "step": target_step,
-        "previous_step": current_step
-    })
-    events._trigger_event("state_updated", {
-        "key": "current_step",
-        "value": target_step
-    })
+    events._trigger_event("STEP_COMPLETED", {"step": target_step, "previous_step": current_step})
+    events._trigger_event("state_updated", {"key": "current_step", "value": target_step})
 
     # STEP_17完成时触发强制验证闭环事件
-    if target_step == 'STEP_17':
-        events._trigger_event("STEP_17_COMPLETED", {
-            "step": "STEP_17",
-            "previous_step": current_step,
-            "verify_result": None  # 初始为null，等待验证
-        })
+    if target_step == "STEP_17":
+        events._trigger_event(
+            "STEP_17_COMPLETED",
+            {
+                "step": "STEP_17",
+                "previous_step": current_step,
+                "verify_result": None,  # 初始为null，等待验证
+            },
+        )
 
     return True, f"Advanced to {target_step}"

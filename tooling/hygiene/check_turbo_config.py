@@ -3,6 +3,7 @@
 Validates that turbo.json schema and root package.json scripts are coherent.
 Pure structural check — does NOT execute turbo.
 """
+
 from __future__ import annotations
 
 import json

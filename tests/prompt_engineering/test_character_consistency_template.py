@@ -2,6 +2,7 @@
 
 Doc 2 §5 SCENARIOS:character_consistency 是 auditor scenario,抽检角色一致性。
 """
+
 from __future__ import annotations
 
 from lingwen_prompt.templates import (

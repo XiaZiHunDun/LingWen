@@ -12,6 +12,7 @@ LLMTask/TaskType to lingwen_shared and using a factory for the default
 service. Future regressions that reintroduce any of these patterns
 should fail this check.
 """
+
 from __future__ import annotations
 
 import re
@@ -37,8 +38,7 @@ def check_static_import() -> list[str]:
     text = _read()
     pattern = re.compile(r"^\s*from\s+infra\.llm_service\s+import\s+", re.MULTILINE)
     return [
-        f"port_adapter.py:{m.start()}: forbidden static import "
-        f"`from infra.llm_service import ...`"
+        f"port_adapter.py:{m.start()}: forbidden static import `from infra.llm_service import ...`"
         for m in pattern.finditer(text)
     ]
 
@@ -52,8 +52,7 @@ def check_string_concat_evasion() -> list[str]:
         re.MULTILINE,
     )
     return [
-        f"port_adapter.py:{m.start()}: forbidden string-concat "
-        f"dynamic import of infra.llm_service"
+        f"port_adapter.py:{m.start()}: forbidden string-concat dynamic import of infra.llm_service"
         for m in pattern.finditer(text)
     ]
 
@@ -80,11 +79,7 @@ def check_pep562_re_export() -> list[str]:
 
 
 def main() -> int:
-    findings = (
-        check_static_import()
-        + check_string_concat_evasion()
-        + check_pep562_re_export()
-    )
+    findings = check_static_import() + check_string_concat_evasion() + check_pep562_re_export()
     if findings:
         print("FAIL: grimp-evasion regression detected in port_adapter.py:")
         for f in findings:

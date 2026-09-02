@@ -19,6 +19,7 @@ Usage:
 公共 API 表面保持向后兼容: 所有原 lib.py 顶层符号仍然可从
 `from infra.tools.workflow.lib import ...` 访问。
 """
+
 # 路径常量（测试通过 monkeypatch 修改）
 # 批量
 from .batch import batch_dispatch_reviewer, batch_dispatch_writer
@@ -57,21 +58,38 @@ from .tasks import dispatch_task, get_task_status, list_tasks, verify_task
 
 __all__ = [
     # 常量
-    "DB_DIR", "DB_PATH", "LOCKFILE", "PROJECT_ROOT", "WORKFLOW_FILE",
+    "DB_DIR",
+    "DB_PATH",
+    "LOCKFILE",
+    "PROJECT_ROOT",
+    "WORKFLOW_FILE",
     # 数据库
     "init_sqlite",
     # 锁
-    "_acquire_lock", "_release_lock",
+    "_acquire_lock",
+    "_release_lock",
     # 状态
-    "advance_step", "get_json", "get_state", "set_state",
+    "advance_step",
+    "get_json",
+    "get_state",
+    "set_state",
     # 任务
-    "dispatch_task", "get_task_status", "list_tasks", "verify_task",
+    "dispatch_task",
+    "get_task_status",
+    "list_tasks",
+    "verify_task",
     # 断点
-    "create_checkpoint", "delete_checkpoint", "list_checkpoints", "restore_checkpoint",
+    "create_checkpoint",
+    "delete_checkpoint",
+    "list_checkpoints",
+    "restore_checkpoint",
     # 事件
-    "_get_hook_engine", "_trigger_event", "trigger_event",
+    "_get_hook_engine",
+    "_trigger_event",
+    "trigger_event",
     # 批量
-    "batch_dispatch_reviewer", "batch_dispatch_writer",
+    "batch_dispatch_reviewer",
+    "batch_dispatch_writer",
     # 迁移
     "migrate_json_to_sqlite",
 ]
@@ -82,7 +100,9 @@ if __name__ == "__main__":
 
     if len(sys.argv) < 2:
         print("Usage: python -m infra.tools.workflow.lib <command> [args...]")
-        print("Commands: get_state, set_state, advance_step, dispatch_task, verify_task, checkpoint, restore, list_checkpoints, init")
+        print(
+            "Commands: get_state, set_state, advance_step, dispatch_task, verify_task, checkpoint, restore, list_checkpoints, init"
+        )
         sys.exit(1)
 
     cmd = sys.argv[1]

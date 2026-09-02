@@ -49,9 +49,7 @@ class PerspectiveValidator(BaseValidator):
 
         passed = len(issues) == 0
         return ValidationResult(
-            passed=passed,
-            issues=issues,
-            severity=IssueSeverity.P1 if issues else IssueSeverity.P2
+            passed=passed, issues=issues, severity=IssueSeverity.P1 if issues else IssueSeverity.P2
         )
 
     def _extract_first_person_markers(self, content: str) -> List[str]:

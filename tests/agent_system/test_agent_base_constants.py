@@ -3,6 +3,7 @@
 防止 magic number 0.7 / 4096 再次潜入 base.py - 必须从 agent_config 读,
 且值与历史一致 (行为契约)。
 """
+
 from lingwen_core.agents.agent_config import AGENT_DEFAULTS
 from lingwen_core.agents.agents.base import AgentBase
 
@@ -37,15 +38,10 @@ class TestR1011AgentDefaultsRegistry:
         也不能是 base.py 中直接写 = 0.7。
         """
         import inspect
+
         source = inspect.getsource(AgentBase)
         # 必须从注册表读 - 允许 "AGENT_DEFAULTS[" 出现
-        assert "AGENT_DEFAULTS" in source, (
-            "AgentBase 必须引用 AGENT_DEFAULTS 注册表,禁止裸字面量"
-        )
+        assert "AGENT_DEFAULTS" in source, "AgentBase 必须引用 AGENT_DEFAULTS 注册表,禁止裸字面量"
         # 禁止裸赋值 "= 0.7" (带空格,避免误报 AGENT_DEFAULTS 里的值)
-        assert "= 0.7" not in source, (
-            "AgentBase 源码不应出现 '= 0.7' 裸字面量,应通过 AGENT_DEFAULTS 读"
-        )
-        assert "= 4096" not in source, (
-            "AgentBase 源码不应出现 '= 4096' 裸字面量,应通过 AGENT_DEFAULTS 读"
-        )
+        assert "= 0.7" not in source, "AgentBase 源码不应出现 '= 0.7' 裸字面量,应通过 AGENT_DEFAULTS 读"
+        assert "= 4096" not in source, "AgentBase 源码不应出现 '= 4096' 裸字面量,应通过 AGENT_DEFAULTS 读"

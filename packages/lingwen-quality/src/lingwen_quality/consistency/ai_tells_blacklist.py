@@ -30,7 +30,6 @@ AI_TELLS_BLACKLIST: list[str] = [
     "在这个充满.*?的世界里",
     "在这个.*?的时代",
     "随着.*?的发展",
-
     # 冗余连接词
     "不禁",
     "不由得",
@@ -39,26 +38,22 @@ AI_TELLS_BLACKLIST: list[str] = [
     "毫无疑问",
     "不言而喻",
     "众所周知",
-
     # 总结性套话
     "总而言之",
     "综上所述",
     "总的来看",
     "概括来说",
     "一言以蔽之",
-
     # 排比句式（AI 高频模式）
     "首先.*?其次.*?最后",
     "一方面.*?另一方面",
     "不仅.*?而且",
     "既.*?又",
-
     # 过程化表达
     "在.*?的过程中",
     "在.*?的进程中",
     "在这一刻",
     "在这一瞬间",
-
     # 强调/评价性套话
     "值得注意的是",
     "值得关注的是",
@@ -66,17 +61,14 @@ AI_TELLS_BLACKLIST: list[str] = [
     "令人难以置信的是",
     "不可忽视的是",
     "需要指出的是",
-
     # 程度副词滥用
     "某种程度上",
     "某种意义上",
     "在一定程度上",
     "从某种角度来说",
-
     # 万能转折
     "然而，(?:事情|情况|事实|一切).*?并非如此",
     "但(?:事情|情况|事实|一切).*?并非如此",
-
     # 万能描写
     "他的眼神中.*?闪过一丝",
     "她的眼神中.*?闪过一丝",
@@ -85,7 +77,6 @@ AI_TELLS_BLACKLIST: list[str] = [
     "目光.*?深邃",
     "他的声音.*?低沉.*?而",
     "她的声音.*?温柔.*?而",
-
     # 万能情感描述
     "心中充满了",
     "内心充满了",
@@ -97,6 +88,7 @@ AI_TELLS_BLACKLIST: list[str] = [
 
 
 # ── 编译正则表达式 ──
+
 
 def _compile_patterns() -> list[tuple[str, re.Pattern[str]]]:
     """将黑名单模式编译为正则表达式"""
@@ -138,12 +130,14 @@ def detect_ai_tells(text: str) -> list[dict[str, Any]]:
             if span in seen_spans:
                 continue
             seen_spans.add(span)
-            matches.append({
-                "pattern": pattern_str,
-                "match": m.group(),
-                "start": m.start(),
-                "end": m.end(),
-            })
+            matches.append(
+                {
+                    "pattern": pattern_str,
+                    "match": m.group(),
+                    "start": m.start(),
+                    "end": m.end(),
+                }
+            )
 
     # 按位置排序
     matches.sort(key=lambda x: x["start"])

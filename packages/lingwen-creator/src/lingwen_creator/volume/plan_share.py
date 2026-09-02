@@ -3,6 +3,7 @@
 Migrated from infra/creator_volume_plan_share.py in Phase 126 v16.2.1.
 New location: packages/lingwen-creator/src/lingwen_creator/volume/plan_share.py
 """
+
 from __future__ import annotations
 
 import base64

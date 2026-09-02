@@ -7,6 +7,7 @@ Doc 3 (主线/支线模型 v1.0) §5.2: 3 个辅助查询函数。
 - suggest_subplot_to_close(registry): 建议关闭的 subplot_id
 - detect_constraint_saturation(registry, current_ch): 检测约束饱和
 """
+
 from __future__ import annotations
 
 import re
@@ -48,7 +49,8 @@ def suggest_subplot_to_close(registry: PlotRegistry) -> Optional[str]:
         plot_id if 找到候选,None if 没有 active subplot
     """
     candidates = [
-        p for p in registry.list_active_subplots()
+        p
+        for p in registry.list_active_subplots()
         if p.birth_ch > 0  # 排除无 birth_ch 的 (无法判断早晚)
     ]
     if not candidates:

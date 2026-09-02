@@ -5,6 +5,7 @@
 - 支持按时间范围查询事件
 - 支持按章节查询事件
 """
+
 from typing import Any, Dict, List, Optional
 
 from lingwen_memory.state.state_manager import MemoryStateManager
@@ -30,7 +31,7 @@ class TimelineManager:
         timestamp: str,
         description: str,
         chapter: int,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """添加事件
 
@@ -54,7 +55,7 @@ class TimelineManager:
             "timestamp": timestamp,
             "description": description,
             "chapter": chapter,
-            "metadata": metadata or {}
+            "metadata": metadata or {},
         }
 
         all_data["events"].append(event)
@@ -71,11 +72,7 @@ class TimelineManager:
         all_data = self.state_manager.load("timeline_file")
         return all_data.get("events", [])
 
-    def get_events_in_range(
-        self,
-        start_time: str,
-        end_time: str
-    ) -> List[Dict[str, Any]]:
+    def get_events_in_range(self, start_time: str, end_time: str) -> List[Dict[str, Any]]:
         """获取时间范围内的事件
 
         Args:
@@ -94,10 +91,7 @@ class TimelineManager:
         all_data = self.state_manager.load("timeline_file")
         events = all_data.get("events", [])
 
-        return [
-            event for event in events
-            if self._is_timestamp_in_range(event["timestamp"], start, end)
-        ]
+        return [event for event in events if self._is_timestamp_in_range(event["timestamp"], start, end)]
 
     def get_events_by_chapter(self, chapter: int) -> List[Dict[str, Any]]:
         """获取指定章节的事件
@@ -125,17 +119,13 @@ class TimelineManager:
         try:
             # 验证时间戳格式
             from datetime import datetime
-            datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+
+            datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
             return timestamp
         except (ValueError, AttributeError):
             return None
 
-    def _is_timestamp_in_range(
-        self,
-        timestamp: str,
-        start: str,
-        end: str
-    ) -> bool:
+    def _is_timestamp_in_range(self, timestamp: str, start: str, end: str) -> bool:
         """检查时间戳是否在范围内
 
         Args:
@@ -148,9 +138,10 @@ class TimelineManager:
         """
         try:
             from datetime import datetime
-            ts = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
-            s = datetime.fromisoformat(start.replace('Z', '+00:00'))
-            e = datetime.fromisoformat(end.replace('Z', '+00:00'))
+
+            ts = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+            s = datetime.fromisoformat(start.replace("Z", "+00:00"))
+            e = datetime.fromisoformat(end.replace("Z", "+00:00"))
             return s <= ts <= e
         except (ValueError, AttributeError, TypeError):
             return False

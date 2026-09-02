@@ -31,7 +31,7 @@ class CharacterConsistencyRepairer(YAMLRuleRepairer):
 
     def __init__(self, paths=None, api_key: Optional[str] = None):
         super().__init__("character_consistency_rules.yaml", paths)
-        self.api_key = api_key or os.getenv('MINIMAX_API_KEY', '')
+        self.api_key = api_key or os.getenv("MINIMAX_API_KEY", "")
         self._provider = None
         self._characters: Dict[str, Any] = {}
         self._load_character_profiles()
@@ -73,7 +73,7 @@ class CharacterConsistencyRepairer(YAMLRuleRepairer):
         characters_json = json.dumps(list(self._characters.values())[:5], ensure_ascii=False, indent=2)
         issues_json = json.dumps(issues, ensure_ascii=False, indent=2)
 
-        return f'''你是小说文字编辑专家。请修复以下章节中的角色一致性问题。
+        return f"""你是小说文字编辑专家。请修复以下章节中的角色一致性问题。
 
 角色设定档案：
 {characters_json[:3000]}
@@ -93,7 +93,7 @@ class CharacterConsistencyRepairer(YAMLRuleRepairer):
 
 只返回JSON格式的修复后内容：
 {{"content": "修复后的正文"}}
-'''
+"""
 
     def _call_llm(self, prompt: str, max_tokens: int = 4000) -> str:
         """调用LLM"""
@@ -125,7 +125,7 @@ class CharacterConsistencyRepairer(YAMLRuleRepairer):
         if not self._characters or not self.provider:
             return []
 
-        prompt = f'''检查以下章节中的角色行为是否符合人设。返回JSON格式：
+        prompt = f"""检查以下章节中的角色行为是否符合人设。返回JSON格式：
 
 角色设定：
 {json.dumps(list(self._characters.values())[:5], ensure_ascii=False, indent=2)[:3000]}
@@ -138,7 +138,7 @@ class CharacterConsistencyRepairer(YAMLRuleRepairer):
 
 如果没有发现问题，返回空数组：[]
 
-只返回JSON，不要其他内容。'''
+只返回JSON，不要其他内容。"""
 
         response = self._call_llm(prompt)
         if not response:
@@ -221,12 +221,7 @@ class CharacterConsistencyRepairer(YAMLRuleRepairer):
             if changes > 0:
                 self.paths.write_chapter(chapter_num, new_content)
 
-            return RepairResult(
-                chapter=chapter_num,
-                success=True,
-                changes=changes,
-                new_content=new_content
-            )
+            return RepairResult(chapter=chapter_num, success=True, changes=changes, new_content=new_content)
         except Exception as e:
             logger.error(f"修复失败 ch{chapter_num:03d}: {e}")
             return RepairResult(chapter=chapter_num, success=False, error=str(e))
@@ -243,35 +238,34 @@ class CharacterConsistencyRepairer(YAMLRuleRepairer):
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description='角色一致性修复器')
-    parser.add_argument('--chapters', type=str, default='1-10',
-                        help='章节范围')
-    parser.add_argument('--dry-run', action='store_true',
-                        help='只输出不保存')
-    parser.add_argument('--limit', type=int, default=None,
-                        help='限制处理章节数量')
-    parser.add_argument('--api-key', type=str, default=None,
-                        help='API密钥（也可通过MINIMAX_API_KEY环境变量）')
+
+    parser = argparse.ArgumentParser(description="角色一致性修复器")
+    parser.add_argument("--chapters", type=str, default="1-10", help="章节范围")
+    parser.add_argument("--dry-run", action="store_true", help="只输出不保存")
+    parser.add_argument("--limit", type=int, default=None, help="限制处理章节数量")
+    parser.add_argument(
+        "--api-key", type=str, default=None, help="API密钥（也可通过MINIMAX_API_KEY环境变量）"
+    )
 
     args = parser.parse_args()
 
     # 解析章节范围
     chapters = []
-    for part in args.chapters.split(','):
-        if '-' in part:
-            start, end = map(int, part.split('-'))
+    for part in args.chapters.split(","):
+        if "-" in part:
+            start, end = map(int, part.split("-"))
             chapters.extend(range(start, end + 1))
         else:
             chapters.append(int(part))
 
     if args.limit:
-        chapters = chapters[:args.limit]
+        chapters = chapters[: args.limit]
 
     print(f"待处理章节: {len(chapters)} 个")
     print(f"模式: {'干跑(dry-run)' if args.dry_run else '实际修改'}")
     print("-" * 50)
 
-    api_key = args.api_key or os.getenv('MINIMAX_API_KEY', '')
+    api_key = args.api_key or os.getenv("MINIMAX_API_KEY", "")
     if not api_key:
         print("[WARN] 未设置API密钥，将只使用规则修复")
 
@@ -290,5 +284,5 @@ def main():
     print(f"完成: 总修改 {total_changes} 处")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

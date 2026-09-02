@@ -15,19 +15,20 @@ from typing import Any, Callable, Dict, Generic, List, Optional, Type, TypeVar
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
-R = TypeVar('R')
+T = TypeVar("T")
+R = TypeVar("R")
 
 
 @dataclass(frozen=True)
 class Tag(Generic[T]):
     """类型标签，用于依赖查找"""
+
     type: Type[T]
     name: str = ""
 
     def __post_init__(self):
         if not self.name:
-            object.__setattr__(self, 'name', self.type.__name__)
+            object.__setattr__(self, "name", self.type.__name__)
 
     def __hash__(self):
         return hash((self.type, self.name))
@@ -48,7 +49,9 @@ class Layer:
     3. 转换（flatMap）
     """
 
-    def __init__(self, provides: List[Tag], dependencies: List[Tag], build: Callable[[Dict[Tag, Any]], Dict[Tag, Any]]):
+    def __init__(
+        self, provides: List[Tag], dependencies: List[Tag], build: Callable[[Dict[Tag, Any]], Dict[Tag, Any]]
+    ):
         self._provides = provides
         self._dependencies = dependencies
         self._build = build
@@ -70,7 +73,7 @@ class Layer:
             raise RuntimeError(f"Missing dependencies: {missing}")
         return self._build(env)
 
-    def zip(self, other: 'Layer') -> 'Layer':
+    def zip(self, other: "Layer") -> "Layer":
         """与另一层组合"""
         provides = self.provides + other.provides
         dependencies = list(set(self.dependencies + other.dependencies))
@@ -83,7 +86,7 @@ class Layer:
 
         return Layer(provides, dependencies, build)
 
-    def flat_map(self, f: Callable[['Layer'], 'Layer']) -> 'Layer':
+    def flat_map(self, f: Callable[["Layer"], "Layer"]) -> "Layer":
         """转换并组合"""
         other = f(self)
         provides = other.provides
@@ -96,14 +99,16 @@ class Layer:
 
         return Layer(provides, dependencies, build)
 
-    def map(self, f: Callable[[Dict[Tag, Any]], Dict[Tag, Any]]) -> 'Layer':
+    def map(self, f: Callable[[Dict[Tag, Any]], Dict[Tag, Any]]) -> "Layer":
         """转换输出"""
+
         def build(env: Dict[Tag, Any]) -> Dict[Tag, Any]:
             return f(self.build(env))
+
         return Layer(self.provides, self.dependencies, build)
 
     @classmethod
-    def succeed(cls, **kwargs: Any) -> 'Layer':
+    def succeed(cls, **kwargs: Any) -> "Layer":
         """创建成功层（无依赖）"""
         provides = [Tag(type(v), k) for k, v in kwargs.items()]
         dependencies = []
@@ -114,7 +119,7 @@ class Layer:
         return cls(provides, dependencies, build)
 
     @classmethod
-    def from_service(cls, tag: Tag[T], build: Callable[[Dict[Tag, Any]], T]) -> 'Layer':
+    def from_service(cls, tag: Tag[T], build: Callable[[Dict[Tag, Any]], T]) -> "Layer":
         """从服务构建层"""
         dependencies = []
 
@@ -124,14 +129,17 @@ class Layer:
         return cls([tag], dependencies, _build)
 
     @classmethod
-    def from_service_with_deps(cls, tag: Tag[T], deps: List[Tag], build: Callable[[Dict[Tag, Any]], T]) -> 'Layer':
+    def from_service_with_deps(
+        cls, tag: Tag[T], deps: List[Tag], build: Callable[[Dict[Tag, Any]], T]
+    ) -> "Layer":
         """从服务构建层（带依赖）"""
+
         def _build(env: Dict[Tag, Any]) -> Dict[Tag, Any]:
             return {tag: build(env)}
 
         return cls([tag], deps, _build)
 
-    def __and__(self, other: 'Layer') -> 'Layer':
+    def __and__(self, other: "Layer") -> "Layer":
         """使用 & 操作符合并层"""
         return self.zip(other)
 
@@ -148,19 +156,19 @@ class Runtime:
         self._env: Dict[Tag, Any] = {}
         self._loaded = False
 
-    def add_layer(self, layer: Layer) -> 'Runtime':
+    def add_layer(self, layer: Layer) -> "Runtime":
         """添加层"""
         self._layers.append(layer)
         self._loaded = False
         return self
 
-    def add_layers(self, *layers: Layer) -> 'Runtime':
+    def add_layers(self, *layers: Layer) -> "Runtime":
         """添加多个层"""
         for layer in layers:
             self.add_layer(layer)
         return self
 
-    def load(self) -> 'Runtime':
+    def load(self) -> "Runtime":
         """加载所有层"""
         if self._loaded:
             return self
@@ -195,12 +203,12 @@ class Runtime:
 
         raise RuntimeError(f"No dependency of type {type_} found")
 
-    def set(self, tag: Tag[T], value: T) -> 'Runtime':
+    def set(self, tag: Tag[T], value: T) -> "Runtime":
         """设置依赖（用于测试替换）"""
         self._env[tag] = value
         return self
 
-    def override(self, **kwargs: Any) -> 'Runtime':
+    def override(self, **kwargs: Any) -> "Runtime":
         """覆盖依赖（用于测试）"""
         for k, v in kwargs.items():
             tag = Tag(type(v), k)
@@ -222,26 +230,33 @@ class Runtime:
 
 def make(tag: Tag[T], build: Callable[[], T]) -> Layer:
     """创建简单层"""
+
     def _build(env: Dict[Tag, Any]) -> Dict[Tag, Any]:
         return {tag: build()}
+
     return Layer([tag], [], _build)
 
 
 def make_with_deps(tag: Tag[T], deps: List[Tag], build: Callable[[Dict[Tag, Any]], T]) -> Layer:
     """创建带依赖的层"""
+
     def _build(env: Dict[Tag, Any]) -> Dict[Tag, Any]:
         return {tag: build(env)}
+
     return Layer([tag], deps, _build)
 
 
 def provide(tag: Tag[T]) -> Callable[[Callable[..., T]], Callable[..., T]]:
     """装饰器：提供依赖"""
+
     def decorator(f: Callable[..., T]) -> Callable[..., T]:
         def wrapper(*args, **kwargs):
             result = f(*args, **kwargs)
             return result
+
         wrapper.__layer_tag__ = tag
         return wrapper
+
     return decorator
 
 

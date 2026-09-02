@@ -8,6 +8,7 @@ Domain 实体下沉到 packages/lingwen-core/src/lingwen_core/domain/。
 
 迁移自 infra/world_model/data_structures.py + 新增 Chapter/Volume/Character/Foreshadow。
 """
+
 from __future__ import annotations
 
 from dataclasses import FrozenInstanceError, is_dataclass
@@ -124,7 +125,9 @@ def test_character_entity_frozen():
     from lingwen_core.domain.character import Character, CharacterStatus
 
     c = Character(
-        name="alice", faction="流浪者", role="主角",
+        name="alice",
+        faction="流浪者",
+        role="主角",
         status=CharacterStatus.ALIVE,
     )
     assert is_dataclass(c)
@@ -252,9 +255,7 @@ def test_foreshadow_resolved_event_frozen():
 def test_ripple_state_changed_event():
     from lingwen_core.domain.ripple import RippleStateChangedEvent
 
-    e = RippleStateChangedEvent(
-        payload={"ripple_id": "r:1", "from": "open", "to": "propagating"}
-    )
+    e = RippleStateChangedEvent(payload={"ripple_id": "r:1", "from": "open", "to": "propagating"})
     assert e.type == "RippleStateChanged"
 
 
@@ -350,7 +351,9 @@ def test_world_snapshot_physical_mental_serialize():
     from lingwen_core.domain.ripple import WorldSnapshot
 
     snap = WorldSnapshot(
-        snapshot_id="s", chapter=5, timestamp=datetime(2026, 1, 1),
+        snapshot_id="s",
+        chapter=5,
+        timestamp=datetime(2026, 1, 1),
     )
     d = snap.to_dict()
     assert "physical" in d

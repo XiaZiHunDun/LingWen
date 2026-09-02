@@ -42,7 +42,9 @@ class OpenAIProvider(AIProvider):
             timeout=config.timeout,
             max_retries=0,  # 我们自己处理重试
         )
-        self._embedding_model = config.model if "embedding" in config.model.lower() else self.DEFAULT_EMBEDDING_MODEL
+        self._embedding_model = (
+            config.model if "embedding" in config.model.lower() else self.DEFAULT_EMBEDDING_MODEL
+        )
 
     def generate(self, prompt: str, **kwargs) -> str:
         """生成文本
@@ -75,39 +77,35 @@ class OpenAIProvider(AIProvider):
         for attempt in range(self.config.max_retries):
             try:
                 response = self._client.chat.completions.create(
-                    model=model,
-                    messages=messages,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                    **kwargs
+                    model=model, messages=messages, temperature=temperature, max_tokens=max_tokens, **kwargs
                 )
                 return response.choices[0].message.content
 
             except openai.APITimeoutError:
                 last_error = TimeoutError(f"Request timed out after {self.config.timeout}s")
                 if attempt < self.config.max_retries - 1:
-                    time.sleep(2 ** attempt)  # 指数退避
+                    time.sleep(2**attempt)  # 指数退避
                     continue
                 raise last_error
 
             except openai.APIConnectionError as e:
                 last_error = NetworkError(f"Connection failed: {e}")
                 if attempt < self.config.max_retries - 1:
-                    time.sleep(2 ** attempt)
+                    time.sleep(2**attempt)
                     continue
                 raise last_error
 
             except openai.RateLimitError as e:
                 last_error = APIError(f"Rate limit exceeded: {e}")
                 if attempt < self.config.max_retries - 1:
-                    time.sleep(2 ** attempt)
+                    time.sleep(2**attempt)
                     continue
                 raise last_error
 
             except openai.APIError as e:
                 last_error = APIError(f"OpenAI API error: {e}")
                 if attempt < self.config.max_retries - 1:
-                    time.sleep(2 ** attempt)
+                    time.sleep(2**attempt)
                     continue
                 raise last_error
 
@@ -156,13 +154,11 @@ class OpenAIProvider(AIProvider):
                 last_error = AIProviderError(f"Unexpected error: {e}")
                 raise last_error
             if attempt < self.config.max_retries - 1:
-                time.sleep(2 ** attempt)
+                time.sleep(2**attempt)
                 continue
             raise last_error or AIProviderError("Max retries exceeded")
 
-    def generate_with_usage(
-        self, prompt: str, **kwargs
-    ) -> tuple[str, dict[str, int]]:
+    def generate_with_usage(self, prompt: str, **kwargs) -> tuple[str, dict[str, int]]:
         """生成文本 + 返回 SDK 原生 usage (OpenAI).
 
         跟 generate() 区别: 同时返回 response.usage.prompt_tokens / completion_tokens
@@ -193,11 +189,7 @@ class OpenAIProvider(AIProvider):
         for attempt in range(self.config.max_retries):
             try:
                 response = self._client.chat.completions.create(
-                    model=model,
-                    messages=messages,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                    **kwargs
+                    model=model, messages=messages, temperature=temperature, max_tokens=max_tokens, **kwargs
                 )
                 text = response.choices[0].message.content
                 usage = {
@@ -209,28 +201,28 @@ class OpenAIProvider(AIProvider):
             except openai.APITimeoutError:
                 last_error = TimeoutError(f"Request timed out after {self.config.timeout}s")
                 if attempt < self.config.max_retries - 1:
-                    time.sleep(2 ** attempt)
+                    time.sleep(2**attempt)
                     continue
                 raise last_error
 
             except openai.APIConnectionError as e:
                 last_error = NetworkError(f"Connection failed: {e}")
                 if attempt < self.config.max_retries - 1:
-                    time.sleep(2 ** attempt)
+                    time.sleep(2**attempt)
                     continue
                 raise last_error
 
             except openai.RateLimitError as e:
                 last_error = APIError(f"Rate limit exceeded: {e}")
                 if attempt < self.config.max_retries - 1:
-                    time.sleep(2 ** attempt)
+                    time.sleep(2**attempt)
                     continue
                 raise last_error
 
             except openai.APIError as e:
                 last_error = APIError(f"OpenAI API error: {e}")
                 if attempt < self.config.max_retries - 1:
-                    time.sleep(2 ** attempt)
+                    time.sleep(2**attempt)
                     continue
                 raise last_error
 
@@ -255,30 +247,27 @@ class OpenAIProvider(AIProvider):
         last_error = None
         for attempt in range(self.config.max_retries):
             try:
-                response = self._client.embeddings.create(
-                    model=self._embedding_model,
-                    input=text
-                )
+                response = self._client.embeddings.create(model=self._embedding_model, input=text)
                 return response.data[0].embedding
 
             except openai.APITimeoutError:
                 last_error = TimeoutError("Embedding request timed out")
                 if attempt < self.config.max_retries - 1:
-                    time.sleep(2 ** attempt)
+                    time.sleep(2**attempt)
                     continue
                 raise last_error
 
             except openai.APIConnectionError as e:
                 last_error = NetworkError(f"Connection failed: {e}")
                 if attempt < self.config.max_retries - 1:
-                    time.sleep(2 ** attempt)
+                    time.sleep(2**attempt)
                     continue
                 raise last_error
 
             except openai.RateLimitError as e:
                 last_error = APIError(f"Rate limit exceeded: {e}")
                 if attempt < self.config.max_retries - 1:
-                    time.sleep(2 ** attempt)
+                    time.sleep(2**attempt)
                     continue
                 raise last_error
 

@@ -18,6 +18,7 @@ from infra.errors import BaseError
 
 class HealthCheckError(BaseError):
     """健康检查错误"""
+
     __error_name__ = "HealthCheckError"
     __error_tags__ = ["health"]
 
@@ -34,6 +35,7 @@ class HealthStatus:
         latency_ms: 响应时间（毫秒）
         details: 详细信息
     """
+
     status: str
     message: str
     component: str = "system"
@@ -100,12 +102,14 @@ class CompositeHealthCheck(HealthCheck):
             result = check.check()
             latency = (time.time() - start) * 1000
             total_latency += latency
-            results.append({
-                "component": result.component,
-                "status": result.status,
-                "message": result.message,
-                "latency_ms": latency,
-            })
+            results.append(
+                {
+                    "component": result.component,
+                    "status": result.status,
+                    "message": result.message,
+                    "latency_ms": latency,
+                }
+            )
 
         # 汇总状态
         status = "healthy"

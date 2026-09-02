@@ -19,6 +19,7 @@ Phase 1.3 — Doc 2 (提示词工程 v1.0) §5: 12 SCENARIOS + 22 STEP_CONTRACTS
 - 5 本网文全集蒸馏 (主公后续指定)
 - 多模型分级路由 (Haiku 4.5 提及但 routing out of scope)
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -30,18 +31,18 @@ from lingwen_prompt.data_structures import (
 
 # 12 SCENARIOS (per Doc 2 v1.0) — 不可变 tuple
 SCENARIOS: tuple[str, ...] = (
-    "chapter_writing",        # content_writer — 写章节正文
-    "chapter_outline",        # content_writer — 写章节大纲
-    "outline_review",         # auditor — 审核大纲
-    "chapter_review",         # auditor — 审核章节
-    "worldview_check",        # auditor — 世界观一致性
+    "chapter_writing",  # content_writer — 写章节正文
+    "chapter_outline",  # content_writer — 写章节大纲
+    "outline_review",  # auditor — 审核大纲
+    "chapter_review",  # auditor — 审核章节
+    "worldview_check",  # auditor — 世界观一致性
     "character_consistency",  # auditor — 角色一致性
-    "hook_extraction",        # polisher — 钩子提取
-    "ai_trace_removal",       # polisher — AI 痕迹去除
-    "foreshadow_scan",        # auditor — 伏笔扫描
-    "emotional_pacing",       # auditor — 情感节奏
-    "ripple_audit",           # auditor — 涟漪审计
-    "subplot_suggest",        # outline_master — 支线建议
+    "hook_extraction",  # polisher — 钩子提取
+    "ai_trace_removal",  # polisher — AI 痕迹去除
+    "foreshadow_scan",  # auditor — 伏笔扫描
+    "emotional_pacing",  # auditor — 情感节奏
+    "ripple_audit",  # auditor — 涟漪审计
+    "subplot_suggest",  # outline_master — 支线建议
 )
 
 
@@ -108,25 +109,26 @@ _SCENARIO_METADATA: dict[str, dict[str, str]] = {
 def _build_scenario_tier_map() -> dict:
     """构造 SCENARIO_TIER_MAP (12 SCENARIOS + 2 CVG → ModelTier, Phase 9.12 additive)"""
     from lingwen_llm.providers.model_tiers import ModelTier
+
     return {
         # --- 简单任务 → HAIKU ---
-        "worldview_check": ModelTier.HAIKU,        # 境界/术语/规则事实核查
+        "worldview_check": ModelTier.HAIKU,  # 境界/术语/规则事实核查
         "character_consistency": ModelTier.HAIKU,  # 性格/能力档案对比
-        "hook_extraction": ModelTier.HAIKU,        # 开篇/结尾钩子识别
-        "ai_trace_removal": ModelTier.HAIKU,       # 模板句/套话改写
+        "hook_extraction": ModelTier.HAIKU,  # 开篇/结尾钩子识别
+        "ai_trace_removal": ModelTier.HAIKU,  # 模板句/套话改写
         # --- 中等任务 → SONNET ---
-        "chapter_writing": ModelTier.SONNET,       # 长文生成
-        "chapter_outline": ModelTier.SONNET,       # 单章大纲设计
-        "chapter_review": ModelTier.SONNET,        # S1-S8 八维评估
-        "foreshadow_scan": ModelTier.SONNET,       # 跨章伏笔状态
-        "emotional_pacing": ModelTier.SONNET,      # 跨章情感曲线
-        "ripple_audit": ModelTier.SONNET,          # 涟漪挖坑/平复审计
+        "chapter_writing": ModelTier.SONNET,  # 长文生成
+        "chapter_outline": ModelTier.SONNET,  # 单章大纲设计
+        "chapter_review": ModelTier.SONNET,  # S1-S8 八维评估
+        "foreshadow_scan": ModelTier.SONNET,  # 跨章伏笔状态
+        "emotional_pacing": ModelTier.SONNET,  # 跨章情感曲线
+        "ripple_audit": ModelTier.SONNET,  # 涟漪挖坑/平复审计
         # --- 复杂任务 → OPUS ---
-        "outline_review": ModelTier.OPUS,          # 整卷结构推理
-        "subplot_suggest": ModelTier.OPUS,         # 创意支线开/关
+        "outline_review": ModelTier.OPUS,  # 整卷结构推理
+        "subplot_suggest": ModelTier.OPUS,  # 创意支线开/关
         # --- Phase 9.12 additive (CVG LLM scanner + edge inferrer) ---
-        "cvg_llm_scan": ModelTier.SONNET,          # 4-dim serial scan per chapter
-        "cvg_edge_inference": ModelTier.SONNET,    # 8-rel-type edge inference
+        "cvg_llm_scan": ModelTier.SONNET,  # 4-dim serial scan per chapter
+        "cvg_edge_inference": ModelTier.SONNET,  # 8-rel-type edge inference
     }
 
 
@@ -138,6 +140,7 @@ SCENARIO_TIER_MAP: dict = _build_scenario_tier_map()
 # 为简化 22 STEP_CONTRACTS 序列化,使用 class 而不是嵌套定义
 class _GenericOutput:
     """通用输出占位 — 实际使用时由具体 LLM 输出替换"""
+
     pass
 
 
@@ -155,74 +158,113 @@ _STEP_CONTRACTS_DATA: tuple[tuple[str, str, str, tuple[ContextItem, ...], int, i
     ("STEP_06", "Worldview", "subplot_suggest", (), 8_000, 120),
     ("STEP_07", "Structure", "subplot_suggest", (), 6_000, 90),
     (
-        "STEP_08", "Lock Check", "outline_review",
+        "STEP_08",
+        "Lock Check",
+        "outline_review",
         (ContextItem(key="outline", source="infra.world_model.SnapshotStore"),),
-        4_000, 60,
+        4_000,
+        60,
     ),
     (
-        "STEP_09", "Plot Skeleton Verify", "outline_review",
+        "STEP_09",
+        "Plot Skeleton Verify",
+        "outline_review",
         (ContextItem(key="outline", source="x"), ContextItem(key="rules", source="x")),
-        4_000, 60,
+        4_000,
+        60,
     ),
     (
-        "STEP_10", "Core Sample Verify", "chapter_review",
+        "STEP_10",
+        "Core Sample Verify",
+        "chapter_review",
         (ContextItem(key="chapter", source="x"),),
-        4_000, 60,
+        4_000,
+        60,
     ),
     (
-        "STEP_11", "Target Reader Test", "emotional_pacing",
+        "STEP_11",
+        "Target Reader Test",
+        "emotional_pacing",
         (ContextItem(key="chapters", source="x"),),
-        8_000, 120,
+        8_000,
+        120,
     ),
     (
-        "STEP_12", "Batch Writing", "chapter_writing",
+        "STEP_12",
+        "Batch Writing",
+        "chapter_writing",
         (
             ContextItem(key="chapter_outline", source="x"),
             ContextItem(key="world_snapshot", source="x"),
             ContextItem(key="character_state", source="x"),
         ),
-        16_000, 300,
+        16_000,
+        300,
     ),
     (
-        "STEP_13", "Batch Complete", "chapter_writing",
+        "STEP_13",
+        "Batch Complete",
+        "chapter_writing",
         (ContextItem(key="chapters", source="x"),),
-        8_000, 180,
+        8_000,
+        180,
     ),
     (
-        "STEP_14", "Block Stage", "ai_trace_removal",
+        "STEP_14",
+        "Block Stage",
+        "ai_trace_removal",
         (ContextItem(key="chapter", source="x"),),
-        8_000, 180,
+        8_000,
+        180,
     ),
     (
-        "STEP_15", "Polish Stage", "hook_extraction",
+        "STEP_15",
+        "Polish Stage",
+        "hook_extraction",
         (ContextItem(key="chapter", source="x"),),
-        6_000, 120,
+        6_000,
+        120,
     ),
     ("STEP_16", "Assign Auditor", "chapter_review", (), 2_000, 30),
     (
-        "STEP_17", "S1-S8 Audit", "chapter_review",
+        "STEP_17",
+        "S1-S8 Audit",
+        "chapter_review",
         (ContextItem(key="chapter", source="x"),),
-        8_000, 120,
+        8_000,
+        120,
     ),
     (
-        "STEP_18", "Audit Verdict", "chapter_review",
+        "STEP_18",
+        "Audit Verdict",
+        "chapter_review",
         (ContextItem(key="audit_reports", source="x"),),
-        4_000, 60,
+        4_000,
+        60,
     ),
     (
-        "STEP_19", "Summary Compile", "foreshadow_scan",
+        "STEP_19",
+        "Summary Compile",
+        "foreshadow_scan",
         (ContextItem(key="chapters", source="x"),),
-        16_000, 240,
+        16_000,
+        240,
     ),
     (
-        "STEP_20", "Volume Finalize", "ripple_audit",
+        "STEP_20",
+        "Volume Finalize",
+        "ripple_audit",
         (ContextItem(key="volume", source="x"),),
-        8_000, 120,
+        8_000,
+        120,
     ),
     (
-        "STEP_21", "Publish Archive", "ai_trace_removal",
+        "STEP_21",
+        "Publish Archive",
+        "ai_trace_removal",
         (ContextItem(key="final", source="x"),),
-        4_000, 60,
+        4_000,
+        60,
     ),
 )
 
@@ -269,9 +311,7 @@ def get_scenario(name: str) -> dict[str, Any]:
         ValueError: 不在 12 SCENARIOS 中
     """
     if name not in _SCENARIO_METADATA:
-        raise ValueError(
-            f"unknown scenario: {name!r}, expected one of {SCENARIOS}"
-        )
+        raise ValueError(f"unknown scenario: {name!r}, expected one of {SCENARIOS}")
     meta = dict(_SCENARIO_METADATA[name])
     meta["name"] = name
     return meta

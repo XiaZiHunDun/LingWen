@@ -13,6 +13,7 @@ API:
   - reset() 清空
   - records() 全部记录列表
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -94,7 +95,7 @@ class TestCostAggregation:
         tracker = CostTracker()
         tracker.record("a", ModelTier.SONNET, 1_000_000, 0)  # 3
         tracker.record("b", ModelTier.SONNET, 0, 1_000_000)  # 15
-        tracker.record("c", ModelTier.OPUS, 1_000_000, 0)    # 15
+        tracker.record("c", ModelTier.OPUS, 1_000_000, 0)  # 15
         by_tier = tracker.cost_by_tier()
         assert by_tier[ModelTier.SONNET] == pytest.approx(18.0)
         assert by_tier[ModelTier.OPUS] == pytest.approx(15.0)
@@ -143,6 +144,7 @@ class TestImportContract:
 
     def test_top_level_imports(self):
         from lingwen_llm.providers import CostRecord, CostTracker
+
         assert CostRecord is not None
         assert CostTracker is not None
 
@@ -219,9 +221,7 @@ class TestCostBudgetExceededMessage:
         from lingwen_llm.providers.cost_tracker import CostBudgetExceeded
 
         # Default 'run' scope → no [scope=run] in message
-        exc_default = CostBudgetExceeded(
-            used_usd=0.15, budget_usd=0.10, scenario="chapter_writing"
-        )
+        exc_default = CostBudgetExceeded(used_usd=0.15, budget_usd=0.10, scenario="chapter_writing")
         assert exc_default.scope == "run"
         assert "[scope=run]" not in str(exc_default)
         assert "(last scenario: chapter_writing)" in str(exc_default)
@@ -257,7 +257,7 @@ class TestCostTrackerSinceFilter:
 
         tracker = CostTracker()
         tracker.record("chapter_writing", ModelTier.SONNET, 1_000, 500)  # 0.0105
-        tracker.record("hook_extraction", ModelTier.HAIKU, 100, 50)     # 0.00035
+        tracker.record("hook_extraction", ModelTier.HAIKU, 100, 50)  # 0.00035
         # 1h 前 → 全部 records 都在 since 之后
         one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
         by_scenario = tracker.cost_by_scenario(since=one_hour_ago)
@@ -292,21 +292,37 @@ class TestCostTrackerCostByDay:
         # 直接插预制 timestamp 的 records (绕过 record() 调 datetime.now)
         from lingwen_llm.providers.cost_tracker import CostRecord
         from lingwen_llm.providers.model_tiers import compute_cost
-        tracker._records.append(CostRecord(
-            scenario="chapter_writing", tier=ModelTier.SONNET,
-            input_tokens=1000, output_tokens=500, cost_usd=0.0105,
-            timestamp=day1,
-        ))
-        tracker._records.append(CostRecord(
-            scenario="hook_extraction", tier=ModelTier.HAIKU,
-            input_tokens=100, output_tokens=50, cost_usd=0.00035,
-            timestamp=day1,
-        ))
-        tracker._records.append(CostRecord(
-            scenario="chapter_review", tier=ModelTier.SONNET,
-            input_tokens=500, output_tokens=250, cost_usd=0.00525,
-            timestamp=day2,
-        ))
+
+        tracker._records.append(
+            CostRecord(
+                scenario="chapter_writing",
+                tier=ModelTier.SONNET,
+                input_tokens=1000,
+                output_tokens=500,
+                cost_usd=0.0105,
+                timestamp=day1,
+            )
+        )
+        tracker._records.append(
+            CostRecord(
+                scenario="hook_extraction",
+                tier=ModelTier.HAIKU,
+                input_tokens=100,
+                output_tokens=50,
+                cost_usd=0.00035,
+                timestamp=day1,
+            )
+        )
+        tracker._records.append(
+            CostRecord(
+                scenario="chapter_review",
+                tier=ModelTier.SONNET,
+                input_tokens=500,
+                output_tokens=250,
+                cost_usd=0.00525,
+                timestamp=day2,
+            )
+        )
         by_day = tracker.cost_by_day()
         assert by_day == {
             "2026-06-01": pytest.approx(0.0105 + 0.00035, abs=1e-9),
@@ -340,23 +356,34 @@ class TestCostTrackerCostByDayPerTier:
         tracker = CostTracker()
         day1 = datetime(2026, 6, 1, 10, 0, 0, tzinfo=timezone.utc)
         day2 = datetime(2026, 6, 2, 14, 0, 0, tzinfo=timezone.utc)
-        tracker._records.extend([
-            CostRecord(
-                scenario="chapter_writing", tier=ModelTier.SONNET,
-                input_tokens=1000, output_tokens=500, cost_usd=0.0105,
-                timestamp=day1,
-            ),
-            CostRecord(
-                scenario="hook_extraction", tier=ModelTier.HAIKU,
-                input_tokens=100, output_tokens=50, cost_usd=0.00035,
-                timestamp=day1,
-            ),
-            CostRecord(
-                scenario="chapter_review", tier=ModelTier.SONNET,
-                input_tokens=500, output_tokens=250, cost_usd=0.00525,
-                timestamp=day2,
-            ),
-        ])
+        tracker._records.extend(
+            [
+                CostRecord(
+                    scenario="chapter_writing",
+                    tier=ModelTier.SONNET,
+                    input_tokens=1000,
+                    output_tokens=500,
+                    cost_usd=0.0105,
+                    timestamp=day1,
+                ),
+                CostRecord(
+                    scenario="hook_extraction",
+                    tier=ModelTier.HAIKU,
+                    input_tokens=100,
+                    output_tokens=50,
+                    cost_usd=0.00035,
+                    timestamp=day1,
+                ),
+                CostRecord(
+                    scenario="chapter_review",
+                    tier=ModelTier.SONNET,
+                    input_tokens=500,
+                    output_tokens=250,
+                    cost_usd=0.00525,
+                    timestamp=day2,
+                ),
+            ]
+        )
         by_day_tier = tracker.cost_by_day_per_tier()
         assert by_day_tier == {
             "2026-06-01": {

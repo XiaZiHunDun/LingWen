@@ -26,27 +26,25 @@ class WorldviewRepairer(YAMLRuleRepairer):
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description='世界观统一修复器')
-    parser.add_argument('--chapters', type=str, default='1-10',
-                        help='章节范围')
-    parser.add_argument('--dry-run', action='store_true',
-                        help='只输出不保存')
-    parser.add_argument('--limit', type=int, default=None,
-                        help='限制处理章节数量')
+
+    parser = argparse.ArgumentParser(description="世界观统一修复器")
+    parser.add_argument("--chapters", type=str, default="1-10", help="章节范围")
+    parser.add_argument("--dry-run", action="store_true", help="只输出不保存")
+    parser.add_argument("--limit", type=int, default=None, help="限制处理章节数量")
 
     args = parser.parse_args()
 
     # 解析章节范围
     chapters = []
-    for part in args.chapters.split(','):
-        if '-' in part:
-            start, end = map(int, part.split('-'))
+    for part in args.chapters.split(","):
+        if "-" in part:
+            start, end = map(int, part.split("-"))
             chapters.extend(range(start, end + 1))
         else:
             chapters.append(int(part))
 
     if args.limit:
-        chapters = chapters[:args.limit]
+        chapters = chapters[: args.limit]
 
     print(f"待处理章节: {len(chapters)} 个")
     print(f"模式: {'干跑(dry-run)' if args.dry_run else '实际修改'}")
@@ -59,8 +57,7 @@ def main():
             new_content = repairer.dry_run(ch)
             content = repairer.paths.read_chapter(ch)
             if new_content != content and new_content:
-                count = sum(1 for old, new, _ in repairer._get_rules()
-                           if old in content and new != old)
+                count = sum(1 for old, new, _ in repairer._get_rules() if old in content and new != old)
                 print(f"ch{ch:03d}: [干跑] 预计替换 {count} 处")
             else:
                 print(f"ch{ch:03d}: — 无需修改")
@@ -78,5 +75,5 @@ def main():
         print(f"完成: 总替换 {total_changes} 处")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

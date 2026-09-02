@@ -34,6 +34,7 @@ class CharacterConsistencyFinding:
         severity: 严重程度
         suggestion: 修改建议
     """
+
     character_name: str
     conflict_type: str
     description: str
@@ -58,7 +59,7 @@ class CharacterConsistencyAgent(AgentBase):
         "请检查名字冲突、性格重叠、角色功能重复等问题。"
     )
 
-    def __init__(self, router: Optional['AIRouter'] = None):
+    def __init__(self, router: Optional["AIRouter"] = None):
         """初始化角色一致性 Agent
 
         Args:
@@ -156,23 +157,27 @@ class CharacterConsistencyAgent(AgentBase):
 
             # 名字完全相同的冲突
             if new_name == existing_name:
-                findings.append(CharacterConsistencyFinding(
-                    character_name=new_name,
-                    conflict_type="name_conflict",
-                    description=f"角色名 '{new_name}' 与已有角色 '{existing_name}' 完全相同",
-                    severity="critical",
-                    suggestion="请为角色使用不同的名字",
-                ))
+                findings.append(
+                    CharacterConsistencyFinding(
+                        character_name=new_name,
+                        conflict_type="name_conflict",
+                        description=f"角色名 '{new_name}' 与已有角色 '{existing_name}' 完全相同",
+                        severity="critical",
+                        suggestion="请为角色使用不同的名字",
+                    )
+                )
 
             # 名字高度相似的冲突（包含关系）
             elif new_name in existing_name or existing_name in new_name:
-                findings.append(CharacterConsistencyFinding(
-                    character_name=new_name,
-                    conflict_type="name_similarity",
-                    description=f"角色名 '{new_name}' 与已有角色 '{existing_name}' 高度相似",
-                    severity="major",
-                    suggestion="建议修改角色名以避免读者混淆",
-                ))
+                findings.append(
+                    CharacterConsistencyFinding(
+                        character_name=new_name,
+                        conflict_type="name_similarity",
+                        description=f"角色名 '{new_name}' 与已有角色 '{existing_name}' 高度相似",
+                        severity="major",
+                        suggestion="建议修改角色名以避免读者混淆",
+                    )
+                )
 
         return findings
 
@@ -181,9 +186,7 @@ class CharacterConsistencyAgent(AgentBase):
         import json
         import re
 
-        json_match = re.search(
-            r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', response, re.DOTALL
-        )
+        json_match = re.search(r"\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}", response, re.DOTALL)
         if json_match:
             return json.loads(json_match.group(0))
         return {}

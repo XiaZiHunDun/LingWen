@@ -25,9 +25,21 @@ class TransitionScorer(BaseScorer):
 
         # 检查过渡词使用
         transition_words = [
-            "于是", "然后", "接着", "之后", "此时", "与此同时",
-            "与此同时", "不一会儿", "没过多久", "片刻之后",
-            "然而", "但", "可是", "只是", "没想到"
+            "于是",
+            "然后",
+            "接着",
+            "之后",
+            "此时",
+            "与此同时",
+            "与此同时",
+            "不一会儿",
+            "没过多久",
+            "片刻之后",
+            "然而",
+            "但",
+            "可是",
+            "只是",
+            "没想到",
         ]
         transition_count = sum(1 for word in transition_words if word in content)
 
@@ -56,18 +68,12 @@ class TransitionScorer(BaseScorer):
         # 限制分数范围
         score = max(0, min(100, score))
 
-        return ScoredResult(
-            score=score,
-            reason="; ".join(reasons) if reasons else "过渡流畅度评分完成"
-        )
+        return ScoredResult(score=score, reason="; ".join(reasons) if reasons else "过渡流畅度评分完成")
 
     def _check_scene_switch_smoothness(self, content: str) -> int:
         """检查场景切换平滑度"""
         # 检测场景切换标记
-        scene_switch_markers = [
-            "来到", "进入", "走到", "穿过", "回到",
-            "此时", "下一刻", "转瞬间"
-        ]
+        scene_switch_markers = ["来到", "进入", "走到", "穿过", "回到", "此时", "下一刻", "转瞬间"]
         count = sum(1 for marker in scene_switch_markers if marker in content)
 
         if count >= 2:

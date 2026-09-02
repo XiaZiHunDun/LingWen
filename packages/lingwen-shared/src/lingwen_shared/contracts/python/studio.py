@@ -18,6 +18,7 @@ storage (``apps/studio_api/models/studio.py``) uses snake_case but the
 manual TS used the same shape, so no rename needed. Resolving backend
 re-export from lingwen-shared is v16.5 #N.8+ carryover.
 """
+
 from __future__ import annotations
 
 from typing import Optional
@@ -297,9 +298,7 @@ class StudioProseJudgeResponse(BaseModel):
     false_positive_candidate_count: int = 0
     review_needed_count: int = 0
     high_priority: list[StudioProseJudgeSignal] = Field(default_factory=list)
-    false_positive_candidates: list[StudioProseJudgeSignal] = Field(
-        default_factory=list
-    )
+    false_positive_candidates: list[StudioProseJudgeSignal] = Field(default_factory=list)
     review_needed: list[StudioProseJudgeSignal] = Field(default_factory=list)
 
 

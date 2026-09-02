@@ -2,6 +2,7 @@
 
 测试 Qdrant 客户端、批量嵌入和相似度搜索功能。
 """
+
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
@@ -175,10 +176,7 @@ class TestBatchEmbedder:
             {"chapter_id": "ch_002", "content": "内容2", "chapter_num": 2, "author": "张三"},
         ]
 
-        result = batch_embedder.embed_chapters(
-            chapters,
-            metadata_fields=["chapter_num", "author"]
-        )
+        result = batch_embedder.embed_chapters(chapters, metadata_fields=["chapter_num", "author"])
 
         assert len(result) == 2
 
@@ -410,12 +408,14 @@ class TestBatchEmbedderEdgeCases:
             embedder=mock_embedder,
         )
 
-        chapters = [{
-            "chapter_id": "ch_001",
-            "content": "内容",
-            "extra_field": "额外数据",
-            "title": "章节标题",  # 这会作为 metadata_fields 被包含
-        }]
+        chapters = [
+            {
+                "chapter_id": "ch_001",
+                "content": "内容",
+                "extra_field": "额外数据",
+                "title": "章节标题",  # 这会作为 metadata_fields 被包含
+            }
+        ]
 
         batch_embedder.embed_chapters(chapters, metadata_fields=["title"])
 
@@ -433,12 +433,14 @@ class TestBatchEmbedderEdgeCases:
             embedder=mock_embedder,
         )
 
-        segments = [{
-            "segment_id": "seg_001",
-            "text": "段落内容",
-            "chapter_id": "ch_001",
-            "position": 5,
-        }]
+        segments = [
+            {
+                "segment_id": "seg_001",
+                "text": "段落内容",
+                "chapter_id": "ch_001",
+                "position": 5,
+            }
+        ]
 
         batch_embedder.embed_segments(segments, parent_field="chapter_id")
 

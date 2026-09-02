@@ -55,16 +55,9 @@ class SymbolismScorer(BaseScorer):
         # 限制分数范围
         score = max(0, min(100, score))
 
-        return ScoredResult(
-            score=score,
-            reason="; ".join(reasons) if reasons else "象征约束评分完成"
-        )
+        return ScoredResult(score=score, reason="; ".join(reasons) if reasons else "象征约束评分完成")
 
-    def _check_symbol_occurrences(
-        self,
-        content: str,
-        symbols: List[str]
-    ) -> Dict[str, bool]:
+    def _check_symbol_occurrences(self, content: str, symbols: List[str]) -> Dict[str, bool]:
         """检查象征元素出现情况"""
         content_lower = content.lower()
         found_symbols = []
@@ -80,7 +73,7 @@ class SymbolismScorer(BaseScorer):
 
         return {
             "found": len(found_symbols) >= len(symbols) * 0.5 if symbols else False,
-            "progressive": progressive
+            "progressive": progressive,
         }
 
     def _check_excessive_symbolism(self, content: str) -> bool:

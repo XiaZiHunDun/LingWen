@@ -10,6 +10,7 @@ dynamic import of ``infra.llm_service``, or any PEP 562 ``__getattr__``
 that re-exports ``infra.llm_service`` symbols. Regression-tested by
 ``tooling/hygiene/check_no_grimp_evasion.py`` (v16.5 #1).
 """
+
 from __future__ import annotations
 
 import asyncio

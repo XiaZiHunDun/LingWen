@@ -1,4 +1,5 @@
 """Tests for creator v6.11 share apply, throughput chart, haptic."""
+
 from __future__ import annotations
 
 from lingwen_creator.content.ui_profile import resolve_creator_ui_profile

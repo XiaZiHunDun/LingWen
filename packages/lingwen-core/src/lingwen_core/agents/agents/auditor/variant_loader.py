@@ -167,12 +167,7 @@ class VariantLoader:
         return variant.get("expertise_types", [])
 
     def build_weighted_prompt(
-        self,
-        reviewer_id: str,
-        base_prompt: str,
-        content: str,
-        characters: list,
-        context: dict
+        self, reviewer_id: str, base_prompt: str, content: str, characters: list, context: dict
     ) -> str:
         """构建加权审核提示
 
@@ -241,6 +236,7 @@ class VariantLoader:
 
 # 全局实例
 _loader = None
+
 
 def get_variant_loader() -> VariantLoader:
     """获取变体加载器单例

@@ -12,6 +12,7 @@ or similar application layer in a future phase.
 
 DO NOT add new code here; this is a deletion target.
 """
+
 from __future__ import annotations
 
 from lingwen_core.domain.subplot import (

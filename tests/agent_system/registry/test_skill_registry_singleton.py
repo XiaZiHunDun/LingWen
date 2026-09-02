@@ -8,6 +8,7 @@ reset_registry() 也没加锁,与正在 init 的线程 race。
 
 修复:双重检查锁 (Double-Checked Locking) 模式。
 """
+
 import threading
 from unittest import TestCase
 

@@ -1,4 +1,5 @@
 """Tests for creator v4.5 outline inline edit, recheck paragraph jump, batch pulse clear."""
+
 from __future__ import annotations
 
 import pytest

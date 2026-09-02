@@ -23,18 +23,21 @@ from infra.errors import BaseError
 
 class CacheError(BaseError):
     """缓存错误"""
+
     __error_name__ = "CacheError"
     __error_tags__ = ["cache"]
 
 
 class CacheMissError(CacheError):
     """缓存未命中"""
+
     __error_name__ = "CacheMissError"
     __error_tags__ = ["cache", "miss"]
 
 
 class CacheExpiredError(CacheError):
     """缓存过期"""
+
     __error_name__ = "CacheExpiredError"
     __error_tags__ = ["cache", "expired"]
 
@@ -51,6 +54,7 @@ class CacheHint:
         key: 缓存键
         tags: 标签
     """
+
     ttl_seconds: int = 3600  # 默认 1 小时
     key: Optional[str] = None
     tags: List[str] = field(default_factory=list)
@@ -66,6 +70,7 @@ class CacheHint:
 
 class MessageRole:
     """消息角色"""
+
     USER = "user"
     SYSTEM = "system"
     ASSISTANT = "assistant"
@@ -305,17 +310,20 @@ class FileCacheStorage(CacheStorage):
     def __init__(self, cache_dir: str = "./cache"):
         self._cache_dir = cache_dir
         import os
+
         os.makedirs(cache_dir, exist_ok=True)
 
     def _key_to_path(self, key: str) -> str:
         """将键转换为文件路径"""
         import os
+
         hash_key = hashlib.md5(key.encode()).hexdigest()
         return os.path.join(self._cache_dir, f"{hash_key}.json")
 
     def get(self, key: str) -> Optional[CacheEntry]:
         """获取缓存"""
         import os
+
         path = self._key_to_path(key)
         if not os.path.exists(path):
             return None
@@ -352,6 +360,7 @@ class FileCacheStorage(CacheStorage):
     def delete(self, key: str) -> None:
         """删除缓存"""
         import os
+
         path = self._key_to_path(key)
         if os.path.exists(path):
             os.remove(path)
@@ -359,6 +368,7 @@ class FileCacheStorage(CacheStorage):
     def clear(self) -> None:
         """清空所有缓存"""
         import os
+
         for filename in os.listdir(self._cache_dir):
             if filename.endswith(".json"):
                 os.remove(os.path.join(self._cache_dir, filename))
@@ -367,6 +377,7 @@ class FileCacheStorage(CacheStorage):
         """获取所有缓存键"""
         keys = []
         import os
+
         for filename in os.listdir(self._cache_dir):
             if filename.endswith(".json"):
                 path = os.path.join(self._cache_dir, filename)
@@ -382,6 +393,7 @@ class FileCacheStorage(CacheStorage):
         """清理过期缓存"""
         count = 0
         import os
+
         for filename in os.listdir(self._cache_dir):
             if filename.endswith(".json"):
                 path = os.path.join(self._cache_dir, filename)

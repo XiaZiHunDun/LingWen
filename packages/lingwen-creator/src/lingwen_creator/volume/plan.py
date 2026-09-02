@@ -3,6 +3,7 @@
 Migrated from infra/creator_volume_plan.py in Phase 126 v16.2.1.
 New location: packages/lingwen-creator/src/lingwen_creator/volume/plan.py
 """
+
 from __future__ import annotations
 
 import json
@@ -398,8 +399,7 @@ def detect_volume_overlaps(volumes: list[VolumeEntry]) -> list[dict[str, Any]]:
                     "chapter": start,
                     "volume_label": f"{left.label}/{right.label}",
                     "message": (
-                        f"卷「{left.label}」与「{right.label}」"
-                        f"在 ch{start:03d}–ch{end:03d} 章范围重叠"
+                        f"卷「{left.label}」与「{right.label}」在 ch{start:03d}–ch{end:03d} 章范围重叠"
                     ),
                 },
             )

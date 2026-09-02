@@ -45,13 +45,12 @@ class MiniMaxProvider(AIProvider):
         # MiniMax使用X-Api-Key header，需要自定义httpx客户端
         # httpx.Client 接受 headers 参数（自 0.20+ 起），用于透传自定义 header
         import httpx
+
         self._client = anthropic.Anthropic(
             api_key=config.api_key,
             base_url=f"{api_host}/anthropic",
             timeout=self.config.timeout,
-            http_client=httpx.Client(
-                headers={"X-Api-Key": config.api_key}
-            ),
+            http_client=httpx.Client(headers={"X-Api-Key": config.api_key}),
         )
         self._model = config.model if config.model else self.DEFAULT_MODEL
 
@@ -88,16 +87,16 @@ class MiniMaxProvider(AIProvider):
                     messages=messages,
                     temperature=temperature,
                     max_tokens=max_tokens,
-                    **kwargs
+                    **kwargs,
                 )
                 # Handle different block types - extract text only, skip thinking blocks
-                text_blocks = [b for b in response.content if b.type == 'text']
-                if text_blocks and hasattr(text_blocks[0], 'text'):
+                text_blocks = [b for b in response.content if b.type == "text"]
+                if text_blocks and hasattr(text_blocks[0], "text"):
                     return text_blocks[0].text
                 # If no text block found and there's content, return the first block as string
                 if response.content:
                     first = response.content[0]
-                    if first.type == 'thinking':
+                    if first.type == "thinking":
                         # MiniMax thinking block - return empty if no text, or try to extract anyway
                         return text_blocks[0].text if text_blocks else ""
                 return str(response.content[0]) if response.content else ""
@@ -105,28 +104,28 @@ class MiniMaxProvider(AIProvider):
             except anthropic.APITimeoutError:
                 last_error = TimeoutError(f"Request timed out after {self.config.timeout}s")
                 if attempt < self.config.max_retries - 1:
-                    time.sleep(2 ** attempt)  # 指数退避
+                    time.sleep(2**attempt)  # 指数退避
                     continue
                 raise last_error
 
             except anthropic.APIConnectionError as e:
                 last_error = NetworkError(f"Connection failed: {e}")
                 if attempt < self.config.max_retries - 1:
-                    time.sleep(2 ** attempt)
+                    time.sleep(2**attempt)
                     continue
                 raise last_error
 
             except anthropic.RateLimitError as e:
                 last_error = APIError(f"Rate limit exceeded: {e}")
                 if attempt < self.config.max_retries - 1:
-                    time.sleep(2 ** attempt)
+                    time.sleep(2**attempt)
                     continue
                 raise last_error
 
             except anthropic.APIError as e:
                 last_error = APIError(f"MiniMax API error: {e}")
                 if attempt < self.config.max_retries - 1:
-                    time.sleep(2 ** attempt)
+                    time.sleep(2**attempt)
                     continue
                 raise last_error
 
@@ -136,9 +135,7 @@ class MiniMaxProvider(AIProvider):
 
         raise last_error or AIProviderError("Max retries exceeded")
 
-    def generate_with_usage(
-        self, prompt: str, **kwargs
-    ) -> tuple[str, dict[str, int]]:
+    def generate_with_usage(self, prompt: str, **kwargs) -> tuple[str, dict[str, int]]:
         """生成文本 + 返回 SDK 原生 usage (MiniMax M2.7, 走 Anthropic 兼容).
 
         跟 generate() 区别: 同时返回 response.usage.input_tokens / output_tokens.
@@ -171,15 +168,15 @@ class MiniMaxProvider(AIProvider):
                     messages=messages,
                     temperature=temperature,
                     max_tokens=max_tokens,
-                    **kwargs
+                    **kwargs,
                 )
                 # Extract text (跟 generate() 同, 跳过 thinking block)
-                text_blocks = [b for b in response.content if b.type == 'text']
-                if text_blocks and hasattr(text_blocks[0], 'text'):
+                text_blocks = [b for b in response.content if b.type == "text"]
+                if text_blocks and hasattr(text_blocks[0], "text"):
                     text = text_blocks[0].text
                 elif response.content:
                     first = response.content[0]
-                    if first.type == 'thinking':
+                    if first.type == "thinking":
                         # MiniMax thinking block - return empty if no text
                         text = text_blocks[0].text if text_blocks else ""
                     else:
@@ -195,28 +192,28 @@ class MiniMaxProvider(AIProvider):
             except anthropic.APITimeoutError:
                 last_error = TimeoutError(f"Request timed out after {self.config.timeout}s")
                 if attempt < self.config.max_retries - 1:
-                    time.sleep(2 ** attempt)  # 指数退避
+                    time.sleep(2**attempt)  # 指数退避
                     continue
                 raise last_error
 
             except anthropic.APIConnectionError as e:
                 last_error = NetworkError(f"Connection failed: {e}")
                 if attempt < self.config.max_retries - 1:
-                    time.sleep(2 ** attempt)
+                    time.sleep(2**attempt)
                     continue
                 raise last_error
 
             except anthropic.RateLimitError as e:
                 last_error = APIError(f"Rate limit exceeded: {e}")
                 if attempt < self.config.max_retries - 1:
-                    time.sleep(2 ** attempt)
+                    time.sleep(2**attempt)
                     continue
                 raise last_error
 
             except anthropic.APIError as e:
                 last_error = APIError(f"MiniMax API error: {e}")
                 if attempt < self.config.max_retries - 1:
-                    time.sleep(2 ** attempt)
+                    time.sleep(2**attempt)
                     continue
                 raise last_error
 
@@ -260,7 +257,7 @@ class MiniMaxProvider(AIProvider):
                 last_error = AIProviderError(f"Unexpected error: {e}")
                 raise last_error
             if attempt < self.config.max_retries - 1:
-                time.sleep(2 ** attempt)
+                time.sleep(2**attempt)
                 continue
             raise last_error or AIProviderError("Max retries exceeded")
 
@@ -274,8 +271,7 @@ class MiniMaxProvider(AIProvider):
             AIProviderError: 不支持嵌入操作
         """
         raise AIProviderError(
-            "MiniMax Provider does not support embedding. "
-            "Use OpenAIProvider for embedding operations."
+            "MiniMax Provider does not support embedding. Use OpenAIProvider for embedding operations."
         )
 
     def batch_generate(self, prompts: List[str], **kwargs) -> List[str]:

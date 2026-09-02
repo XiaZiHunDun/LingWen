@@ -9,6 +9,7 @@
 - audit 异常 → 旧 try/except 兜底, usage 0
 - chat_with_usage sanity 防回归
 """
+
 from __future__ import annotations
 
 import inspect

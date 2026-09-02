@@ -3,6 +3,7 @@
 TDD: 这些测试在 step 1 阶段会全部 FAIL (ImportError on Backfiller / 4 Extractor),
 在 Task 2 (Extractor impl) + Task 3 (Backfiller + storage.append_nodes_atomic) + Task 4 (CLI) + Task 5 (fixture) 后通过.
 """
+
 from pathlib import Path
 
 import pytest
@@ -19,6 +20,7 @@ from infra.cross_volume.reference_graph import CrossVolumeReferenceGraph
 from infra.cross_volume.storage import RippleStorage
 
 # ============ 4 Extractor unit tests (8 tests) ============
+
 
 class TestCharacterExtractor:
     @pytest.fixture
@@ -145,6 +147,7 @@ class TestPlotPointExtractor:
 
 # ============ Backfiller orchestration tests (3 tests) ============
 
+
 class TestBackfiller:
     @pytest.fixture
     def rules_yaml(self, tmp_path):
@@ -183,14 +186,13 @@ plot_point:
         )
         # ch002: character (跨章聚合 ch001)
         (corpus_root / "ch002.md").write_text("李青云与林凡激战.", encoding="utf-8")
-        (corpus_root / "ch002_大纲.md").write_text(
-            "# 章节二\n## 凌霄宗大战林凡\n", encoding="utf-8"
-        )
+        (corpus_root / "ch002_大纲.md").write_text("# 章节二\n## 凌霄宗大战林凡\n", encoding="utf-8")
         return corpus_root
 
     def test_backfill_dry_run_does_not_write(self, rules_yaml, corpus, tmp_path):
         """Phase 9.11: --dry-run 0 写库, 仅 print 统计."""
         from infra.cross_volume.backfill import Backfiller
+
         storage = RippleStorage(db_path=tmp_path / "ripple.db")
         graph = CrossVolumeReferenceGraph(storage=storage)
         backfiller = Backfiller(rules_path=rules_yaml, corpus_root=corpus, graph=graph)
@@ -203,6 +205,7 @@ plot_point:
     def test_backfill_execute_writes_via_append_nodes_atomic(self, rules_yaml, corpus, tmp_path):
         """Phase 9.11: --execute 走 storage.append_nodes_atomic 1 commit."""
         from infra.cross_volume.backfill import Backfiller
+
         storage = RippleStorage(db_path=tmp_path / "ripple.db")
         graph = CrossVolumeReferenceGraph(storage=storage)
         backfiller = Backfiller(rules_path=rules_yaml, corpus_root=corpus, graph=graph)
@@ -220,6 +223,7 @@ plot_point:
     def test_backfill_volume_filter_restricts_scan(self, rules_yaml, corpus, tmp_path):
         """Phase 9.11: --vol 1 抽样式, 仅扫 vol 1 章."""
         from infra.cross_volume.backfill import Backfiller
+
         storage = RippleStorage(db_path=tmp_path / "ripple.db")
         graph = CrossVolumeReferenceGraph(storage=storage)
         backfiller = Backfiller(rules_path=rules_yaml, corpus_root=corpus, graph=graph)
@@ -231,10 +235,12 @@ plot_point:
 
 # ============ Integration tests (atomic_batch + dry-run gating) ============
 
+
 class TestBackfillIntegration:
     def test_backfill_execute_commits_atomically(self, rules_yaml, corpus, tmp_path):
         """Phase 9.11: --execute 走 append_nodes_atomic, 0 partial write."""
         from infra.cross_volume.backfill import Backfiller
+
         storage = RippleStorage(db_path=tmp_path / "ripple.db")
         graph = CrossVolumeReferenceGraph(storage=storage)
         backfiller = Backfiller(rules_path=rules_yaml, corpus_root=corpus, graph=graph)
@@ -247,6 +253,7 @@ class TestBackfillIntegration:
     def test_backfill_dry_run_creates_no_db(self, rules_yaml, corpus, tmp_path):
         """Phase 9.11: dry-run 跑后, ripple.db 0 创建 / 0 创建后 0 nodes."""
         from infra.cross_volume.backfill import Backfiller
+
         non_existent_db = tmp_path / "ripple_dry.db"
         storage = RippleStorage(db_path=non_existent_db)
         graph = CrossVolumeReferenceGraph(storage=storage)
@@ -258,6 +265,7 @@ class TestBackfillIntegration:
 
 # ============ E2E test (10 章 fixture) ============
 
+
 class TestBackfillE2E:
     def test_backfill_runs_on_10_chapter_fixture(self, tmp_path):
         """Phase 9.11 E2E: 走 10 章真实 fixture, 验证 4 维 N nodes 范围合理 0 crash."""
@@ -266,13 +274,12 @@ class TestBackfillE2E:
             Backfiller,  # Phase 9.11: Task 6 cleanup (remove namespace hack)
         )
         from tests.cross_volume.fixtures.sample_corpus import SAMPLE_CORPUS_ROOT, SAMPLE_RULES_YAML
+
         rules_yaml = tmp_path / "rules.yaml"
         rules_yaml.write_text(SAMPLE_RULES_YAML, encoding="utf-8")
         storage = RippleStorage(db_path=tmp_path / "ripple.db")
         graph = CrossVolumeReferenceGraph(storage=storage)
-        backfiller = Backfiller(
-            rules_path=rules_yaml, corpus_root=SAMPLE_CORPUS_ROOT, graph=graph
-        )
+        backfiller = Backfiller(rules_path=rules_yaml, corpus_root=SAMPLE_CORPUS_ROOT, graph=graph)
         stats = backfiller.run(dry_run=False)
         # 4 维 N nodes 范围合理 (跟 fixture 内容有关, 估 ≥ 5 total, 各 dim ≥ 1)
         assert stats.total_count >= 5

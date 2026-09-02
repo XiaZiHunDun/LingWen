@@ -4,6 +4,7 @@
 - 跳过 event=='DEFAULT_TEST' 行（测试污染）
 - 把 {'event':'STEP_BUMP','data':{...}} 映射成 WorkflowEvent
 """
+
 from __future__ import annotations
 
 import argparse
@@ -68,15 +69,13 @@ def main() -> int:
     ap.add_argument("--dst", required=True, type=Path)
     args = ap.parse_args()
     if not args.src.exists():
-        print(f"WARNING: source log not found at {args.src}; skipping migration",
-              file=sys.stderr)
+        print(f"WARNING: source log not found at {args.src}; skipping migration", file=sys.stderr)
         return 0
     try:
         store = JsonlStore(args.dst)
         n = migrate(args.src, store)
     except (OSError, Exception) as e:
-        print(f"ERROR: migration failed: {e.__class__.__name__}: {e}",
-              file=sys.stderr)
+        print(f"ERROR: migration failed: {e.__class__.__name__}: {e}", file=sys.stderr)
         return 1
     print(f"Migrated {n} events to {args.dst}")
     return 0

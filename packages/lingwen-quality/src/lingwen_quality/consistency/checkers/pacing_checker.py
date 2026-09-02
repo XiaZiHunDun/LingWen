@@ -44,36 +44,57 @@ class _RippleRegistryLike(Protocol):
 
 class PacingChecker(BaseChecker):
     """节奏检测器"""
-    _checker_type = CheckerType.PACING
 
+    _checker_type = CheckerType.PACING
 
     def __init__(self):
         super().__init__(self._checker_type)
 
         # 高潮/动作关键词
         self.action_keywords = [
-            "战斗", "攻击", "冲击", "爆发", "爆炸", "碰撞",
-            "厮杀", "搏斗", "对决", "交锋", "对抗"
+            "战斗",
+            "攻击",
+            "冲击",
+            "爆发",
+            "爆炸",
+            "碰撞",
+            "厮杀",
+            "搏斗",
+            "对决",
+            "交锋",
+            "对抗",
         ]
 
         # 缓冲/过渡关键词
         self.cooldown_keywords = [
-            "沉默", "叹息", "思考", "回忆", "休息", "等待",
-            "观察", "警惕", "戒备", "喘息", "平静"
+            "沉默",
+            "叹息",
+            "思考",
+            "回忆",
+            "休息",
+            "等待",
+            "观察",
+            "警惕",
+            "戒备",
+            "喘息",
+            "平静",
         ]
 
         # 铺垫关键词
         self.foreshadow_keywords = [
-            "预感", "觉得", "似乎", "可能", "也许", "将要",
-            "即将", "准备", "预感", "担忧"
+            "预感",
+            "觉得",
+            "似乎",
+            "可能",
+            "也许",
+            "将要",
+            "即将",
+            "准备",
+            "预感",
+            "担忧",
         ]
 
-    def check(
-        self,
-        chapter_content: str,
-        chapter_num: int,
-        context: Optional[Dict] = None
-    ) -> List[Issue]:
+    def check(self, chapter_content: str, chapter_num: int, context: Optional[Dict] = None) -> List[Issue]:
         issues = []
 
         # 检测高潮密度
@@ -85,41 +106,47 @@ class PacingChecker(BaseChecker):
 
             # 动作段超过60%认为节奏过密
             if action_ratio > 0.6 and action_count > 5:
-                issues.append(Issue(
-                    id=f"pacing_density_{chapter_num}",
-                    severity=IssueSeverity.P2,
-                    checker_type=CheckerType.PACING,
-                    issue_type="节奏过密",
-                    title="章节节奏过于密集",
-                    description=f"章节中动作/冲突段过于密集（{action_count}处，占比{action_ratio:.0%}）",
-                    location=IssueLocation(chapter=chapter_num),
-                    evidence=f"动作段: {action_count}, 总段: {total_segments}"
-                ))
+                issues.append(
+                    Issue(
+                        id=f"pacing_density_{chapter_num}",
+                        severity=IssueSeverity.P2,
+                        checker_type=CheckerType.PACING,
+                        issue_type="节奏过密",
+                        title="章节节奏过于密集",
+                        description=f"章节中动作/冲突段过于密集（{action_count}处，占比{action_ratio:.0%}）",
+                        location=IssueLocation(chapter=chapter_num),
+                        evidence=f"动作段: {action_count}, 总段: {total_segments}",
+                    )
+                )
 
         # 检测高潮后是否有缓冲
         if self._has_climax_without_cooldown(chapter_content):
-            issues.append(Issue(
-                id=f"pacing_cooldown_{chapter_num}",
-                severity=IssueSeverity.P2,
-                checker_type=CheckerType.SCENE_PATTERN,
-                issue_type="高潮后缺少缓冲",
-                title="连续高潮后缺少缓冲",
-                description="连续高潮后缺少缓冲段读者会疲劳",
-                location=IssueLocation(chapter=chapter_num)
-            ))
+            issues.append(
+                Issue(
+                    id=f"pacing_cooldown_{chapter_num}",
+                    severity=IssueSeverity.P2,
+                    checker_type=CheckerType.SCENE_PATTERN,
+                    issue_type="高潮后缺少缓冲",
+                    title="连续高潮后缺少缓冲",
+                    description="连续高潮后缺少缓冲段读者会疲劳",
+                    location=IssueLocation(chapter=chapter_num),
+                )
+            )
 
         # 检测是否有过长铺垫
         setup_length = self._measure_foreshadow_length(chapter_content)
         if setup_length > 0.4:  # 铺垫超过40%
-            issues.append(Issue(
-                id=f"pacing_setup_{chapter_num}",
-                severity=IssueSeverity.P3,
-                checker_type=CheckerType.SCENE_PATTERN,
-                issue_type="铺垫过长",
-                title="章节前期铺垫过长",
-                description="章节前期铺垫过长可能让读者失去耐心",
-                location=IssueLocation(chapter=chapter_num)
-            ))
+            issues.append(
+                Issue(
+                    id=f"pacing_setup_{chapter_num}",
+                    severity=IssueSeverity.P3,
+                    checker_type=CheckerType.SCENE_PATTERN,
+                    issue_type="铺垫过长",
+                    title="章节前期铺垫过长",
+                    description="章节前期铺垫过长可能让读者失去耐心",
+                    location=IssueLocation(chapter=chapter_num),
+                )
+            )
 
         return issues
 
@@ -137,7 +164,7 @@ class PacingChecker(BaseChecker):
 
     def _estimate_total_segments(self, content: str) -> int:
         """估算总段数（简单按句号计数）"""
-        return max(1, content.count('。') + content.count('！') + content.count('？'))
+        return max(1, content.count("。") + content.count("！") + content.count("？"))
 
     def _has_climax_without_cooldown(self, content: str) -> bool:
         """检测高潮后是否有缓冲"""
@@ -166,11 +193,8 @@ class PacingChecker(BaseChecker):
             return 0.0
 
         # 前1/3为铺垫区
-        setup_sentences = sentences[:len(sentences) // 3]
-        foreshadow_count = sum(
-            1 for s in setup_sentences
-            if any(kw in s for kw in self.foreshadow_keywords)
-        )
+        setup_sentences = sentences[: len(sentences) // 3]
+        foreshadow_count = sum(1 for s in setup_sentences if any(kw in s for kw in self.foreshadow_keywords))
 
         return foreshadow_count / max(1, len(setup_sentences))
 
@@ -206,20 +230,21 @@ class PacingChecker(BaseChecker):
 
         # 2. 密度检测
         if active_count > active_threshold:
-            issues.append(Issue(
-                id=f"ripple_density_{current_ch}",
-                severity=IssueSeverity.P2,
-                checker_type=CheckerType.PACING,
-                issue_type="涟漪密度过高",
-                title=f"章节涟漪密度过高 ({active_count} > {active_threshold})",
-                description=(
-                    f"活跃涟漪数 {active_count} 超过阈值 {active_threshold},"
-                    f"读者可能感到伏笔负担过重"
-                ),
-                location=IssueLocation(chapter=current_ch),
-                evidence=f"active_count={active_count}, threshold={active_threshold}",
-                suggestion="考虑提前平复部分涟漪 (resolve) 或暂缓新涟漪注册",
-            ))
+            issues.append(
+                Issue(
+                    id=f"ripple_density_{current_ch}",
+                    severity=IssueSeverity.P2,
+                    checker_type=CheckerType.PACING,
+                    issue_type="涟漪密度过高",
+                    title=f"章节涟漪密度过高 ({active_count} > {active_threshold})",
+                    description=(
+                        f"活跃涟漪数 {active_count} 超过阈值 {active_threshold},读者可能感到伏笔负担过重"
+                    ),
+                    location=IssueLocation(chapter=current_ch),
+                    evidence=f"active_count={active_count}, threshold={active_threshold}",
+                    suggestion="考虑提前平复部分涟漪 (resolve) 或暂缓新涟漪注册",
+                )
+            )
 
         # 3. 集中检测 (wavefront 章节分布)
         #    用 get_active_wavefront 过滤未来章节 → 统计每章出现次数
@@ -233,25 +258,26 @@ class PacingChecker(BaseChecker):
 
         # 找集中爆发的章节 (> convergence_threshold)
         convergence_chapters = [
-            (ch, count) for ch, count in chapter_counter.items()
-            if count > convergence_threshold
+            (ch, count) for ch, count in chapter_counter.items() if count > convergence_threshold
         ]
         for ch, count in convergence_chapters:
-            issues.append(Issue(
-                id=f"ripple_convergence_{current_ch}_{ch}",
-                severity=IssueSeverity.P1,
-                checker_type=CheckerType.PACING,
-                issue_type="涟漪集中爆发",
-                title=f"ch{ch} 涟漪集中爆发 ({count} 个)",
-                description=(
-                    f"ch{ch} 出现 {count} 个 ripple wavefront,"
-                    f"超过集中阈值 {convergence_threshold},"
-                    f"读者可能感到信息过载"
-                ),
-                location=IssueLocation(chapter=ch),
-                evidence=f"ch{ch}: {count} ripples",
-                suggestion="考虑将部分 ripple 推到后续章节展开",
-            ))
+            issues.append(
+                Issue(
+                    id=f"ripple_convergence_{current_ch}_{ch}",
+                    severity=IssueSeverity.P1,
+                    checker_type=CheckerType.PACING,
+                    issue_type="涟漪集中爆发",
+                    title=f"ch{ch} 涟漪集中爆发 ({count} 个)",
+                    description=(
+                        f"ch{ch} 出现 {count} 个 ripple wavefront,"
+                        f"超过集中阈值 {convergence_threshold},"
+                        f"读者可能感到信息过载"
+                    ),
+                    location=IssueLocation(chapter=ch),
+                    evidence=f"ch{ch}: {count} ripples",
+                    suggestion="考虑将部分 ripple 推到后续章节展开",
+                )
+            )
 
         return issues
 
@@ -262,7 +288,4 @@ class PacingChecker(BaseChecker):
         复用 RippleEngine.get_active_wavefront 逻辑
         (避免直接 import engine 造成依赖)
         """
-        return tuple(
-            w for w in ripple.wavefront
-            if ripple.origin_ch <= w <= current_ch
-        )
+        return tuple(w for w in ripple.wavefront if ripple.origin_ch <= w <= current_ch)

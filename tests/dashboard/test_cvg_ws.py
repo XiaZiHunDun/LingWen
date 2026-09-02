@@ -4,6 +4,7 @@ Spec 4.2.3: 3 message types (ripple_created / ripple_status_changed / pong).
 Mirror dashboard/ws.py::ConnectionManager 1:1, 但 CVG 专用 + 0 background poll
 (CVG 事件 push-only, 跟 /api/ws/workflows 1:1 passive 模式).
 """
+
 from __future__ import annotations
 
 from pathlib import Path

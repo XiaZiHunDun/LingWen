@@ -14,6 +14,7 @@ Usage:
         required_metrics=["S1", "S4", "S5"]
     )
 """
+
 import os
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -27,6 +28,7 @@ from prompt_assembler import PromptAssembler, TemplateCategory, TemplateMetadata
 @dataclass
 class TemplateScore:
     """模板评分结果"""
+
     template: TemplateMetadata
     total_score: float
     metric_scores: Dict[str, float]
@@ -39,6 +41,7 @@ class TemplateScore:
 @dataclass
 class RecommendationCriteria:
     """推荐标准"""
+
     scene_type: str
     genre: str = "玄幻"
     required_metrics: List[str] = field(default_factory=list)
@@ -89,15 +92,15 @@ class TemplateRecommender:
         self.template_stats: Dict[str, Dict] = {}
 
         if self.index_file.exists():
-            with open(self.index_file, 'r', encoding='utf-8') as f:
+            with open(self.index_file, "r", encoding="utf-8") as f:
                 data = yaml.safe_load(f)
 
-            for template in data.get('templates', []):
-                self.template_stats[template['id']] = {
-                    'use_count': template.get('use_count', 0),
-                    'success_rate': template.get('success_rate', 0.0),
-                    'avg_score': template.get('avg_score', 0.0),
-                    'last_used': template.get('last_used'),
+            for template in data.get("templates", []):
+                self.template_stats[template["id"]] = {
+                    "use_count": template.get("use_count", 0),
+                    "success_rate": template.get("success_rate", 0.0),
+                    "avg_score": template.get("avg_score", 0.0),
+                    "last_used": template.get("last_used"),
                 }
 
     def recommend(
@@ -106,7 +109,7 @@ class TemplateRecommender:
         genre: str = "玄幻",
         required_metrics: Optional[List[str]] = None,
         preferred_category: Optional[str] = None,
-        top_k: int = 3
+        top_k: int = 3,
     ) -> List[TemplateScore]:
         """
         推荐模板
@@ -125,7 +128,7 @@ class TemplateRecommender:
             scene_type=scene_type,
             genre=genre,
             required_metrics=required_metrics or [],
-            preferred_category=TemplateCategory(preferred_category) if preferred_category else None
+            preferred_category=TemplateCategory(preferred_category) if preferred_category else None,
         )
 
         candidates = self._get_candidate_templates(criteria)
@@ -135,10 +138,7 @@ class TemplateRecommender:
         return ranked[:top_k]
 
     def recommend_single(
-        self,
-        scene_type: str,
-        genre: str = "玄幻",
-        required_metrics: Optional[List[str]] = None
+        self, scene_type: str, genre: str = "玄幻", required_metrics: Optional[List[str]] = None
     ) -> Optional[TemplateScore]:
         """推荐单个最佳模板"""
         results = self.recommend(scene_type, genre, required_metrics, top_k=1)
@@ -166,21 +166,17 @@ class TemplateRecommender:
 
         return templates
 
-    def _score_template(
-        self,
-        template: TemplateMetadata,
-        criteria: RecommendationCriteria
-    ) -> TemplateScore:
+    def _score_template(self, template: TemplateMetadata, criteria: RecommendationCriteria) -> TemplateScore:
         """计算模板评分"""
         metric_scores: Dict[str, float] = {}
         reasons: List[str] = []
         total = 0.0
 
         # 1. 质量维度匹配评分
-        template_metrics = template.care_elements.get('result_metrics', [])
+        template_metrics = template.care_elements.get("result_metrics", [])
         for metric in criteria.required_metrics:
             if metric in template_metrics:
-                weight = self.QUALITY_WEIGHTS.get(metric, {}).get('weight', 0.1)
+                weight = self.QUALITY_WEIGHTS.get(metric, {}).get("weight", 0.1)
                 metric_scores[metric] = weight * 10  # 满分10分
                 total += metric_scores[metric]
             else:
@@ -215,13 +211,11 @@ class TemplateRecommender:
             temperature_match=temp_score,
             category_bonus=category_bonus,
             history_bonus=history_bonus,
-            reasons=reasons
+            reasons=reasons,
         )
 
     def _calculate_temperature_score(
-        self,
-        template: TemplateMetadata,
-        criteria: RecommendationCriteria
+        self, template: TemplateMetadata, criteria: RecommendationCriteria
     ) -> float:
         """计算温度匹配分数"""
         template_temp = template.temperature.recommended
@@ -244,50 +238,45 @@ class TemplateRecommender:
     def _calculate_history_bonus(self, template_id: str) -> float:
         """计算历史表现加分"""
         stats = self.template_stats.get(template_id, {})
-        use_count = stats.get('use_count', 0)
-        success_rate = stats.get('success_rate', 0.0)
-        avg_score = stats.get('avg_score', 0.0)
+        use_count = stats.get("use_count", 0)
+        success_rate = stats.get("success_rate", 0.0)
+        avg_score = stats.get("avg_score", 0.0)
 
         if use_count == 0:
             return 0.5  # 新模板给点机会
 
         # 综合评分
-        score = (success_rate * 3 + (avg_score / 10) * 5 + min(use_count / 10, 1) * 2)
+        score = success_rate * 3 + (avg_score / 10) * 5 + min(use_count / 10, 1) * 2
         return min(score, 5.0)  # 最高5分
 
-    def update_template_stats(
-        self,
-        template_id: str,
-        success: bool,
-        score: float
-    ):
+    def update_template_stats(self, template_id: str, success: bool, score: float):
         """更新模板使用统计"""
         if not self.index_file.exists():
             return
 
-        with open(self.index_file, 'r', encoding='utf-8') as f:
+        with open(self.index_file, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
 
-        for template in data.get('templates', []):
-            if template['id'] == template_id:
+        for template in data.get("templates", []):
+            if template["id"] == template_id:
                 # 更新使用次数
-                template['use_count'] = template.get('use_count', 0) + 1
+                template["use_count"] = template.get("use_count", 0) + 1
 
                 # 更新成功率和平均分
-                old_rate = template.get('success_rate', 0.0)
-                old_score = template.get('avg_score', 0.0)
-                old_count = template.get('use_count', 1) - 1
+                old_rate = template.get("success_rate", 0.0)
+                old_score = template.get("avg_score", 0.0)
+                old_count = template.get("use_count", 1) - 1
 
-                new_rate = (old_rate * old_count + (1 if success else 0)) / template['use_count']
-                new_score = (old_score * old_count + score) / template['use_count']
+                new_rate = (old_rate * old_count + (1 if success else 0)) / template["use_count"]
+                new_score = (old_score * old_count + score) / template["use_count"]
 
-                template['success_rate'] = round(new_rate, 3)
-                template['avg_score'] = round(new_score, 2)
-                template['last_used'] = datetime.now().strftime("%Y-%m-%d")
+                template["success_rate"] = round(new_rate, 3)
+                template["avg_score"] = round(new_score, 2)
+                template["last_used"] = datetime.now().strftime("%Y-%m-%d")
 
                 break
 
-        with open(self.index_file, 'w', encoding='utf-8') as f:
+        with open(self.index_file, "w", encoding="utf-8") as f:
             yaml.safe_dump(data, f, allow_unicode=True, default_flow_style=False, indent=2)
 
         # 重新加载
@@ -298,15 +287,15 @@ class TemplateRecommender:
         if not self.index_file.exists():
             return []
 
-        with open(self.index_file, 'r', encoding='utf-8') as f:
+        with open(self.index_file, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
 
-        version_history = data.get('version_history', [])
+        version_history = data.get("version_history", [])
 
         # 找到该模板相关的版本记录
         relevant = []
         for entry in version_history:
-            if any(template_id.startswith(v) for v in entry.get('templates_added', [])):
+            if any(template_id.startswith(v) for v in entry.get("templates_added", [])):
                 relevant.append(entry)
 
         return relevant
@@ -341,12 +330,14 @@ class TemplateRecommender:
                 weight = self.QUALITY_WEIGHTS.get(metric, {})
                 lines.append(f"- {metric} ({weight.get('name', '')}): {score:.1f}/10")
 
-        lines.extend([
-            "",
-            "## 温度参数",
-            f"- 推荐温度: {template_score.template.temperature.recommended}",
-            f"- 温度范围: [{template_score.template.temperature.min_value}, {template_score.template.temperature.max_value}]",
-        ])
+        lines.extend(
+            [
+                "",
+                "## 温度参数",
+                f"- 推荐温度: {template_score.template.temperature.recommended}",
+                f"- 温度范围: [{template_score.template.temperature.min_value}, {template_score.template.temperature.max_value}]",
+            ]
+        )
 
         return "\n".join(lines)
 
@@ -367,13 +358,13 @@ class TemplateRecommender:
 
         scored_templates = []
         for template_id, stats in self.template_stats.items():
-            use_count = stats.get('use_count', 0)
+            use_count = stats.get("use_count", 0)
             # 过滤掉未使用的模板
             if use_count == 0:
                 continue
 
-            success_rate = stats.get('success_rate', 0.0)
-            avg_score = stats.get('avg_score', 0.0)
+            success_rate = stats.get("success_rate", 0.0)
+            avg_score = stats.get("avg_score", 0.0)
 
             # 计算综合评分
             score = use_count * success_rate * (avg_score / 10)
@@ -410,15 +401,12 @@ def main():
     recommender = TemplateRecommender(assembler, args.index)
 
     results = recommender.recommend(
-        scene_type=args.scene,
-        genre=args.genre,
-        required_metrics=args.metrics,
-        top_k=args.top_k
+        scene_type=args.scene, genre=args.genre, required_metrics=args.metrics, top_k=args.top_k
     )
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"场景: {args.scene} | 类型: {args.genre}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     for i, result in enumerate(results, 1):
         print(f"#{i} {result.template.name} (得分: {result.total_score:.2f})")
@@ -431,4 +419,5 @@ def main():
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main() or 0)

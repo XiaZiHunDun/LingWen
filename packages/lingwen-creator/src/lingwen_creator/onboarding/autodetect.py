@@ -1,4 +1,5 @@
 """Auto-detect onboarding wizard step completion from project artifacts."""
+
 from __future__ import annotations
 
 from infra.paths import ProjectPaths
@@ -21,10 +22,7 @@ def infer_auto_completed_steps(project: StudioProject) -> list[str]:
             inferred.append("pillars")
 
     volumes = load_volume_plan(project.root)
-    if volumes and (
-        any(v.locked for v in volumes)
-        or volume_plan_state_path(project.root).is_file()
-    ):
+    if volumes and (any(v.locked for v in volumes) or volume_plan_state_path(project.root).is_file()):
         inferred.append("volume")
 
     scan_upto = min(config.max_chapter, 30)

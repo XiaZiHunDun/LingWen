@@ -31,6 +31,7 @@ from .base_checker import BaseChecker
 @dataclass
 class ChapterRedundancyIssue:
     """章节重复问题"""
+
     chapter_a: int
     chapter_b: int
     similarity_score: float
@@ -48,8 +49,8 @@ class ChapterRedundancyChecker(BaseChecker):
     章节重复度检测器
     检测章节间的内容重复
     """
-    _checker_type = CheckerType.CHAPTER_REDUNDANCY
 
+    _checker_type = CheckerType.CHAPTER_REDUNDANCY
 
     # N-gram参数
     NGRAM_SIZE = 3  # 连续3句话为N-gram
@@ -69,14 +70,11 @@ class ChapterRedundancyChecker(BaseChecker):
         super().__init__(self._checker_type)
         if chapters_dir is None:
             project_root = Path(__file__).parent.parent.parent.parent
-            chapters_dir = project_root / '03_内容仓库' / '04_正文'
+            chapters_dir = project_root / "03_内容仓库" / "04_正文"
         self.chapters_dir = Path(chapters_dir)
 
     def check(
-        self,
-        chapter_content: str,
-        chapter_num: int,
-        context: Optional[Dict[str, Any]] = None
+        self, chapter_content: str, chapter_num: int, context: Optional[Dict[str, Any]] = None
     ) -> List[Issue]:
         """
         执行章节重复度检查
@@ -89,49 +87,53 @@ class ChapterRedundancyChecker(BaseChecker):
         if chapter_num > 1:
             pair_issues = self.check_chapter_pair(chapter_num - 1, chapter_num)
             for issue in pair_issues:
-                if issue.severity in ('HIGH', 'MEDIUM'):
-                    issues.append(Issue(
-                        id=f"CR_{chapter_num-1:03d}_{chapter_num:03d}_{issue.repeat_type}",
-                        severity=IssueSeverity.P1 if issue.severity == 'HIGH' else IssueSeverity.P2,
-                        checker_type=CheckerType.CHAPTER_REDUNDANCY,
-                        issue_type="chapter_redundancy",
-                        title=f"章节重复: ch{chapter_num-1}-ch{chapter_num}",
-                        description=f"与前一章重复度{issue.similarity_score*100:.1f}%",
-                        location=IssueLocation(chapter=chapter_num),
-                        evidence=f"重复类型: {issue.repeat_type}",
-                        suggestion="考虑合并或删减重复内容"
-                    ))
+                if issue.severity in ("HIGH", "MEDIUM"):
+                    issues.append(
+                        Issue(
+                            id=f"CR_{chapter_num - 1:03d}_{chapter_num:03d}_{issue.repeat_type}",
+                            severity=IssueSeverity.P1 if issue.severity == "HIGH" else IssueSeverity.P2,
+                            checker_type=CheckerType.CHAPTER_REDUNDANCY,
+                            issue_type="chapter_redundancy",
+                            title=f"章节重复: ch{chapter_num - 1}-ch{chapter_num}",
+                            description=f"与前一章重复度{issue.similarity_score * 100:.1f}%",
+                            location=IssueLocation(chapter=chapter_num),
+                            evidence=f"重复类型: {issue.repeat_type}",
+                            suggestion="考虑合并或删减重复内容",
+                        )
+                    )
 
         # 检查与后一章的重复度
         next_ch = chapter_num + 1
-        ch_file = self.chapters_dir / f'ch{next_ch:03d}.md'
+        ch_file = self.chapters_dir / f"ch{next_ch:03d}.md"
         if ch_file.exists():
             pair_issues = self.check_chapter_pair(chapter_num, next_ch)
             for issue in pair_issues:
-                if issue.severity in ('HIGH', 'MEDIUM'):
-                    issues.append(Issue(
-                        id=f"CR_{chapter_num:03d}_{next_ch:03d}_{issue.repeat_type}",
-                        severity=IssueSeverity.P1 if issue.severity == 'HIGH' else IssueSeverity.P2,
-                        checker_type=CheckerType.CHAPTER_REDUNDANCY,
-                        issue_type="chapter_redundancy",
-                        title=f"章节重复: ch{chapter_num}-ch{next_ch}",
-                        description=f"与后一章重复度{issue.similarity_score*100:.1f}%",
-                        location=IssueLocation(chapter=chapter_num),
-                        evidence=f"重复类型: {issue.repeat_type}",
-                        suggestion="考虑合并或删减重复内容"
-                    ))
+                if issue.severity in ("HIGH", "MEDIUM"):
+                    issues.append(
+                        Issue(
+                            id=f"CR_{chapter_num:03d}_{next_ch:03d}_{issue.repeat_type}",
+                            severity=IssueSeverity.P1 if issue.severity == "HIGH" else IssueSeverity.P2,
+                            checker_type=CheckerType.CHAPTER_REDUNDANCY,
+                            issue_type="chapter_redundancy",
+                            title=f"章节重复: ch{chapter_num}-ch{next_ch}",
+                            description=f"与后一章重复度{issue.similarity_score * 100:.1f}%",
+                            location=IssueLocation(chapter=chapter_num),
+                            evidence=f"重复类型: {issue.repeat_type}",
+                            suggestion="考虑合并或删减重复内容",
+                        )
+                    )
 
         return issues
 
     def _read_chapter(self, chapter_num: int) -> str:
-        ch_file = self.chapters_dir / f'ch{chapter_num:03d}.md'
+        ch_file = self.chapters_dir / f"ch{chapter_num:03d}.md"
         if not ch_file.exists():
             return ""
-        return ch_file.read_text(encoding='utf-8')
+        return ch_file.read_text(encoding="utf-8")
 
     def _extract_sentences(self, content: str) -> List[str]:
         """提取句子列表"""
-        sentences = re.split(r'[。！？\n]+', content)
+        sentences = re.split(r"[。！？\n]+", content)
         return [s.strip() for s in sentences if s.strip() and len(s.strip()) > 10]
 
     def _extract_keywords(self, sentences: List[str]) -> Set[str]:
@@ -139,7 +141,7 @@ class ChapterRedundancyChecker(BaseChecker):
         words = []
         for sent in sentences:
             # 去除标点和常用词
-            cleaned = re.sub(r'[^\w]', '', sent)
+            cleaned = re.sub(r"[^\w]", "", sent)
             if len(cleaned) > 1:
                 words.append(cleaned)
         return set(words)
@@ -152,7 +154,7 @@ class ChapterRedundancyChecker(BaseChecker):
         def get_ngrams(sents: List[str], n: int) -> List[str]:
             ngrams = []
             for i in range(len(sents) - n + 1):
-                ngram = '|||'.join(sents[i:i+n])
+                ngram = "|||".join(sents[i : i + n])
                 ngrams.append(ngram)
             return ngrams
 
@@ -197,7 +199,7 @@ class ChapterRedundancyChecker(BaseChecker):
             def get_ngrams(sents: List[str], n: int) -> List[str]:
                 ngrams = []
                 for i in range(len(sents) - n + 1):
-                    ngram = '|||'.join(sents[i:i+n])
+                    ngram = "|||".join(sents[i : i + n])
                     ngrams.append(ngram)
                 return ngrams
 
@@ -205,15 +207,17 @@ class ChapterRedundancyChecker(BaseChecker):
             ngrams_b = get_ngrams(sentences_b, self.NGRAM_SIZE)
             shared = list(set(ngrams_a) & set(ngrams_b))[:5]  # 最多5个
 
-            severity = 'HIGH' if ngram_sim > 0.5 else 'MEDIUM'
-            issues.append(ChapterRedundancyIssue(
-                chapter_a=ch_a,
-                chapter_b=ch_b,
-                similarity_score=round(ngram_sim, 3),
-                repeat_type='ngram',
-                shared_content=shared,
-                severity=severity
-            ))
+            severity = "HIGH" if ngram_sim > 0.5 else "MEDIUM"
+            issues.append(
+                ChapterRedundancyIssue(
+                    chapter_a=ch_a,
+                    chapter_b=ch_b,
+                    similarity_score=round(ngram_sim, 3),
+                    repeat_type="ngram",
+                    shared_content=shared,
+                    severity=severity,
+                )
+            )
 
         # 关键词重叠
         keywords_a = self._extract_keywords(sentences_a)
@@ -221,15 +225,17 @@ class ChapterRedundancyChecker(BaseChecker):
         kw_overlap = self._compute_keyword_overlap(keywords_a, keywords_b)
 
         if kw_overlap > self.KEYWORD_THRESHOLD:
-            severity = 'HIGH' if kw_overlap > 0.7 else 'MEDIUM'
-            issues.append(ChapterRedundancyIssue(
-                chapter_a=ch_a,
-                chapter_b=ch_b,
-                similarity_score=round(kw_overlap, 3),
-                repeat_type='keyword',
-                shared_content=[],
-                severity=severity
-            ))
+            severity = "HIGH" if kw_overlap > 0.7 else "MEDIUM"
+            issues.append(
+                ChapterRedundancyIssue(
+                    chapter_a=ch_a,
+                    chapter_b=ch_b,
+                    similarity_score=round(kw_overlap, 3),
+                    repeat_type="keyword",
+                    shared_content=[],
+                    severity=severity,
+                )
+            )
 
         return issues
 
@@ -254,13 +260,13 @@ class ChapterRedundancyChecker(BaseChecker):
             issues.extend(range_issues)
 
         # 2. 滑动窗口检查所有相邻章节
-        chapter_files = sorted(self.chapters_dir.glob('ch*.md'))
+        chapter_files = sorted(self.chapters_dir.glob("ch*.md"))
         if limit:
             chapter_files = chapter_files[:limit]
 
         chapter_nums = []
         for ch_file in chapter_files:
-            match = re.match(r'ch(\d+)\.md', ch_file.name)
+            match = re.match(r"ch(\d+)\.md", ch_file.name)
             if match:
                 chapter_nums.append(int(match.group(1)))
 
@@ -269,7 +275,7 @@ class ChapterRedundancyChecker(BaseChecker):
             ch_b = chapter_nums[i + 1]
             pair_issues = self.check_chapter_pair(ch_a, ch_b)
             for issue in pair_issues:
-                if issue.severity == 'HIGH':  # 只报告HIGH级问题
+                if issue.severity == "HIGH":  # 只报告HIGH级问题
                     issues.append(issue)
 
         return issues
@@ -280,7 +286,7 @@ class ChapterRedundancyChecker(BaseChecker):
         range_issues = self.check_range(start, end)
 
         for issue in range_issues:
-            if issue.severity in ('HIGH', 'MEDIUM'):
+            if issue.severity in ("HIGH", "MEDIUM"):
                 suggestions = {
                     (2, 3): "合并为1章，保留裂爪兽、第一次杀人等关键场景",
                     (11, 15): "压缩为2章，保留篝火夜话、小九噩梦等关键情感场景",
@@ -288,17 +294,19 @@ class ChapterRedundancyChecker(BaseChecker):
                 }
                 suggestion = suggestions.get((start, end), "考虑合并或删减重复内容")
 
-                issues.append(Issue(
-                    id=f"CR_{start:03d}_{end:03d}_{issue.repeat_type}",
-                    severity=IssueSeverity.P1 if issue.severity == 'HIGH' else IssueSeverity.P2,
-                    checker_type=CheckerType.CHAPTER_REDUNDANCY,
-                    issue_type="chapter_redundancy",
-                    title=f"章节重复: ch{start}-ch{end} {reason}",
-                    description=f"ch{issue.chapter_a}与ch{issue.chapter_b}重复度{issue.similarity_score*100:.1f}%",
-                    location=IssueLocation(chapter=issue.chapter_a),
-                    evidence=f"重复类型: {issue.repeat_type}",
-                    suggestion=suggestion
-                ))
+                issues.append(
+                    Issue(
+                        id=f"CR_{start:03d}_{end:03d}_{issue.repeat_type}",
+                        severity=IssueSeverity.P1 if issue.severity == "HIGH" else IssueSeverity.P2,
+                        checker_type=CheckerType.CHAPTER_REDUNDANCY,
+                        issue_type="chapter_redundancy",
+                        title=f"章节重复: ch{start}-ch{end} {reason}",
+                        description=f"ch{issue.chapter_a}与ch{issue.chapter_b}重复度{issue.similarity_score * 100:.1f}%",
+                        location=IssueLocation(chapter=issue.chapter_a),
+                        evidence=f"重复类型: {issue.repeat_type}",
+                        suggestion=suggestion,
+                    )
+                )
 
         return issues
 
@@ -306,8 +314,8 @@ class ChapterRedundancyChecker(BaseChecker):
         if not issues:
             return "✅ 章节重复度检查通过：未检测到显著的章节重复"
 
-        high_issues = [i for i in issues if i.severity == 'HIGH']
-        medium_issues = [i for i in issues if i.severity == 'MEDIUM']
+        high_issues = [i for i in issues if i.severity == "HIGH"]
+        medium_issues = [i for i in issues if i.severity == "MEDIUM"]
 
         report = ["# 章节重复度检查报告\n"]
         report.append("## 汇总\n")
@@ -317,18 +325,22 @@ class ChapterRedundancyChecker(BaseChecker):
         if high_issues:
             report.append("\n## HIGH 需重写\n")
             for issue in sorted(high_issues, key=lambda x: x.similarity_score, reverse=True)[:10]:
-                report.append(f"- ch{issue.chapter_a} ↔ ch{issue.chapter_b}: {issue.similarity_score*100:.1f}%重复 ({issue.repeat_type})")
+                report.append(
+                    f"- ch{issue.chapter_a} ↔ ch{issue.chapter_b}: {issue.similarity_score * 100:.1f}%重复 ({issue.repeat_type})"
+                )
                 if issue.shared_content:
                     for content in issue.shared_content[:2]:
-                        clean = content.replace('|||', ' ')
+                        clean = content.replace("|||", " ")
                         if len(clean) > 50:
-                            clean = clean[:50] + '...'
+                            clean = clean[:50] + "..."
                         report.append(f"  例: {clean}")
 
         if medium_issues:
             report.append("\n## MEDIUM 建议优化\n")
             for issue in sorted(medium_issues, key=lambda x: x.similarity_score, reverse=True)[:5]:
-                report.append(f"- ch{issue.chapter_a} ↔ ch{issue.chapter_b}: {issue.similarity_score*100:.1f}%重复 ({issue.repeat_type})")
+                report.append(
+                    f"- ch{issue.chapter_a} ↔ ch{issue.chapter_b}: {issue.similarity_score * 100:.1f}%重复 ({issue.repeat_type})"
+                )
 
         # 已知问题区域
         report.append("\n## 评审建议的待合并章节\n")
@@ -336,19 +348,20 @@ class ChapterRedundancyChecker(BaseChecker):
             range_issues = [i for i in issues if start <= i.chapter_a <= end and start <= i.chapter_b <= end]
             if range_issues:
                 max_sim = max(i.similarity_score for i in range_issues)
-                report.append(f"- ch{start}-ch{end}: {reason} (最大重复度: {max_sim*100:.1f}%)")
+                report.append(f"- ch{start}-ch{end}: {reason} (最大重复度: {max_sim * 100:.1f}%)")
             else:
                 report.append(f"- ch{start}-ch{end}: {reason} (未检测到显著重复)")
 
         return "\n".join(report)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
+
     checker = ChapterRedundancyChecker()
 
     limit = None
-    if len(sys.argv) > 1 and sys.argv[1] == '--limit':
+    if len(sys.argv) > 1 and sys.argv[1] == "--limit":
         limit = int(sys.argv[2]) if len(sys.argv) > 2 else 50
 
     issues = checker.check_all(limit=limit)

@@ -6,6 +6,7 @@ Covers:
 - Required vs optional field validation
 - Nested model composition (Step inside Response, Notification inside NotificationsResponse, etc)
 """
+
 from __future__ import annotations
 
 import pytest

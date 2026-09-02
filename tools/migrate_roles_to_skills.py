@@ -16,6 +16,7 @@ slug 规则:
 - "审核员A" → "reviewer-a"
 - "读者A" → "reader-a"
 """
+
 from __future__ import annotations
 
 import argparse
@@ -90,11 +91,13 @@ def migrate(role_root: Path, out_root: Path, role: str) -> list[dict]:
                 _stub_skill_md(child.name, slug, role),
                 encoding="utf-8",
             )
-        skills.append({
-            "slug": slug,
-            "legacy_dir": str(child.relative_to(role_root.parent)),
-            "skill_md": str(skill_md.relative_to(role_root.parent.parent)),
-        })
+        skills.append(
+            {
+                "slug": slug,
+                "legacy_dir": str(child.relative_to(role_root.parent)),
+                "skill_md": str(skill_md.relative_to(role_root.parent.parent)),
+            }
+        )
     return skills
 
 

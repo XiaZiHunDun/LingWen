@@ -23,6 +23,7 @@ Routes must continue to map backend storage → presentation at the response
 boundary. Resolving backend re-export from lingwen-shared is v16.5 #N.8+
 carryover.
 """
+
 from __future__ import annotations
 
 from typing import Any, Literal, Optional

@@ -10,6 +10,7 @@
 
 镜像 Phase 1.5 test_ripple_integration 风格。
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -43,6 +44,7 @@ from infra.world_model.snapshot_diff import ChangeKind, EntityKind
 
 # === Helpers ===
 
+
 def _ripple(ripple_id: str, state: RippleState = RippleState.OPEN) -> Ripple:
     return Ripple(ripple_id=ripple_id, origin_event="e", origin_ch=10, state=state)
 
@@ -60,6 +62,7 @@ def _plot(plot_id: str, status: PlotStatus = PlotStatus.ACTIVE, related=()) -> P
 
 
 # === TestE2E_LLMToRippleLifecycle ===
+
 
 class TestE2E_LLMToRippleLifecycle:
     """完整: 模板加载 → 解析 LLM 输出 → register → propagate → resolve"""
@@ -90,12 +93,12 @@ class TestE2E_LLMToRippleLifecycle:
         eng = RippleEngine()
 
         # 1. 解析 mock LLM 输出
-        raw = '''{
+        raw = """{
             "new_ripples": [
                 {"ripple_id": "r1", "origin_event": "林尘身世", "origin_ch": 10, "planned_resolve_ch": 200}
             ],
             "resolved_ripples": []
-        }'''
+        }"""
         result = parse_ripple_extraction(raw)
         assert len(result.new_ripples) == 1
         ext = result.new_ripples[0]
@@ -103,8 +106,9 @@ class TestE2E_LLMToRippleLifecycle:
         assert ext.planned_resolve_ch == 200
 
         # 2. register
-        r = eng.register(reg, ext.ripple_id, ext.origin_event, ext.origin_ch,
-                         planned_resolve_ch=ext.planned_resolve_ch)
+        r = eng.register(
+            reg, ext.ripple_id, ext.origin_event, ext.origin_ch, planned_resolve_ch=ext.planned_resolve_ch
+        )
         assert r.state == RippleState.OPEN
 
         # 3. propagate
@@ -121,12 +125,12 @@ class TestE2E_LLMToRippleLifecycle:
         eng = RippleEngine()
         eng.register(reg, "r1", "e", 10, planned_resolve_ch=200)
 
-        raw = '''{
+        raw = """{
             "new_ripples": [],
             "resolved_ripples": [
                 {"ripple_id": "r1", "resolution_ch": 150, "mode": "weak"}
             ]
-        }'''
+        }"""
         result = parse_ripple_extraction(raw)
         assert len(result.resolved_ripples) == 1
         ext_res: ExtractedResolution = result.resolved_ripples[0]
@@ -141,6 +145,7 @@ class TestE2E_LLMToRippleLifecycle:
 
 
 # === TestE2E_SnapshotDiff ===
+
 
 class TestE2E_SnapshotDiff:
     """SnapshotDiff 检测两章世界状态变化"""
@@ -170,10 +175,14 @@ class TestE2E_SnapshotDiff:
 
     def test_diff_add_new_ripple(self, tmp_path):
         prev = WorldSnapshot(
-            snapshot_id="s1", chapter=100, timestamp=datetime(2026, 6, 4),
+            snapshot_id="s1",
+            chapter=100,
+            timestamp=datetime(2026, 6, 4),
         )
         curr = WorldSnapshot(
-            snapshot_id="s2", chapter=200, timestamp=datetime(2026, 6, 4),
+            snapshot_id="s2",
+            chapter=200,
+            timestamp=datetime(2026, 6, 4),
             active_ripples=(_ripple("r1", RippleState.OPEN),),
         )
         changes = diff_snapshots(prev, curr)
@@ -184,6 +193,7 @@ class TestE2E_SnapshotDiff:
 
 # === TestE2E_CheckerIntegration ===
 
+
 class TestE2E_CheckerIntegration:
     """两个 checker 集成到完整流水线"""
 
@@ -191,10 +201,15 @@ class TestE2E_CheckerIntegration:
         """register 8 个 active ripple → PacingChecker 检测 P2 density"""
         reg = RippleRegistry(base_dir=tmp_path / "ripples")
         for i in range(8):
-            reg.add_ripple(Ripple(
-                ripple_id=f"r{i}", origin_event="e", origin_ch=10,
-                state=RippleState.OPEN, wavefront=(10, 50),
-            ))
+            reg.add_ripple(
+                Ripple(
+                    ripple_id=f"r{i}",
+                    origin_event="e",
+                    origin_ch=10,
+                    state=RippleState.OPEN,
+                    wavefront=(10, 50),
+                )
+            )
 
         checker = PacingChecker()
         issues = checker.check_ripple_density(reg, current_ch=100, active_threshold=6)
@@ -204,10 +219,15 @@ class TestE2E_CheckerIntegration:
     def test_foreshadow_detects_overdue(self, tmp_path):
         """register 1 overdue ripple → ForeshadowChecker 检测 P1"""
         reg = RippleRegistry(base_dir=tmp_path / "ripples")
-        reg.add_ripple(Ripple(
-            ripple_id="r1", origin_event="e", origin_ch=10,
-            state=RippleState.OPEN, planned_resolve_ch=10,
-        ))
+        reg.add_ripple(
+            Ripple(
+                ripple_id="r1",
+                origin_event="e",
+                origin_ch=10,
+                state=RippleState.OPEN,
+                planned_resolve_ch=10,
+            )
+        )
 
         checker = ForeshadowChecker(chapters_dir=tmp_path)
         issues = checker.check_ripple_alignment(reg, current_ch=100)
@@ -230,6 +250,7 @@ class TestE2E_CheckerIntegration:
 
 
 # === TestE2E_RippleSubplotLink ===
+
 
 class TestE2E_RippleSubplotLink:
     """Ripple ↔ Subplot 联动"""

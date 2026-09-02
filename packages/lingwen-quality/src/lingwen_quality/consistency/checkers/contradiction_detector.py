@@ -52,6 +52,7 @@ class ContradictionDetector:
     ) -> ContradictionResult:
         """检测单章节矛盾"""
         import time
+
         start_time = time.perf_counter()
 
         context = context or {}
@@ -63,20 +64,15 @@ class ContradictionDetector:
         # 1. 规则检测
         if self.config.enable_rule_based:
             previous_chapters = [
-                (ch, content) for ch, content in self._chapter_cache.items()
-                if ch < chapter_num
+                (ch, content) for ch, content in self._chapter_cache.items() if ch < chapter_num
             ]
-            rule_contradictions = self.rule_detector.detect(
-                chapter_num, chapter_content, previous_chapters
-            )
+            rule_contradictions = self.rule_detector.detect(chapter_num, chapter_content, previous_chapters)
             contradictions.extend(rule_contradictions)
 
         # 2. 属性检测
         if self.config.enable_attribute:
             # 获取所有章节
-            all_chapters = [
-                (ch, content) for ch, content in sorted(self._chapter_cache.items())
-            ]
+            all_chapters = [(ch, content) for ch, content in sorted(self._chapter_cache.items())]
 
             # 清除缓存的属性以重新计算
             self._all_attributes_cache = None
@@ -88,9 +84,7 @@ class ContradictionDetector:
             )
             self._all_attributes_cache = all_attributes
 
-            attribute_contradictions = self.attribute_comparer.detect_all_mismatches(
-                all_attributes
-            )
+            attribute_contradictions = self.attribute_comparer.detect_all_mismatches(all_attributes)
             contradictions.extend(attribute_contradictions)
 
         # 3. LLM检测（如果启用且有P1+问题）

@@ -17,12 +17,13 @@ from pathlib import Path
 
 def get_chapter_title(content: str) -> str:
     """从章节内容中提取标题（第一行）"""
-    lines = content.strip().split('\n')
+    lines = content.strip().split("\n")
     for line in lines:
         line = line.strip()
-        if line and not line.startswith('='):
+        if line and not line.startswith("="):
             return line
     return ""
+
 
 def merge_chapters(chapter_dir: Path, start: int, end: int, output_file: Path, with_separators: bool = True):
     """合并指定范围的章节"""
@@ -34,27 +35,27 @@ def merge_chapters(chapter_dir: Path, start: int, end: int, output_file: Path, w
     merged_count = 0
     total = end - start + 1
 
-    with open(output_file, 'w', encoding='utf-8') as out:
+    with open(output_file, "w", encoding="utf-8") as out:
         for i in range(start, end + 1):
             fname = f"ch{i:03d}.md"
             fpath = chapter_dir / fname
 
             # 跳过大纲文件
-            if '_大纲' in fname:
+            if "_大纲" in fname:
                 continue
 
             if not fpath.exists():
                 print(f"  ⚠ 缺失: {fname}")
                 continue
 
-            content = fpath.read_text(encoding='utf-8')
-            lines = content.split('\n')
+            content = fpath.read_text(encoding="utf-8")
+            lines = content.split("\n")
 
             # 提取标题行（第一行，去除#后的空格）
             title_line = ""
             for line in lines:
                 line = line.strip()
-                if line and not line.startswith('='):
+                if line and not line.startswith("="):
                     title_line = line
                     break
 
@@ -72,10 +73,13 @@ def merge_chapters(chapter_dir: Path, start: int, end: int, output_file: Path, w
                 body_lines = lines
 
             # 清理正文末尾的章节标记
-            while body_lines and (body_lines[-1].strip() == '' or
-                                   body_lines[-1].strip() == '---' or
-                                   '本章完' in body_lines[-1] or
-                                   '第' in body_lines[-1] and '章' in body_lines[-1]):
+            while body_lines and (
+                body_lines[-1].strip() == ""
+                or body_lines[-1].strip() == "---"
+                or "本章完" in body_lines[-1]
+                or "第" in body_lines[-1]
+                and "章" in body_lines[-1]
+            ):
                 body_lines = body_lines[:-1]
 
             # 写入分隔符和标题
@@ -85,7 +89,7 @@ def merge_chapters(chapter_dir: Path, start: int, end: int, output_file: Path, w
 
             # 写入正文
             for line in body_lines:
-                out.write(line + '\n')
+                out.write(line + "\n")
 
             merged_count += 1
             if merged_count % 20 == 0:
@@ -98,6 +102,7 @@ def merge_chapters(chapter_dir: Path, start: int, end: int, output_file: Path, w
     print(f"输出文件: {output_file}")
     print(f"合并章节: {merged_count} 个")
     print(f"文件大小: {size / 1024 / 1024:.2f} MB")
+
 
 def main():
     if len(sys.argv) < 2:
@@ -145,6 +150,7 @@ def main():
         print(f"未知命令: {cmd}")
         print(__doc__)
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

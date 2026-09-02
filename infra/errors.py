@@ -16,11 +16,12 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Type, TypeVar, Union
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class BaseError(Exception):
     """基础错误类"""
+
     __error_name__: str = "Error"
     __error_tags__: List[str] = []
 
@@ -218,11 +219,12 @@ def capture_stack_trace(error: BaseError) -> str:
     Returns:
         堆栈信息字符串
     """
-    return ''.join(traceback.format_exception(type(error), error, error.__traceback__))
+    return "".join(traceback.format_exception(type(error), error, error.__traceback__))
 
 
 class RetryableError(BaseError):
     """可重试错误"""
+
     __error_name__ = "RetryableError"
     __error_tags__ = ["retryable"]
 
@@ -233,16 +235,20 @@ class RetryableError(BaseError):
 
 class FatalError(BaseError):
     """致命错误"""
+
     __error_name__ = "FatalError"
     __error_tags__ = ["fatal"]
 
 
 class ValidationError(BaseError):
     """验证错误"""
+
     __error_name__ = "ValidationError"
     __error_tags__ = ["validation"]
 
-    def __init__(self, message: str = "", field: str = "", expected: Any = None, actual: Any = None, **kwargs):  # noqa: F811
+    def __init__(
+        self, message: str = "", field: str = "", expected: Any = None, actual: Any = None, **kwargs
+    ):  # noqa: F811
         super().__init__(message, **kwargs)
         self.field = field
         self.expected = expected
@@ -251,6 +257,7 @@ class ValidationError(BaseError):
 
 class NotFoundError(BaseError):
     """未找到错误"""
+
     __error_name__ = "NotFoundError"
     __error_tags__ = ["not_found"]
 
@@ -262,24 +269,28 @@ class NotFoundError(BaseError):
 
 class ConflictError(BaseError):
     """冲突错误"""
+
     __error_name__ = "ConflictError"
     __error_tags__ = ["conflict"]
 
 
 class AuthenticationError(BaseError):
     """认证错误"""
+
     __error_name__ = "AuthenticationError"
     __error_tags__ = ["auth"]
 
 
 class AuthorizationError(BaseError):
     """授权错误"""
+
     __error_name__ = "AuthorizationError"
     __error_tags__ = ["auth"]
 
 
 class RateLimitError(BaseError):
     """限流错误"""
+
     __error_name__ = "RateLimitError"
     __error_tags__ = ["rate_limit"]
 
@@ -291,36 +302,42 @@ class RateLimitError(BaseError):
 
 class NetworkError(BaseError):
     """网络错误"""
+
     __error_name__ = "NetworkError"
     __error_tags__ = ["network", "retryable"]
 
 
 class TimeoutError(BaseError):
     """超时错误"""
+
     __error_name__ = "TimeoutError"
     __error_tags__ = ["timeout", "retryable"]
 
 
 class ServiceUnavailableError(BaseError):
     """服务不可用错误"""
+
     __error_name__ = "ServiceUnavailableError"
     __error_tags__ = ["service_unavailable", "retryable"]
 
 
 class DatabaseError(BaseError):
     """数据库错误"""
+
     __error_name__ = "DatabaseError"
     __error_tags__ = ["database"]
 
 
 class ConfigurationError(BaseError):
     """配置错误"""
+
     __error_name__ = "ConfigurationError"
     __error_tags__ = ["config", "fatal"]
 
 
 class NotImplementedError(BaseError):
     """未实现错误"""
+
     __error_name__ = "NotImplementedError"
     __error_tags__ = ["not_implemented"]
 
@@ -331,6 +348,7 @@ class NotImplementedError(BaseError):
 # can collect.
 class SnapshotError(BaseError):
     """角色快照操作失败时抛出（如空 chapter_range）。"""
+
     __error_name__ = "SnapshotError"
     __error_tags__ = ["snapshot"]
 

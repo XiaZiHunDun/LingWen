@@ -8,6 +8,7 @@ Usage:
     python -m prompt_templates version rollback <template_path> <version_id>
     python -m prompt_templates version diff <version_a> <version_b>
 """
+
 import argparse
 import sys
 from pathlib import Path
@@ -17,9 +18,9 @@ try:
 except ImportError:
     # Fallback when run directly as __main__.py
     import importlib.util
+
     spec = importlib.util.spec_from_file_location(
-        "version_manager",
-        Path(__file__).parent / "version_manager.py"
+        "version_manager", Path(__file__).parent / "version_manager.py"
     )
     vm_module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(vm_module)
@@ -39,9 +40,7 @@ def cmd_save(args, vm: VersionManager):
 
     try:
         version = vm.create_version(
-            template_id=template_id,
-            changelog=args.comment,
-            template_dir=template_path
+            template_id=template_id, changelog=args.comment, template_dir=template_path
         )
         print(f"Version saved successfully: {version.version}")
         print(f"  Template: {template_id}")
@@ -137,7 +136,10 @@ def cmd_diff(args, vm: VersionManager):
             break
 
     if not found:
-        print(f"Error: Could not find versions '{version_a}' and '{version_b}' in the same template", file=sys.stderr)
+        print(
+            f"Error: Could not find versions '{version_a}' and '{version_b}' in the same template",
+            file=sys.stderr,
+        )
         return 1
 
     try:
@@ -166,8 +168,7 @@ def cmd_diff(args, vm: VersionManager):
 def main():
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
-        description="Template Version Management CLI",
-        prog="python -m prompt_templates"
+        description="Template Version Management CLI", prog="python -m prompt_templates"
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")

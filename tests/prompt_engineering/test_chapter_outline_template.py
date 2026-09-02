@@ -8,6 +8,7 @@ SCENARIOS 中已有 chapter_outline 描述,但缺 YAML 模板。
 - 必需字段存在 (scenario/version/agent_role/system_prompt/user_prompt)
 - 模板可被 render_template 渲染 (含 chapter_num / volume_outline / drive_chain)
 """
+
 from __future__ import annotations
 
 from lingwen_prompt.templates import (

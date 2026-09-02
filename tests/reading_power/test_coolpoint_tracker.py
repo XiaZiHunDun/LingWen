@@ -10,15 +10,11 @@ from infra.reading_power.coolpoint_tracker import CoolPointTracker
 def test_track_and_get_coolpoints() -> None:
     """Test tracking coolpoints and retrieving them."""
     mock_db = MagicMock()
-    mock_db.get_coolpoints.return_value = [
-        {"pattern": "装逼打脸", "density": 0.9, "combo_with": "[]"}
-    ]
+    mock_db.get_coolpoints.return_value = [{"pattern": "装逼打脸", "density": 0.9, "combo_with": "[]"}]
 
     tracker = CoolPointTracker(mock_db)
 
-    coolpoints = [
-        {"pattern": "装逼打脸", "density": 0.9, "combo_with": [], "content": "打脸..."}
-    ]
+    coolpoints = [{"pattern": "装逼打脸", "density": 0.9, "combo_with": [], "content": "打脸..."}]
     tracker.track(1, coolpoints)
 
     mock_db.save_coolpoint.assert_called_once()

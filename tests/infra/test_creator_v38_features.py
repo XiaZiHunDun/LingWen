@@ -1,4 +1,5 @@
 """Tests for creator v3.8 mode-aware UX features."""
+
 from __future__ import annotations
 
 import pytest

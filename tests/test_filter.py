@@ -25,7 +25,7 @@ def test_filter_removes_detector_issues():
         issue_type="时间线矛盾",
         severity="P1",
         description="亿万年时间跨度",
-        evidence="宇宙级场景"
+        evidence="宇宙级场景",
     )
 
     filtered = filter.filter([issue], "章节内容...")
@@ -43,7 +43,7 @@ def test_filter_keeps_content_issues():
         issue_type="状态矛盾",
         severity="P0",
         description="角色状态前后不一致",
-        evidence="前文说死了，后文活着"
+        evidence="前文说死了，后文活着",
     )
 
     filtered = filter.filter([issue], "章节内容...")
@@ -55,8 +55,26 @@ def test_filter_batch():
     filter = FalsePositiveFilter()
 
     issues_by_chapter = {
-        1: [Issue(chapter=1, dimension="一致性", issue_type="状态矛盾", severity="P0", description="test", evidence="")],
-        2: [Issue(chapter=2, dimension="一致性", issue_type="时间线矛盾", severity="P1", description="亿万年", evidence="宇宙")]
+        1: [
+            Issue(
+                chapter=1,
+                dimension="一致性",
+                issue_type="状态矛盾",
+                severity="P0",
+                description="test",
+                evidence="",
+            )
+        ],
+        2: [
+            Issue(
+                chapter=2,
+                dimension="一致性",
+                issue_type="时间线矛盾",
+                severity="P1",
+                description="亿万年",
+                evidence="宇宙",
+            )
+        ],
     }
 
     result = filter.filter_batch(issues_by_chapter)
@@ -75,7 +93,7 @@ def test_filter_keeps_needs_context():
         issue_type="角色一致性",
         severity="P2",
         description="角色档案缺失",
-        evidence="跨章节引用"
+        evidence="跨章节引用",
     )
 
     filtered = filter.filter([issue], "章节内容...")
@@ -100,7 +118,7 @@ def test_filter_detector_issue_by_keyword():
         issue_type="时间线矛盾",
         severity="P1",
         description="时间跨度太大",
-        evidence="光年级别"
+        evidence="光年级别",
     )
 
     filtered = filter.filter([issue], "章节内容...")
@@ -118,7 +136,7 @@ def test_filter_content_issue_by_type():
         issue_type="状态矛盾",
         severity="P0",
         description="状态不一致",
-        evidence=""
+        evidence="",
     )
 
     filtered = filter.filter([issue], "章节内容...")
@@ -131,7 +149,7 @@ def test_filter_content_issue_by_type():
         issue_type="角色行为逻辑",
         severity="P1",
         description="行为突变",
-        evidence=""
+        evidence="",
     )
 
     filtered2 = filter.filter([issue2], "章节内容...")
@@ -144,7 +162,7 @@ def test_filter_content_issue_by_type():
         issue_type="逻辑矛盾",
         severity="P1",
         description="因果不符",
-        evidence=""
+        evidence="",
     )
 
     filtered3 = filter.filter([issue3], "章节内容...")

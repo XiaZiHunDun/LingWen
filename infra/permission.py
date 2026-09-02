@@ -22,18 +22,21 @@ from infra.errors import BaseError, wrap
 
 class PermissionError(BaseError):
     """权限错误"""
+
     __error_name__ = "PermissionError"
     __error_tags__ = ["permission"]
 
 
 class BlockedError(BaseError):
     """权限被拒绝错误"""
+
     __error_name__ = "BlockedError"
     __error_tags__ = ["permission", "deny"]
 
 
 class PermissionRequiredError(BaseError):
     """需要权限确认错误"""
+
     __error_name__ = "PermissionRequiredError"
     __error_tags__ = ["permission", "ask"]
 
@@ -49,6 +52,7 @@ class Rule:
         effect: 效果（allow/deny/ask）
         context: 上下文条件（可选）
     """
+
     action: str
     resource: str
     effect: str = "allow"
@@ -76,7 +80,7 @@ class Ruleset(List[Rule]):
     """
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Ruleset':
+    def from_dict(cls, data: Dict[str, Any]) -> "Ruleset":
         """从字典创建规则集"""
         rules = []
         for rule_data in data.get("rules", []):
@@ -256,6 +260,7 @@ class PermissionRequest(BaseError):
 
     当权限效果为 ask 时，创建此请求等待用户回复。
     """
+
     __error_name__ = "PermissionRequest"
     __error_tags__ = ["permission", "request"]
 
@@ -444,11 +449,13 @@ class PermissionRules:
     @staticmethod
     def default_rules() -> Ruleset:
         """默认规则：允许大部分，询问敏感操作"""
-        return Ruleset([
-            Rule(action="*", resource="*", effect="allow"),
-            Rule(action="tool:system:*", resource="*", effect="ask"),
-            Rule(action="tool:write:*", resource="*", effect="ask"),
-        ])
+        return Ruleset(
+            [
+                Rule(action="*", resource="*", effect="allow"),
+                Rule(action="tool:system:*", resource="*", effect="ask"),
+                Rule(action="tool:write:*", resource="*", effect="ask"),
+            ]
+        )
 
 
 def evaluate(action: str, resource: str, *rulesets: Ruleset) -> Rule:

@@ -10,15 +10,17 @@ class StructuredFormatter(logging.Formatter):
     """JSON格式日志，便于日志分析"""
 
     def format(self, record):
-        return json.dumps({
-            "timestamp": datetime.now(tz=timezone.utc).isoformat(),
-            "level": record.levelname,
-            "logger": record.name,
-            "message": record.getMessage(),
-            "module": record.module,
-            "function": record.funcName,
-            "line": record.lineno,
-        })
+        return json.dumps(
+            {
+                "timestamp": datetime.now(tz=timezone.utc).isoformat(),
+                "level": record.levelname,
+                "logger": record.name,
+                "message": record.getMessage(),
+                "module": record.module,
+                "function": record.funcName,
+                "line": record.lineno,
+            }
+        )
 
 
 def setup_logging(name="lingwen", log_dir="logs", level=logging.INFO):

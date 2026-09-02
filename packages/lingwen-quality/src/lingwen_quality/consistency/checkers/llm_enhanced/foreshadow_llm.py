@@ -13,9 +13,7 @@ class LLMEnhancedForeshadowChecker(LLMEnhancedChecker):
         from ..foreshadow_checker import ForeshadowChecker
 
         super().__init__(
-            base_checker=ForeshadowChecker(),
-            llm_service=LLMService(),
-            checker_type="foreshadow"
+            base_checker=ForeshadowChecker(), llm_service=LLMService(), checker_type="foreshadow"
         )
 
     def _find_uncertain_regions(self, content: str, context: dict) -> List[dict]:
@@ -32,12 +30,14 @@ class LLMEnhancedForeshadowChecker(LLMEnhancedChecker):
 
         for pattern in foreshadow_patterns:
             for m in re.finditer(pattern, content):
-                uncertain.append({
-                    "type": "foreshadow_uncertain",
-                    "text": m.group(),
-                    "start": m.start(),
-                    "end": m.end(),
-                    "context": content[max(0, m.start()-100):m.end()+100]
-                })
+                uncertain.append(
+                    {
+                        "type": "foreshadow_uncertain",
+                        "text": m.group(),
+                        "start": m.start(),
+                        "end": m.end(),
+                        "context": content[max(0, m.start() - 100) : m.end() + 100],
+                    }
+                )
 
         return uncertain

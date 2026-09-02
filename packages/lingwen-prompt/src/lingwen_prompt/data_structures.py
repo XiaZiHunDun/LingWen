@@ -13,6 +13,7 @@ Phase 1.3 — Doc 2 (提示词工程 v1.0) 实施层。
 - token 预算字段为 int — 允许 PromptContext.fits_budget() 校验
 - ContextItem key + source 非空 (验证,空字符串/空白都拒绝)
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

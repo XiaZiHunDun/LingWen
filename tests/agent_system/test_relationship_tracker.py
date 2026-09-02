@@ -5,7 +5,7 @@ import tempfile
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
 from lingwen_core.agents.social_engine.relationship_tracker import RelationshipTracker
 
@@ -19,6 +19,7 @@ def test_relationship_tracker_init():
         assert "characters" in network
         assert "relationships" in network
 
+
 def test_add_character():
     """测试添加角色"""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -27,6 +28,7 @@ def test_add_character():
         tracker.add_character("铁蛋", role="protagonist")
         network = tracker.get_network()
         assert "铁蛋" in [c["name"] for c in network["characters"]]
+
 
 def test_add_relationship():
     """测试添加关系"""
@@ -40,6 +42,7 @@ def test_add_relationship():
         assert rel is not None
         assert rel["trust"] == 0.7
 
+
 def test_update_trust():
     """测试更新信任值"""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -52,6 +55,7 @@ def test_update_trust():
         rel = tracker.get_relationship("铁蛋", "林夜")
         assert rel["trust"] == 0.8
 
+
 def test_update_conflict():
     """测试更新冲突值"""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -63,6 +67,7 @@ def test_update_conflict():
         tracker.update_conflict("铁蛋", "莫言", 0.2)
         rel = tracker.get_relationship("铁蛋", "莫言")
         assert rel["conflict"] == 0.5
+
 
 def test_record_event():
     """测试记录事件"""
@@ -77,6 +82,7 @@ def test_record_event():
         assert rel["last_event"] == "ch50"
         network = tracker.get_network()
         assert len(network["events"]) == 1
+
 
 def test_get_all_relationships_for_character():
     """测试获取角色的所有关系"""

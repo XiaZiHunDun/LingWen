@@ -1,4 +1,5 @@
 """Tests for infra.creator_settings_history."""
+
 from __future__ import annotations
 
 import pytest

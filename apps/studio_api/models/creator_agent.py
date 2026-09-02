@@ -2,6 +2,7 @@
 
 Models unchanged — only relocated for code organization.
 """
+
 from __future__ import annotations
 
 from typing import Optional
@@ -13,6 +14,7 @@ class CreatorAgentScope(BaseModel):
     type: str
     chapter: Optional[int] = None
     selection_text: Optional[str] = None
+
 
 class CreatorAgentPlanRequest(BaseModel):
     action: str
@@ -26,21 +28,25 @@ class CreatorAgentPlanRequest(BaseModel):
     lens: str = "author"
     provider_mode: str = "auto"
 
+
 class CreatorAgentCandidate(BaseModel):
     id: str
     label: str
     direction: str
     text: str
 
+
 class CreatorAgentAdviceItem(BaseModel):
     id: str
     text: str
+
 
 class CreatorAgentAnnotation(BaseModel):
     id: str
     level: str = "info"
     text: str
     paragraph: Optional[int] = None
+
 
 class CreatorAgentPlanResponse(BaseModel):
     advice_only: bool = False

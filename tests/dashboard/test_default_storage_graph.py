@@ -1,4 +1,5 @@
 """Default CVG storage singleton attaches reference graph for cascade BFS."""
+
 from __future__ import annotations
 
 from infra.cross_volume.reference_graph import CrossVolumeReferenceGraph

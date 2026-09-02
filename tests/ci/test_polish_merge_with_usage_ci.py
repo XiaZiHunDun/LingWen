@@ -3,6 +3,7 @@
 Phase 8.7 已实现 MC variant + got_bridge handler; F27 补 CI 契约防 regression
 (旧 polish_merge_synthesis 估算 path 误接 workflow cost tracking).
 """
+
 from __future__ import annotations
 
 import inspect
@@ -13,9 +14,7 @@ from lingwen_pipeline.master_controller import MasterController
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 GOT_BRIDGE_PATH = REPO_ROOT / "infra" / "agent_system" / "got_bridge.py"
-MASTER_CONTROLLER_PATH = (
-    REPO_ROOT / "infra" / "agent_system" / "master_controller.py"
-)
+MASTER_CONTROLLER_PATH = REPO_ROOT / "infra" / "agent_system" / "master_controller.py"
 # Phase 15.0 P3-SPLIT: _impl_polish_merge_synthesis 迁到 mc_editing.py (EditingMixin)
 MC_EDITING_PATH = REPO_ROOT / "infra" / "agent_system" / "mc_editing.py"
 
@@ -46,9 +45,7 @@ class TestPolishMergeWithUsageContract:
         source = GOT_BRIDGE_PATH.read_text(encoding="utf-8")
         handler_block = source.split("def _handler_polish_merge", 1)[1].split("\ndef _handler_", 1)[0]
         assert "polish_merge_synthesis_with_usage" in handler_block
-        assert "polish_merge_synthesis(" not in handler_block.replace(
-            "polish_merge_synthesis_with_usage", ""
-        )
+        assert "polish_merge_synthesis(" not in handler_block.replace("polish_merge_synthesis_with_usage", "")
 
     def test_impl_uses_chat_with_usage_when_record_usage_true(self):
         source = MC_EDITING_PATH.read_text(encoding="utf-8")

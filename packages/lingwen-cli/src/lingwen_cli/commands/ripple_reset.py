@@ -10,6 +10,7 @@ Usage:
     lingwen.py ripple-reset rip-pending-1 --to-status pending
     lingwen.py ripple-reset rip-rejected-1 --to-status rejected
 """
+
 import re
 import sys
 from pathlib import Path
@@ -24,6 +25,7 @@ DEFAULT_RIPPLE_DB = Path(".state/ripple.db")
 def _get_storage():
     """Phase 9.18: 1:1 with Phase 9.14 ripple_rollback pattern (lazy import)."""
     from infra.cross_volume.storage import RippleStorage
+
     return RippleStorage(db_path=DEFAULT_RIPPLE_DB)
 
 
@@ -62,10 +64,7 @@ class RippleResetCommand(Command):
                 origin="system",
                 reason=reason,
             )
-            print(
-                f"Reset {ripple_id}: status={updated.status}, applied_at=NULL "
-                f"(audit entry written)"
-            )
+            print(f"Reset {ripple_id}: status={updated.status}, applied_at=NULL (audit entry written)")
             return 0
         except (KeyError, ValueError) as e:
             print(f"Error: {e}", file=sys.stderr)

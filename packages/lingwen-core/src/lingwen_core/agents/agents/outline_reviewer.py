@@ -33,6 +33,7 @@ class OutlineFinding:
         contract_section: 相关的故事契约章节
         suggestion: 修改建议
     """
+
     issue: str
     severity: str = "minor"
     contract_section: str = ""
@@ -56,7 +57,7 @@ class OutlineReviewer(AgentBase):
         "请严格对照故事契约，找出大纲中的偏差和遗漏。"
     )
 
-    def __init__(self, router: Optional['AIRouter'] = None):
+    def __init__(self, router: Optional["AIRouter"] = None):
         """初始化大纲审稿 Agent
 
         Args:
@@ -122,9 +123,7 @@ class OutlineReviewer(AgentBase):
         import json
         import re
 
-        json_match = re.search(
-            r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', response, re.DOTALL
-        )
+        json_match = re.search(r"\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}", response, re.DOTALL)
         if json_match:
             return json.loads(json_match.group(0))
         return {}

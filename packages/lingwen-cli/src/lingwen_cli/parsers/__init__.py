@@ -6,6 +6,7 @@ registers the subparser and its arguments.
 
 `create_parser()` is the single entry point used by `lingwen.py`.
 """
+
 import argparse
 
 from .anti_trope import add_anti_trope_parser

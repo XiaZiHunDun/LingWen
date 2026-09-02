@@ -5,6 +5,7 @@ Runs a minimal DECISION-pause workflow (0 real LLM) through:
 
 Used by pytest and `python -m lingwen_core.agents.chapter_golden_path`.
 """
+
 from __future__ import annotations
 
 import json
@@ -132,10 +133,7 @@ def run_golden_path(
     summary2 = run2["summary"]
     graph = run2["graph"]
     finalize_exec = graph.get_execution("finalize")
-    finalize_ok = (
-        finalize_exec is not None
-        and finalize_exec.status == NodeStatus.COMPLETED
-    )
+    finalize_ok = finalize_exec is not None and finalize_exec.status == NodeStatus.COMPLETED
     decisions_path = state_dir / "decisions.json"
     memory_ctx = controller._last_initial_inputs.get("memory_context") or {}
     memory_attached = bool(memory_ctx)
@@ -189,9 +187,7 @@ def run_human_review_smoke(
         },
     )
     if run_resp.status_code != 200:
-        raise RuntimeError(
-            f"human review smoke: run failed {run_resp.status_code}: {run_resp.text}"
-        )
+        raise RuntimeError(f"human review smoke: run failed {run_resp.status_code}: {run_resp.text}")
     run_body = run_resp.json()
     if not run_body.get("paused"):
         raise RuntimeError("human review smoke: expected paused workflow after run")
@@ -207,16 +203,13 @@ def run_human_review_smoke(
         json={"decision_id": decision_id, "option": resolve_option},
     )
     if resume_resp.status_code != 200:
-        raise RuntimeError(
-            f"human review smoke: resume failed {resume_resp.status_code}: {resume_resp.text}"
-        )
+        raise RuntimeError(f"human review smoke: resume failed {resume_resp.status_code}: {resume_resp.text}")
     resume_body = resume_resp.json()
 
     pending_after = client.get("/api/decisions/pending").json()
     all_decisions = client.get("/api/decisions/all").json()
     decision_resolved = any(
-        d.get("decision_id") == decision_id and d.get("status") == "resolved"
-        for d in all_decisions
+        d.get("decision_id") == decision_id and d.get("status") == "resolved" for d in all_decisions
     )
 
     return HumanReviewSmokeResult(
@@ -261,4 +254,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

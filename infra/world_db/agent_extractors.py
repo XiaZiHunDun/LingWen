@@ -12,6 +12,7 @@ Cost guards (per handoff §5):
 Tests inject a mock ``llm_service`` via the ``llm_service`` kwarg so we
 don't hit the real provider in CI.
 """
+
 from __future__ import annotations
 
 import logging
@@ -58,14 +59,8 @@ SYSTEM_PROMPT = """你是小说设定编辑。分析章节正文,提取与指定
 
 
 def _build_user_prompt(character_slug: str, chapter_texts: list[str]) -> str:
-    chapters = "\n\n".join(
-        f"### 第{i+1}段\n{t}" for i, t in enumerate(chapter_texts)
-    )
-    return (
-        f"角色 slug: {character_slug}\n\n"
-        f"章节文本 (按顺序):\n\n{chapters}\n\n"
-        "请输出 JSON。"
-    )
+    chapters = "\n\n".join(f"### 第{i + 1}段\n{t}" for i, t in enumerate(chapter_texts))
+    return f"角色 slug: {character_slug}\n\n章节文本 (按顺序):\n\n{chapters}\n\n请输出 JSON。"
 
 
 def _build_prompt_user_prompt(character_slug: str, user_prompt: str) -> str:

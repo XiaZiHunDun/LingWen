@@ -1,4 +1,5 @@
 """Tests for prose calibration (Phase 11.23)."""
+
 from __future__ import annotations
 
 from infra.prose_calibration import (

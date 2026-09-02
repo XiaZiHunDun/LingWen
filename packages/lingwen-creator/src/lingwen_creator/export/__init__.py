@@ -10,6 +10,7 @@ Architecture:
 - publish: publish job log + adapter dispatch
 - publish_adapters: PublishAdapter Protocol + 4 platform stubs (fanqie/qidian/jjwxc/custom)
 """
+
 from lingwen_creator.export.common import *  # noqa: F403
 from lingwen_creator.export.docx import *  # noqa: F403
 from lingwen_creator.export.epub import *  # noqa: F403

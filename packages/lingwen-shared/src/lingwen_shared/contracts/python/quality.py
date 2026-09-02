@@ -1,4 +1,5 @@
 """Pydantic v2 DTOs for the quality bounded context (prose judge + scoring)."""
+
 from __future__ import annotations
 
 from typing import Literal, Mapping

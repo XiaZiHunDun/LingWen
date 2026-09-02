@@ -10,6 +10,7 @@
 3. `ttl=0` 等价禁用 cache (put 后 get 仍 None)
 4. `put` 同 key 只刷 value 保 ts (fast TTL 不被人为延长)
 """
+
 from __future__ import annotations
 
 import time

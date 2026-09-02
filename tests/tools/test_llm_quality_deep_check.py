@@ -4,6 +4,7 @@ llm_quality_deep_check.py 测试
 
 测试工具脚本的核心修复逻辑，不调用实际LLM API。
 """
+
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -16,7 +17,7 @@ class TestLLMQualityChecker:
     @pytest.fixture
     def mock_llm_service(self):
         """模拟LLM服务，避免实际API调用"""
-        with patch('tools.llm_quality_deep_check.LLMService') as mock:
+        with patch("tools.llm_quality_deep_check.LLMService") as mock:
             mock_instance = MagicMock()
             mock.return_value = mock_instance
             yield mock_instance
@@ -24,11 +25,13 @@ class TestLLMQualityChecker:
     @pytest.fixture
     def checker(self, mock_llm_service):
         """创建checker实例"""
-        with patch('tools.llm_quality_deep_check.LLMService', return_value=mock_llm_service):
+        with patch("tools.llm_quality_deep_check.LLMService", return_value=mock_llm_service):
             # 延迟导入以避免环境问题
             import sys
+
             sys.path.insert(0, str(Path(__file__).parent.parent.parent))
             from tools.llm_quality_deep_check import LLMQualityChecker
+
             return LLMQualityChecker(llm_service=mock_llm_service)
 
     def test_load_chapter(self, checker, tmp_path):
@@ -39,7 +42,7 @@ class TestLLMQualityChecker:
         chapters_dir.mkdir(parents=True)
 
         ch_file = chapters_dir / "ch001.md"
-        ch_file.write_text("# 第一章测试内容", encoding='utf-8')
+        ch_file.write_text("# 第一章测试内容", encoding="utf-8")
 
         checker.project_root = project_root
         checker.chapters_dir = chapters_dir
@@ -69,7 +72,7 @@ class TestLLMQualityChecker:
         # 创建多个章节文件
         for i in range(1, 4):
             ch_file = chapters_dir / f"ch{i:03d}.md"
-            ch_file.write_text(f"第{i}章内容", encoding='utf-8')
+            ch_file.write_text(f"第{i}章内容", encoding="utf-8")
 
         checker.project_root = project_root
         checker.chapters_dir = chapters_dir
@@ -86,11 +89,7 @@ class TestLLMQualityChecker:
 
         from tools.llm_quality_deep_check import QualityReport
 
-        report = QualityReport(
-            chapter=1,
-            checker="test_checker",
-            score=0.85
-        )
+        report = QualityReport(chapter=1, checker="test_checker", score=0.85)
 
         assert report.chapter == 1
         assert report.checker == "test_checker"
@@ -102,11 +101,7 @@ class TestLLMQualityChecker:
         """测试质检报告序列化"""
         from tools.llm_quality_deep_check import QualityReport
 
-        report = QualityReport(
-            chapter=1,
-            checker="test_checker",
-            score=0.85
-        )
+        report = QualityReport(chapter=1, checker="test_checker", score=0.85)
 
         data = report.to_dict()
         assert data["chapter"] == 1
@@ -121,32 +116,34 @@ class TestRepairMethods:
 
     @pytest.fixture
     def mock_llm_service(self):
-        with patch('tools.llm_quality_deep_check.LLMService') as mock:
+        with patch("tools.llm_quality_deep_check.LLMService") as mock:
             mock_instance = MagicMock()
             mock.return_value = mock_instance
             yield mock_instance
 
     @pytest.fixture
     def checker(self, mock_llm_service):
-        with patch('tools.llm_quality_deep_check.LLMService', return_value=mock_llm_service):
+        with patch("tools.llm_quality_deep_check.LLMService", return_value=mock_llm_service):
             import sys
+
             sys.path.insert(0, str(Path(__file__).parent.parent.parent))
             from tools.llm_quality_deep_check import LLMQualityChecker
+
             return LLMQualityChecker(llm_service=mock_llm_service)
 
     def test_check_character_consistency_exists(self, checker):
         """测试check_character_consistency方法存在"""
-        assert hasattr(checker, 'check_character_consistency')
+        assert hasattr(checker, "check_character_consistency")
         assert callable(checker.check_character_consistency)
 
     def test_scan_logic_contradictions_exists(self, checker):
         """测试scan_logic_contradictions方法存在"""
-        assert hasattr(checker, 'scan_logic_contradictions')
+        assert hasattr(checker, "scan_logic_contradictions")
         assert callable(checker.scan_logic_contradictions)
 
     def test_verify_foreshadow_completeness_exists(self, checker):
         """测试verify_foreshadow_completeness方法存在"""
-        assert hasattr(checker, 'verify_foreshadow_completeness')
+        assert hasattr(checker, "verify_foreshadow_completeness")
         assert callable(checker.verify_foreshadow_completeness)
 
 
@@ -159,8 +156,9 @@ class TestComprehensiveQualityChecker:
 
     def test_chapter_file_parsing(self, mock_api_key, tmp_path):
         """测试章节文件解析"""
-        with patch('tools.comprehensive_quality_check.MiniMaxProvider'):
+        with patch("tools.comprehensive_quality_check.MiniMaxProvider"):
             import sys
+
             sys.path.insert(0, str(Path(__file__).parent.parent.parent))
             from tools.comprehensive_quality_check import ComprehensiveQualityChecker
 
@@ -173,7 +171,7 @@ class TestComprehensiveQualityChecker:
 
             # 创建测试章节
             ch_file = chapters_dir / "ch001.md"
-            ch_file.write_text("# 第一章\n测试内容", encoding='utf-8')
+            ch_file.write_text("# 第一章\n测试内容", encoding="utf-8")
 
             checker.project_root = project_root
 
@@ -182,8 +180,9 @@ class TestComprehensiveQualityChecker:
 
     def test_read_chapter(self, mock_api_key, tmp_path):
         """测试读取章节内容"""
-        with patch('tools.comprehensive_quality_check.MiniMaxProvider'):
+        with patch("tools.comprehensive_quality_check.MiniMaxProvider"):
             import sys
+
             sys.path.insert(0, str(Path(__file__).parent.parent.parent))
             from tools.comprehensive_quality_check import ComprehensiveQualityChecker
 
@@ -195,7 +194,7 @@ class TestComprehensiveQualityChecker:
 
             # Use a non-standard chapter number to avoid finding real content
             ch_file = chapters_dir / "ch999.md"
-            ch_file.write_text("测试章节正文内容", encoding='utf-8')
+            ch_file.write_text("测试章节正文内容", encoding="utf-8")
 
             checker.project_root = project_root
             # 直接设置chapters_dir，因为ComprehensiveQualityChecker使用固定的PROJECT_ROOT

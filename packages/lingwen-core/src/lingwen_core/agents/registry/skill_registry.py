@@ -35,11 +35,7 @@ class SkillRegistry:
     skill_registry.yaml and individual variant YAML files.
     """
 
-    def __init__(
-        self,
-        config_path: Optional[str] = None,
-        base_path: Optional[str] = None
-    ):
+    def __init__(self, config_path: Optional[str] = None, base_path: Optional[str] = None):
         """Initialize the Skill Registry.
 
         Args:
@@ -69,9 +65,7 @@ class SkillRegistry:
             if path.exists():
                 return path
 
-        raise FileNotFoundError(
-            f"skill_registry.yaml not found in any of: {possible_paths}"
-        )
+        raise FileNotFoundError(f"skill_registry.yaml not found in any of: {possible_paths}")
 
     def _find_base_path(self) -> Path:
         """Find the novel-factory base path."""
@@ -194,9 +188,7 @@ class SkillRegistry:
 
         return None
 
-    def get_variant_score_dimensions(
-        self, variant_id: str
-    ) -> Optional[List[Dict[str, Any]]]:
+    def get_variant_score_dimensions(self, variant_id: str) -> Optional[List[Dict[str, Any]]]:
         """Get score dimensions for a specific variant.
 
         Args:
@@ -210,9 +202,7 @@ class SkillRegistry:
             return config.get("score_dimensions")
         return None
 
-    def get_feedback_preference(
-        self, variant_id: str
-    ) -> Optional[Dict[str, Any]]:
+    def get_feedback_preference(self, variant_id: str) -> Optional[Dict[str, Any]]:
         """Get feedback preferences for a specific variant.
 
         Args:
@@ -243,10 +233,7 @@ class SkillRegistry:
         return self._registry.get("metadata", {})
 
     def __repr__(self) -> str:
-        return (
-            f"SkillRegistry(registry={self.config_path}, "
-            f"agents={len(self._registry.get('agents', {}))})"
-        )
+        return f"SkillRegistry(registry={self.config_path}, agents={len(self._registry.get('agents', {}))})"
 
 
 # Global singleton instance

@@ -8,6 +8,7 @@ Most routes share a pattern: lookup active project, 404 if None, then delegate t
 infra.studio_registry / infra.studio_batch_runner. We declare a local helper
 to dedupe the project lookup boilerplate.
 """
+
 from __future__ import annotations
 
 from typing import Optional

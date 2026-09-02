@@ -49,6 +49,7 @@ class ForeshadowIssue:
 @dataclass
 class PlotThread:
     """伏笔"""
+
     id: str
     content: str
     introduced_chapter: int

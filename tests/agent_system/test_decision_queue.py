@@ -6,6 +6,7 @@ Doc 4 (GoT 适配设计 v1.0) §10: 决策点管理
 - HumanDecisionQueue: 增删查 + 排序 (priority desc + due_at asc) + 持久化
 - HumanDecision: frozen dataclass (含 status 转换 PENDING → RESOLVED/DEFERRED/CANCELLED)
 """
+
 from __future__ import annotations
 
 import json
@@ -22,6 +23,7 @@ from lingwen_core.agents.decision_queue import (
 )
 
 # === Test fixtures ===
+
 
 def _mk_decision(
     kind: DecisionKind = DecisionKind.OUTLINE_JUDGMENT,
@@ -42,6 +44,7 @@ def _mk_decision(
 
 
 # === TestHumanDecisionBasic ===
+
 
 class TestHumanDecisionBasic:
     """HumanDecision dataclass 基础 + factory"""
@@ -97,6 +100,7 @@ class TestHumanDecisionBasic:
 
 # === TestQueueAddAndGet ===
 
+
 class TestQueueAddAndGet:
     """HumanDecisionQueue.add + get 基础"""
 
@@ -128,6 +132,7 @@ class TestQueueAddAndGet:
 
 
 # === TestQueuePendingSorting ===
+
 
 class TestQueuePendingSorting:
     """pending() 按 priority desc + due_at asc 排序"""
@@ -183,6 +188,7 @@ class TestQueuePendingSorting:
 
 # === TestQueueResolve ===
 
+
 class TestQueueResolve:
     """resolve() 标记 RESOLVED + 记录选项"""
 
@@ -233,6 +239,7 @@ class TestQueueResolve:
 
 # === TestQueueDeferAndCancel ===
 
+
 class TestQueueDeferAndCancel:
     """defer() / cancel() 状态转换"""
 
@@ -266,6 +273,7 @@ class TestQueueDeferAndCancel:
 
 
 # === TestQueuePersistence ===
+
 
 class TestQueuePersistence:
     """JSON 持久化 (state_dir/decisions.json)"""
@@ -320,6 +328,7 @@ class TestQueuePersistence:
 
 
 # === TestQueueStats ===
+
 
 class TestQueueStats:
     """队列统计 (pending_count / by_status)"""

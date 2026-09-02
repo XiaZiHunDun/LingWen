@@ -1,4 +1,5 @@
 """Timeline event CRUD with optimistic concurrency."""
+
 import json
 
 from lingwen_shared.ports.storage import ConnectionPort
@@ -23,13 +24,17 @@ def create_timeline_event(conn: ConnectionPort, data: dict) -> int:
             created_at, updated_at, revision)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)""",
         (
-            data["slug"], data["title"],
-            data.get("story_year"), data.get("story_label"),
-            data.get("chapter"), data.get("description"),
+            data["slug"],
+            data["title"],
+            data.get("story_year"),
+            data.get("story_label"),
+            data.get("chapter"),
+            data.get("description"),
             data.get("category"),
             json.dumps(data.get("related_characters") or [], ensure_ascii=False),
             json.dumps(data.get("related_factions") or [], ensure_ascii=False),
-            now, now,
+            now,
+            now,
         ),
     )
     conn.commit()
@@ -37,13 +42,8 @@ def create_timeline_event(conn: ConnectionPort, data: dict) -> int:
 
 
 def list_timeline(conn: ConnectionPort) -> list[dict]:
-    rows = conn.execute(
-        "SELECT * FROM timeline_event ORDER BY story_year"
-    ).fetchall()
-    return [
-        row_to_dict(r, ("related_characters", "related_factions"))
-        for r in rows if r is not None
-    ]
+    rows = conn.execute("SELECT * FROM timeline_event ORDER BY story_year").fetchall()
+    return [row_to_dict(r, ("related_characters", "related_factions")) for r in rows if r is not None]
 
 
 def get_timeline_event(conn: ConnectionPort, tid: int) -> dict | None:
@@ -53,16 +53,12 @@ def get_timeline_event(conn: ConnectionPort, tid: int) -> dict | None:
     )
 
 
-def update_timeline_event(
-    conn: ConnectionPort, tid: int, patch: dict, expected_revision: int
-) -> None:
+def update_timeline_event(conn: ConnectionPort, tid: int, patch: dict, expected_revision: int) -> None:
     related_chars = (
-        json.dumps(patch["related_characters"], ensure_ascii=False)
-        if "related_characters" in patch else None
+        json.dumps(patch["related_characters"], ensure_ascii=False) if "related_characters" in patch else None
     )
     related_facts = (
-        json.dumps(patch["related_factions"], ensure_ascii=False)
-        if "related_factions" in patch else None
+        json.dumps(patch["related_factions"], ensure_ascii=False) if "related_factions" in patch else None
     )
     cur = conn.execute(
         """UPDATE timeline_event SET
@@ -79,15 +75,18 @@ def update_timeline_event(
            WHERE id = ? AND revision = ?""",
         (
             patch.get("title"),
-            patch.get("story_year"), patch.get("story_label"),
-            patch.get("chapter"), patch.get("description"),
+            patch.get("story_year"),
+            patch.get("story_label"),
+            patch.get("chapter"),
+            patch.get("description"),
             patch.get("category"),
-            related_chars, related_facts,
-            now_iso(), tid, expected_revision,
+            related_chars,
+            related_facts,
+            now_iso(),
+            tid,
+            expected_revision,
         ),
     )
     if cur.rowcount == 0:
-        raise TimelineRevisionConflict(
-            f"timeline_event {tid} revision != {expected_revision}"
-        )
+        raise TimelineRevisionConflict(f"timeline_event {tid} revision != {expected_revision}")
     conn.commit()

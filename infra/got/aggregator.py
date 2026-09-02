@@ -13,6 +13,7 @@ Phase 1.4 — Doc 4 (GoT 适配设计 v1.0) §5: 多 review 合并。
 - 加权评分 / 自定义 severity order
 - LLM 仲裁冲突 (P0/P1 互相对立时)
 """
+
 from __future__ import annotations
 
 from typing import Any, Optional
@@ -81,9 +82,7 @@ class JudgmentAggregator:
                 merged_issues.append(issue)
 
         # 用 reports[0] 的类型构造,保持 isinstance 兼容
-        return self._build_report(
-            reports[0], issues=tuple(merged_issues), verdict=verdict, score=score
-        )
+        return self._build_report(reports[0], issues=tuple(merged_issues), verdict=verdict, score=score)
 
     def _empty_report(self) -> Any:
         return _QualityReportShim(issues=(), verdict="PASS", score=1.0)
@@ -105,9 +104,7 @@ class JudgmentAggregator:
             return cls(issues=issues, verdict=verdict, score=score)
         except (TypeError, ValueError):
             # 兜底: 用 shim
-            return _QualityReportShim(
-                issues=issues, verdict=verdict, score=score
-            )
+            return _QualityReportShim(issues=issues, verdict=verdict, score=score)
 
 
 # === Shim: 兜底,用于空 reports 场景 ===
@@ -127,19 +124,12 @@ class _QualityReportShim:
         self.score = score
 
     def __repr__(self) -> str:
-        return (
-            f"QualityReport(issues={len(self.issues)}, "
-            f"verdict={self.verdict!r}, score={self.score})"
-        )
+        return f"QualityReport(issues={len(self.issues)}, verdict={self.verdict!r}, score={self.score})"
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, _QualityReportShim):
             return NotImplemented
-        return (
-            self.issues == other.issues
-            and self.verdict == other.verdict
-            and self.score == other.score
-        )
+        return self.issues == other.issues and self.verdict == other.verdict and self.score == other.score
 
     def __hash__(self) -> int:
         return hash((self.issues, self.verdict, self.score))

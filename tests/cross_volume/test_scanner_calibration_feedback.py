@@ -1,4 +1,5 @@
 """Phase 9.43 F32: scanner calibration feedback loop tests."""
+
 from pathlib import Path
 
 import pytest
@@ -21,20 +22,36 @@ from infra.cross_volume.scanner_calibration import (
 def sample_nodes():
     return [
         ReferenceNode(
-            dimension="character", volume=1, chapter=1, title="林轩",
-            description="", confidence=4,
+            dimension="character",
+            volume=1,
+            chapter=1,
+            title="林轩",
+            description="",
+            confidence=4,
         ),
         ReferenceNode(
-            dimension="character", volume=1, chapter=1, title="路人甲",
-            description="", confidence=2,
+            dimension="character",
+            volume=1,
+            chapter=1,
+            title="路人甲",
+            description="",
+            confidence=2,
         ),
         ReferenceNode(
-            dimension="foreshadow", volume=1, chapter=1, title="九转玄功",
-            description="", confidence=3,
+            dimension="foreshadow",
+            volume=1,
+            chapter=1,
+            title="九转玄功",
+            description="",
+            confidence=3,
         ),
         ReferenceNode(
-            dimension="setting", volume=1, chapter=1, title="青云宗",
-            description="", confidence=5,
+            dimension="setting",
+            volume=1,
+            chapter=1,
+            title="青云宗",
+            description="",
+            confidence=5,
         ),
     ]
 

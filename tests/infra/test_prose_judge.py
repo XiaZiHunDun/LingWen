@@ -1,4 +1,5 @@
 """Tests for infra.prose_judge (Phase 12.03)."""
+
 from __future__ import annotations
 
 import json
@@ -31,7 +32,9 @@ class TestProseJudgeValidation:
                 "chapters": [
                     {
                         "chapter": 1,
-                        "issues": [{"severity": "P1", "issue_type": "low_character_agency", "description": "x"}],
+                        "issues": [
+                            {"severity": "P1", "issue_type": "low_character_agency", "description": "x"}
+                        ],
                     },
                 ],
             },
@@ -62,7 +65,9 @@ class TestProseJudgeOffline:
                 "chapters": [
                     {
                         "chapter": 1,
-                        "issues": [{"severity": "P1", "issue_type": "low_character_agency", "description": "d"}],
+                        "issues": [
+                            {"severity": "P1", "issue_type": "low_character_agency", "description": "d"}
+                        ],
                     },
                 ],
             },

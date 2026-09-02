@@ -1,4 +1,5 @@
 """Phase 126 v16.2.0: tests for shared/revision.py migrated utilities."""
+
 from __future__ import annotations
 
 import pytest

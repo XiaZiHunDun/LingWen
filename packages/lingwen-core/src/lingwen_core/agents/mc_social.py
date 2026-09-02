@@ -9,9 +9,7 @@ class SocialEngineMixin:
 
     def apply_event(self, event_type, from_char, to_char, chapter):
         """应用事件并更新关系"""
-        self.event_calculator.apply_event(
-            event_type, from_char, to_char, self.relationship_tracker
-        )
+        self.event_calculator.apply_event(event_type, from_char, to_char, self.relationship_tracker)
         self.relationship_tracker.record_event(from_char, to_char, event_type, chapter)
 
     def check_alerts(self, chapter):
@@ -20,6 +18,4 @@ class SocialEngineMixin:
 
     def get_writing_suggestions(self, chapter):
         """获取写作建议"""
-        return self.writing_suggestion.generate_suggestions(
-            self.relationship_tracker, chapter
-        )
+        return self.writing_suggestion.generate_suggestions(self.relationship_tracker, chapter)

@@ -1,4 +1,5 @@
 """Phase 9.48 F37: Playwright opt-in CI workflow contract tests."""
+
 from __future__ import annotations
 
 import json
@@ -16,16 +17,12 @@ class TestDashboardE2ESmokeWorkflow:
         assert (WORKFLOWS_DIR / "dashboard-e2e-smoke.yml").is_file()
 
     def test_e2e_smoke_workflow_has_manual_dispatch(self):
-        data = yaml.safe_load(
-            (WORKFLOWS_DIR / "dashboard-e2e-smoke.yml").read_text(encoding="utf-8")
-        )
+        data = yaml.safe_load((WORKFLOWS_DIR / "dashboard-e2e-smoke.yml").read_text(encoding="utf-8"))
         triggers = data.get("on") or data.get(True) or {}
         assert "workflow_dispatch" in triggers
 
     def test_e2e_smoke_workflow_not_on_push(self):
-        data = yaml.safe_load(
-            (WORKFLOWS_DIR / "dashboard-e2e-smoke.yml").read_text(encoding="utf-8")
-        )
+        data = yaml.safe_load((WORKFLOWS_DIR / "dashboard-e2e-smoke.yml").read_text(encoding="utf-8"))
         triggers = data.get("on") or data.get(True) or {}
         assert "push" not in triggers
 

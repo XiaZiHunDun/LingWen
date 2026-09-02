@@ -1,4 +1,5 @@
 """Phase 9.67 F59: chapter production golden path tests (0 real LLM)."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -71,4 +72,3 @@ class TestGoldenPathIncrementalBackfillOptional:
                 enabled=True,
             )
         assert stats is not None
-

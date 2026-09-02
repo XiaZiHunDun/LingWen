@@ -5,6 +5,7 @@ per-tier (haiku/sonnet/opus) budget persistence (Phase 8.15).
 Append-only `budgets` + `budgets_by_tier` tables.
 Per-day = UTC 00:00-23:59, per-week = Mon-Sun.
 """
+
 from __future__ import annotations
 
 import sqlite3
@@ -44,9 +45,7 @@ class TestBudgetService:
         service.init_db()
         service.set("run", 0.1, run_id="abc123")
         with sqlite3.connect(str(tmp_path / "test.db")) as conn:
-            row = conn.execute(
-                "SELECT scope, usd, run_id FROM budgets"
-            ).fetchone()
+            row = conn.execute("SELECT scope, usd, run_id FROM budgets").fetchone()
         assert row[0] == "run"
         assert row[1] == 0.1
         assert row[2] == "abc123"
@@ -58,9 +57,7 @@ class TestBudgetService:
         service.set("day", 0.5)
         service.set("week", 2.0)
         with sqlite3.connect(str(tmp_path / "test.db")) as conn:
-            rows = conn.execute(
-                "SELECT scope, usd, run_id FROM budgets ORDER BY id"
-            ).fetchall()
+            rows = conn.execute("SELECT scope, usd, run_id FROM budgets ORDER BY id").fetchall()
         assert rows[0] == ("day", 0.5, None)
         assert rows[1] == ("week", 2.0, None)
 
@@ -96,6 +93,7 @@ class TestBudgetService:
     def test_check_all_scopes_per_run_exceeded(self, tmp_path: Path) -> None:
         """per-run set 0.1, total_cost 0.15 → raise CostBudgetExceeded(scope='run')"""
         from lingwen_llm.providers.cost_tracker import CostBudgetExceeded
+
         service = BudgetService(db_path=tmp_path / "test.db")
         service.init_db()
         service.set("run", 0.1, run_id="r1")
@@ -135,11 +133,10 @@ class TestBudgetService:
         service.set("week", 2.0)
         service.check_all_scopes(total_cost_usd=1.5, current_run_id="r1")
 
-    def test_check_all_scopes_priority_run_over_day_over_week(
-        self, tmp_path: Path
-    ) -> None:
+    def test_check_all_scopes_priority_run_over_day_over_week(self, tmp_path: Path) -> None:
         """3 档都设, total_cost 超 per-run → raise(scope='run') 不管 day/week"""
         from lingwen_llm.providers.cost_tracker import CostBudgetExceeded
+
         service = BudgetService(db_path=tmp_path / "test.db")
         service.init_db()
         service.set("run", 0.1, run_id="r1")
@@ -232,11 +229,13 @@ class TestBudgetByTierPersistence:
         svc.set_by_tier(ModelTier.SONNET, 0.5)
         svc.set_by_tier(ModelTier.OPUS, 1.0)
         with pytest.raises(CostBudgetExceeded) as exc_info:
-            svc.check_all_tiers({
-                ModelTier.HAIKU: 0.5,   # 超
-                ModelTier.SONNET: 1.0,  # 超
-                ModelTier.OPUS: 2.0,    # 超
-            })
+            svc.check_all_tiers(
+                {
+                    ModelTier.HAIKU: 0.5,  # 超
+                    ModelTier.SONNET: 1.0,  # 超
+                    ModelTier.OPUS: 2.0,  # 超
+                }
+            )
         # 第 1 个超阈 raise (haiku), 后续不检查
         assert exc_info.value.tier == ModelTier.HAIKU
 
@@ -245,15 +244,15 @@ class TestBudgetByTierPersistence:
         svc = BudgetService(db_path=tmp_path / "b.db")
         svc.set_by_tier(ModelTier.OPUS, 1.0)
         # 只设 opus, haiku/sonnet 未设, cost_by_tier 含这 3 档 → 只 check opus
-        svc.check_all_tiers({
-            ModelTier.HAIKU: 999.0,  # 未设, 跳过
-            ModelTier.SONNET: 999.0,  # 未设, 跳过
-            ModelTier.OPUS: 0.5,  # 0.5 < 1.0 ok
-        })
+        svc.check_all_tiers(
+            {
+                ModelTier.HAIKU: 999.0,  # 未设, 跳过
+                ModelTier.SONNET: 999.0,  # 未设, 跳过
+                ModelTier.OPUS: 0.5,  # 0.5 < 1.0 ok
+            }
+        )
 
-    def test_tier_budget_persistence_independent_from_run_day_week(
-        self, tmp_path: Path
-    ) -> None:
+    def test_tier_budget_persistence_independent_from_run_day_week(self, tmp_path: Path) -> None:
         """Phase 8.15: tier budget 跟 run/day/week budget 共存同一 DB 不同表."""
         svc = BudgetService(db_path=tmp_path / "b.db")
         svc.set("run", 5.0)  # Phase 8.12 旧

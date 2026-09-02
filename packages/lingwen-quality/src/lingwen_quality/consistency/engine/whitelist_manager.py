@@ -21,6 +21,7 @@ FEEDBACK_PATH = CONTEXT_DIR / "feedback_learning.json"
 @dataclass
 class WhitelistEntry:
     """白名单条目"""
+
     type: str  # scene, character, vocabulary, force_check
     checker: str
     pattern: str
@@ -30,6 +31,7 @@ class WhitelistEntry:
 
 class WhitelistManager:
     """白名单管理器（单例）"""
+
     _instance = None
 
     def __new__(cls):
@@ -48,11 +50,12 @@ class WhitelistManager:
     def _load_whitelist(self) -> Dict[str, Any]:
         """加载白名单配置"""
         import yaml
+
         if not WHITELIST_PATH.exists():
             logger.debug("白名单文件不存在，使用空白名单")
             return {}
         try:
-            with open(WHITELIST_PATH, 'r', encoding='utf-8') as f:
+            with open(WHITELIST_PATH, "r", encoding="utf-8") as f:
                 data = yaml.safe_load(f)
                 if not data:
                     logger.warning("白名单文件为空")
@@ -68,11 +71,15 @@ class WhitelistManager:
             return {
                 "feedback_entries": [],
                 "statistics": {"total_confirmations": 0, "total_false_positives": 0, "accuracy_rate": 0.0},
-                "learned_patterns": {"scene_types_to_skip": [], "characters_to_skip": [], "vocabulary_exceptions": []},
-                "last_updated": None
+                "learned_patterns": {
+                    "scene_types_to_skip": [],
+                    "characters_to_skip": [],
+                    "vocabulary_exceptions": [],
+                },
+                "last_updated": None,
             }
         try:
-            with open(FEEDBACK_PATH, 'r', encoding='utf-8') as f:
+            with open(FEEDBACK_PATH, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception:
             return {"feedback_entries": [], "learned_patterns": {}, "last_updated": None}
@@ -148,7 +155,7 @@ class WhitelistManager:
             "checker_type": issue_data.get("checker_type"),
             "severity": issue_data.get("severity"),
             "is_false_positive": is_false_positive,
-            "content_snippet": issue_data.get("content", "")[:200] if issue_data.get("content") else ""
+            "content_snippet": issue_data.get("content", "")[:200] if issue_data.get("content") else "",
         }
         self.feedback_data.setdefault("feedback_entries", []).append(entry)
         self._update_statistics()
@@ -163,14 +170,14 @@ class WhitelistManager:
         self.feedback_data["statistics"] = {
             "total_confirmations": len(confirmations),
             "total_false_positives": len(false_positives),
-            "accuracy_rate": len(confirmations) / max(len(entries), 1)
+            "accuracy_rate": len(confirmations) / max(len(entries), 1),
         }
         self.feedback_data["last_updated"] = datetime.now().isoformat()
 
     def _save_feedback(self):
         """保存反馈数据"""
         FEEDBACK_PATH.parent.mkdir(exist_ok=True)
-        with open(FEEDBACK_PATH, 'w', encoding='utf-8') as f:
+        with open(FEEDBACK_PATH, "w", encoding="utf-8") as f:
             json.dump(self.feedback_data, f, ensure_ascii=False, indent=2)
 
     def get_statistics(self) -> Dict[str, Any]:
@@ -183,5 +190,5 @@ class WhitelistManager:
             "scene_whitelist": len(self.whitelist_data.get("scene_whitelist", [])),
             "character_whitelist": len(self.whitelist_data.get("character_whitelist", [])),
             "vocabulary_whitelist": len(self.whitelist_data.get("vocabulary_whitelist", [])),
-            "force_check_whitelist": len(self.whitelist_data.get("force_check_whitelist", []))
+            "force_check_whitelist": len(self.whitelist_data.get("force_check_whitelist", [])),
         }

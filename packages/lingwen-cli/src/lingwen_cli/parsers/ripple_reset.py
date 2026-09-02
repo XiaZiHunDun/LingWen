@@ -2,6 +2,7 @@
 
 1:1 with infra/cli/parsers/ripple_rollback.py (Phase 9.14).
 """
+
 import argparse
 
 
@@ -16,7 +17,7 @@ def add_ripple_reset_parser(subparsers: argparse._SubParsersAction) -> argparse.
         "ripple-reset",
         help="重置 ripple 状态 (test/dev 工具, Phase 9.18)",
         description="Idempotent reset ripple status + write audit entry. "
-                    "For e2e test idempotency (ripples-audit.spec.js Test 2 beforeEach).",
+        "For e2e test idempotency (ripples-audit.spec.js Test 2 beforeEach).",
     )
     parser.add_argument(
         "ripple_id",

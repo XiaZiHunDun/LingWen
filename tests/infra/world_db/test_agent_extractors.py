@@ -3,6 +3,7 @@
 Phase 118: real LLM call replaces the Phase 117 stub. Tests inject a mock
 LLM service so no API call is made in CI.
 """
+
 import pytest
 
 from infra.world_db.agent_extractors import (
@@ -36,7 +37,7 @@ class FakeLLMService:
 @pytest.mark.asyncio
 async def test_extract_proposals_returns_empty_when_no_chapters():
     proposals = await extract_proposals_from_chapters(
-        character_slug='lin-ye',
+        character_slug="lin-ye",
         chapter_texts=[],
     )
     assert proposals == []
@@ -47,14 +48,16 @@ async def test_extract_proposals_returns_empty_when_no_chapters():
 # ---------------------------------------------------------------------------
 @pytest.mark.asyncio
 async def test_extract_proposals_from_chapters_with_mock_llm():
-    llm = FakeLLMService(response=(
-        '{"proposals":[{"kind":"character.update","target_kind":"character",'
-        '"target_id":1,"payload":{"status":"alive","last_seen_chapter":3},'
-        '"source_context":"第3章明确写","confidence":"high"}]}'
-    ))
+    llm = FakeLLMService(
+        response=(
+            '{"proposals":[{"kind":"character.update","target_kind":"character",'
+            '"target_id":1,"payload":{"status":"alive","last_seen_chapter":3},'
+            '"source_context":"第3章明确写","confidence":"high"}]}'
+        )
+    )
     proposals = await extract_proposals_from_chapters(
-        character_slug='lin-ye',
-        chapter_texts=['ch001 林夜登场...', 'ch002 林夜遇到苏琳...'],
+        character_slug="lin-ye",
+        chapter_texts=["ch001 林夜登场...", "ch002 林夜遇到苏琳..."],
         llm_service=llm,
     )
     assert len(proposals) == 1
@@ -71,39 +74,39 @@ async def test_extract_proposals_from_chapters_with_mock_llm():
 async def test_extract_proposals_prompt_includes_slug_and_chapters():
     llm = FakeLLMService()
     await extract_proposals_from_chapters(
-        character_slug='su-lin',
-        chapter_texts=['第一章内容', '第二章内容'],
+        character_slug="su-lin",
+        chapter_texts=["第一章内容", "第二章内容"],
         llm_service=llm,
     )
     assert llm.last_prompt is not None
-    assert 'su-lin' in llm.last_prompt
-    assert '第一章内容' in llm.last_prompt
-    assert '第二章内容' in llm.last_prompt
+    assert "su-lin" in llm.last_prompt
+    assert "第一章内容" in llm.last_prompt
+    assert "第二章内容" in llm.last_prompt
 
 
 @pytest.mark.asyncio
 async def test_extract_proposals_max_chapters_cap():
     llm = FakeLLMService(response='{"proposals":[]}')
-    chapters = [f'第{i}章' for i in range(20)]
+    chapters = [f"第{i}章" for i in range(20)]
     await extract_proposals_from_chapters(
-        character_slug='lin-ye',
+        character_slug="lin-ye",
         chapter_texts=chapters,
         llm_service=llm,
     )
     assert llm.last_prompt is not None
     # Only the last MAX_CHAPTERS_DEFAULT chapters are included.
     for i in range(20 - MAX_CHAPTERS_DEFAULT):
-        assert f'第{i}章' not in llm.last_prompt
+        assert f"第{i}章" not in llm.last_prompt
     for i in range(20 - MAX_CHAPTERS_DEFAULT, 20):
-        assert f'第{i}章' in llm.last_prompt
+        assert f"第{i}章" in llm.last_prompt
 
 
 @pytest.mark.asyncio
 async def test_extract_proposals_invalid_json_returns_empty_list():
-    llm = FakeLLMService(response='not json at all')
+    llm = FakeLLMService(response="not json at all")
     proposals = await extract_proposals_from_chapters(
-        character_slug='lin-ye',
-        chapter_texts=['some text'],
+        character_slug="lin-ye",
+        chapter_texts=["some text"],
         llm_service=llm,
     )
     assert proposals == []  # no raise, treat as no-op extraction
@@ -111,14 +114,16 @@ async def test_extract_proposals_invalid_json_returns_empty_list():
 
 @pytest.mark.asyncio
 async def test_extract_proposals_schema_validation_rejects_bad_canon_level():
-    llm = FakeLLMService(response=(
-        '{"proposals":[{"kind":"character.update","target_kind":"character",'
-        '"target_id":1,"payload":{"canon_level":"NotAValidLevel"},'
-        '"source_context":"...","confidence":"high"}]}'
-    ))
+    llm = FakeLLMService(
+        response=(
+            '{"proposals":[{"kind":"character.update","target_kind":"character",'
+            '"target_id":1,"payload":{"canon_level":"NotAValidLevel"},'
+            '"source_context":"...","confidence":"high"}]}'
+        )
+    )
     proposals = await extract_proposals_from_chapters(
-        character_slug='lin-ye',
-        chapter_texts=['...'],
+        character_slug="lin-ye",
+        chapter_texts=["..."],
         llm_service=llm,
     )
     assert proposals == []  # bad payload is rejected, returns empty
@@ -126,12 +131,10 @@ async def test_extract_proposals_schema_validation_rejects_bad_canon_level():
 
 @pytest.mark.asyncio
 async def test_extract_proposals_accepts_markdown_fenced_json():
-    llm = FakeLLMService(response=(
-        '```json\n{"proposals":[]}\n```'
-    ))
+    llm = FakeLLMService(response=('```json\n{"proposals":[]}\n```'))
     proposals = await extract_proposals_from_chapters(
-        character_slug='lin-ye',
-        chapter_texts=['...'],
+        character_slug="lin-ye",
+        chapter_texts=["..."],
         llm_service=llm,
     )
     assert proposals == []
@@ -139,14 +142,16 @@ async def test_extract_proposals_accepts_markdown_fenced_json():
 
 @pytest.mark.asyncio
 async def test_extract_proposals_accepts_top_level_array():
-    llm = FakeLLMService(response=(
-        '[{"kind":"character.update","target_kind":"character","target_id":2,'
-        '"payload":{"attributes":{"灵力":"觉醒"}},"source_context":"...",'
-        '"confidence":"medium"}]'
-    ))
+    llm = FakeLLMService(
+        response=(
+            '[{"kind":"character.update","target_kind":"character","target_id":2,'
+            '"payload":{"attributes":{"灵力":"觉醒"}},"source_context":"...",'
+            '"confidence":"medium"}]'
+        )
+    )
     proposals = await extract_proposals_from_chapters(
-        character_slug='lin-ye',
-        chapter_texts=['...'],
+        character_slug="lin-ye",
+        chapter_texts=["..."],
         llm_service=llm,
     )
     assert len(proposals) == 1
@@ -160,8 +165,8 @@ async def test_extract_proposals_accepts_top_level_array():
 async def test_extract_proposals_from_prompt_empty_returns_empty():
     llm = FakeLLMService()
     proposals = await extract_proposals_from_prompt(
-        character_slug='lin-ye',
-        user_prompt='   ',
+        character_slug="lin-ye",
+        user_prompt="   ",
         llm_service=llm,
     )
     assert proposals == []
@@ -171,14 +176,16 @@ async def test_extract_proposals_from_prompt_empty_returns_empty():
 
 @pytest.mark.asyncio
 async def test_extract_proposals_from_prompt_with_mock():
-    llm = FakeLLMService(response=(
-        '{"proposals":[{"kind":"character.update","target_kind":"character",'
-        '"target_id":5,"payload":{"status":"deceased"},'
-        '"source_context":"用户描述","confidence":"low"}]}'
-    ))
+    llm = FakeLLMService(
+        response=(
+            '{"proposals":[{"kind":"character.update","target_kind":"character",'
+            '"target_id":5,"payload":{"status":"deceased"},'
+            '"source_context":"用户描述","confidence":"low"}]}'
+        )
+    )
     proposals = await extract_proposals_from_prompt(
-        character_slug='mo-yan',
-        user_prompt='莫言在第三卷末死了',
+        character_slug="mo-yan",
+        user_prompt="莫言在第三卷末死了",
         llm_service=llm,
     )
     assert len(proposals) == 1
@@ -192,4 +199,4 @@ def test_parse_proposals_json_rejects_non_json():
     import pytest
 
     with pytest.raises(ValueError, match="not valid JSON"):
-        parse_proposals_json('not json')
+        parse_proposals_json("not json")

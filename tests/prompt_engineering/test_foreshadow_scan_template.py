@@ -2,6 +2,7 @@
 
 Doc 2 §5 SCENARIOS:foreshadow_scan 是 auditor scenario,扫描伏笔未回收/重复/混乱。
 """
+
 from __future__ import annotations
 
 from lingwen_prompt.templates import (

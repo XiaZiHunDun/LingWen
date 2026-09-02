@@ -1,4 +1,5 @@
 """Character CRUD query tests with optimistic concurrency."""
+
 import pytest
 
 from infra.world_db.queries.characters import (
@@ -16,10 +17,16 @@ def test_create_and_get(tmp_path):
     conn = get_connection(db)
     init_schema(conn)
 
-    cid = create_character(conn, {
-        "slug": "lin-ye", "name": "林夜", "canon_level": "Provisional",
-        "attributes": {"appearance": "tall"}, "aliases": ["主角"],
-    })
+    cid = create_character(
+        conn,
+        {
+            "slug": "lin-ye",
+            "name": "林夜",
+            "canon_level": "Provisional",
+            "attributes": {"appearance": "tall"},
+            "aliases": ["主角"],
+        },
+    )
     assert isinstance(cid, int) and cid > 0
 
     char = get_character(conn, cid)

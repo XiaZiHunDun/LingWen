@@ -35,7 +35,7 @@ class TaskOrchestrator:
         self,
         state_manager: Optional[Any] = None,
         event_bus: Optional[EventBus] = None,
-        state_file: Optional[str] = None  # 保留参数但不使用，由 state_manager 替代
+        state_file: Optional[str] = None,  # 保留参数但不使用，由 state_manager 替代
     ):
         """初始化任务编排器
 
@@ -50,6 +50,7 @@ class TaskOrchestrator:
         # 状态管理器 - 延迟导入避免循环依赖
         if state_manager is None:
             from lingwen_pipeline.state.state_manager import StateManager
+
             state_manager = StateManager()
 
         self._state = state_manager
@@ -107,13 +108,7 @@ class TaskOrchestrator:
 
     # ==================== 任务管理 ====================
 
-    def dispatch_task(
-        self,
-        task_name: str,
-        agent: str,
-        context: Dict[str, Any],
-        priority: int = 0
-    ) -> str:
+    def dispatch_task(self, task_name: str, agent: str, context: Dict[str, Any], priority: int = 0) -> str:
         """分发任务给Agent
 
         Args:
@@ -131,6 +126,7 @@ class TaskOrchestrator:
             调用方通过 verify_task/fail_task 终结任务。
         """
         import uuid
+
         task_id = str(uuid.uuid4())[:8]
 
         task_info = {
@@ -143,7 +139,7 @@ class TaskOrchestrator:
             "created_at": datetime.now().isoformat(),
             "dispatched_at": None,
             "completed_at": None,
-            "result": None
+            "result": None,
         }
 
         self._task_queue.append(task_info)
@@ -248,12 +244,7 @@ class TaskOrchestrator:
         self._step_callbacks[step].append(callback)
         logger.info(f"步骤回调已注册: step={step}")
 
-    def _trigger_step_event(
-        self,
-        old_step: str,
-        new_step: str,
-        context: Optional[Dict]
-    ) -> None:
+    def _trigger_step_event(self, old_step: str, new_step: str, context: Optional[Dict]) -> None:
         """触发步骤事件"""
         # 调用注册的回调
         callbacks = self._step_callbacks.get(new_step, [])
@@ -265,11 +256,9 @@ class TaskOrchestrator:
 
         # 通过事件总线触发事件
         event_name = f"{new_step}_COMPLETED"
-        self._event_bus.emit(event_name, {
-            "old_step": old_step,
-            "new_step": new_step,
-            "context": context or {}
-        })
+        self._event_bus.emit(
+            event_name, {"old_step": old_step, "new_step": new_step, "context": context or {}}
+        )
 
     # ==================== 状态查询 ====================
 
@@ -284,7 +273,7 @@ class TaskOrchestrator:
             "allowed_steps": self.get_allowed_steps(),
             "pending_tasks": len(self._task_queue),
             "active_tasks": len(self._active_tasks),
-            "active_task_ids": list(self._active_tasks.keys())
+            "active_task_ids": list(self._active_tasks.keys()),
         }
 
     # ==================== 死锁检测 ====================

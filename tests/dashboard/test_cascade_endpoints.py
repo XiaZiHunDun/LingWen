@@ -1,4 +1,5 @@
 """Phase 9.19 Task 2: max_depth query param for cascade endpoints."""
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -13,6 +14,7 @@ def cvg_storage(tmp_path):
     """Storage with ripple + multi-hop graph + persisted cascade."""
     storage = RippleStorage(db_path=tmp_path / "cvg.db")
     from infra.cross_volume.reference_graph import CrossVolumeReferenceGraph
+
     g = CrossVolumeReferenceGraph(storage)
     # Chain: n1 → n2 → n3 (n3 is 2-hop from n1)
     g.add_node(ReferenceNode(id="n1", volume=1, chapter=1, dimension="character"))
@@ -23,8 +25,12 @@ def cvg_storage(tmp_path):
     storage._graph = g
     # Append ripple → fires cascade hook → persists cascade at depth=3
     ripple = CrossVolumeRipple(
-        id="rip-1", trigger_volume=1, trigger_chapter=1,
-        affected_nodes=("n1",), affected_edges=(), proposed_actions=(),
+        id="rip-1",
+        trigger_volume=1,
+        trigger_chapter=1,
+        affected_nodes=("n1",),
+        affected_edges=(),
+        proposed_actions=(),
         status="pending",
     )
     storage.append_ripple(ripple)
@@ -35,6 +41,7 @@ def cvg_storage(tmp_path):
 def client(cvg_storage, monkeypatch):
     """TestClient with _default_storage overridden to use cvg_storage."""
     from apps.studio_api import app as app_module
+
     monkeypatch.setattr(app_module, "_default_storage", lambda: cvg_storage)
     app = create_app()
     return TestClient(app)
@@ -112,30 +119,29 @@ class TestCascadeEndpointMaxNodesCap:
         for i in range(150):
             nid = f"n_{i:03d}"
             g.add_node(ReferenceNode(id=nid, volume=2, chapter=1, dimension="character"))
-            g.add_edge(
-                ReferenceEdge(id=f"e_{i:03d}", from_node_id="trigger", to_node_id=nid, weight=0.5)
-            )
+            g.add_edge(ReferenceEdge(id=f"e_{i:03d}", from_node_id="trigger", to_node_id=nid, weight=0.5))
         storage._graph = g
         storage.append_ripple(
             CrossVolumeRipple(
-                id="rip-star", trigger_volume=1, trigger_chapter=1,
-                affected_nodes=("trigger",), affected_edges=(), proposed_actions=(),
+                id="rip-star",
+                trigger_volume=1,
+                trigger_chapter=1,
+                affected_nodes=("trigger",),
+                affected_edges=(),
+                proposed_actions=(),
                 status="pending",
             )
         )
         from apps.studio_api import app as app_module
+
         monkeypatch.setattr(app_module, "_default_storage", lambda: storage)
         return TestClient(create_app())
 
     def test_max_nodes_cap_200_returns_all_neighbors(self, star_client):
-        resp = star_client.get(
-            "/api/cvg/ripples/rip-star/cascade?max_depth=1&max_nodes_cap=200"
-        )
+        resp = star_client.get("/api/cvg/ripples/rip-star/cascade?max_depth=1&max_nodes_cap=200")
         assert resp.status_code == 200
         assert len(resp.json()["nodes"]) == 150
 
     def test_max_nodes_cap_1001_rejected(self, star_client):
-        resp = star_client.get(
-            "/api/cvg/ripples/rip-star/cascade?max_depth=1&max_nodes_cap=1001"
-        )
+        resp = star_client.get("/api/cvg/ripples/rip-star/cascade?max_depth=1&max_nodes_cap=1001")
         assert resp.status_code == 400

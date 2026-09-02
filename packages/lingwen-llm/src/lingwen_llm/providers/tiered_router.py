@@ -9,6 +9,7 @@ Doc 2 §6.3 + Doc 4 §2: 任务复杂度 → tier → 模型 → 实际调用 + 
 - disable_downgrade: 关闭降级 (失败直接抛错,用于 A/B 测试)
 - CostTracker 注入点 (Phase 2.13 接入)
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -56,9 +57,7 @@ class TieredRouter:
     ) -> None:
         missing = set(self.DOWNGRADE_ORDER) - set(providers.keys())
         if missing:
-            raise TieredRouterError(
-                f"missing tier providers: {sorted(missing, key=lambda t: t.value)}"
-            )
+            raise TieredRouterError(f"missing tier providers: {sorted(missing, key=lambda t: t.value)}")
         self._providers: dict[ModelTier, AIProvider] = dict(providers)
         self._cost_tracker = cost_tracker
         # 降级开关 (True=启用降级,默认)
@@ -129,13 +128,9 @@ class TieredRouter:
                     break
                 continue
 
-        raise TieredRouterError(
-            f"all tiers failed for scenario {scenario!r}: {last_error}"
-        )
+        raise TieredRouterError(f"all tiers failed for scenario {scenario!r}: {last_error}")
 
-    def generate_with_usage(
-        self, scenario: str, prompt: str, **kwargs
-    ) -> tuple[str, dict[str, int]]:
+    def generate_with_usage(self, scenario: str, prompt: str, **kwargs) -> tuple[str, dict[str, int]]:
         """按 scenario 路由 + 失败时降级 + 返回 real usage (Phase 8.6).
 
         跟 generate() 区别:
@@ -169,18 +164,14 @@ class TieredRouter:
                     break
                 continue
 
-        raise TieredRouterError(
-            f"all tiers failed for scenario {scenario!r}: {last_error}"
-        )
+        raise TieredRouterError(f"all tiers failed for scenario {scenario!r}: {last_error}")
 
     def _build_downgrade_chain(self, start_tier: ModelTier) -> tuple[ModelTier, ...]:
         """从 start_tier 开始的降级链 (高 → 低)"""
         idx = self.DOWNGRADE_ORDER.index(start_tier)
         return self.DOWNGRADE_ORDER[idx:]
 
-    def _notify_tracker(
-        self, scenario: str, tier: ModelTier, prompt: str, response: str
-    ) -> None:
+    def _notify_tracker(self, scenario: str, tier: ModelTier, prompt: str, response: str) -> None:
         """通知 cost_tracker (若注入)"""
         if self._cost_tracker is None:
             return

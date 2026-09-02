@@ -7,6 +7,7 @@ Goal: 200 ripple 端到端 ≤ 200ms. N+1 in old `_ripple_to_list_item`
 RED: import new bulk method → ImportError before impl.
 GREEN: T3.2 adds method, T3.3 refactors _ripple_list_items to use it.
 """
+
 from __future__ import annotations
 
 import time
@@ -73,13 +74,10 @@ class TestBulkImpactScores:
         from infra.cross_volume.scoring import compute_impact_score
 
         for rid in ids:
-            ripple = next(
-                r for r in storage.get_ripples(limit=200) if r.id == rid
-            )
+            ripple = next(r for r in storage.get_ripples(limit=200) if r.id == rid)
             expected = compute_impact_score(ripple, cascade=None)
             assert bulk[rid] == pytest.approx(expected, abs=1e-6), (
-                f"bulk vs per-ripple mismatch for {rid}: "
-                f"{bulk[rid]} vs {expected}"
+                f"bulk vs per-ripple mismatch for {rid}: {bulk[rid]} vs {expected}"
             )
 
     def test_200_rows_under_200ms(self, storage, client):
@@ -90,7 +88,4 @@ class TestBulkImpactScores:
         elapsed_ms = (time.perf_counter() - t0) * 1000
         assert resp.status_code == 200
         assert len(resp.json()) == 200
-        assert elapsed_ms < 200, (
-            f"list 200 ripple took {elapsed_ms:.1f}ms, budget 200ms — "
-            "N+1 not eliminated"
-        )
+        assert elapsed_ms < 200, f"list 200 ripple took {elapsed_ms:.1f}ms, budget 200ms — N+1 not eliminated"

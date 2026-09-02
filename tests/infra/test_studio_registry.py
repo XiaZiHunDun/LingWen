@@ -1,4 +1,5 @@
 """Tests for infra/studio_registry.py (Phase 10.04)."""
+
 from __future__ import annotations
 
 import json

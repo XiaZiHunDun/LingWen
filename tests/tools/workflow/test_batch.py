@@ -24,7 +24,7 @@ class TestBatchDispatch:
         batch_dispatch_writer(["ch_batch_1", "ch_batch_2"])
 
         tasks = list_tasks()
-        task_names = [t['task_name'] for t in tasks]
+        task_names = [t["task_name"] for t in tasks]
         assert any("ch_batch_1" in name for name in task_names)
         assert any("ch_batch_2" in name for name in task_names)
 
@@ -52,5 +52,5 @@ class TestBatchDispatch:
         batch_dispatch_reviewer(["ch_review"])
 
         tasks = list_tasks()
-        task_names = [t['task_name'] for t in tasks]
+        task_names = [t["task_name"] for t in tasks]
         assert any("ch_review" in name for name in task_names)

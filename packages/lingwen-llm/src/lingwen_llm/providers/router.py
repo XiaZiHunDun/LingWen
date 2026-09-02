@@ -34,7 +34,7 @@ class AIRouter:
         config: Dict[str, ProviderConfig],
         primary_provider: Optional[str] = None,
         enable_failover: bool = True,
-        cost_optimize: bool = False
+        cost_optimize: bool = False,
     ):
         """初始化路由选择器
 
@@ -54,7 +54,7 @@ class AIRouter:
         self._cost_map: Dict[str, float] = {
             "openai": 15.0,  # GPT-4
             "anthropic": 15.0,  # Claude
-            "minimax": 1.0,   # MiniMax M2.7
+            "minimax": 1.0,  # MiniMax M2.7
         }
 
         # 类型到Provider的默认映射
@@ -127,11 +127,7 @@ class AIRouter:
         return None
 
     def generate(
-        self,
-        prompt: str,
-        provider: Optional[str] = None,
-        provider_type: Optional[str] = None,
-        **kwargs
+        self, prompt: str, provider: Optional[str] = None, provider_type: Optional[str] = None, **kwargs
     ) -> str:
         """生成文本
 
@@ -217,7 +213,7 @@ class AIRouter:
         prompts: List[str],
         provider: Optional[str] = None,
         provider_type: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ) -> List[str]:
         """批量生成文本
 
@@ -232,11 +228,7 @@ class AIRouter:
         """
         return [self.generate(p, provider=provider, provider_type=provider_type, **kwargs) for p in prompts]
 
-    def _get_provider_order(
-        self,
-        provider: Optional[str],
-        provider_type: Optional[str]
-    ) -> List[str]:
+    def _get_provider_order(self, provider: Optional[str], provider_type: Optional[str]) -> List[str]:
         """获取Provider调用顺序
 
         Args:
@@ -274,10 +266,7 @@ class AIRouter:
         if not self._cost_optimize:
             return list(self._providers.keys())
 
-        return sorted(
-            self._providers.keys(),
-            key=lambda x: self._cost_map.get(x, 999.0)
-        )
+        return sorted(self._providers.keys(), key=lambda x: self._cost_map.get(x, 999.0))
 
     def get_available_providers(self) -> List[str]:
         """获取所有可用Provider名称

@@ -15,6 +15,7 @@ Doc 1 §3.4 + Doc 3 联动:
 
 MODIFIED 字段:tuple[(field, before, after), ...]
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -35,6 +36,7 @@ from infra.world_model.snapshot_diff import (
 )
 
 # === Helpers ===
+
 
 def _make_snap(
     chapter: int = 1,
@@ -76,6 +78,7 @@ def _node(name: str) -> NodeId:
 
 # === TestEmptyDiff ===
 
+
 class TestEmptyDiff:
     def test_identical_snapshots_no_diff(self):
         s1 = _make_snap(chapter=10, world_mood="tense")
@@ -94,6 +97,7 @@ class TestEmptyDiff:
 
 
 # === TestNodeDiff ===
+
 
 class TestNodeDiff:
     def test_node_added(self):
@@ -123,6 +127,7 @@ class TestNodeDiff:
 
 
 # === TestRippleDiff ===
+
 
 class TestRippleDiff:
     def test_ripple_added(self):
@@ -155,9 +160,7 @@ class TestRippleDiff:
         c = ripple_changes[0]
         assert c.kind == ChangeKind.MODIFIED
         # field_changes 应含 ("state", OPEN, PROPAGATING)
-        state_change = next(
-            (fc for fc in c.field_changes if fc[0] == "state"), None
-        )
+        state_change = next((fc for fc in c.field_changes if fc[0] == "state"), None)
         assert state_change is not None
         assert state_change[1] == RippleState.OPEN
         assert state_change[2] == RippleState.PROPAGATING
@@ -192,6 +195,7 @@ class TestRippleDiff:
 
 # === TestMoodDiff ===
 
+
 class TestMoodDiff:
     def test_mood_change_modified(self):
         s1 = _make_snap(chapter=10, world_mood="neutral")
@@ -207,6 +211,7 @@ class TestMoodDiff:
 
 # === TestHasStateTransition ===
 
+
 class TestHasStateTransition:
     def test_finds_state_transition(self):
         s1 = _make_snap(chapter=10, active_ripples=(_ripple("r1", RippleState.OPEN),))
@@ -215,9 +220,7 @@ class TestHasStateTransition:
             active_ripples=(_ripple("r1", RippleState.PROPAGATING),),
         )
         changes = diff_ripples(s1, s2)
-        assert has_state_transition(
-            changes, "r1", RippleState.OPEN, RippleState.PROPAGATING
-        ) is True
+        assert has_state_transition(changes, "r1", RippleState.OPEN, RippleState.PROPAGATING) is True
 
     def test_returns_false_for_wrong_transition(self):
         s1 = _make_snap(chapter=10, active_ripples=(_ripple("r1", RippleState.OPEN),))
@@ -227,18 +230,15 @@ class TestHasStateTransition:
         )
         changes = diff_ripples(s1, s2)
         # r1 没有 OPEN→RESOLVED 转换
-        assert has_state_transition(
-            changes, "r1", RippleState.OPEN, RippleState.RESOLVED
-        ) is False
+        assert has_state_transition(changes, "r1", RippleState.OPEN, RippleState.RESOLVED) is False
 
     def test_returns_false_for_missing_ripple(self):
         changes = ()
-        assert has_state_transition(
-            changes, "ghost", RippleState.OPEN, RippleState.RESOLVED
-        ) is False
+        assert has_state_transition(changes, "ghost", RippleState.OPEN, RippleState.RESOLVED) is False
 
 
 # === TestMultipleEntities ===
+
 
 class TestMultipleEntities:
     def test_mixed_changes_all_categories(self):
@@ -258,6 +258,7 @@ class TestMultipleEntities:
 
 
 # === TestChangeMetadata ===
+
 
 class TestChangeMetadata:
     def test_snapshot_change_is_frozen(self):

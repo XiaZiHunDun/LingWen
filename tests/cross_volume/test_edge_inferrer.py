@@ -9,6 +9,7 @@ TDD contract: ALL real ReferenceEdge fields (from_node_id, to_node_id, weight,
 created_by, evidence) are used. id is auto-generated uuid (do NOT pass edge_id
 from LLM).
 """
+
 import json
 import time
 from pathlib import Path
@@ -100,9 +101,7 @@ class TestEdgeInferrerCore:
         # 5 nodes with confidences 1..5; threshold=3 → only conf 3,4,5 pass (3 nodes)
         nodes = make_nodes_with_fixture_ids([1, 2, 3, 4, 5])
         # First 2 nodes have fixture ids rotated; we'll see the first 2 used ids in prompt
-        inferrer = EdgeInferrer(
-            router, cache, cost, model_tier=ModelTier.SONNET, confidence_threshold=3
-        )
+        inferrer = EdgeInferrer(router, cache, cost, model_tier=ModelTier.SONNET, confidence_threshold=3)
 
         inferrer.infer_edges(1, "chapter content", nodes)
 
@@ -131,9 +130,7 @@ class TestEdgeInferrerCore:
 
         # 7 nodes with fixture-aligned ids; confidence all >= 3
         nodes = make_nodes_with_fixture_ids([3, 3, 3, 3, 3, 3, 3])
-        inferrer = EdgeInferrer(
-            router, cache, cost, model_tier=ModelTier.SONNET, confidence_threshold=3
-        )
+        inferrer = EdgeInferrer(router, cache, cost, model_tier=ModelTier.SONNET, confidence_threshold=3)
 
         edges = inferrer.infer_edges(1, "chapter content", nodes)
 
@@ -161,9 +158,7 @@ class TestEdgeInferrerCore:
 
         content = "林轩在青云山遇到了他的宿敌"
         nodes = make_nodes_with_fixture_ids([3, 3, 3, 3, 3, 3, 3])
-        inferrer = EdgeInferrer(
-            router, cache, cost, model_tier=ModelTier.SONNET, confidence_threshold=3
-        )
+        inferrer = EdgeInferrer(router, cache, cost, model_tier=ModelTier.SONNET, confidence_threshold=3)
 
         inferrer.infer_edges(1, content, nodes)
 
@@ -182,9 +177,7 @@ class TestEdgeInferrerCore:
         cost = CostTracker()
 
         nodes = make_nodes_with_fixture_ids([3, 3, 3, 3, 3, 3, 3])
-        inferrer = EdgeInferrer(
-            router, cache, cost, model_tier=ModelTier.SONNET, confidence_threshold=3
-        )
+        inferrer = EdgeInferrer(router, cache, cost, model_tier=ModelTier.SONNET, confidence_threshold=3)
 
         edges = inferrer.infer_edges(1, "chapter content", nodes)
 
@@ -212,17 +205,12 @@ class TestEdgeInferrerCache:
         nodes = make_nodes([4, 4])
         content = "cached content"
         nodes_dump = json.dumps(
-            [
-                {"id": n.id, "dim": n.dimension, "conf": n.confidence}
-                for n in nodes
-            ],
+            [{"id": n.id, "dim": n.dimension, "conf": n.confidence} for n in nodes],
             sort_keys=True,
             ensure_ascii=False,
         )
         model_id = "claude-sonnet-4-6"
-        cache_key = LLMCache.make_key(
-            f"{nodes_dump}|{content}", "edge_inference.txt", model_id
-        )
+        cache_key = LLMCache.make_key(f"{nodes_dump}|{content}", "edge_inference.txt", model_id)
         # Pre-populate cache with 1 valid edge from n_0 → n_1
         cache.put(
             cache_key,
@@ -243,9 +231,7 @@ class TestEdgeInferrerCache:
             },
         )
 
-        inferrer = EdgeInferrer(
-            router, cache, cost, model_tier=ModelTier.SONNET, confidence_threshold=3
-        )
+        inferrer = EdgeInferrer(router, cache, cost, model_tier=ModelTier.SONNET, confidence_threshold=3)
         inferrer.model_id = model_id  # align with pre-warm key
 
         edges = inferrer.infer_edges(1, content, nodes)
@@ -264,9 +250,7 @@ class TestEdgeInferrerCache:
         cost = CostTracker()
 
         nodes = make_nodes_with_fixture_ids([3, 3, 3, 3, 3, 3, 3])
-        inferrer = EdgeInferrer(
-            router, cache, cost, model_tier=ModelTier.SONNET, confidence_threshold=3
-        )
+        inferrer = EdgeInferrer(router, cache, cost, model_tier=ModelTier.SONNET, confidence_threshold=3)
 
         inferrer.infer_edges(1, "test content", nodes)
 
@@ -290,9 +274,7 @@ class TestEdgeInferrerCache:
         cache = LLMCache(cache_path=tmp_path / "cache.json")
         cost = CostTracker()
         nodes = make_nodes_with_fixture_ids([3, 3, 3, 3, 3, 3, 3])
-        inferrer = EdgeInferrer(
-            router, cache, cost, model_tier=ModelTier.SONNET, confidence_threshold=3
-        )
+        inferrer = EdgeInferrer(router, cache, cost, model_tier=ModelTier.SONNET, confidence_threshold=3)
 
         with patch("infra.cross_volume.edge_inferrer.time.sleep") as mock_sleep:
             inferrer.infer_edges(1, "test content", nodes)
@@ -310,9 +292,7 @@ class TestEdgeInferrerCache:
         cache = LLMCache(cache_path=tmp_path / "cache.json")
         cost = CostTracker()
         nodes = make_nodes_with_fixture_ids([3, 3, 3, 3, 3, 3, 3])
-        inferrer = EdgeInferrer(
-            router, cache, cost, model_tier=ModelTier.SONNET, confidence_threshold=3
-        )
+        inferrer = EdgeInferrer(router, cache, cost, model_tier=ModelTier.SONNET, confidence_threshold=3)
 
         with patch("infra.cross_volume.edge_inferrer.time.sleep"):
             edges = inferrer.infer_edges(1, "test content", nodes)
@@ -337,9 +317,7 @@ class TestEdgeInferrerError:
         cache = LLMCache(cache_path=tmp_path / "cache.json")
         cost = CostTracker()
 
-        inferrer = EdgeInferrer(
-            router, cache, cost, model_tier=ModelTier.SONNET, confidence_threshold=3
-        )
+        inferrer = EdgeInferrer(router, cache, cost, model_tier=ModelTier.SONNET, confidence_threshold=3)
 
         edges = inferrer.infer_edges(1, "chapter content", [])
 
@@ -392,9 +370,7 @@ class TestEdgeInferrerError:
         cache = LLMCache(cache_path=tmp_path / "cache.json")
         cost = CostTracker()
         nodes = make_nodes([3])  # 1 node
-        inferrer = EdgeInferrer(
-            router, cache, cost, model_tier=ModelTier.SONNET, confidence_threshold=3
-        )
+        inferrer = EdgeInferrer(router, cache, cost, model_tier=ModelTier.SONNET, confidence_threshold=3)
 
         edges = inferrer.infer_edges(1, "test content", nodes)
 

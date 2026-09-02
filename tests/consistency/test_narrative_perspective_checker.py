@@ -1,4 +1,5 @@
 """NarrativePerspectiveChecker integration with ConsistencyEngine."""
+
 from lingwen_quality.consistency.checkers.narrative_perspective_checker import NarrativePerspectiveChecker
 
 

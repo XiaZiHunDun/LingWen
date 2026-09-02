@@ -3,6 +3,7 @@
 事件总线 - Hook系统的核心组件
 提供事件订阅、发布、异步发布功能
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -34,7 +35,7 @@ class EventBus:
         event_name: str,
         handler: Callable[[Event], None],
         priority: int = 0,
-        filter_func: Optional[Callable[[Event], bool]] = None
+        filter_func: Optional[Callable[[Event], bool]] = None,
     ) -> None:
         """
         订阅事件
@@ -49,20 +50,12 @@ class EventBus:
             if event_name not in self._handlers:
                 self._handlers[event_name] = []
 
-            registration = HandlerRegistration(
-                handler=handler,
-                priority=priority,
-                filter_func=filter_func
-            )
+            registration = HandlerRegistration(handler=handler, priority=priority, filter_func=filter_func)
             self._handlers[event_name].append(registration)
             # 按优先级排序（高优先级在前）
             self._handlers[event_name].sort(key=lambda x: x.priority, reverse=True)
 
-    def unsubscribe(
-        self,
-        event_name: str,
-        handler: Callable[[Event], None]
-    ) -> None:
+    def unsubscribe(self, event_name: str, handler: Callable[[Event], None]) -> None:
         """
         取消订阅
 
@@ -73,8 +66,7 @@ class EventBus:
         with self._lock:
             if event_name in self._handlers:
                 self._handlers[event_name] = [
-                    reg for reg in self._handlers[event_name]
-                    if reg.handler != handler
+                    reg for reg in self._handlers[event_name] if reg.handler != handler
                 ]
 
     def publish(self, event: Event) -> List[Any]:
@@ -131,11 +123,7 @@ class EventBus:
         results = await asyncio.gather(*tasks, return_exceptions=True)
         return list(results)
 
-    async def _safe_handle(
-        self,
-        registration: HandlerRegistration,
-        event: Event
-    ) -> Any:
+    async def _safe_handle(self, registration: HandlerRegistration, event: Event) -> Any:
         """安全执行handler（捕获异常）"""
         try:
             result = registration.handler(event)
@@ -168,6 +156,7 @@ class EventBus:
 @dataclass
 class HandlerRegistration:
     """Handler注册信息"""
+
     handler: Callable[[Event], None]
     priority: int = 0
     filter_func: Optional[Callable[[Event], bool]] = None
@@ -184,6 +173,7 @@ class Event:
         data: 事件数据（字典）
         timestamp: 事件发生时间
     """
+
     name: str
     source: str
     data: Dict[str, Any] = field(default_factory=dict)
@@ -196,6 +186,7 @@ class Event:
 # 预定义的事件类型常量
 class EventTypes:
     """事件类型枚举"""
+
     # 工作流事件
     PHASE_CHANGED = "PHASE_CHANGED"
     STEP_COMPLETED = "STEP_COMPLETED"

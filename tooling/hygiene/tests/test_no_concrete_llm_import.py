@@ -6,6 +6,7 @@ Catches regressions in:
 - LLMServicePort Protocol is_available() removal
 - New direct infra.llm_service imports in tools/ (defense-in-depth gate)
 """
+
 from __future__ import annotations
 
 import re
@@ -35,10 +36,7 @@ def test_dp02_contract_targets_correct_modules() -> None:
     config = tomllib.loads(pyproject.read_text())
 
     contracts = config["tool"]["importlinter"]["contracts"]
-    dp02 = next(
-        c for c in contracts
-        if c["name"] == "no_concrete_llm_service_in_business_code"
-    )
+    dp02 = next(c for c in contracts if c["name"] == "no_concrete_llm_service_in_business_code")
 
     assert dp02["type"] == "forbidden"
     assert "infra.llm_service" in dp02["forbidden_modules"]
@@ -72,13 +70,16 @@ def test_no_concrete_llm_in_business_code() -> None:
     # We exclude the port_adapter re-export path since that's the allowed escape hatch.
     result = subprocess.run(
         [
-            "grep", "-rn",
+            "grep",
+            "-rn",
             "from infra.llm_service import.*LLMService($|[^A-Za-z])",
             "--include=*.py",
             "packages/lingwen-creator/",
             "apps/",
         ],
-        capture_output=True, text=True, cwd=PROJECT_ROOT,
+        capture_output=True,
+        text=True,
+        cwd=PROJECT_ROOT,
     )
 
     # subprocess returns exit code 1 if no matches found (which is what we want)
@@ -88,8 +89,7 @@ def test_no_concrete_llm_in_business_code() -> None:
     violations = [line for line in result.stdout.splitlines() if line.strip()]
 
     assert not violations, (
-        "DP-02 violations found (concrete LLMService import in business code):\n"
-        + "\n".join(violations)
+        "DP-02 violations found (concrete LLMService import in business code):\n" + "\n".join(violations)
     )
 
 

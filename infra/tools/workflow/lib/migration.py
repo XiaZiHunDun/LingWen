@@ -4,6 +4,7 @@ v16.5 #N.4: drop direct ``import sqlite3``; use ``SqliteStorageAdapter``
 for the one-shot migration. The migration logic (read JSON, INSERT
 OR REPLACE into workflow_state + agent_tasks) is unchanged.
 """
+
 import json
 from datetime import datetime
 from typing import Tuple
@@ -31,7 +32,7 @@ def migrate_json_to_sqlite() -> Tuple[int, int]:
     if not db.WORKFLOW_FILE.exists():
         return 0, 0
 
-    with open(db.WORKFLOW_FILE, 'r', encoding='utf-8') as f:
+    with open(db.WORKFLOW_FILE, "r", encoding="utf-8") as f:
         data = json.load(f)
 
     conn = _open_conn()
@@ -41,32 +42,38 @@ def migrate_json_to_sqlite() -> Tuple[int, int]:
 
     try:
         for key, value in data.items():
-            if key == 'agent_tasks':
+            if key == "agent_tasks":
                 continue
             if isinstance(value, (dict, list)):
                 value = json.dumps(value, ensure_ascii=False)
 
-            conn.execute("""
+            conn.execute(
+                """
                 INSERT OR REPLACE INTO workflow_state (key, value, updated_at)
                 VALUES (?, ?, CURRENT_TIMESTAMP)
-            """, (key, str(value) if value else ''))
+            """,
+                (key, str(value) if value else ""),
+            )
             state_count += 1
 
-        for task_id, task in data.get('agent_tasks', {}).items():
-            conn.execute("""
+        for task_id, task in data.get("agent_tasks", {}).items():
+            conn.execute(
+                """
                 INSERT OR REPLACE INTO agent_tasks
                 (task_id, task_name, agent, status, heartbeat_at, task_id_external, dispatched_at, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                task_id,
-                task.get('task_name', task_id),
-                task.get('agent', ''),
-                task.get('status', 'pending'),
-                task.get('heartbeat_at'),
-                task.get('task_id'),
-                task.get('dispatched_at'),
-                task.get('created_at', datetime.now().isoformat())
-            ))
+            """,
+                (
+                    task_id,
+                    task.get("task_name", task_id),
+                    task.get("agent", ""),
+                    task.get("status", "pending"),
+                    task.get("heartbeat_at"),
+                    task.get("task_id"),
+                    task.get("dispatched_at"),
+                    task.get("created_at", datetime.now().isoformat()),
+                ),
+            )
             task_count += 1
 
         conn.commit()

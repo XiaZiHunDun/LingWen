@@ -1,4 +1,5 @@
 """Phase 9.42 F31: QueryImpactCache tests."""
+
 from __future__ import annotations
 
 import time

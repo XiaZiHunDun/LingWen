@@ -35,22 +35,28 @@ class CheckerCache:
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
     def _content_hash(self, content: str) -> str:
-        return hashlib.md5(content.encode('utf-8')).hexdigest()[:12]
+        return hashlib.md5(content.encode("utf-8")).hexdigest()[:12]
 
     def _get_cache_path(self, checker: str, chapter: int, content_hash: str) -> Path:
         checker_dir = self.cache_dir / checker
         checker_dir.mkdir(exist_ok=True)
         return checker_dir / f"ch{chapter:03d}_{content_hash}.json"
 
-    def set(self, checker: str, chapter: int, content: str, result: Dict[str, Any], ttl_seconds: float = None):
+    def set(
+        self, checker: str, chapter: int, content: str, result: Dict[str, Any], ttl_seconds: float = None
+    ):
         content_hash = self._content_hash(content)
         ttl = ttl_seconds if ttl_seconds is not None else self.default_ttl
         entry = CacheEntry(
-            chapter=chapter, checker=checker, content_hash=content_hash,
-            timestamp=time.time(), ttl=ttl, result=result
+            chapter=chapter,
+            checker=checker,
+            content_hash=content_hash,
+            timestamp=time.time(),
+            ttl=ttl,
+            result=result,
         )
         cache_path = self._get_cache_path(checker, chapter, content_hash)
-        with open(cache_path, 'w', encoding='utf-8') as f:
+        with open(cache_path, "w", encoding="utf-8") as f:
             json.dump(asdict(entry), f, ensure_ascii=False)
 
     def get(self, checker: str, chapter: int, content: str) -> Optional[Dict[str, Any]]:
@@ -59,7 +65,7 @@ class CheckerCache:
         if not cache_path.exists():
             return None
         try:
-            with open(cache_path, 'r', encoding='utf-8') as f:
+            with open(cache_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
             entry = CacheEntry(**data)
             if entry.is_expired():

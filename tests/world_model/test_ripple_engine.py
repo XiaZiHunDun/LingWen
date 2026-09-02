@@ -13,6 +13,7 @@ Doc 1 §3.4 — Ripple 传播/衰减/平复 6 方法:
 测试用 _StubRegistry (in-memory dict) 解耦 RippleRegistry (1.5.g/h 才实施),
 确保 engine 逻辑独立可测。
 """
+
 from __future__ import annotations
 
 import pytest
@@ -22,6 +23,7 @@ from lingwen_core.domain.ripple import ResolutionMode, Ripple, RippleState
 from infra.world_model.engine import RippleEngine
 
 # === Stub registry (解耦 RippleRegistry) ===
+
 
 class _StubRegistry:
     """最小 registry 接口,供 engine 测试独立使用"""
@@ -56,6 +58,7 @@ def registry() -> _StubRegistry:
 
 # === TestRegister ===
 
+
 class TestRegister:
     def test_register_creates_open_ripple(self, engine, registry):
         r = engine.register(registry, "r1", "星月之子身世", 10, planned_resolve_ch=200)
@@ -78,12 +81,12 @@ class TestRegister:
 
     def test_register_with_affected_nodes(self, engine, registry):
         nodes = (NodeId(NodeType.CHARACTER, "林尘"), NodeId(NodeType.CHARACTER, "暗皇"))
-        r = engine.register(registry, "r1", "e", 1, planned_resolve_ch=10,
-                            affected_nodes=nodes)
+        r = engine.register(registry, "r1", "e", 1, planned_resolve_ch=10, affected_nodes=nodes)
         assert r.affected_nodes == nodes
 
 
 # === TestPropagate ===
+
 
 class TestPropagate:
     def test_propagate_appends_to_wavefront(self, engine, registry):
@@ -114,6 +117,7 @@ class TestPropagate:
 
 # === TestStartResolution ===
 
+
 class TestStartResolution:
     def test_start_resolution_from_open(self, engine, registry):
         engine.register(registry, "r1", "e", 10, planned_resolve_ch=200)
@@ -132,6 +136,7 @@ class TestStartResolution:
 
 
 # === TestResolve ===
+
 
 class TestResolve:
     def test_resolve_strong_sets_resolved_ch(self, engine, registry):
@@ -164,6 +169,7 @@ class TestResolve:
 
 # === TestComputeCollapseRisk ===
 
+
 class TestComputeCollapseRisk:
     def test_empty_registry_zero_risk(self, engine, registry):
         assert engine.compute_collapse_risk(registry, current_ch=100) == 0.0
@@ -190,6 +196,7 @@ class TestComputeCollapseRisk:
 
 # === TestGetActiveWavefront ===
 
+
 class TestGetActiveWavefront:
     def test_wavefront_before_origin_ch_empty(self, engine):
         r = Ripple(ripple_id="r1", origin_event="e", origin_ch=10, wavefront=())
@@ -206,18 +213,17 @@ class TestGetActiveWavefront:
 
 # === TestIntegration: ch010→ch050→ch200 worked example ===
 
+
 class TestRippleWorkedExample:
     """Doc 1 §3.4 worked example: ch010 林尘身份 → ch050 涟漪扩散 → ch200 强平复"""
 
     def test_full_lifecycle(self, engine, registry):
         # ch010: 挖坑
-        r = engine.register(registry, "ripple_identity", "林尘是星月之子",
-                            10, planned_resolve_ch=200)
+        r = engine.register(registry, "ripple_identity", "林尘是星月之子", 10, planned_resolve_ch=200)
         assert r.state == RippleState.OPEN
 
         # ch050: 涟漪扩散 (暗皇追踪)
-        r = engine.propagate(registry, r.ripple_id, 50,
-                             affected_nodes=(NodeId(NodeType.CHARACTER, "暗皇"),))
+        r = engine.propagate(registry, r.ripple_id, 50, affected_nodes=(NodeId(NodeType.CHARACTER, "暗皇"),))
         assert r.state == RippleState.PROPAGATING
         assert 50 in r.wavefront
 

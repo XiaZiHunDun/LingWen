@@ -83,11 +83,7 @@ class ReportGenerator:
 *报告生成时间: {report_time}*
 """
 
-    def generate(
-        self,
-        report: ConsistencyReport,
-        format: str = "markdown"
-    ) -> str:
+    def generate(self, report: ConsistencyReport, format: str = "markdown") -> str:
         """
         生成报告
 
@@ -118,7 +114,7 @@ class ReportGenerator:
         verdict_comments = {
             "pass": "通过，无P0/P1问题",
             "review": "建议审核，存在一些问题",
-            "fail": "不通过，存在严重问题"
+            "fail": "不通过，存在严重问题",
         }
 
         # 填充模板
@@ -143,7 +139,7 @@ class ReportGenerator:
             verdict=report.verdict.upper(),
             verdict_comment=verdict_comments.get(report.verdict, ""),
             suggestions=suggestions,
-            report_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            report_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         )
 
     def _format_issues(self, issues: List[Issue]) -> str:
@@ -272,9 +268,11 @@ class ReportGenerator:
 </body>
 </html>"""
 
-        suggestions_html = "\n".join(
-            f"<li>{s}</li>" for s in report.suggestions
-        ) if report.suggestions else "<li>暂无建议</li>"
+        suggestions_html = (
+            "\n".join(f"<li>{s}</li>" for s in report.suggestions)
+            if report.suggestions
+            else "<li>暂无建议</li>"
+        )
 
         return html_template.format(
             chapter=report.chapter,
@@ -287,15 +285,10 @@ class ReportGenerator:
             total_score=f"{report.total_score:.1f}",
             verdict=report.verdict,
             suggestions=suggestions_html,
-            report_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            report_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         )
 
-    def save_report(
-        self,
-        report: ConsistencyReport,
-        output_path: str,
-        format: str = "markdown"
-    ) -> str:
+    def save_report(self, report: ConsistencyReport, output_path: str, format: str = "markdown") -> str:
         """
         保存报告到文件
 
@@ -312,7 +305,7 @@ class ReportGenerator:
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             f.write(content)
 
         return str(output_path)

@@ -24,13 +24,13 @@ class TimelineAgeConsistencyChecker(BaseChecker):
     - 年龄计算错误（生存时间不一致）
     - "X岁那年"与当前年龄矛盾
     """
-    _checker_type = CheckerType.TIMELINE_AGE
 
+    _checker_type = CheckerType.TIMELINE_AGE
 
     # 林夜年龄时间线关键节点
     LINYE_AGE_RULES = {
-        "ch001": 7,    # 父母双亡，起点
-        "ch024": 22,   # 15年后
+        "ch001": 7,  # 父母双亡，起点
+        "ch024": 22,  # 15年后
     }
 
     # 关键角色年龄信息
@@ -51,10 +51,7 @@ class TimelineAgeConsistencyChecker(BaseChecker):
         super().__init__(self._checker_type)
 
     def check(
-        self,
-        chapter_content: str,
-        chapter_num: int,
-        context: Optional[Dict[str, Any]] = None
+        self, chapter_content: str, chapter_num: int, context: Optional[Dict[str, Any]] = None
     ) -> List[Issue]:
         """
         检查时间线年龄一致性
@@ -173,8 +170,8 @@ class TimelineAgeConsistencyChecker(BaseChecker):
 
         # 匹配"X岁那年"或"X岁时"等模式
         patterns = [
-            rf'{character}[^。]*(?P<age>\d+)岁(?:的那年|时|候|那年|的日子)',
-            r'(?P<age>\d+)岁(?:的那年|时|候|那年)',
+            rf"{character}[^。]*(?P<age>\d+)岁(?:的那年|时|候|那年|的日子)",
+            r"(?P<age>\d+)岁(?:的那年|时|候|那年)",
         ]
 
         for pattern in patterns:
@@ -184,10 +181,12 @@ class TimelineAgeConsistencyChecker(BaseChecker):
                 start = max(0, match.start() - 20)
                 end = min(len(content), match.end() + 20)
                 context = content[start:end]
-                mentions.append({
-                    "age": age,
-                    "context": context,
-                })
+                mentions.append(
+                    {
+                        "age": age,
+                        "context": context,
+                    }
+                )
 
         return mentions
 
@@ -211,26 +210,30 @@ class TimelineAgeConsistencyChecker(BaseChecker):
 
             # 检查时间是否倒流
             if age2 < age1:
-                contradictions.append({
-                    "type": "age_regression",
-                    "chapter1": ch1,
-                    "age1": age1,
-                    "chapter2": ch2,
-                    "age2": age2,
-                    "description": f"{character}年龄从ch{ch1}的{age1}岁倒流至ch{ch2}的{age2}岁",
-                })
+                contradictions.append(
+                    {
+                        "type": "age_regression",
+                        "chapter1": ch1,
+                        "age1": age1,
+                        "chapter2": ch2,
+                        "age2": age2,
+                        "description": f"{character}年龄从ch{ch1}的{age1}岁倒流至ch{ch2}的{age2}岁",
+                    }
+                )
 
             # 检查年龄增长是否合理（每章约1个月，最多不超过1年）
             chapters_diff = ch2 - ch1
             age_diff = age2 - age1
             if age_diff > chapters_diff:
-                contradictions.append({
-                    "type": "excessive_age_growth",
-                    "chapter1": ch1,
-                    "age1": age1,
-                    "chapter2": ch2,
-                    "age2": age2,
-                    "description": f"{character}年龄增长过快：ch{ch1}到ch{ch2}（{chapters_diff}章）年龄增长{age_diff}岁",
-                })
+                contradictions.append(
+                    {
+                        "type": "excessive_age_growth",
+                        "chapter1": ch1,
+                        "age1": age1,
+                        "chapter2": ch2,
+                        "age2": age2,
+                        "description": f"{character}年龄增长过快：ch{ch1}到ch{ch2}（{chapters_diff}章）年龄增长{age_diff}岁",
+                    }
+                )
 
         return contradictions

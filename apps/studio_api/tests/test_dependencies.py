@@ -2,6 +2,7 @@
 
 DI 容器为 use-cases 提供 LLM / EventStorePort 实例注入。
 """
+
 from __future__ import annotations
 
 

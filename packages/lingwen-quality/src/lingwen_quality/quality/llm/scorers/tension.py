@@ -36,10 +36,7 @@ class TensionScorer(BaseScorer):
             reasons.append("句子偏长，节奏较慢")
 
         # 检查动作词
-        action_words = [
-            "冲", "打", "杀", "战", "斗", "击", "砍", "劈",
-            "逃", "追", "奔", "跑", "跃", "跳"
-        ]
+        action_words = ["冲", "打", "杀", "战", "斗", "击", "砍", "劈", "逃", "追", "奔", "跑", "跃", "跳"]
         action_count = sum(1 for word in action_words if word in content)
         if action_count > 5:
             score += 15
@@ -61,7 +58,4 @@ class TensionScorer(BaseScorer):
         # 限制分数范围
         score = max(0, min(100, score))
 
-        return ScoredResult(
-            score=score,
-            reason="; ".join(reasons) if reasons else "张力评分完成"
-        )
+        return ScoredResult(score=score, reason="; ".join(reasons) if reasons else "张力评分完成")

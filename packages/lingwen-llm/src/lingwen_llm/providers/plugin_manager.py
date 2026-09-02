@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PluginInfo:
     """插件信息"""
+
     name: str
     module_path: str
     provider_class: Type[AIProvider]
@@ -60,11 +61,7 @@ class PluginManager:
                     module = importlib.import_module(module_path)
                     for attr_name in dir(module):
                         attr = getattr(module, attr_name)
-                        if (
-                            isinstance(attr, type)
-                            and issubclass(attr, AIProvider)
-                            and attr != AIProvider
-                        ):
+                        if isinstance(attr, type) and issubclass(attr, AIProvider) and attr != AIProvider:
                             provider_name = attr_name.replace("Provider", "").lower()
                             self._plugins[provider_name] = PluginInfo(
                                 name=provider_name,
@@ -83,11 +80,7 @@ class PluginManager:
                     module = importlib.import_module(module_path)
                     for attr_name in dir(module):
                         attr = getattr(module, attr_name)
-                        if (
-                            isinstance(attr, type)
-                            and issubclass(attr, AIProvider)
-                            and attr != AIProvider
-                        ):
+                        if isinstance(attr, type) and issubclass(attr, AIProvider) and attr != AIProvider:
                             provider_name = attr_name.replace("Provider", "").lower()
                             self._plugins[provider_name] = PluginInfo(
                                 name=provider_name,
@@ -124,11 +117,7 @@ class PluginManager:
                         module = importlib.import_module(module_name)
                         for attr_name in dir(module):
                             attr = getattr(module, attr_name)
-                            if (
-                                isinstance(attr, type)
-                                and issubclass(attr, AIProvider)
-                                and attr != AIProvider
-                            ):
+                            if isinstance(attr, type) and issubclass(attr, AIProvider) and attr != AIProvider:
                                 provider_name = attr_name.replace("Provider", "").lower()
                                 self._plugins[provider_name] = PluginInfo(
                                     name=provider_name,
@@ -148,9 +137,7 @@ class PluginManager:
         self._discover_external_plugins(plugin_dirs)
 
         default_priority = ["minimax", "anthropic", "openai"]
-        self._provider_priority = [
-            p for p in default_priority if p in self._plugins
-        ] + [
+        self._provider_priority = [p for p in default_priority if p in self._plugins] + [
             p for p in self._plugins if p not in default_priority
         ]
 

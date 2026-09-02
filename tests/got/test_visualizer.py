@@ -6,6 +6,7 @@ Doc 4 (GoT 适配设计 v1.0) §11 Phase 4:
 - render_status_table: 节点执行表 (markdown)
 - 所有函数纯函数,接受 graph + executions,不依赖 scheduler
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta
@@ -27,6 +28,7 @@ from infra.got.visualizer import (
 )
 
 # === Test fixtures ===
+
 
 def _node(nid: str, ntype: NodeType = NodeType.GENERATION, deps: tuple[str, ...] = ()) -> ThoughtNode:
     return ThoughtNode(
@@ -57,6 +59,7 @@ def _exec(
 
 
 # === TestRenderMermaidBasics ===
+
 
 class TestRenderMermaidBasics:
     """render_mermaid 基本格式 (含 graph TD, 节点, 边)"""
@@ -91,6 +94,7 @@ class TestRenderMermaidBasics:
 
 
 # === TestRenderMermaidStatusColoring ===
+
 
 class TestRenderMermaidStatusColoring:
     """按 NodeStatus 应用 mermaid class 染色"""
@@ -135,15 +139,16 @@ class TestRenderMermaidStatusColoring:
         for status in NodeStatus:
             nid = f"n_{status.value}"
             graph.add_node(_node(nid))
-        out = render_mermaid(graph, {nid: _exec(nid, status) for nid, status in [
-            (f"n_{s.value}", s) for s in NodeStatus
-        ]})
+        out = render_mermaid(
+            graph, {nid: _exec(nid, status) for nid, status in [(f"n_{s.value}", s) for s in NodeStatus]}
+        )
         # 全部 8 个 classDef
         for status in NodeStatus:
             assert NODE_STATUS_CLASS[status] in out
 
 
 # === TestRenderSummary ===
+
 
 class TestRenderSummary:
     """render_summary 节点统计"""
@@ -218,6 +223,7 @@ class TestRenderSummary:
 
 # === TestRenderStatusTable ===
 
+
 class TestRenderStatusTable:
     """render_status_table 节点执行表 (markdown)"""
 
@@ -250,9 +256,14 @@ class TestRenderStatusTable:
         graph = ThoughtGraph()
         graph.add_node(_node("a"))
         started = datetime(2026, 6, 4, 10, 0, 0)
-        out = render_status_table(graph, {
-            "a": _exec("a", NodeStatus.COMPLETED, started=started, finished=started + timedelta(milliseconds=750)),
-        })
+        out = render_status_table(
+            graph,
+            {
+                "a": _exec(
+                    "a", NodeStatus.COMPLETED, started=started, finished=started + timedelta(milliseconds=750)
+                ),
+            },
+        )
         # duration 字段
         assert "750" in out or "0.75" in out
 
@@ -275,6 +286,7 @@ class TestRenderStatusTable:
 
 
 # === TestVisualizerAcceptsBothInterfaces ===
+
 
 class TestVisualizerAcceptsBothInterfaces:
     """visualizer 既接受裸 graph,又接受 scheduler(用 _graph / _executions 抽取)"""

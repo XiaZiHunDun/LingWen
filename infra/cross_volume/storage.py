@@ -15,6 +15,7 @@ hygiene gate (``grep -rln "import sqlite3"``) does not match. The
 ``_connect`` contextmanager now delegates to ``SqliteStorageAdapter`` so
 ``row_factory = sqlite3.Row`` and the schema PRAGMAs are pre-applied.
 """
+
 import json
 import logging
 import warnings
@@ -47,6 +48,7 @@ class AuditEntry:
     Append-only history entry. Immutable after insert.
     Fields mirror ripple_audit table columns (except id which is autoincrement PK).
     """
+
     id: int
     ripple_id: str
     action: str  # 'created' / 'applied' / 'rejected' / 'failed' / 'rolled_back'
@@ -65,6 +67,7 @@ class CascadeRun:
     Immutable after insert. Fields mirror cascade_runs table columns (except
     autoincrement id which is exposed for caller reference).
     """
+
     id: int
     ripple_id: str
     max_depth: int
@@ -86,6 +89,7 @@ class CascadeBroadcastLogEntry:
     ripple_id: str
     latency_ms: int
     created_at: datetime
+
 
 _SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS reference_nodes (
@@ -221,17 +225,10 @@ class RippleStorage:
 
     def _apply_schema_migrations(self, conn: ConnectionPort) -> None:
         """Phase 9.64 F55: additive column migrations for existing ripple.db."""
-        cols = {
-            row[1] for row in conn.execute("PRAGMA table_info(reference_ripples)")
-        }
+        cols = {row[1] for row in conn.execute("PRAGMA table_info(reference_ripples)")}
         if "parent_ripple_id" not in cols:
-            conn.execute(
-                "ALTER TABLE reference_ripples ADD COLUMN parent_ripple_id TEXT"
-            )
-        conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_ripples_parent "
-            "ON reference_ripples(parent_ripple_id)"
-        )
+            conn.execute("ALTER TABLE reference_ripples ADD COLUMN parent_ripple_id TEXT")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_ripples_parent ON reference_ripples(parent_ripple_id)")
 
     @contextmanager
     def _connect(self) -> Iterator[ConnectionPort]:
@@ -269,9 +266,17 @@ class RippleStorage:
             try:
                 conn.execute(
                     "INSERT INTO reference_nodes VALUES (?,?,?,?,?,?,?,?,?)",
-                    (node.id, node.dimension, node.volume, node.chapter,
-                     node.title, node.description, json.dumps(node.payload, ensure_ascii=False),
-                     node.created_at.isoformat(), node.created_by),
+                    (
+                        node.id,
+                        node.dimension,
+                        node.volume,
+                        node.chapter,
+                        node.title,
+                        node.description,
+                        json.dumps(node.payload, ensure_ascii=False),
+                        node.created_at.isoformat(),
+                        node.created_by,
+                    ),
                 )
                 conn.commit()
             except IntegrityError as e:
@@ -282,9 +287,16 @@ class RippleStorage:
             try:
                 conn.execute(
                     "INSERT INTO reference_edges VALUES (?,?,?,?,?,?,?,?)",
-                    (edge.id, edge.from_node_id, edge.to_node_id, edge.relationship_type,
-                     edge.weight, json.dumps(edge.payload, ensure_ascii=False),
-                     edge.created_at.isoformat(), edge.created_by),
+                    (
+                        edge.id,
+                        edge.from_node_id,
+                        edge.to_node_id,
+                        edge.relationship_type,
+                        edge.weight,
+                        json.dumps(edge.payload, ensure_ascii=False),
+                        edge.created_at.isoformat(),
+                        edge.created_by,
+                    ),
                 )
                 conn.commit()
             except IntegrityError as e:
@@ -295,15 +307,20 @@ class RippleStorage:
             try:
                 conn.execute(
                     "INSERT INTO reference_ripples VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
-                    (ripple.id, ripple.trigger_volume, ripple.trigger_chapter,
-                     json.dumps(list(ripple.affected_nodes), ensure_ascii=False),
-                     json.dumps(list(ripple.affected_edges), ensure_ascii=False),
-                     json.dumps(list(ripple.proposed_actions), ensure_ascii=False),
-                     ripple.status, ripple.created_at.isoformat(),
-                     ripple.confirmed_at.isoformat() if ripple.confirmed_at else None,
-                     ripple.applied_at.isoformat() if ripple.applied_at else None,
-                     json.dumps(ripple.payload, ensure_ascii=False),
-                     ripple.parent_ripple_id),
+                    (
+                        ripple.id,
+                        ripple.trigger_volume,
+                        ripple.trigger_chapter,
+                        json.dumps(list(ripple.affected_nodes), ensure_ascii=False),
+                        json.dumps(list(ripple.affected_edges), ensure_ascii=False),
+                        json.dumps(list(ripple.proposed_actions), ensure_ascii=False),
+                        ripple.status,
+                        ripple.created_at.isoformat(),
+                        ripple.confirmed_at.isoformat() if ripple.confirmed_at else None,
+                        ripple.applied_at.isoformat() if ripple.applied_at else None,
+                        json.dumps(ripple.payload, ensure_ascii=False),
+                        ripple.parent_ripple_id,
+                    ),
                 )
                 conn.commit()
             except IntegrityError as e:
@@ -315,6 +332,7 @@ class RippleStorage:
         if self._graph is not None:
             try:
                 import time
+
                 _cascade_started = time.perf_counter()
                 cascaded = self._graph.trigger_cascade(ripple)  # uses ref_graph BFS
                 self.record_cascade(cascaded)
@@ -335,12 +353,11 @@ class RippleStorage:
                         latency_ms=cascade_latency_ms,
                     )
                 except Exception as e:
-                    logger.warning(
-                        "append_ripple: cascade broadcast log failed: %s", e
-                    )
+                    logger.warning("append_ripple: cascade broadcast log failed: %s", e)
             try:
                 from dashboard.cascade_notifier import notify_cascade_update
                 from dashboard.protocols import CascadeUpdatePayload
+
                 notify_cascade_update(
                     CascadeUpdatePayload(
                         ripple_id=cascaded.trigger_ripple_id,
@@ -357,6 +374,7 @@ class RippleStorage:
         if cascaded is not None and ripple.parent_ripple_id is None:
             try:
                 from infra.cross_volume.chained_cascade import spawn_child_ripples
+
                 spawn_child_ripples(self, self._graph, ripple, cascaded)
             except Exception as e:
                 logger.warning("append_ripple: chained cascade spawn failed: %s", e)
@@ -366,7 +384,9 @@ class RippleStorage:
             action="created",
             prev_status=None,
             new_status=ripple.status,
-            actor=ripple.payload.get("created_by", "system") if isinstance(ripple.payload, dict) else "system",
+            actor=ripple.payload.get("created_by", "system")
+            if isinstance(ripple.payload, dict)
+            else "system",
             origin="system",
             reason=None,
         )
@@ -382,10 +402,17 @@ class RippleStorage:
                 try:
                     conn.execute(
                         "INSERT INTO reference_nodes VALUES (?,?,?,?,?,?,?,?,?)",
-                        (node.id, node.dimension, node.volume, node.chapter,
-                         node.title, node.description,
-                         json.dumps(node.payload, ensure_ascii=False),
-                         node.created_at.isoformat(), node.created_by),
+                        (
+                            node.id,
+                            node.dimension,
+                            node.volume,
+                            node.chapter,
+                            node.title,
+                            node.description,
+                            json.dumps(node.payload, ensure_ascii=False),
+                            node.created_at.isoformat(),
+                            node.created_by,
+                        ),
                     )
                 except IntegrityError as e:
                     raise ValueError(f"storage integrity: {e}") from e
@@ -430,10 +457,7 @@ class RippleStorage:
         """
         params = [*node_ids, *node_ids]
         with self._connect() as conn:
-            return [
-                self._row_to_edge(row)
-                for row in conn.execute(sql, params)
-            ]
+            return [self._row_to_edge(row) for row in conn.execute(sql, params)]
 
     def load_all_edges(self) -> list[ReferenceEdge]:
         with self._connect() as conn:
@@ -445,8 +469,12 @@ class RippleStorage:
 
     def _row_to_node(self, row: object) -> ReferenceNode:
         return ReferenceNode(
-            id=row["id"], dimension=row["dimension"], volume=row["volume"],
-            chapter=row["chapter"], title=row["title"], description=row["description"],
+            id=row["id"],
+            dimension=row["dimension"],
+            volume=row["volume"],
+            chapter=row["chapter"],
+            title=row["title"],
+            description=row["description"],
             payload=json.loads(row["payload"]),
             created_at=datetime.fromisoformat(row["created_at"]),
             created_by=row["created_by"],
@@ -454,8 +482,11 @@ class RippleStorage:
 
     def _row_to_edge(self, row: object) -> ReferenceEdge:
         return ReferenceEdge(
-            id=row["id"], from_node_id=row["from_node_id"], to_node_id=row["to_node_id"],
-            relationship_type=row["relationship_type"], weight=row["weight"],
+            id=row["id"],
+            from_node_id=row["from_node_id"],
+            to_node_id=row["to_node_id"],
+            relationship_type=row["relationship_type"],
+            weight=row["weight"],
             payload=json.loads(row["payload"]),
             created_at=datetime.fromisoformat(row["created_at"]),
             created_by=row["created_by"],
@@ -465,7 +496,8 @@ class RippleStorage:
         keys = row.keys()
         parent_id = row["parent_ripple_id"] if "parent_ripple_id" in keys else None
         return CrossVolumeRipple(
-            id=row["id"], trigger_volume=row["trigger_volume"],
+            id=row["id"],
+            trigger_volume=row["trigger_volume"],
             trigger_chapter=row["trigger_chapter"],
             affected_nodes=tuple(json.loads(row["affected_nodes"])),
             affected_edges=tuple(json.loads(row["affected_edges"])),
@@ -538,9 +570,7 @@ class RippleStorage:
 
     def get_ripple_by_id(self, ripple_id: str) -> CrossVolumeRipple | None:
         with self._connect() as conn:
-            row = conn.execute(
-                "SELECT * FROM reference_ripples WHERE id = ?", (ripple_id,)
-            ).fetchone()
+            row = conn.execute("SELECT * FROM reference_ripples WHERE id = ?", (ripple_id,)).fetchone()
             return self._row_to_ripple(row) if row else None
 
     def update_ripple_status(
@@ -561,20 +591,14 @@ class RippleStorage:
             - 当前 status 不能是 terminal, 否则 raise ConflictError (API 转 409)
         """
         if new_status not in _VALID_TRANSITION_STATUSES:
-            raise ValueError(
-                f"new_status must be one of {_VALID_TRANSITION_STATUSES}, got {new_status!r}"
-            )
+            raise ValueError(f"new_status must be one of {_VALID_TRANSITION_STATUSES}, got {new_status!r}")
         with self._connect() as conn:
-            row = conn.execute(
-                "SELECT * FROM reference_ripples WHERE id = ?", (ripple_id,)
-            ).fetchone()
+            row = conn.execute("SELECT * FROM reference_ripples WHERE id = ?", (ripple_id,)).fetchone()
             if row is None:
                 raise KeyError(f"ripple {ripple_id} not found")
             current = self._row_to_ripple(row)
             if current.status in _TERMINAL_STATUSES:
-                raise ConflictError(
-                    f"ripple {ripple_id} already in terminal status {current.status!r}"
-                )
+                raise ConflictError(f"ripple {ripple_id} already in terminal status {current.status!r}")
             now_iso = datetime.now(timezone.utc).isoformat()
             conn.execute(
                 "UPDATE reference_ripples SET status = ?, applied_at = ? WHERE id = ?",
@@ -646,20 +670,14 @@ class RippleStorage:
         """
         valid = ("pending", "applied", "rejected", "failed", "created")
         if to_status not in valid:
-            raise ValueError(
-                f"to_status must be one of {valid}, got {to_status!r}"
-            )
+            raise ValueError(f"to_status must be one of {valid}, got {to_status!r}")
         with self._connect() as conn:
-            row = conn.execute(
-                "SELECT * FROM reference_ripples WHERE id = ?", (ripple_id,)
-            ).fetchone()
+            row = conn.execute("SELECT * FROM reference_ripples WHERE id = ?", (ripple_id,)).fetchone()
             if row is None:
                 raise KeyError(f"ripple {ripple_id} not found")
             current = self._row_to_ripple(row)
             prev_status = current.status
-            self._update_ripple_status_internal(
-                conn, ripple_id, to_status, None
-            )
+            self._update_ripple_status_internal(conn, ripple_id, to_status, None)
             conn.commit()
         # Write audit (independent commit, like cost_tracker.record)
         self.record_audit(
@@ -695,14 +713,14 @@ class RippleStorage:
             cur = conn.execute(
                 "INSERT INTO ripple_audit (ripple_id, action, prev_status, new_status, actor, origin, reason, created_at)"
                 " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (ripple_id, action, prev_status, new_status, actor, origin, reason,
-                 created_iso),
+                (ripple_id, action, prev_status, new_status, actor, origin, reason, created_iso),
             )
             conn.commit()
             entry_id = int(cur.lastrowid)
         try:
             from dashboard.cascade_notifier import notify_audit_created
             from dashboard.protocols import AuditCreatedPayload
+
             notify_audit_created(
                 AuditCreatedPayload(
                     id=entry_id,
@@ -767,9 +785,7 @@ class RippleStorage:
         if not reason or not reason.strip():
             raise ValueError("reason is required for rollback")
         with self.atomic_batch() as conn:
-            row = conn.execute(
-                "SELECT * FROM reference_ripples WHERE id = ?", (ripple_id,)
-            ).fetchone()
+            row = conn.execute("SELECT * FROM reference_ripples WHERE id = ?", (ripple_id,)).fetchone()
             if row is None:
                 raise KeyError(f"ripple {ripple_id} not found")
             current = self._row_to_ripple(row)
@@ -778,9 +794,7 @@ class RippleStorage:
                     f"can only rollback applied/rejected ripples, current status: {current.status!r}"
                 )
             now_iso = datetime.now(timezone.utc).isoformat()
-            self._update_ripple_status_internal(
-                conn, ripple_id, "pending", None
-            )
+            self._update_ripple_status_internal(conn, ripple_id, "pending", None)
             conn.execute(
                 "INSERT INTO ripple_audit (ripple_id, action, prev_status, new_status, actor, origin, reason, created_at)"
                 " VALUES (?, 'rolled_back', ?, 'pending', ?, ?, ?, ?)",
@@ -792,8 +806,15 @@ class RippleStorage:
         updated = replace(current, status="pending", applied_at=None)
         _broadcast_ripple_event(
             "ripple_status_changed",
-            {"ripple_id": ripple_id, "new_status": "pending", "actor": actor,
-             "origin": origin, "reason": reason, "applied_at": None, "action": "rolled_back"},
+            {
+                "ripple_id": ripple_id,
+                "new_status": "pending",
+                "actor": actor,
+                "origin": origin,
+                "reason": reason,
+                "applied_at": None,
+                "action": "rolled_back",
+            },
         )
         return updated
 
@@ -839,8 +860,7 @@ class RippleStorage:
         """
         with self._connect() as conn:
             row = conn.execute(
-                "SELECT * FROM ripple_cascade WHERE trigger_ripple_id = ?"
-                " ORDER BY id DESC LIMIT 1",
+                "SELECT * FROM ripple_cascade WHERE trigger_ripple_id = ? ORDER BY id DESC LIMIT 1",
                 (ripple_id,),
             ).fetchone()
             if row is None:
@@ -894,9 +914,7 @@ class RippleStorage:
             )
         return out
 
-    def get_ripple_impact_scores_bulk(
-        self, ripple_ids: list[str]
-    ) -> dict[str, float]:
+    def get_ripple_impact_scores_bulk(self, ripple_ids: list[str]) -> dict[str, float]:
         """Phase 13.0 T3 H4: bulk compute impact_score for many ripples in 2 queries.
 
         Replaces N+1 `get_cascade_by_ripple_id` + `compute_impact_score` per ripple.
@@ -914,6 +932,7 @@ class RippleStorage:
             ).fetchall()
         ripples_by_id = {row["id"]: self._row_to_ripple(row) for row in rows}
         from infra.cross_volume.scoring import compute_impact_score
+
         out: dict[str, float] = {}
         for rid in ripple_ids:
             r = ripples_by_id.get(rid)
@@ -951,7 +970,10 @@ class RippleStorage:
             raise KeyError(f"Ripple {ripple_id} not found")
         cap = DEFAULT_MAX_NODES_CAP if max_nodes_cap is None else max_nodes_cap
         return self._graph.trigger_cascade(
-            ripple, max_depth=max_depth, weighted=True, max_nodes_cap=cap,
+            ripple,
+            max_depth=max_depth,
+            weighted=True,
+            max_nodes_cap=cap,
         )
 
     def record_cascade_run(
@@ -1009,9 +1031,7 @@ class RippleStorage:
         """
         now_iso = datetime.now(timezone.utc).isoformat()
         with self._connect() as conn:
-            row = conn.execute(
-                "SELECT status FROM cascade_runs WHERE id = ?", (run_id,)
-            ).fetchone()
+            row = conn.execute("SELECT status FROM cascade_runs WHERE id = ?", (run_id,)).fetchone()
             if row is None:
                 raise KeyError(f"Cascade run {run_id} not found")
             if row["status"] == "cancelled":
@@ -1110,9 +1130,7 @@ class RippleStorage:
         """Phase 9.46 F35: cross-ripple cascade_runs list (latest first)."""
         started_after = None
         if since_days is not None and since_days > 0:
-            started_after = (
-                datetime.now(timezone.utc) - timedelta(days=since_days)
-            ).isoformat()
+            started_after = (datetime.now(timezone.utc) - timedelta(days=since_days)).isoformat()
         clauses, params = self._cascade_runs_filter_clauses(
             ripple_id=ripple_id,
             status=status,
@@ -1149,9 +1167,7 @@ class RippleStorage:
     def get_cascade_run_by_id(self, run_id: int) -> CascadeRun | None:
         """Phase 9.20: fetch single cascade run by PK, or None."""
         with self._connect() as conn:
-            row = conn.execute(
-                "SELECT * FROM cascade_runs WHERE id = ?", (run_id,)
-            ).fetchone()
+            row = conn.execute("SELECT * FROM cascade_runs WHERE id = ?", (run_id,)).fetchone()
             return self._row_to_cascade_run(row) if row else None
 
     def append_cascade_broadcast_log(self, ripple_id: str, latency_ms: int) -> int:
@@ -1161,8 +1177,7 @@ class RippleStorage:
         created_at = datetime.now(timezone.utc).isoformat()
         with self._connect() as conn:
             cur = conn.execute(
-                "INSERT INTO cascade_broadcast_log (ripple_id, latency_ms, created_at)"
-                " VALUES (?, ?, ?)",
+                "INSERT INTO cascade_broadcast_log (ripple_id, latency_ms, created_at) VALUES (?, ?, ?)",
                 (ripple_id, latency_ms, created_at),
             )
             conn.commit()
@@ -1184,8 +1199,7 @@ class RippleStorage:
         """Phase 9.44 F33: list broadcast latency rows for ripple (newest first)."""
         with self._connect() as conn:
             rows = conn.execute(
-                "SELECT * FROM cascade_broadcast_log WHERE ripple_id = ?"
-                " ORDER BY id DESC LIMIT ? OFFSET ?",
+                "SELECT * FROM cascade_broadcast_log WHERE ripple_id = ? ORDER BY id DESC LIMIT ? OFFSET ?",
                 (ripple_id, limit, offset),
             ).fetchall()
             return [self._row_to_cascade_broadcast_log(row) for row in rows]
@@ -1209,9 +1223,7 @@ class RippleStorage:
             False if already v2_weighted (idempotent no-op)
         """
         with self._connect() as conn:
-            row = conn.execute(
-                "SELECT algorithm FROM cascade_runs WHERE id = ?", (run_id,)
-            ).fetchone()
+            row = conn.execute("SELECT algorithm FROM cascade_runs WHERE id = ?", (run_id,)).fetchone()
             if row is None:
                 raise KeyError(f"Cascade run {run_id} not found")
             if row["algorithm"] == "v2_weighted":
@@ -1257,35 +1269,55 @@ class RippleStorage:
 
     def _node_to_dict(self, n: "ReferenceNode") -> dict:
         return {
-            "id": n.id, "dimension": n.dimension, "volume": n.volume,
-            "chapter": n.chapter, "title": n.title, "description": n.description,
-            "payload": n.payload, "created_at": n.created_at.isoformat(),
+            "id": n.id,
+            "dimension": n.dimension,
+            "volume": n.volume,
+            "chapter": n.chapter,
+            "title": n.title,
+            "description": n.description,
+            "payload": n.payload,
+            "created_at": n.created_at.isoformat(),
             "created_by": n.created_by,
         }
 
     def _edge_to_dict(self, e: "ReferenceEdge") -> dict:
         return {
-            "id": e.id, "from_node_id": e.from_node_id, "to_node_id": e.to_node_id,
-            "relationship_type": e.relationship_type, "weight": e.weight,
-            "payload": e.payload, "created_at": e.created_at.isoformat(),
+            "id": e.id,
+            "from_node_id": e.from_node_id,
+            "to_node_id": e.to_node_id,
+            "relationship_type": e.relationship_type,
+            "weight": e.weight,
+            "payload": e.payload,
+            "created_at": e.created_at.isoformat(),
             "created_by": e.created_by,
         }
 
     def _dict_to_node(self, d: dict) -> "ReferenceNode":
         return ReferenceNode(
-            id=d["id"], dimension=d["dimension"], volume=d["volume"],
-            chapter=d["chapter"], title=d["title"], description=d["description"],
+            id=d["id"],
+            dimension=d["dimension"],
+            volume=d["volume"],
+            chapter=d["chapter"],
+            title=d["title"],
+            description=d["description"],
             payload=d["payload"],
-            created_at=datetime.fromisoformat(d["created_at"]) if isinstance(d["created_at"], str) else d["created_at"],
+            created_at=datetime.fromisoformat(d["created_at"])
+            if isinstance(d["created_at"], str)
+            else d["created_at"],
             created_by=d["created_by"],
         )
 
     def _dict_to_edge(self, d: dict) -> "ReferenceEdge":
         return ReferenceEdge(
-            id=d["id"], from_node_id=d["from_node_id"], to_node_id=d["to_node_id"],
-            relationship_type=d["relationship_type"], weight=d["weight"],
+            id=d["id"],
+            from_node_id=d["from_node_id"],
+            to_node_id=d["to_node_id"],
+            relationship_type=d["relationship_type"],
+            weight=d["weight"],
             payload=d["payload"],
-            created_at=datetime.fromisoformat(d["created_at"]) if isinstance(d["created_at"], str) else d["created_at"],
+            created_at=datetime.fromisoformat(d["created_at"])
+            if isinstance(d["created_at"], str)
+            else d["created_at"],
             created_by=d["created_by"],
         )
 
@@ -1315,6 +1347,7 @@ def _broadcast_ripple_event(event_type: str, data: dict) -> None:
     """
     try:
         from dashboard.cvg_ws import broadcast as _cvg_broadcast
+
         _cvg_broadcast({"type": event_type, "data": data})
     except Exception:  # noqa: BLE001
         logger.debug("cvg_ws broadcast skipped (dashboard not configured)")

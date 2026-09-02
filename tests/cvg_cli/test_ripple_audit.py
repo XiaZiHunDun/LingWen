@@ -17,6 +17,7 @@ Pattern: parse_args(argv) + Command.execute(options) (1:1 with
 test_cli_llm_flags.py:Phase 9.12). Storage is monkeypatched at the call
 site so 0 启动 dashboard / 0 真实 project path。
 """
+
 from __future__ import annotations
 
 import pytest
@@ -70,13 +71,21 @@ def storage_with_ripple(tmp_path, monkeypatch):
     at least 1 audit row by the time tests run)."""
     storage = RippleStorage(db_path=tmp_path / "cli_audit.db")
     applied = CrossVolumeRipple(
-        id="rip-applied-1", trigger_volume=1, trigger_chapter=1,
-        affected_nodes=(), affected_edges=(), proposed_actions=(),
+        id="rip-applied-1",
+        trigger_volume=1,
+        trigger_chapter=1,
+        affected_nodes=(),
+        affected_edges=(),
+        proposed_actions=(),
         status="applied",
     )
     pending = CrossVolumeRipple(
-        id="rip-pending-1", trigger_volume=1, trigger_chapter=2,
-        affected_nodes=(), affected_edges=(), proposed_actions=(),
+        id="rip-pending-1",
+        trigger_volume=1,
+        trigger_chapter=2,
+        affected_nodes=(),
+        affected_edges=(),
+        proposed_actions=(),
         status="pending",
     )
     storage.append_ripple(applied)

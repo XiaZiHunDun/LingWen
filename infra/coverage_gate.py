@@ -1,4 +1,5 @@
 """Coverage module gate helpers (Phase 11.11)."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -70,8 +71,7 @@ def format_module_gate_report(report: dict[str, Any]) -> str:
     for row in report.get("modules") or []:
         mark = "PASS" if row["passed"] else "FAIL"
         lines.append(
-            f"[{mark}] {row['module']}: {row['actual_percent']}% "
-            f"(min {row['min_percent']}%)",
+            f"[{mark}] {row['module']}: {row['actual_percent']}% (min {row['min_percent']}%)",
         )
     lines.append("")
     lines.append("=== ALL PASS ===" if report.get("passed") else "=== MODULE GATE FAILED ===")

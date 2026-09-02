@@ -19,6 +19,7 @@ from .attribute_comparer import Contradiction
 @dataclass
 class ContradictionResult:
     """矛盾检测结果"""
+
     chapter: int
     contradictions: List[Contradiction]
     detection_time_ms: float
@@ -39,6 +40,7 @@ class ContradictionResult:
 @dataclass
 class DetectionConfig:
     """检测配置"""
+
     enable_rule_based: bool = True
     enable_attribute: bool = True
     enable_llm: bool = False  # 默认关闭，LLM成本高

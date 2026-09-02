@@ -6,6 +6,7 @@ Note: budget endpoints read from `MasterControllerAdapter._controller` (class-le
 singleton), not from the closure-captured master_controller. This is the historical
 behavior — kept identical after extraction.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -31,6 +32,7 @@ def register_budgets(app: FastAPI, ctx: RoutesContext) -> None:
             _extract_budget_per_window,
             _extract_budget_status,
         )
+
         controller = MasterControllerAdapter._controller
         return {
             "per_run": _extract_budget_status(controller),
@@ -50,6 +52,7 @@ def register_budgets(app: FastAPI, ctx: RoutesContext) -> None:
         if scope not in ("day", "week"):
             raise HTTPException(400, "scope must be 'day' or 'week'")
         from apps.studio_api.protocols import MasterControllerAdapter
+
         controller = MasterControllerAdapter._controller
         service = getattr(controller, "budget_service", None)
         if service is None:
@@ -64,6 +67,7 @@ def register_budgets(app: FastAPI, ctx: RoutesContext) -> None:
             MasterControllerAdapter,
             _extract_budget_by_tier,
         )
+
         controller = MasterControllerAdapter._controller
         return _extract_budget_by_tier(controller)
 
@@ -83,9 +87,7 @@ def register_budgets(app: FastAPI, ctx: RoutesContext) -> None:
         try:
             tier_enum = ModelTier(tier)
         except ValueError:
-            raise HTTPException(
-                404, f"invalid tier: {tier!r}, must be 'haiku'/'sonnet'/'opus'"
-            )
+            raise HTTPException(404, f"invalid tier: {tier!r}, must be 'haiku'/'sonnet'/'opus'")
         controller = MasterControllerAdapter._controller
         service = getattr(controller, "budget_service_by_tier", None)
         if service is None:

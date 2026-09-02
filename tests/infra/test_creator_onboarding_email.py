@@ -1,4 +1,5 @@
 """Tests for creator onboarding mention email dispatch."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch

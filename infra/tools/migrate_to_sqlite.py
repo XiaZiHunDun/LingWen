@@ -8,6 +8,7 @@ for the one-shot migration. This is a CLI tool — outside the application
 hot path, no enforcement of port-only contract here, but still avoid
 the bare import to satisfy the regex hygiene gate.
 """
+
 import json
 from datetime import datetime
 from pathlib import Path
@@ -28,11 +29,11 @@ def migrate(workflow_json: str, db_path: str):
     # Backup
     backup_path = workflow_json + f".backup-{datetime.now().strftime('%Y%m%d%H%M%S')}"
 
-    with open(workflow_json, 'r', encoding='utf-8') as f:
+    with open(workflow_json, "r", encoding="utf-8") as f:
         data = json.load(f)
 
     # Save backup
-    with open(backup_path, 'w', encoding='utf-8') as f:
+    with open(backup_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     print(f"Backed up JSON to: {backup_path}")
 
@@ -66,37 +67,43 @@ def migrate(workflow_json: str, db_path: str):
 
     # Migrate top-level state
     for key, value in data.items():
-        if key not in ('agent_tasks',):
-            conn.execute("""
+        if key not in ("agent_tasks",):
+            conn.execute(
+                """
                 INSERT OR REPLACE INTO workflow_state (key, value, updated_at)
                 VALUES (?, ?, CURRENT_TIMESTAMP)
-            """, (key, json.dumps(value, ensure_ascii=False)))
+            """,
+                (key, json.dumps(value, ensure_ascii=False)),
+            )
 
     # Migrate agent_tasks
-    for task_id, task in data.get('agent_tasks', {}).items():
-        conn.execute("""
+    for task_id, task in data.get("agent_tasks", {}).items():
+        conn.execute(
+            """
             INSERT OR REPLACE INTO agent_tasks
             (task_id, task_name, agent, status, heartbeat_at, task_id_external, dispatched_at, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            task_id,
-            task.get('task_name', task_id),
-            task.get('agent', ''),
-            task.get('status', 'pending'),
-            task.get('heartbeat_at'),
-            task.get('task_id'),
-            task.get('dispatched_at'),
-            task.get('created_at', datetime.now().isoformat())
-        ))
+        """,
+            (
+                task_id,
+                task.get("task_name", task_id),
+                task.get("agent", ""),
+                task.get("status", "pending"),
+                task.get("heartbeat_at"),
+                task.get("task_id"),
+                task.get("dispatched_at"),
+                task.get("created_at", datetime.now().isoformat()),
+            ),
+        )
 
     conn.commit()
     conn.close()
     print(f"Migration complete. SQLite DB: {db_path}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     project_root = Path(__file__).parent.parent.parent
-    workflow_json = project_root / 'workflow_state.json'
-    db_path = project_root / '.state' / 'workflow.db'
+    workflow_json = project_root / "workflow_state.json"
+    db_path = project_root / ".state" / "workflow.db"
 
     migrate(str(workflow_json), str(db_path))

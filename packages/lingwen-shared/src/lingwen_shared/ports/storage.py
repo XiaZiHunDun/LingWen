@@ -5,6 +5,7 @@ v16.5 #N.1 status: factory pattern added (mirrors v16.5 #1 LLMServiceAdapter).
 v16.5 status: import-linter enforcement — business code MUST NOT import sqlite3
 or hardcode paths.
 """
+
 from __future__ import annotations
 
 from pathlib import Path

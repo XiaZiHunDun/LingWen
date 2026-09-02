@@ -2,6 +2,7 @@
 
 Models unchanged — only relocated for code organization.
 """
+
 from __future__ import annotations
 
 from typing import Optional
@@ -50,6 +51,7 @@ class CreatorOverviewResponse(BaseModel):
     ui_profile: CreatorUiProfile
     volume_pulse: Optional[CreatorVolumePulse] = None
 
+
 class CreatorVolumePlanResponse(BaseModel):
     slug: str
     global_outline_path: str
@@ -61,9 +63,11 @@ class CreatorVolumePlanResponse(BaseModel):
     deviation_count: int
     alert_count: int
 
+
 class CreatorVolumePlanSaveRequest(BaseModel):
     volumes: list[CreatorVolumePlanEntry]
     expected_revision: Optional[str] = None
+
 
 class CreatorVolumePlanDiffChange(BaseModel):
     type: str
@@ -71,9 +75,11 @@ class CreatorVolumePlanDiffChange(BaseModel):
     message: str
     details: list[str] = []
 
+
 class CreatorOutlineHighlightLine(BaseModel):
     text: str
     highlighted: bool = False
+
 
 class CreatorVolumePlanDiffResponse(BaseModel):
     has_changes: bool

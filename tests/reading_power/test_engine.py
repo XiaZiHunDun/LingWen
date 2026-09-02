@@ -9,13 +9,25 @@ def test_analyze_chapter_with_rule_matcher():
     mock_db = MagicMock()
     mock_db.get_chapter_summary.return_value = None
 
-    with patch('infra.reading_power.rule_matcher.RuleMatcher') as MockMatcher:
+    with patch("infra.reading_power.rule_matcher.RuleMatcher") as MockMatcher:
         mock_matcher = MagicMock()
         mock_matcher.scan.return_value = [
-            MagicMock(segment_type="hook", pattern_name="危机钩",
-                      content="危险...", confidence=0.8, position="结尾", offset=100),
-            MagicMock(segment_type="coolpoint", pattern_name="装逼打脸",
-                      content="打脸...", confidence=0.9, position="中段", offset=200),
+            MagicMock(
+                segment_type="hook",
+                pattern_name="危机钩",
+                content="危险...",
+                confidence=0.8,
+                position="结尾",
+                offset=100,
+            ),
+            MagicMock(
+                segment_type="coolpoint",
+                pattern_name="装逼打脸",
+                content="打脸...",
+                confidence=0.9,
+                position="中段",
+                offset=200,
+            ),
         ]
         MockMatcher.return_value = mock_matcher
 
@@ -26,6 +38,7 @@ def test_analyze_chapter_with_rule_matcher():
 
         assert result.success is True
         mock_matcher.scan.assert_called_once()
+
 
 def test_analyze_empty_chapter():
     mock_db = MagicMock()

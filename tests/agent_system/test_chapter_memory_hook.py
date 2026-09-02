@@ -1,4 +1,5 @@
 """Phase 9.70 F62: chapter memory RAG hook tests."""
+
 from __future__ import annotations
 
 from pathlib import Path

@@ -11,6 +11,7 @@ Usage:
     vm.create_version("outline_full_novel", "修复了bug")
     history = vm.get_history("outline_full_novel")
 """
+
 import hashlib
 import os
 import shutil
@@ -25,6 +26,7 @@ import yaml
 @dataclass
 class TemplateVersion:
     """模板版本信息"""
+
     version: str
     template_id: str
     created_at: str
@@ -37,6 +39,7 @@ class TemplateVersion:
 @dataclass
 class VersionDiff:
     """版本差异"""
+
     version_from: str
     version_to: str
     template_id: str
@@ -54,7 +57,7 @@ class VersionManager:
     def __init__(self, config_dir: str = "config/prompts"):
         config_path = Path(config_dir)
         # If config/prompts, use it directly as config_dir, not parent
-        self.config_dir = config_path if config_path.name == 'prompts' else config_path.parent
+        self.config_dir = config_path if config_path.name == "prompts" else config_path.parent
         self.versions_dir = self.config_dir / self.VERSIONS_DIR
         self.history_file = self.versions_dir / self.HISTORY_FILE
         self._ensure_directories()
@@ -68,7 +71,7 @@ class VersionManager:
         if not file_path.exists():
             return ""
 
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             return hashlib.md5(f.read()).hexdigest()
 
     def _load_history(self) -> Dict[str, List[Dict]]:
@@ -76,12 +79,12 @@ class VersionManager:
         if not self.history_file.exists():
             return {}
 
-        with open(self.history_file, 'r', encoding='utf-8') as f:
+        with open(self.history_file, "r", encoding="utf-8") as f:
             return yaml.safe_load(f) or {}
 
     def _save_history(self, history: Dict[str, List[Dict]]):
         """保存版本历史"""
-        with open(self.history_file, 'w', encoding='utf-8') as f:
+        with open(self.history_file, "w", encoding="utf-8") as f:
             yaml.safe_dump(history, f, allow_unicode=True, default_flow_style=False, indent=2)
 
     def _get_next_version(self, template_id: str) -> str:
@@ -93,11 +96,11 @@ class VersionManager:
             return "v1.0.0"
 
         # 获取最新版本
-        latest = sorted(versions, key=lambda x: x['version'])[-1]
-        current = latest['version']
+        latest = sorted(versions, key=lambda x: x["version"])[-1]
+        current = latest["version"]
 
         # 解析版本号
-        parts = current.lstrip('v').split('.')
+        parts = current.lstrip("v").split(".")
         major = int(parts[0])
         minor = int(parts[1])
         patch = int(parts[2])
@@ -110,10 +113,7 @@ class VersionManager:
         return datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
 
     def create_version(
-        self,
-        template_id: str,
-        changelog: str,
-        template_dir: Optional[Path] = None
+        self, template_id: str, changelog: str, template_dir: Optional[Path] = None
     ) -> TemplateVersion:
         """
         创建新版本
@@ -148,13 +148,13 @@ class VersionManager:
 
         # 更新历史
         version_info = {
-            'version': version,
-            'template_id': template_id,
-            'created_at': timestamp,
-            'changelog': changelog,
-            'file_hash': file_hash,
-            'file_path': str(template_dir.relative_to(self.config_dir)),
-            'status': 'active'
+            "version": version,
+            "template_id": template_id,
+            "created_at": timestamp,
+            "changelog": changelog,
+            "file_hash": file_hash,
+            "file_path": str(template_dir.relative_to(self.config_dir)),
+            "status": "active",
         }
 
         history = self._load_history()
@@ -173,24 +173,20 @@ class VersionManager:
         if not index_file.exists():
             return None
 
-        with open(index_file, 'r', encoding='utf-8') as f:
+        with open(index_file, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
 
-        for template in data.get('templates', []):
+        for template in data.get("templates", []):
             # 匹配ID（去掉版本后缀）
-            base_id = template_id.rsplit('_v', 1)[0]
-            if template['id'].startswith(base_id):
-                file_path = self.config_dir / template['file']
+            base_id = template_id.rsplit("_v", 1)[0]
+            if template["id"].startswith(base_id):
+                file_path = self.config_dir / template["file"]
                 if file_path.exists():
                     return file_path
 
         return None
 
-    def get_history(
-        self,
-        template_id: str,
-        limit: Optional[int] = None
-    ) -> List[TemplateVersion]:
+    def get_history(self, template_id: str, limit: Optional[int] = None) -> List[TemplateVersion]:
         """
         获取模板版本历史
 
@@ -209,9 +205,7 @@ class VersionManager:
 
         # 按时间倒序排列
         sorted_versions = sorted(
-            [TemplateVersion(**v) for v in versions],
-            key=lambda x: x.created_at,
-            reverse=True
+            [TemplateVersion(**v) for v in versions], key=lambda x: x.created_at, reverse=True
         )
 
         if limit:
@@ -225,10 +219,7 @@ class VersionManager:
         return history[0] if history else None
 
     def compare_versions(
-        self,
-        template_id: str,
-        version_from: str,
-        version_to: Optional[str] = None
+        self, template_id: str, version_from: str, version_to: Optional[str] = None
     ) -> VersionDiff:
         """
         比较两个版本
@@ -248,24 +239,24 @@ class VersionManager:
         history = self._load_history()
         versions = history.get(template_id, [])
 
-        from_info = next((v for v in versions if v['version'] == version_from), None)
-        to_info = next((v for v in versions if v['version'] == version_to), None)
+        from_info = next((v for v in versions if v["version"] == version_from), None)
+        to_info = next((v for v in versions if v["version"] == version_to), None)
 
         if not from_info or not to_info:
             raise ValueError("Version not found")
 
         # 读取文件内容对比
         diff_content = None
-        if from_info['file_path'] == to_info['file_path']:
+        if from_info["file_path"] == to_info["file_path"]:
             # 同一文件，读取两个版本
             backup_dir = self.versions_dir / template_id
             from_file = backup_dir / f"{version_from}{Path(from_info['file_path']).suffix}"
             to_file = backup_dir / f"{version_to}{Path(to_info['file_path']).suffix}"
 
             if from_file.exists() and to_file.exists():
-                with open(from_file, 'r', encoding='utf-8') as f:
+                with open(from_file, "r", encoding="utf-8") as f:
                     from_content = f.read()
-                with open(to_file, 'r', encoding='utf-8') as f:
+                with open(to_file, "r", encoding="utf-8") as f:
                     to_content = f.read()
 
                 if from_content != to_content:
@@ -273,17 +264,17 @@ class VersionManager:
 
         # 识别变更字段
         changed_fields = []
-        if from_info['file_hash'] != to_info['file_hash']:
-            changed_fields.append('content')
-        if from_info['changelog'] != to_info['changelog']:
-            changed_fields.append('changelog')
+        if from_info["file_hash"] != to_info["file_hash"]:
+            changed_fields.append("content")
+        if from_info["changelog"] != to_info["changelog"]:
+            changed_fields.append("changelog")
 
         return VersionDiff(
             version_from=version_from,
             version_to=version_to,
             template_id=template_id,
             changed_fields=changed_fields,
-            diff_content=diff_content
+            diff_content=diff_content,
         )
 
     def _generate_diff(self, from_content: str, to_content: str) -> str:
@@ -306,11 +297,7 @@ class VersionManager:
 
         return "\n".join(diff_lines)
 
-    def rollback(
-        self,
-        template_id: str,
-        target_version: str
-    ) -> bool:
+    def rollback(self, template_id: str, target_version: str) -> bool:
         """
         回滚到指定版本
 
@@ -324,12 +311,12 @@ class VersionManager:
         history = self._load_history()
         versions = history.get(template_id, [])
 
-        target_info = next((v for v in versions if v['version'] == target_version), None)
+        target_info = next((v for v in versions if v["version"] == target_version), None)
         if not target_info:
             return False
 
         # 找到当前文件位置
-        current_file = self.config_dir / target_info['file_path']
+        current_file = self.config_dir / target_info["file_path"]
         if not current_file.exists():
             return False
 
@@ -341,7 +328,9 @@ class VersionManager:
             return False
 
         # 备份当前版本
-        current_backup = backup_dir / f"rollback_backup_{datetime.now().strftime('%Y%m%d%H%M%S')}{current_file.suffix}"
+        current_backup = (
+            backup_dir / f"rollback_backup_{datetime.now().strftime('%Y%m%d%H%M%S')}{current_file.suffix}"
+        )
         shutil.copy2(current_file, current_backup)
 
         # 恢复目标版本
@@ -349,24 +338,19 @@ class VersionManager:
 
         return True
 
-    def export_version(
-        self,
-        template_id: str,
-        version: str,
-        output_dir: Path
-    ) -> Optional[Path]:
+    def export_version(self, template_id: str, version: str, output_dir: Path) -> Optional[Path]:
         """导出版本到指定目录"""
         backup_dir = self.versions_dir / template_id
 
         # 查找版本文件
         history = self._load_history()
         versions = history.get(template_id, [])
-        version_info = next((v for v in versions if v['version'] == version), None)
+        version_info = next((v for v in versions if v["version"] == version), None)
 
         if not version_info:
             return None
 
-        ext = Path(version_info['file_path']).suffix
+        ext = Path(version_info["file_path"]).suffix
         version_file = backup_dir / f"{version}{ext}"
 
         if not version_file.exists():
@@ -384,20 +368,12 @@ class VersionManager:
 
         for template_id, versions in history.items():
             result[template_id] = [
-                TemplateVersion(**v) for v in sorted(
-                    versions,
-                    key=lambda x: x['created_at'],
-                    reverse=True
-                )
+                TemplateVersion(**v) for v in sorted(versions, key=lambda x: x["created_at"], reverse=True)
             ]
 
         return result
 
-    def cleanup_old_versions(
-        self,
-        template_id: str,
-        keep_count: int = 5
-    ) -> int:
+    def cleanup_old_versions(self, template_id: str, keep_count: int = 5) -> int:
         """
         清理旧版本（保留最近N个）
 
@@ -415,11 +391,7 @@ class VersionManager:
             return 0
 
         # 按时间排序，保留最新的
-        sorted_versions = sorted(
-            versions,
-            key=lambda x: x['created_at'],
-            reverse=True
-        )
+        sorted_versions = sorted(versions, key=lambda x: x["created_at"], reverse=True)
 
         to_delete = sorted_versions[keep_count:]
         backup_dir = self.versions_dir / template_id
@@ -427,7 +399,7 @@ class VersionManager:
         deleted = 0
         for v in to_delete:
             # 删除文件
-            ext = Path(v['file_path']).suffix
+            ext = Path(v["file_path"]).suffix
             version_file = backup_dir / f"{v['version']}{ext}"
             if version_file.exists():
                 version_file.unlink()
@@ -531,11 +503,7 @@ def main():
         return
 
     if args.command == "export":
-        output_path = vm.export_version(
-            args.template_id,
-            args.version,
-            Path(args.output_dir)
-        )
+        output_path = vm.export_version(args.template_id, args.version, Path(args.output_dir))
         if output_path:
             print(f"导出版本到: {output_path}")
         else:
@@ -559,4 +527,5 @@ def main():
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main() or 0)

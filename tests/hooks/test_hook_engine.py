@@ -2,6 +2,7 @@
 """
 Hook引擎测试
 """
+
 import os
 import tempfile
 import time
@@ -21,6 +22,7 @@ class _SlowAction(BaseAction):
 
     sleep_time 由 params 控制,默认 2.0s。
     """
+
     action_type = "slow"
 
     def execute(self, params, context):
@@ -35,12 +37,8 @@ class TestConditionEvaluator(TestCase):
     def test_simple_equality(self):
         """测试简单相等比较"""
         context = {"chapter_status": "draft_completed"}
-        self.assertTrue(
-            ConditionEvaluator.evaluate("chapter_status == 'draft_completed'", context)
-        )
-        self.assertFalse(
-            ConditionEvaluator.evaluate("chapter_status == 'draft'", context)
-        )
+        self.assertTrue(ConditionEvaluator.evaluate("chapter_status == 'draft_completed'", context))
+        self.assertFalse(ConditionEvaluator.evaluate("chapter_status == 'draft'", context))
 
     def test_numeric_comparison(self):
         """测试数值比较"""
@@ -52,36 +50,24 @@ class TestConditionEvaluator(TestCase):
     def test_in_operator(self):
         """测试in操作符"""
         context = {"review_result": "PASS"}
-        self.assertTrue(
-            ConditionEvaluator.evaluate("review_result in ['PASS', 'NEED_REVISION']", context)
-        )
-        self.assertFalse(
-            ConditionEvaluator.evaluate("review_result in ['FAIL']", context)
-        )
+        self.assertTrue(ConditionEvaluator.evaluate("review_result in ['PASS', 'NEED_REVISION']", context))
+        self.assertFalse(ConditionEvaluator.evaluate("review_result in ['FAIL']", context))
 
     def test_not_in_operator(self):
         """测试not in操作符"""
         context = {"review_result": "PASS"}
-        self.assertTrue(
-            ConditionEvaluator.evaluate("review_result not in ['FAIL']", context)
-        )
-        self.assertFalse(
-            ConditionEvaluator.evaluate("review_result not in ['PASS', 'FAIL']", context)
-        )
+        self.assertTrue(ConditionEvaluator.evaluate("review_result not in ['FAIL']", context))
+        self.assertFalse(ConditionEvaluator.evaluate("review_result not in ['PASS', 'FAIL']", context))
 
     def test_step_in_list(self):
         """测试step in列表"""
         context = {"step": "STEP_10"}
-        self.assertTrue(
-            ConditionEvaluator.evaluate("step in ['STEP_10', 'STEP_11', 'STEP_12']", context)
-        )
+        self.assertTrue(ConditionEvaluator.evaluate("step in ['STEP_10', 'STEP_11', 'STEP_12']", context))
 
     def test_missing_variable(self):
         """测试缺失变量（返回False，不抛异常）"""
         context = {}
-        self.assertFalse(
-            ConditionEvaluator.evaluate("missing_var == 'value'", context)
-        )
+        self.assertFalse(ConditionEvaluator.evaluate("missing_var == 'value'", context))
 
 
 class TestHookConfig(TestCase):
@@ -89,20 +75,14 @@ class TestHookConfig(TestCase):
 
     def test_event_name_property(self):
         """测试event_name属性"""
-        config = HookConfig(
-            name="test_hook",
-            trigger={"event": "CHAPTER_WRITTEN", "conditions": []}
-        )
+        config = HookConfig(name="test_hook", trigger={"event": "CHAPTER_WRITTEN", "conditions": []})
         self.assertEqual(config.event_name, "CHAPTER_WRITTEN")
 
     def test_conditions_property(self):
         """测试conditions属性"""
         config = HookConfig(
             name="test_hook",
-            trigger={
-                "event": "CHAPTER_WRITTEN",
-                "conditions": ["status == 'done'", "count > 5"]
-            }
+            trigger={"event": "CHAPTER_WRITTEN", "conditions": ["status == 'done'", "count > 5"]},
         )
         self.assertEqual(len(config.conditions), 2)
         self.assertEqual(config.conditions[0], "status == 'done'")
@@ -131,7 +111,7 @@ hooks:
     required: true
     timeout: 30
 """
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             f.write(config_content)
             config_path = f.name
 
@@ -151,7 +131,7 @@ hooks:
                 name="test",
                 trigger={"event": "CHAPTER_WRITTEN", "conditions": []},
                 actions=[{"type": "notify", "channel": "writer_channel"}],
-                timeout=30
+                timeout=30,
             )
         ]
         is_valid, errors = self.loader.validate(configs)
@@ -165,7 +145,7 @@ hooks:
                 name="test",
                 trigger={"event": "INVALID_EVENT", "conditions": []},
                 actions=[{"type": "notify", "channel": "writer_channel"}],
-                timeout=30
+                timeout=30,
             )
         ]
         is_valid, errors = self.loader.validate(configs)
@@ -179,7 +159,7 @@ hooks:
                 name="test",
                 trigger={"event": "CHAPTER_WRITTEN", "conditions": []},
                 actions=[{"type": "invalid_action"}],
-                timeout=30
+                timeout=30,
             )
         ]
         is_valid, errors = self.loader.validate(configs)
@@ -201,7 +181,7 @@ class TestHookEngine(TestCase):
 
     def _create_test_config_file(self, content: str) -> str:
         """创建测试配置文件"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             f.write(content)
             return f.name
 
@@ -246,20 +226,12 @@ hooks:
             self.engine.load_hooks(config_path)
 
             # 匹配条件的事件
-            event = Event(
-                name="CHAPTER_WRITTEN",
-                source="test",
-                data={"chapter_status": "done"}
-            )
+            event = Event(name="CHAPTER_WRITTEN", source="test", data={"chapter_status": "done"})
             results = self.engine.trigger(event)
             self.assertEqual(len(results), 1)
 
             # 不匹配条件的事件
-            event2 = Event(
-                name="CHAPTER_WRITTEN",
-                source="test",
-                data={"chapter_status": "pending"}
-            )
+            event2 = Event(name="CHAPTER_WRITTEN", source="test", data={"chapter_status": "pending"})
             results2 = self.engine.trigger(event2)
             self.assertEqual(len(results2), 0)
         finally:
@@ -483,9 +455,9 @@ class TestHookEngineDefaultActions(TestCase):
         # 1) 7 个内置 action 必须全部就位
         expected = set(ACTION_REGISTRY.keys())
         self.assertEqual(
-            registered, expected,
-            f"缺少默认注册: {expected - registered};"
-            f"多余注册: {registered - expected}",
+            registered,
+            expected,
+            f"缺少默认注册: {expected - registered};多余注册: {registered - expected}",
         )
 
     def test_action_type_matches_registry_class(self):
@@ -548,26 +520,19 @@ class TestActionResult(TestCase):
 
     def test_action_result_creation(self):
         """测试ActionResult创建"""
-        result = ActionResult(
-            success=True,
-            output={"key": "value"},
-            duration_ms=150.5
-        )
+        result = ActionResult(success=True, output={"key": "value"}, duration_ms=150.5)
         self.assertTrue(result.success)
         self.assertEqual(result.output["key"], "value")
         self.assertEqual(result.duration_ms, 150.5)
 
     def test_action_result_with_error(self):
         """测试带错误的ActionResult"""
-        result = ActionResult(
-            success=False,
-            error="Something went wrong",
-            duration_ms=50.0
-        )
+        result = ActionResult(success=False, error="Something went wrong", duration_ms=50.0)
         self.assertFalse(result.success)
         self.assertEqual(result.error, "Something went wrong")
 
 
 if __name__ == "__main__":
     import unittest
+
     unittest.main()

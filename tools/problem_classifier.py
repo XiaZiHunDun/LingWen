@@ -28,38 +28,35 @@ class ProblemClassifier:
     DETECTOR_LIMITATIONS = {
         "时间线矛盾": {
             "patterns": ["宇宙级", "跨维度", "时间跳跃", "星际", "光年", "亿万年"],
-            "description": "宇宙级场景的时间线检测器容易误报"
+            "description": "宇宙级场景的时间线检测器容易误报",
         },
         "角色一致性": {
             "patterns": ["character_profiles缺失", "跨章节引用"],
-            "description": "缺少角色档案时的角色一致性检测不准确"
+            "description": "缺少角色档案时的角色一致性检测不准确",
         },
         "伏笔回收": {
             "patterns": ["需要前文铺垫", "伏笔首次出现", "悬念"],
-            "description": "单章节无法判断伏笔回收，需要跨章节上下文"
+            "description": "单章节无法判断伏笔回收，需要跨章节上下文",
         },
         "视角混乱": {
             "patterns": ["全知视角", "第三人称", "叙述者"],
-            "description": "科幻/奇幻小说的特殊叙事方式可能被误判"
+            "description": "科幻/奇幻小说的特殊叙事方式可能被误判",
         },
-        "逻辑矛盾": {
-            "patterns": ["设定冲突", "世界观矛盾"],
-            "description": "需要完整世界观设定才能判断"
-        },
+        "逻辑矛盾": {"patterns": ["设定冲突", "世界观矛盾"], "description": "需要完整世界观设定才能判断"},
         # 新增：节奏检测器宇宙场景局限
         "节奏过密": {
             "patterns": ["宇宙级", "星际战争", "跨维度", "亿万年", "战斗密集"],
-            "description": "宇宙级战斗场景节奏密集是正常的"
+            "description": "宇宙级战斗场景节奏密集是正常的",
         },
         # 新增：场景转换宇宙场景局限
         "场景转换突兀": {
             "patterns": ["维度裂缝", "空间跳跃", "传送", "虫洞", "瞬间移动"],
-            "description": "科幻/奇幻场景中突兀转换可能是设定需要"
+            "description": "科幻/奇幻场景中突兀转换可能是设定需要",
         },
         # 新增：对话AI化检测器局限
         "对话AI化": {
             "patterns": ["郑重", "严肃", "正式场合"],
-            "description": "某些严肃/正式场合的对话本身就偏正式"
+            "description": "某些严肃/正式场合的对话本身就偏正式",
         },
     }
 
@@ -151,11 +148,7 @@ class ProblemClassifier:
                 "NEEDS_CONTEXT": [...],   # 需要更多上下文
             }
         """
-        results = {
-            "CONTENT_ISSUE": [],
-            "DETECTOR_ISSUE": [],
-            "NEEDS_CONTEXT": []
-        }
+        results = {"CONTENT_ISSUE": [], "DETECTOR_ISSUE": [], "NEEDS_CONTEXT": []}
 
         for issue in issues:
             content = chapter_contents.get(issue.chapter, "") if chapter_contents else ""
@@ -217,12 +210,30 @@ if __name__ == "__main__":
     classifier = ProblemClassifier()
 
     test_issues = [
-        Issue(chapter=1, dimension="一致性", issue_type="时间线矛盾",
-              severity="P1", description="宇宙级场景的时间矛盾", evidence="亿万年时间跨度"),
-        Issue(chapter=2, dimension="一致性", issue_type="状态矛盾",
-              severity="P0", description="角色状态前后不一致", evidence="前文说死了，后文活着"),
-        Issue(chapter=3, dimension="一致性", issue_type="角色行为逻辑",
-              severity="P1", description="角色行为不符合设定", evidence="性格突变"),
+        Issue(
+            chapter=1,
+            dimension="一致性",
+            issue_type="时间线矛盾",
+            severity="P1",
+            description="宇宙级场景的时间矛盾",
+            evidence="亿万年时间跨度",
+        ),
+        Issue(
+            chapter=2,
+            dimension="一致性",
+            issue_type="状态矛盾",
+            severity="P0",
+            description="角色状态前后不一致",
+            evidence="前文说死了，后文活着",
+        ),
+        Issue(
+            chapter=3,
+            dimension="一致性",
+            issue_type="角色行为逻辑",
+            severity="P1",
+            description="角色行为不符合设定",
+            evidence="性格突变",
+        ),
     ]
 
     for issue in test_issues:

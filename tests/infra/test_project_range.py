@@ -1,4 +1,5 @@
 """Tests for lingwen_cli.project_range."""
+
 from __future__ import annotations
 
 import pytest
@@ -14,7 +15,8 @@ def five_chapter_project(tmp_path):
     (tmp_path / "03_内容仓库" / "04_正文").mkdir(parents=True)
     (tmp_path / "03_内容仓库" / "角色设定").mkdir(parents=True)
     (tmp_path / "03_内容仓库" / "角色设定" / "character_profiles.json").write_text(
-        "{}", encoding="utf-8",
+        "{}",
+        encoding="utf-8",
     )
     (tmp_path / "config").mkdir(parents=True)
     (tmp_path / "config" / "project.yaml").write_text(

@@ -2,6 +2,7 @@
 
 Phase 18.1 — 卷域实体。
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -32,9 +33,7 @@ class Volume:
         if start <= 0 or end <= 0:
             raise ValueError("Volume.chapter_range values must be positive")
         if start > end:
-            raise ValueError(
-                f"Volume.chapter_range start ({start}) must be <= end ({end})"
-            )
+            raise ValueError(f"Volume.chapter_range start ({start}) must be <= end ({end})")
 
 
 class VolumeCreatedEvent(DomainEvent):

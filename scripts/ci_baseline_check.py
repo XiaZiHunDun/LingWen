@@ -69,14 +69,12 @@ def check_false_positive_rate(baseline: dict[str, Any]) -> tuple[bool, str]:
     # 从 CheckerFeedback 获取实际数据
     try:
         from lingwen_quality.consistency.checker_feedback import get_checker_stats
+
         stats = get_checker_stats()
         for checker_id, s in stats.items():
             fp_rate = s.get("false_positive_rate", 0) / 100.0
             if fp_rate > max_rate:
-                return False, (
-                    f"检查器 {checker_id} 误报率 {fp_rate:.1%} "
-                    f"超过基线上限 {max_rate:.1%}"
-                )
+                return False, (f"检查器 {checker_id} 误报率 {fp_rate:.1%} 超过基线上限 {max_rate:.1%}")
         return True, f"检查器误报率基线: max={max_rate:.1%} (全部通过)"
     except ImportError:
         return True, f"检查器误报率基线: max={max_rate:.1%} (待接入实际数据)"

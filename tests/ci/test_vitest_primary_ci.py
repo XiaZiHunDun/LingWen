@@ -1,4 +1,5 @@
 """Phase 12.07: Vitest blocking gate in primary test workflow."""
+
 from __future__ import annotations
 
 from pathlib import Path

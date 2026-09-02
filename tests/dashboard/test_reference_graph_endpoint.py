@@ -1,4 +1,5 @@
 """Phase 9.41 F30: GET /api/cvg/reference-graph for ImpactGraph.vue."""
+
 from __future__ import annotations
 
 import pytest

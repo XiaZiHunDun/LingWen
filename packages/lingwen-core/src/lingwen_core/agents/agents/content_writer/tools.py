@@ -97,9 +97,7 @@ class ContentWriterTools(AgentBase):
         prompt = self.build_writing_prompt(context, writer_style)
 
         # 获取系统提示（融入作家特定补充）
-        system = self._get_writing_system_prompt(
-            context, prompt_additions, writer_name, variant_config
-        )
+        system = self._get_writing_system_prompt(context, prompt_additions, writer_name, variant_config)
 
         # 调用LLM (record_usage 决定走 chat() 估算 还是 chat_with_usage() 真实)
         if record_usage:
@@ -159,34 +157,44 @@ class ContentWriterTools(AgentBase):
         dialogue_ratio = style.get("dialogue_ratio", "30%")
         action_intensity = style.get("action_intensity", "medium")
 
-        prompt_parts.extend([
-            "",
-            "## 文风要求",
-            f"基调：{tone}",
-            f"对话比例：{dialogue_ratio}",
-            f"动作强度：{action_intensity}",
-        ])
+        prompt_parts.extend(
+            [
+                "",
+                "## 文风要求",
+                f"基调：{tone}",
+                f"对话比例：{dialogue_ratio}",
+                f"动作强度：{action_intensity}",
+            ]
+        )
         if style.get("continuity_rules"):
-            prompt_parts.extend([
-                "",
-                "## 连贯性约束",
-                style["continuity_rules"],
-            ])
+            prompt_parts.extend(
+                [
+                    "",
+                    "## 连贯性约束",
+                    style["continuity_rules"],
+                ]
+            )
         if style.get("continuity_excerpt"):
-            prompt_parts.extend([
-                "",
-                "## 上一章结尾（必须承接）",
-                style["continuity_excerpt"],
-            ])
+            prompt_parts.extend(
+                [
+                    "",
+                    "## 上一章结尾（必须承接）",
+                    style["continuity_excerpt"],
+                ]
+            )
         if style.get("avoid"):
-            prompt_parts.extend([
+            prompt_parts.extend(
+                [
+                    "",
+                    f"避免：{style['avoid']}",
+                ]
+            )
+        prompt_parts.extend(
+            [
                 "",
-                f"避免：{style['avoid']}",
-            ])
-        prompt_parts.extend([
-            "",
-            "请开始创作：",
-        ])
+                "请开始创作：",
+            ]
+        )
 
         return "\n".join(prompt_parts)
 
@@ -196,7 +204,7 @@ class ContentWriterTools(AgentBase):
             "cliffhanger": "就在这时，他突然听到了一个声音...",
             "question": "这一切究竟是怎么回事？",
             "revelation": "原来，真相竟然是这样...",
-            "tension": "危险，正在逼近..."
+            "tension": "危险，正在逼近...",
         }
         return content + "\n\n" + hooks.get(hook_type, hooks["cliffhanger"])
 

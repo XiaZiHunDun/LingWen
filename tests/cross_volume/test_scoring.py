@@ -1,4 +1,5 @@
 """Phase 9.59 F50: cross-volume impact scoring unit tests."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -63,8 +64,12 @@ class TestComputeImpactScore:
         assert with_cross > no_cross
 
     def test_confidence_clamped_and_scales(self):
-        low = compute_impact_score(_ripple(payload={"confidence": 1}, affected_nodes=("a",), affected_edges=()))
-        high = compute_impact_score(_ripple(payload={"confidence": 5}, affected_nodes=("a",), affected_edges=()))
+        low = compute_impact_score(
+            _ripple(payload={"confidence": 1}, affected_nodes=("a",), affected_edges=())
+        )
+        high = compute_impact_score(
+            _ripple(payload={"confidence": 5}, affected_nodes=("a",), affected_edges=())
+        )
         assert high > low
 
     def test_empty_ripple_non_negative(self):

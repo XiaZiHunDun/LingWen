@@ -2,6 +2,7 @@
 
 Doc 2 §5 SCENARIOS:chapter_review 是 auditor scenario,S1-S8 八维度评估章节。
 """
+
 from __future__ import annotations
 
 from lingwen_prompt.templates import (

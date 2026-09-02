@@ -7,6 +7,7 @@
 
 旧 target="workflow_state.json" 仍按 JSON 文件处理，便于旧 hook 配置文件平滑过渡。
 """
+
 from __future__ import annotations
 
 import json
@@ -41,11 +42,7 @@ class UpdateStateAction(BaseAction):
     def action_type(self) -> str:
         return "update_state"
 
-    def execute(
-        self,
-        params: Dict[str, Any],
-        context: Dict[str, Any]
-    ) -> ActionResult:
+    def execute(self, params: Dict[str, Any], context: Dict[str, Any]) -> ActionResult:
         """
         更新状态
 
@@ -93,6 +90,7 @@ class UpdateStateAction(BaseAction):
     def _execute_sqlite(self, field_parts, value, merge) -> ActionResult:
         """新路径：用 SQLite（WorkflowDB）更新状态"""
         from lingwen_pipeline.state.database import WorkflowDB
+
         db = WorkflowDB()
         # 字段路径整体作为 SQLite 的 key（"." 分隔）
         key = ".".join(field_parts)
@@ -110,7 +108,7 @@ class UpdateStateAction(BaseAction):
                 "field": key,
                 "value": new_value,
                 "previous_value": previous,
-            }
+            },
         )
 
     def _execute_legacy_json(self, field_parts, value, merge) -> ActionResult:
@@ -128,7 +126,7 @@ class UpdateStateAction(BaseAction):
                 "field": ".".join(field_parts),
                 "value": value,
                 "previous_value": previous,
-            }
+            },
         )
 
     def _execute_custom_file(self, state_file, field_parts, value, merge) -> ActionResult:
@@ -145,7 +143,7 @@ class UpdateStateAction(BaseAction):
                 "field": ".".join(field_parts),
                 "value": value,
                 "previous_value": previous,
-            }
+            },
         )
 
     def _resolve_value_from_context(self, value_expr: str, context: Dict[str, Any]) -> Any:
@@ -168,11 +166,7 @@ class UpdateStateAction(BaseAction):
             json.dump(state, f, ensure_ascii=False, indent=2)
 
     def _update_field(
-        self,
-        state: Dict[str, Any],
-        field_parts: list,
-        value: Any,
-        merge: bool
+        self, state: Dict[str, Any], field_parts: list, value: Any, merge: bool
     ) -> Dict[str, Any]:
         """
         更新嵌套字段

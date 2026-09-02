@@ -1,4 +1,5 @@
 """Phase 9.11: ForeshadowExtractor — keyword + chapter_window 聚合."""
+
 import logging
 import re
 from pathlib import Path

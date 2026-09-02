@@ -11,6 +11,7 @@ Phase 1.4.g — RED tests for JudgmentAggregator.
   - verdict: 取最严格 (FAIL > WARN > PASS)
   - score: 取最低
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -92,11 +93,13 @@ class TestAggregatorVerdict:
         from infra.got.aggregator import JudgmentAggregator
 
         agg = JudgmentAggregator()
-        result = agg.aggregate([
-            _pass_report(),
-            _warn_report(_p1("warning")),
-            _fail_report(_p0("critical")),
-        ])
+        result = agg.aggregate(
+            [
+                _pass_report(),
+                _warn_report(_p1("warning")),
+                _fail_report(_p0("critical")),
+            ]
+        )
         assert result.verdict == "FAIL"
 
     def test_warn_overrides_pass(self):
@@ -113,10 +116,12 @@ class TestAggregatorIssues:
         from infra.got.aggregator import JudgmentAggregator
 
         agg = JudgmentAggregator()
-        result = agg.aggregate([
-            _fail_report(_p0("error1")),
-            _pass_report(),
-        ])
+        result = agg.aggregate(
+            [
+                _fail_report(_p0("error1")),
+                _pass_report(),
+            ]
+        )
         p0s = [i for i in result.issues if i.severity == "P0"]
         assert len(p0s) == 1
         assert p0s[0].message == "error1"
@@ -125,10 +130,12 @@ class TestAggregatorIssues:
         from infra.got.aggregator import JudgmentAggregator
 
         agg = JudgmentAggregator()
-        result = agg.aggregate([
-            _fail_report(_p0("e1"), _p0("e2")),
-            _fail_report(_p0("e3")),
-        ])
+        result = agg.aggregate(
+            [
+                _fail_report(_p0("e1"), _p0("e2")),
+                _fail_report(_p0("e3")),
+            ]
+        )
         p0s = [i for i in result.issues if i.severity == "P0"]
         assert len(p0s) == 3
         messages = sorted(p.message for p in p0s)
@@ -138,10 +145,12 @@ class TestAggregatorIssues:
         from infra.got.aggregator import JudgmentAggregator
 
         agg = JudgmentAggregator()
-        result = agg.aggregate([
-            _fail_report(_p0("e1")),
-            _warn_report(_p1("w1"), _p2("m1")),
-        ])
+        result = agg.aggregate(
+            [
+                _fail_report(_p0("e1")),
+                _warn_report(_p1("w1"), _p2("m1")),
+            ]
+        )
         severities = sorted(i.severity for i in result.issues)
         assert severities == ["P0", "P1", "P2"]
 
@@ -150,10 +159,12 @@ class TestAggregatorIssues:
         from infra.got.aggregator import JudgmentAggregator
 
         agg = JudgmentAggregator()
-        result = agg.aggregate([
-            _warn_report(_p1("dup"), _p1("dup")),
-            _warn_report(_p1("dup")),
-        ])
+        result = agg.aggregate(
+            [
+                _warn_report(_p1("dup"), _p1("dup")),
+                _warn_report(_p1("dup")),
+            ]
+        )
         p1s = [i for i in result.issues if i.severity == "P1"]
         assert len(p1s) == 1
 
@@ -164,11 +175,13 @@ class TestAggregatorScore:
         from infra.got.aggregator import JudgmentAggregator
 
         agg = JudgmentAggregator()
-        result = agg.aggregate([
-            _pass_report(),      # 1.0
-            _warn_report(_p1("x")),  # 0.7
-            _fail_report(_p0("y")),  # 0.3
-        ])
+        result = agg.aggregate(
+            [
+                _pass_report(),  # 1.0
+                _warn_report(_p1("x")),  # 0.7
+                _fail_report(_p0("y")),  # 0.3
+            ]
+        )
         assert result.score == 0.3
 
     def test_pass_score_1(self):
@@ -193,10 +206,12 @@ class TestAggregatorEdgeCases:
 
         agg = JudgmentAggregator()
         # 仅 P3 应不影响 verdict (还是 WARN if 有 P2)
-        result = agg.aggregate([
-            _warn_report(
-                Issue(severity="P3", message="low"),
-            ),
-            _pass_report(),
-        ])
+        result = agg.aggregate(
+            [
+                _warn_report(
+                    Issue(severity="P3", message="low"),
+                ),
+                _pass_report(),
+            ]
+        )
         assert result.verdict == "WARN"  # 因为有 P3

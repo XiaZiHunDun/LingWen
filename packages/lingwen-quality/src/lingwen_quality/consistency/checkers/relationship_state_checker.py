@@ -15,39 +15,62 @@ from .base_checker import BaseChecker
 
 class RelationshipStateChecker(BaseChecker):
     """关系状态突变检测器"""
-    _checker_type = CheckerType.RELATIONSHIP_STATE
 
+    _checker_type = CheckerType.RELATIONSHIP_STATE
 
     # 负面关系词汇（信任度低）
     NEGATIVE_TRUST_WORDS = [
-        "不信任", "怀疑", "警惕", "敌意", "仇恨", "敌视",
-        "不信任他", "不信任她", "不会信任", "无法信任"
+        "不信任",
+        "怀疑",
+        "警惕",
+        "敌意",
+        "仇恨",
+        "敌视",
+        "不信任他",
+        "不信任她",
+        "不会信任",
+        "无法信任",
     ]
 
     # 正面关系词汇（信任度高）
-    POSITIVE_TRUST_WORDS = [
-        "信任", "相信", "托付", "依赖",
-        "信任他", "信任她", "信任你", "深信不疑"
-    ]
+    POSITIVE_TRUST_WORDS = ["信任", "相信", "托付", "依赖", "信任他", "信任她", "信任你", "深信不疑"]
 
     # 负面情感词汇
     NEGATIVE_EMOTIONAL_WORDS = [
-        "讨厌", "憎恨", "厌恶", "痛恨", "厌恶地",
-        "讨厌他", "讨厌她", "憎恨他", "憎恨她"
+        "讨厌",
+        "憎恨",
+        "厌恶",
+        "痛恨",
+        "厌恶地",
+        "讨厌他",
+        "讨厌她",
+        "憎恨他",
+        "憎恨她",
     ]
 
     # 正面情感词汇
-    POSITIVE_EMOTIONAL_WORDS = [
-        "喜欢", "爱", "关心", "在乎",
-        "喜欢他", "喜欢她", "深爱", "爱她", "爱他"
-    ]
+    POSITIVE_EMOTIONAL_WORDS = ["喜欢", "爱", "关心", "在乎", "喜欢他", "喜欢她", "深爱", "爱她", "爱他"]
 
     # 过渡词（关系变化前的铺垫）
     TRANSITION_WORDS = [
-        "经过", "几天后", "一个月后", "最终", "慢慢",
-        "渐渐地", "终于", "逐渐", "多次", "生死考验",
-        "渐渐地", "慢慢地", "随着时间", "日复一日",
-        "从那以后", "此后", "后来", "一段时间后"
+        "经过",
+        "几天后",
+        "一个月后",
+        "最终",
+        "慢慢",
+        "渐渐地",
+        "终于",
+        "逐渐",
+        "多次",
+        "生死考验",
+        "渐渐地",
+        "慢慢地",
+        "随着时间",
+        "日复一日",
+        "从那以后",
+        "此后",
+        "后来",
+        "一段时间后",
     ]
 
     # 突变关键词（表示关系突然变化）
@@ -68,10 +91,7 @@ class RelationshipStateChecker(BaseChecker):
         super().__init__(self._checker_type)
 
     def check(
-        self,
-        chapter_content: str,
-        chapter_num: int,
-        context: Optional[Dict[str, Any]] = None
+        self, chapter_content: str, chapter_num: int, context: Optional[Dict[str, Any]] = None
     ) -> List[Issue]:
         """
         检测章节中的关系状态突变
@@ -96,11 +116,7 @@ class RelationshipStateChecker(BaseChecker):
 
         return issues
 
-    def _check_trust_state_change(
-        self,
-        chapter_content: str,
-        chapter_num: int
-    ) -> List[Issue]:
+    def _check_trust_state_change(self, chapter_content: str, chapter_num: int) -> List[Issue]:
         """检测信任状态突变"""
         issues = []
 
@@ -113,20 +129,18 @@ class RelationshipStateChecker(BaseChecker):
             # 检查是否有过渡词
             has_transition = self._has_transition_word(chapter_content)
             if not has_transition:
-                issues.append(self._create_issue(
-                    change_type="trust",
-                    evidence=f"负面信任词{negative_count}个, 正面信任词{positive_count}个",
-                    chapter_num=chapter_num,
-                    description="信任关系发生剧烈变化但无过渡描述"
-                ))
+                issues.append(
+                    self._create_issue(
+                        change_type="trust",
+                        evidence=f"负面信任词{negative_count}个, 正面信任词{positive_count}个",
+                        chapter_num=chapter_num,
+                        description="信任关系发生剧烈变化但无过渡描述",
+                    )
+                )
 
         return issues
 
-    def _check_emotional_state_change(
-        self,
-        chapter_content: str,
-        chapter_num: int
-    ) -> List[Issue]:
+    def _check_emotional_state_change(self, chapter_content: str, chapter_num: int) -> List[Issue]:
         """检测情感状态突变"""
         issues = []
 
@@ -139,12 +153,14 @@ class RelationshipStateChecker(BaseChecker):
             # 检查是否有过渡词
             has_transition = self._has_transition_word(chapter_content)
             if not has_transition:
-                issues.append(self._create_issue(
-                    change_type="emotional",
-                    evidence=f"负面情感词{negative_count}个, 正面情感词{positive_count}个",
-                    chapter_num=chapter_num,
-                    description="情感关系发生剧烈变化但无过渡描述"
-                ))
+                issues.append(
+                    self._create_issue(
+                        change_type="emotional",
+                        evidence=f"负面情感词{negative_count}个, 正面情感词{positive_count}个",
+                        chapter_num=chapter_num,
+                        description="情感关系发生剧烈变化但无过渡描述",
+                    )
+                )
 
         return issues
 
@@ -172,11 +188,7 @@ class RelationshipStateChecker(BaseChecker):
         return False
 
     def _create_issue(
-        self,
-        change_type: str,
-        evidence: str,
-        chapter_num: int,
-        description: str = ""
+        self, change_type: str, evidence: str, chapter_num: int, description: str = ""
     ) -> Issue:
         """创建Issue"""
         return Issue(
@@ -188,7 +200,7 @@ class RelationshipStateChecker(BaseChecker):
             description=description or "关系发生剧烈变化但无过渡描述",
             location=IssueLocation(chapter=chapter_num),
             evidence=f"证据: {evidence}",
-            suggestion="需要加入过渡描述（如：经过、几天后、终于、渐渐地等）来说明关系是如何变化的"
+            suggestion="需要加入过渡描述（如：经过、几天后、终于、渐渐地等）来说明关系是如何变化的",
         )
 
     def check_realtime(self, text: str, **kwargs) -> List[Issue]:
@@ -206,8 +218,7 @@ class RelationshipStateChecker(BaseChecker):
         positive_emotional = self._count_words(text, self.POSITIVE_EMOTIONAL_WORDS)
 
         # 如果同时出现正负两面词，且有过渡词，则可能有问题
-        if (negative_trust > 0 and positive_trust > 0) or \
-           (negative_emotional > 0 and positive_emotional > 0):
+        if (negative_trust > 0 and positive_trust > 0) or (negative_emotional > 0 and positive_emotional > 0):
             if not self._has_transition_word(text):
                 # 可能存在关系突变
                 pass  # 实时检查不创建Issue，仅记录

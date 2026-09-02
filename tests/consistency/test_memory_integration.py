@@ -24,9 +24,12 @@ from lingwen_quality.consistency.engine.data_structures import CheckScope, Consi
 class MockMemoryGateway:
     """模拟记忆网关"""
 
-    def __init__(self, character_states: Dict[str, Dict[str, Any]] = None,
-                 pending_foreshadows: Dict[str, Dict[str, Any]] = None,
-                 similar_segments: List[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        character_states: Dict[str, Dict[str, Any]] = None,
+        pending_foreshadows: Dict[str, Dict[str, Any]] = None,
+        similar_segments: List[Dict[str, Any]] = None,
+    ):
         """
         初始化模拟记忆网关
 
@@ -43,7 +46,7 @@ class MockMemoryGateway:
             "character_states": self._character_states,
             "pending_foreshadows": self._pending_foreshadows,
             "recent_events": [],
-            "related_segments": self._similar_segments
+            "related_segments": self._similar_segments,
         }
 
     def get_all_characters(self) -> Dict[str, Dict[str, Any]]:
@@ -64,8 +67,9 @@ class MockMemoryGateway:
         ctx["chapter"] = chapter_num
         return ctx
 
-    def query(self, query: str, scope: str = "all",
-              top_k: int = 5, filters: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+    def query(
+        self, query: str, scope: str = "all", top_k: int = 5, filters: Dict[str, Any] = None
+    ) -> List[Dict[str, Any]]:
         """查询相似段落"""
         return self._similar_segments[:top_k]
 
@@ -99,14 +103,14 @@ class TestCharacterStateHistory:
                 "current_location": "王宫",
                 "current_form": "人形",
                 "alive": True,
-                "emotion_state": "平静"
+                "emotion_state": "平静",
             },
             "李明": {
                 "current_location": "废墟",
                 "current_form": "受伤状态",
                 "alive": True,
-                "emotion_state": "焦虑"
-            }
+                "emotion_state": "焦虑",
+            },
         }
 
         mock_gateway = MockMemoryGateway(character_states=character_states)
@@ -129,12 +133,7 @@ class TestCharacterStateHistory:
 
     def test_character_state_in_context_enrichment(self):
         """测试角色状态在上下文丰富时被包含"""
-        character_states = {
-            "林夜": {
-                "current_location": "王宫",
-                "alive": True
-            }
-        }
+        character_states = {"林夜": {"current_location": "王宫", "alive": True}}
 
         mock_gateway = MockMemoryGateway(character_states=character_states)
         engine = ConsistencyEngine(memory_gateway=mock_gateway)
@@ -143,9 +142,7 @@ class TestCharacterStateHistory:
         context = {}
 
         enriched = engine._enrich_context_from_memory(
-            chapter_num=25,
-            chapter_content=content,
-            context=context
+            chapter_num=25, chapter_content=content, context=context
         )
 
         assert "character_states" in enriched
@@ -161,7 +158,7 @@ class TestSimilarPlotRetrieval:
         similar_segments = [
             {"text": "林夜与敌人在山崖激战", "chapter": 10, "score": 0.95},
             {"text": "林夜使用新能力击败对手", "chapter": 15, "score": 0.88},
-            {"text": "山崖上的最终对决", "chapter": 20, "score": 0.82}
+            {"text": "山崖上的最终对决", "chapter": 20, "score": 0.82},
         ]
 
         mock_gateway = MockMemoryGateway(similar_segments=similar_segments)
@@ -174,9 +171,7 @@ class TestSimilarPlotRetrieval:
 
     def test_similar_plots_in_context_enrichment(self):
         """测试相似情节在上下文丰富时被包含"""
-        similar_segments = [
-            {"text": "林夜在山崖上战斗", "chapter": 10, "score": 0.9}
-        ]
+        similar_segments = [{"text": "林夜在山崖上战斗", "chapter": 10, "score": 0.9}]
 
         mock_gateway = MockMemoryGateway(similar_segments=similar_segments)
         engine = ConsistencyEngine(memory_gateway=mock_gateway)
@@ -185,9 +180,7 @@ class TestSimilarPlotRetrieval:
         context = {}
 
         enriched = engine._enrich_context_from_memory(
-            chapter_num=25,
-            chapter_content=content,
-            context=context
+            chapter_num=25, chapter_content=content, context=context
         )
 
         assert "similar_segments" in enriched
@@ -225,9 +218,7 @@ class TestContextEnrichment:
         context = {"existing_key": "value"}
 
         enriched = engine._enrich_context_from_memory(
-            chapter_num=25,
-            chapter_content=content,
-            context=context
+            chapter_num=25, chapter_content=content, context=context
         )
 
         assert enriched == context
@@ -238,8 +229,7 @@ class TestContextEnrichment:
         pending_foreshadows = {"fp_001": {"title": "神秘剑客", "status": "pending"}}
 
         mock_gateway = MockMemoryGateway(
-            character_states=character_states,
-            pending_foreshadows=pending_foreshadows
+            character_states=character_states, pending_foreshadows=pending_foreshadows
         )
         engine = ConsistencyEngine(memory_gateway=mock_gateway)
 
@@ -247,9 +237,7 @@ class TestContextEnrichment:
         context = {}
 
         enriched = engine._enrich_context_from_memory(
-            chapter_num=25,
-            chapter_content=content,
-            context=context
+            chapter_num=25, chapter_content=content, context=context
         )
 
         assert "character_states" in enriched
@@ -258,19 +246,14 @@ class TestContextEnrichment:
 
     def test_check_chapter_enriches_context(self):
         """测试 check_chapter 自动丰富上下文"""
-        character_states = {
-            "林夜": {"current_location": "王宫", "alive": True}
-        }
+        character_states = {"林夜": {"current_location": "王宫", "alive": True}}
 
         mock_gateway = MockMemoryGateway(character_states=character_states)
         engine = ConsistencyEngine(memory_gateway=mock_gateway)
 
         content = "林夜站在宫殿门口，眺望着远方。"
 
-        report = engine.check_chapter(
-            chapter_num=25,
-            chapter_content=content
-        )
+        report = engine.check_chapter(chapter_num=25, chapter_content=content)
 
         assert report is not None
         assert isinstance(report, ConsistencyReport)
@@ -283,12 +266,7 @@ class TestMemoryIntegrationWithCheckers:
 
     def test_character_checker_receives_character_states(self):
         """测试角色检查器接收到角色状态"""
-        character_states = {
-            "林夜": {
-                "current_location": "王宫",
-                "personality_tags": ["冷静"]
-            }
-        }
+        character_states = {"林夜": {"current_location": "王宫", "personality_tags": ["冷静"]}}
 
         mock_gateway = MockMemoryGateway(character_states=character_states)
         engine = ConsistencyEngine(memory_gateway=mock_gateway)
@@ -296,35 +274,21 @@ class TestMemoryIntegrationWithCheckers:
         content = "林夜在宫殿中冷静地思考着下一步行动。"
 
         # 直接测试上下文丰富
-        enriched = engine._enrich_context_from_memory(
-            chapter_num=25,
-            chapter_content=content,
-            context={}
-        )
+        enriched = engine._enrich_context_from_memory(chapter_num=25, chapter_content=content, context={})
 
         assert "character_states" in enriched
         assert enriched["character_states"]["林夜"]["current_location"] == "王宫"
 
     def test_foreshadow_checker_receives_pending_foreshadows(self):
         """测试伏笔检查器接收到待回收伏笔"""
-        pending_foreshadows = {
-            "fp_001": {
-                "title": "神秘剑客",
-                "planted_chapter": 3,
-                "status": "pending"
-            }
-        }
+        pending_foreshadows = {"fp_001": {"title": "神秘剑客", "planted_chapter": 3, "status": "pending"}}
 
         mock_gateway = MockMemoryGateway(pending_foreshadows=pending_foreshadows)
         engine = ConsistencyEngine(memory_gateway=mock_gateway)
 
         content = "远处传来一阵神秘的声音。"
 
-        enriched = engine._enrich_context_from_memory(
-            chapter_num=25,
-            chapter_content=content,
-            context={}
-        )
+        enriched = engine._enrich_context_from_memory(chapter_num=25, chapter_content=content, context={})
 
         assert "pending_foreshadows" in enriched
         assert "fp_001" in enriched["pending_foreshadows"]

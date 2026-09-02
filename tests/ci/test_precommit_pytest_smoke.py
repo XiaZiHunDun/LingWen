@@ -1,4 +1,5 @@
 """Phase 9.58 F49: pre-commit backend pytest smoke contract tests."""
+
 from __future__ import annotations
 
 import subprocess
@@ -7,9 +8,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 NOVEL_FACTORY = REPO_ROOT
-PRE_COMMIT_HOOK = (
-    NOVEL_FACTORY / "dashboard" / "frontend" / ".husky" / "pre-commit"
-)
+PRE_COMMIT_HOOK = NOVEL_FACTORY / "dashboard" / "frontend" / ".husky" / "pre-commit"
 
 # Keep in sync with .husky/pre-commit smoke subset (~30s budget).
 SMOKE_PYTEST_ARGS = [

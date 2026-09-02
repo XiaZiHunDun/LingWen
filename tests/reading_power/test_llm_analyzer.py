@@ -121,10 +121,7 @@ def test_analyze_segments_limit():
     service.completion.return_value = response
 
     # Create more than 10 segments
-    segments = [
-        SuspectedSegment("hook", f"钩子{i}", f"内容{i}...", 0.8, "结尾", i * 10)
-        for i in range(15)
-    ]
+    segments = [SuspectedSegment("hook", f"钩子{i}", f"内容{i}...", 0.8, "结尾", i * 10) for i in range(15)]
 
     analyzer = LLMAnalyzer(service)
     result = analyzer.analyze(segments, "章节文本")

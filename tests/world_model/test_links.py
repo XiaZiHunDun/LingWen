@@ -14,6 +14,7 @@ Doc 1 §3.4 + Doc 3 联动:
 - subplot 已 CLOSED/ABANDONED → 跳过 (幂等)
 - CLOSING_MIN_CHAPTERS = 2: apply 时需 current_ch + 2 <= close_ch
 """
+
 from __future__ import annotations
 
 from dataclasses import replace
@@ -36,6 +37,7 @@ from infra.world_model.links import (
 from infra.world_model.registry import RippleNotFoundError, RippleRegistry
 
 # === Helpers ===
+
 
 def _plot(
     plot_id: str,
@@ -66,6 +68,7 @@ def _ripple(ripple_id: str, state: RippleState = RippleState.RESOLVED) -> Ripple
 
 
 # === TestLinkSubplotToRipple ===
+
 
 class TestLinkSubplotToRipple:
     """link_subplot_to_ripple: 加入 ripple_id 到 related_ripples (idempotent)"""
@@ -98,6 +101,7 @@ class TestLinkSubplotToRipple:
 
 # === TestApplyRippleResolution ===
 
+
 class TestApplyRippleResolution:
     """apply_ripple_resolution: 涟漪 RESOLVED 时联动 subplot (ACTIVE → CLOSING)"""
 
@@ -107,9 +111,7 @@ class TestApplyRippleResolution:
         rreg.add_ripple(_ripple("r1", RippleState.RESOLVED))
         sreg.add_plot(_plot("p1", status=PlotStatus.ACTIVE, related=("r1",)))
 
-        actions = apply_ripple_resolution(
-            rreg, sreg, "r1", current_ch=100, auto_close=True
-        )
+        actions = apply_ripple_resolution(rreg, sreg, "r1", current_ch=100, auto_close=True)
         assert len(actions) == 1
         a = actions[0]
         assert a.plot_id == "p1"
@@ -129,9 +131,7 @@ class TestApplyRippleResolution:
         rreg.add_ripple(_ripple("r1", RippleState.RESOLVED))
         sreg.add_plot(_plot("p1", status=PlotStatus.CLOSED, related=("r1",)))
 
-        actions = apply_ripple_resolution(
-            rreg, sreg, "r1", current_ch=200, auto_close=True
-        )
+        actions = apply_ripple_resolution(rreg, sreg, "r1", current_ch=200, auto_close=True)
         assert actions == ()  # 无 LinkAction
         # 状态不变
         p1 = sreg.get_plot("p1")
@@ -145,9 +145,7 @@ class TestApplyRippleResolution:
         rreg.add_ripple(_ripple("r1", RippleState.RESOLVED))
         sreg.add_plot(_plot("p1", status=PlotStatus.ACTIVE, related=("r1",)))
 
-        actions = apply_ripple_resolution(
-            rreg, sreg, "r1", current_ch=100, auto_close=False
-        )
+        actions = apply_ripple_resolution(rreg, sreg, "r1", current_ch=100, auto_close=False)
         # 仍返回 1 个 LinkAction (记录会改),但 registry 不动
         assert len(actions) == 1
         assert actions[0].to_status == PlotStatus.CLOSING
@@ -161,9 +159,7 @@ class TestApplyRippleResolution:
         sreg = PlotRegistry(base_dir=tmp_path / "subplots")
         # r1 未注册
         with pytest.raises(RippleNotFoundError):
-            apply_ripple_resolution(
-                rreg, sreg, "ghost", current_ch=100, auto_close=True
-            )
+            apply_ripple_resolution(rreg, sreg, "ghost", current_ch=100, auto_close=True)
 
     def test_multiple_subplots_for_one_ripple(self, tmp_path):
         """1 个 ripple 关联 3 subplot → 3 个 LinkAction"""
@@ -176,9 +172,7 @@ class TestApplyRippleResolution:
         # p4 不关联 r1
         sreg.add_plot(_plot("p4", related=("r_other",)))
 
-        actions = apply_ripple_resolution(
-            rreg, sreg, "r1", current_ch=100, auto_close=True
-        )
+        actions = apply_ripple_resolution(rreg, sreg, "r1", current_ch=100, auto_close=True)
         assert len(actions) == 3
         plot_ids = {a.plot_id for a in actions}
         assert plot_ids == {"p1", "p2", "p3"}
@@ -190,9 +184,7 @@ class TestApplyRippleResolution:
         rreg.add_ripple(_ripple("r1", RippleState.RESOLVED))
         sreg.add_plot(_plot("p1", status=PlotStatus.PAUSED, related=("r1",)))
 
-        actions = apply_ripple_resolution(
-            rreg, sreg, "r1", current_ch=100, auto_close=True
-        )
+        actions = apply_ripple_resolution(rreg, sreg, "r1", current_ch=100, auto_close=True)
         # PAUSED → CLOSING 不是合法转换
         # 应返回空 actions (跳过非法转换)
         assert actions == ()
@@ -202,6 +194,7 @@ class TestApplyRippleResolution:
 
 
 # === TestLinkActionDataclass ===
+
 
 class TestLinkActionDataclass:
     """LinkAction 不可变 + 字段语义"""
@@ -231,6 +224,7 @@ class TestLinkActionDataclass:
 
 # === TestProtocolDecoupling ===
 
+
 class TestProtocolDecoupling:
     """apply_ripple_resolution 接受 Protocol (不是具体类型)"""
 
@@ -255,9 +249,7 @@ class TestProtocolDecoupling:
                 return plots[plot_id]
 
         stub = StubSubplotReg()
-        actions = apply_ripple_resolution(
-            rreg, stub, "r1", current_ch=100, auto_close=True
-        )
+        actions = apply_ripple_resolution(rreg, stub, "r1", current_ch=100, auto_close=True)
         assert len(actions) == 1
         assert actions[0].to_status == PlotStatus.CLOSING
         # 状态机更新反映在 stub
@@ -265,6 +257,7 @@ class TestProtocolDecoupling:
 
 
 # === TestImportContract ===
+
 
 class TestImportContract:
     """Public API 完整性:所有 2.3 符号从顶层可导入"""
@@ -275,6 +268,7 @@ class TestImportContract:
             apply_ripple_resolution,
             link_subplot_to_ripple,
         )
+
         assert LinkAction is not None
         assert callable(link_subplot_to_ripple)
         assert callable(apply_ripple_resolution)

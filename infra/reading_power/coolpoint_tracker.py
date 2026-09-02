@@ -26,9 +26,7 @@ class CoolPointTracker:
         """
         for cp in coolpoints:
             combo_str = (
-                json.dumps(cp.get("combo_with", []), ensure_ascii=False)
-                if cp.get("combo_with")
-                else "[]"
+                json.dumps(cp.get("combo_with", []), ensure_ascii=False) if cp.get("combo_with") else "[]"
             )
 
             self.db.save_coolpoint(

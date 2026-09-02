@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import Any, Callable, Generic, Optional, TypeVar, Union
 
-T = TypeVar('T')
-E = TypeVar('E')
-U = TypeVar('U')
+T = TypeVar("T")
+E = TypeVar("E")
+U = TypeVar("U")
 
 
 class Ok(Generic[T]):
-    __match_args__ = ('value',)
+    __match_args__ = ("value",)
 
     def __init__(self, value: T) -> None:
         self._value = value
@@ -23,16 +23,16 @@ class Ok(Generic[T]):
     def is_err(self) -> bool:
         return False
 
-    def map(self, f: Callable[[T], U]) -> 'Result[U, E]':
+    def map(self, f: Callable[[T], U]) -> "Result[U, E]":
         try:
             return Ok(f(self._value))
         except Exception as e:
             return Err(e)
 
-    def map_err(self, f: Callable[[Any], Any]) -> 'Result[T, Any]':
+    def map_err(self, f: Callable[[Any], Any]) -> "Result[T, Any]":
         return Ok(self._value)
 
-    def flat_map(self, f: Callable[[T], 'Result[U, E]']) -> 'Result[U, E]':
+    def flat_map(self, f: Callable[[T], "Result[U, E]"]) -> "Result[U, E]":
         try:
             return f(self._value)
         except Exception as e:
@@ -54,7 +54,7 @@ class Ok(Generic[T]):
         return self._value
 
     def __repr__(self) -> str:
-        return f'Ok({self._value!r})'
+        return f"Ok({self._value!r})"
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Ok):
@@ -66,7 +66,7 @@ class Ok(Generic[T]):
 
 
 class Err(Generic[E]):
-    __match_args__ = ('error',)
+    __match_args__ = ("error",)
 
     def __init__(self, error: E) -> None:
         self._error = error
@@ -81,16 +81,16 @@ class Err(Generic[E]):
     def is_err(self) -> bool:
         return True
 
-    def map(self, f: Callable[[Any], Any]) -> 'Result[Any, E]':
+    def map(self, f: Callable[[Any], Any]) -> "Result[Any, E]":
         return Err(self._error)
 
-    def map_err(self, f: Callable[[E], Any]) -> 'Result[Any, Any]':
+    def map_err(self, f: Callable[[E], Any]) -> "Result[Any, Any]":
         try:
             return Err(f(self._error))
         except Exception as e:
             return Err(e)
 
-    def flat_map(self, f: Callable[[Any], 'Result[Any, Any]']) -> 'Result[Any, E]':
+    def flat_map(self, f: Callable[[Any], "Result[Any, Any]"]) -> "Result[Any, E]":
         return Err(self._error)
 
     def or_else(self, f: Callable[[E], T]) -> T:
@@ -100,7 +100,7 @@ class Err(Generic[E]):
             raise e
 
     def unwrap(self) -> T:
-        raise ValueError(f'Cannot unwrap Err: {self._error}')
+        raise ValueError(f"Cannot unwrap Err: {self._error}")
 
     def unwrap_or(self, default: T) -> T:
         return default
@@ -112,10 +112,10 @@ class Err(Generic[E]):
             raise e
 
     def expect(self, msg: str) -> T:
-        raise ValueError(f'{msg}: {self._error}')
+        raise ValueError(f"{msg}: {self._error}")
 
     def __repr__(self) -> str:
-        return f'Err({self._error!r})'
+        return f"Err({self._error!r})"
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Err):
@@ -143,6 +143,7 @@ def wrap(f: Callable[..., T]) -> Callable[..., Result[T, Exception]]:
             return Ok(f(*args, **kwargs))
         except Exception as e:
             return Err(e)
+
     return wrapper
 
 

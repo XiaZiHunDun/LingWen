@@ -2,6 +2,7 @@
 
 Mirrors lines 78-210 of the original infra/cli/commands.py.
 """
+
 from typing import List, Optional
 
 from lingwen_creator.shared.check import apply_creator_check_defaults, format_check_mode_banner
@@ -22,10 +23,7 @@ def _issues_meet_fail_threshold(issues, fail_severity: Optional[str]) -> bool:
     threshold = _SEVERITY_RANK.get(fail_severity.upper())
     if threshold is None:
         return True
-    return any(
-        _SEVERITY_RANK.get(issue.severity.value, 99) <= threshold
-        for issue in issues
-    )
+    return any(_SEVERITY_RANK.get(issue.severity.value, 99) <= threshold for issue in issues)
 
 
 class CheckCommand(Command):
@@ -58,7 +56,9 @@ class CheckCommand(Command):
         print(f"检查命令 | 范围: {summary}")
         print(f"模式: {format_check_mode_banner(config, settings)}")
         if llm_requested and not settings.run_llm_judge:
-            print("[提示] 当前创作模式默认关闭 LLM 检查；工作室模式请用 --creation-mode studio 或显式改 project.yaml")
+            print(
+                "[提示] 当前创作模式默认关闭 LLM 检查；工作室模式请用 --creation-mode studio 或显式改 project.yaml"
+            )
         print(f"选项: quick={options.quick}, full={options.full}, llm={options.llm}")
         if options.fail_severity:
             print(f"失败门槛: {options.fail_severity} 及以上")
@@ -83,6 +83,7 @@ class CheckCommand(Command):
             checker = QuickChecker()
             # QuickChecker.run() is async, we run it synchronously for CLI
             import asyncio
+
             asyncio.run(self._run_quick_check_async(checker, chapters))
 
             return 0
@@ -117,7 +118,7 @@ class CheckCommand(Command):
 
         # 1. 运行一致性引擎
         engine = ConsistencyEngine()
-        for ch in chapters[:options.limit]:  # Apply limit
+        for ch in chapters[: options.limit]:  # Apply limit
             content = self.paths.read_chapter(ch)
             if content:
                 result = engine.check_chapter(ch, content, scope=CheckScope.ALL)
@@ -132,7 +133,7 @@ class CheckCommand(Command):
 
         new_issues_count = 0
         for checker_name, checker_instance in new_checkers:
-            for ch in chapters[:options.limit]:  # Apply limit
+            for ch in chapters[: options.limit]:  # Apply limit
                 content = self.paths.read_chapter(ch)
                 if content:
                     ch_issues = checker_instance.check(content, ch)
@@ -170,7 +171,7 @@ class CheckCommand(Command):
             checker = LLMQualityChecker()
 
             # Run for limited chapters in CLI mode
-            for ch in chapters[:options.limit]:  # Use limit from options
+            for ch in chapters[: options.limit]:  # Use limit from options
                 issues = checker.check(ch)
                 print(f"ch{ch:03d}: 发现 {len(issues)} 个问题")
 

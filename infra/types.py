@@ -23,17 +23,19 @@ from typing import Any, Dict, Generic, Optional, Type, TypeVar, Union
 
 from infra.errors import BaseError, ValidationError
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class NewtypeError(BaseError):
     """Newtype 错误"""
+
     __error_name__ = "NewtypeError"
     __error_tags__ = ["newtype"]
 
 
 class NewtypeValidationError(ValidationError):
     """Newtype 验证错误"""
+
     __error_name__ = "NewtypeValidationError"
     __error_tags__ = ["newtype", "validation"]
 
@@ -84,7 +86,7 @@ class Newtype(Generic[T]):
             NewtypeValidationError: 验证失败
         """
         # 默认验证：检查类型
-        expected_type = getattr(self.__class__, '__type__', object)
+        expected_type = getattr(self.__class__, "__type__", object)
         if expected_type is not object and not isinstance(value, expected_type):
             raise NewtypeValidationError(
                 f"Expected {expected_type.__name__}, got {type(value).__name__}",
@@ -123,7 +125,7 @@ class Newtype(Generic[T]):
         return self._value
 
     @classmethod
-    def make(cls, value: T) -> 'Newtype[T]':
+    def make(cls, value: T) -> "Newtype[T]":
         """
         创建实例（工厂方法）
 
@@ -136,7 +138,7 @@ class Newtype(Generic[T]):
         return cls(value)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Newtype[T]':
+    def from_dict(cls, data: Dict[str, Any]) -> "Newtype[T]":
         """
         从字典创建实例
 
@@ -149,7 +151,7 @@ class Newtype(Generic[T]):
         return cls(data["value"])
 
     @classmethod
-    def from_json(cls, data: Any) -> 'Newtype[T]':
+    def from_json(cls, data: Any) -> "Newtype[T]":
         """
         从 JSON 创建实例
 
@@ -170,6 +172,7 @@ class StringID(Newtype[str]):
         class UserID(StringID):
             pass
     """
+
     __type__ = str
 
 
@@ -183,8 +186,9 @@ class UUIDID(StringID):
     def _validate(self, value: str) -> None:
         super()._validate(value)
         import re
+
         uuid_pattern = re.compile(
-            r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+            r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
         )
         if not uuid_pattern.match(value):
             raise NewtypeValidationError(f"Invalid UUID format: {value}")
@@ -198,6 +202,7 @@ class IntegerID(Newtype[int]):
         class OrderID(IntegerID):
             pass
     """
+
     __type__ = int
 
 
@@ -220,6 +225,7 @@ class NonEmptyString(Newtype[str]):
 
     验证字符串不为空。
     """
+
     __type__ = str
 
     def _validate(self, value: str) -> None:
@@ -238,7 +244,8 @@ class Email(NonEmptyString):
     def _validate(self, value: str) -> None:
         super()._validate(value)
         import re
-        email_pattern = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+
+        email_pattern = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
         if not email_pattern.match(value):
             raise NewtypeValidationError(f"Invalid email format: {value}")
 
@@ -253,9 +260,8 @@ class URL(NonEmptyString):
     def _validate(self, value: str) -> None:
         super()._validate(value)
         import re
-        url_pattern = re.compile(
-            r'^https?://[^\s]+$'
-        )
+
+        url_pattern = re.compile(r"^https?://[^\s]+$")
         if not url_pattern.match(value):
             raise NewtypeValidationError(f"Invalid URL format: {value}")
 
@@ -263,36 +269,43 @@ class URL(NonEmptyString):
 # 常用 ID 类型
 class SessionID(UUIDID):
     """会话 ID"""
+
     pass
 
 
 class UserID(UUIDID):
     """用户 ID"""
+
     pass
 
 
 class ProjectID(UUIDID):
     """项目 ID"""
+
     pass
 
 
 class WorkspaceID(UUIDID):
     """工作区 ID"""
+
     pass
 
 
 class DocumentID(UUIDID):
     """文档 ID"""
+
     pass
 
 
 class ToolID(StringID):
     """工具 ID"""
+
     pass
 
 
 class ModelID(StringID):
     """模型 ID"""
+
     pass
 
 

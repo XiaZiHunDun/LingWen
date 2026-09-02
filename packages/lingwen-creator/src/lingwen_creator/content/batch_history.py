@@ -2,6 +2,7 @@
 
 Migrated from infra/creator_batch_history.py in Phase 126 v16.2.4.
 """
+
 from __future__ import annotations
 
 from typing import Any

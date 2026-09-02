@@ -16,6 +16,7 @@ shapes are runtime-defined; ``context`` / resolution / reason fields are
 ``Optional[str]`` / ``Optional[dict[str, Any]]`` to permit nulls.
 Resolving backend re-export from lingwen-shared is v16.5 #N.8+ carryover.
 """
+
 from __future__ import annotations
 
 from typing import Any, Optional

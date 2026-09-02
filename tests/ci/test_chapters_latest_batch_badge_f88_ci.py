@@ -1,4 +1,5 @@
 """Phase 9.97 F88: CI contract — ChaptersPage latest batch badge."""
+
 from __future__ import annotations
 
 from pathlib import Path

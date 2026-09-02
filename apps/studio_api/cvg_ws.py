@@ -8,6 +8,7 @@ Mirror dashboard/ws.py::ConnectionManager 1:1, 专用 CVG 实时推送 (跟 /api
 - ripple_status_changed: apply/reject 状态变化
 - pong: heartbeat reply (跟 /api/ws/workflows 1:1, client send ping)
 """
+
 from __future__ import annotations
 
 import asyncio

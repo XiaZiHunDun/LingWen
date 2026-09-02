@@ -1,4 +1,5 @@
 """Phase 9.73 F65: CI contract — production pilot module + runbook §12."""
+
 from __future__ import annotations
 
 from pathlib import Path

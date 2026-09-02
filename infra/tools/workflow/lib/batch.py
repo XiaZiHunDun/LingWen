@@ -1,4 +1,5 @@
 """批量任务分发 - 作家/审核员循环分配"""
+
 from typing import Dict, List
 
 from .tasks import dispatch_task
@@ -15,7 +16,7 @@ def batch_dispatch_writer(chapters: List[str], writers: List[str] = None) -> Dic
         {chapter: task_id} 映射
     """
     if writers is None:
-        writers = [chr(ord('a') + i) for i in range(10)]  # a-j
+        writers = [chr(ord("a") + i) for i in range(10)]  # a-j
 
     results = {}
     for i, ch in enumerate(chapters):
@@ -37,7 +38,7 @@ def batch_dispatch_reviewer(chapters: List[str], reviewers: List[str] = None) ->
         {chapter: task_id} 映射
     """
     if reviewers is None:
-        reviewers = [chr(ord('a') + i) for i in range(5)]  # a-e
+        reviewers = [chr(ord("a") + i) for i in range(5)]  # a-e
 
     results = {}
     for i, ch in enumerate(chapters):

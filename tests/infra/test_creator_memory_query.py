@@ -1,4 +1,5 @@
 """Tests for creator_memory_query."""
+
 from __future__ import annotations
 
 from lingwen_creator.memory.query import creator_memory_query

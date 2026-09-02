@@ -11,6 +11,7 @@ Doc 1 §3.4 + Doc 4 联动:伏笔检测器对齐 Ripple 状态机。
 
 Protocol 抽象 ripple_registry
 """
+
 from __future__ import annotations
 
 from typing import Optional, Protocol
@@ -28,6 +29,7 @@ from infra.world_model.lifecycle import RESOLUTION_GRACE_CH
 from infra.world_model.registry import RippleRegistry
 
 # === Helpers ===
+
 
 class _RippleRegistryLike(Protocol):
     def list_all(self) -> tuple[Ripple, ...]: ...
@@ -53,6 +55,7 @@ def _ripple(
 
 # === TestEmptyCases ===
 
+
 class TestEmptyCases:
     """0 ripple → 无 issue"""
 
@@ -71,6 +74,7 @@ class TestEmptyCases:
 
 
 # === TestOverdueDetection ===
+
 
 class TestOverdueDetection:
     """OPEN/PROPAGATING/RESOLVING + planned 超期 → P1"""
@@ -110,6 +114,7 @@ class TestOverdueDetection:
 
 # === TestPlannedMissing ===
 
+
 class TestPlannedMissing:
     """OPEN 状态 + planned_resolve_ch is None → P3 (warning)"""
 
@@ -130,6 +135,7 @@ class TestPlannedMissing:
 
 
 # === TestResolvedRecent ===
+
 
 class TestResolvedRecent:
     """RESOLVED 状态 + resolved_ch 在范围 → 无 issue"""
@@ -152,6 +158,7 @@ class TestResolvedRecent:
 
 # === TestMultipleIssues ===
 
+
 class TestMultipleIssues:
     """混合场景"""
 
@@ -169,6 +176,7 @@ class TestMultipleIssues:
 
 
 # === TestProtocolDecoupling ===
+
 
 class TestProtocolDecoupling:
     """最小 stub registry 也能用"""
@@ -190,6 +198,7 @@ class TestProtocolDecoupling:
 
 
 # === TestConstants ===
+
 
 class TestConstants:
     """验证 grace 常量正确"""

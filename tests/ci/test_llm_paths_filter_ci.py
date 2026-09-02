@@ -1,4 +1,5 @@
 """Phase 12.10: LLM golden primary path-filter (Option D active)."""
+
 from __future__ import annotations
 
 from pathlib import Path

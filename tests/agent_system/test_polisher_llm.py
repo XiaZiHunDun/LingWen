@@ -6,6 +6,7 @@
 - 默认 reader_id='A' + 可选切换
 - 保留 remove_ai_gloss / apply_style_guide 规则方法 (向后兼容)
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional

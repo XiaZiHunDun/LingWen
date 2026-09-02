@@ -9,10 +9,12 @@
 每个 builder 接受 content + reader_id, 返回组装好的 prompt 字符串。
 reader_id 用于个性化 (默认 'A' = 悬念铺设专长读者)。
 """
+
 from typing import Optional
 
 try:
     from .variant_loader import get_variant_loader
+
     VARIANT_LOADER_AVAILABLE = True
 except ImportError:
     VARIANT_LOADER_AVAILABLE = False
@@ -37,9 +39,7 @@ def _load_variant_enhancement(reader_id: str, max_enhancements: int = 3) -> str:
     parts: list[str] = []
     enhancements = variant.get("feedback_preference", {}).get("focus_areas", [])
     if enhancements:
-        parts.append(
-            f"读者 {reader_id} 关注领域: {', '.join(enhancements[:max_enhancements])}"
-        )
+        parts.append(f"读者 {reader_id} 关注领域: {', '.join(enhancements[:max_enhancements])}")
     style = variant.get("style_expertise", {})
     if style:
         primary = style.get("primary", "")
@@ -49,6 +49,7 @@ def _load_variant_enhancement(reader_id: str, max_enhancements: int = 3) -> str:
 
 
 # ==================== Dialogue ====================
+
 
 def build_dialogue_prompt(content: str, reader_id: str = "A") -> str:
     """构建对话优化提示"""
@@ -77,6 +78,7 @@ def get_dialogue_system_prompt(reader_id: str = "A") -> str:
 
 
 # ==================== Pacing ====================
+
 
 def build_pacing_prompt(content: str, reader_id: str = "A") -> str:
     """构建节奏调整提示"""

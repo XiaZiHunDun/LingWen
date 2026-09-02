@@ -2,6 +2,7 @@
 Phase 15.0 T1.3: cross-volume graph (CVG) helpers.
 
 """
+
 from __future__ import annotations
 
 from dataclasses import asdict, is_dataclass
@@ -81,7 +82,9 @@ def _ripple_to_list_item(r: CrossVolumeRipple, storage: RippleStorage) -> Ripple
 
     Phase 9.14: 通过 JOIN reference_nodes + reference_edges 填充 dimension/relationship_type。
     """
-    dimension, relationship_type, source_chapter, target_chapter = _ripple_dimension_and_relationship(r, storage)
+    dimension, relationship_type, source_chapter, target_chapter = _ripple_dimension_and_relationship(
+        r, storage
+    )
     return RippleListItemResponse(
         ripple_id=r.id,
         dimension=dimension,
@@ -134,7 +137,9 @@ def _ripple_to_detail(r: CrossVolumeRipple, storage: RippleStorage) -> RippleDet
 
     Phase 9.14: 通过 JOIN reference_nodes + reference_edges 填充维度和关系类型。
     """
-    dimension, relationship_type, source_chapter, target_chapter = _ripple_dimension_and_relationship(r, storage)
+    dimension, relationship_type, source_chapter, target_chapter = _ripple_dimension_and_relationship(
+        r, storage
+    )
     return RippleDetailResponse(
         ripple_id=r.id,
         dimension=dimension,
@@ -171,6 +176,7 @@ def _audit_to_response(entry: AuditEntry) -> RippleAuditEntryResponse:
 
 # === Phase 9.15 T4: cascade BFS → response helpers (locality: kept near endpoints
 #  they serve; module-level so the create_app closure can reference them) ===
+
 
 def _node_to_dict_for_response(node: Any) -> dict:
     """Phase 9.15 T4: ReferenceNode → dict for CascadeNodeResponse(**).
@@ -223,10 +229,7 @@ def _build_reference_graph_response(
     if truncated:
         nodes = nodes[:limit]
     node_ids = {n.id for n in nodes}
-    visible_edges = [
-        e for e in edges
-        if e.from_node_id in node_ids and e.to_node_id in node_ids
-    ]
+    visible_edges = [e for e in edges if e.from_node_id in node_ids and e.to_node_id in node_ids]
     # Node dicts: storage id/chapter → presentation node_id/chapter_id
     node_dicts = [
         {
@@ -244,9 +247,7 @@ def _build_reference_graph_response(
         {
             "source": d.get("from_node_id") or d.get("source", ""),
             "target": d.get("to_node_id") or d.get("target", ""),
-            "relation": (
-                d.get("relationship_type") or d.get("relation") or "reference"
-            ),
+            "relation": (d.get("relationship_type") or d.get("relation") or "reference"),
             "weight": d.get("weight"),
         }
         for d in (_edge_to_dict_for_response(e) for e in visible_edges)
@@ -310,5 +311,3 @@ def _validate_max_nodes_cap(max_nodes_cap: int | None) -> int:
     if max_nodes_cap < 1 or max_nodes_cap > MAX_NODES_CAP_UPPER:
         raise HTTPException(400, f"max_nodes_cap must be 1..{MAX_NODES_CAP_UPPER}")
     return max_nodes_cap
-
-

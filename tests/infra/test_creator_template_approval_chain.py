@@ -1,4 +1,5 @@
 """Tests for multi-step template version approval chain."""
+
 from __future__ import annotations
 
 import pytest

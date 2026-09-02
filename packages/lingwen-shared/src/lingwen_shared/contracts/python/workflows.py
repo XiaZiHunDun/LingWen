@@ -19,6 +19,7 @@ the runtime dicts into these models at the response boundary.
 uses untyped dicts; presentation DTOs here use ``dict[str, Any]`` for
 backward compat. Resolving backend re-export is v16.5 #N.8+ carryover.
 """
+
 from __future__ import annotations
 
 from typing import Any, Optional

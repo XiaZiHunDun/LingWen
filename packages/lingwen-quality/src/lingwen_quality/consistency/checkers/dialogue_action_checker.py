@@ -24,8 +24,8 @@ from .base_checker import BaseChecker
 
 class DialogueActionChecker(BaseChecker):
     """言行不一检测器 - 检测说A做B的矛盾"""
-    _checker_type = CheckerType.DIALOGUE_ACTION
 
+    _checker_type = CheckerType.DIALOGUE_ACTION
 
     # 承诺类对话模式
     PROMISE_PATTERNS = [
@@ -62,10 +62,7 @@ class DialogueActionChecker(BaseChecker):
         super().__init__(self._checker_type)
 
     def check(
-        self,
-        chapter_content: str,
-        chapter_num: int,
-        context: Optional[Dict[str, Any]] = None
+        self, chapter_content: str, chapter_num: int, context: Optional[Dict[str, Any]] = None
     ) -> List[Issue]:
         issues = []
 
@@ -78,9 +75,7 @@ class DialogueActionChecker(BaseChecker):
 
             # 2. 检查承诺后是否立即出现矛盾动作
             if self._has_contradiction(after_text):
-                issues.append(self._create_issue(
-                    promise_text, after_text[:100], chapter_num
-                ))
+                issues.append(self._create_issue(promise_text, after_text[:100], chapter_num))
 
         return issues
 
@@ -90,11 +85,13 @@ class DialogueActionChecker(BaseChecker):
         for pattern in self.PROMISE_PATTERNS:
             for m in re.finditer(pattern, text):
                 end_pos = m.end()
-                results.append({
-                    "text": m.group(),
-                    "after_text": text[end_pos:end_pos+150] if end_pos < len(text) else "",
-                    "start_pos": m.start()
-                })
+                results.append(
+                    {
+                        "text": m.group(),
+                        "after_text": text[end_pos : end_pos + 150] if end_pos < len(text) else "",
+                        "start_pos": m.start(),
+                    }
+                )
         return results
 
     def _has_contradiction(self, text: str) -> bool:
@@ -114,11 +111,11 @@ class DialogueActionChecker(BaseChecker):
             description="角色做出承诺但随后立即采取相反行动",
             location=IssueLocation(chapter=chapter_num),
             evidence=f"承诺: {promise[:50]}... 行动: {action[:50]}...",
-            suggestion="承诺后的行动应与承诺一致，或有过渡说明"
+            suggestion="承诺后的行动应与承诺一致，或有过渡说明",
         )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
 
     checker = DialogueActionChecker()
@@ -126,10 +123,11 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         chapter_num = int(sys.argv[1])
         from pathlib import Path
+
         project_root = Path(__file__).parent.parent.parent.parent
-        ch_file = project_root / '03_内容仓库' / '04_正文' / f'ch{chapter_num:03d}.md'
+        ch_file = project_root / "03_内容仓库" / "04_正文" / f"ch{chapter_num:03d}.md"
         if ch_file.exists():
-            content = ch_file.read_text(encoding='utf-8')
+            content = ch_file.read_text(encoding="utf-8")
             issues = checker.check(content, chapter_num)
             if issues:
                 print(f"发现 {len(issues)} 处言行不一问题:")

@@ -7,6 +7,7 @@
 2. 在预期回收章节前添加伏笔触发描述
 3. 确保伏笔关键词在预期位置出现
 """
+
 import re
 import sys
 from pathlib import Path
@@ -58,7 +59,7 @@ class CoreForeshadowRepairer(BaseConsistencyRepairer):
             return content, 0, []
 
         for issue in issues:
-            if hasattr(issue, 'severity') and getattr(issue, 'severity', '') == 'HIGH':
+            if hasattr(issue, "severity") and getattr(issue, "severity", "") == "HIGH":
                 # HIGH严重度问题需要修复
                 new_content, cnt = self._fix_foreshadow_issue(content, issue)
                 if cnt > 0:
@@ -82,15 +83,15 @@ class CoreForeshadowRepairer(BaseConsistencyRepairer):
         changes = 0
 
         # 提取伏笔信息
-        foreshadow_text = getattr(issue, 'foreshadow_text', '')
-        level = getattr(issue, 'level', 'core')
-        getattr(issue, 'chapter', '')
+        foreshadow_text = getattr(issue, "foreshadow_text", "")
+        level = getattr(issue, "level", "core")
+        getattr(issue, "chapter", "")
 
-        if not foreshadow_text or level != 'core':
+        if not foreshadow_text or level != "core":
             return content, 0
 
         # 查找伏笔标记位置
-        foreshadow_pattern = rf'【伏笔:{level}:{re.escape(foreshadow_text)}:([\w-]+)】'
+        foreshadow_pattern = rf"【伏笔:{level}:{re.escape(foreshadow_text)}:([\w-]+)】"
         match = re.search(foreshadow_pattern, content)
 
         if not match:
@@ -120,7 +121,7 @@ class CoreForeshadowRepairer(BaseConsistencyRepairer):
             触发描述文本
         """
         # 简化实现：直接使用伏笔关键词
-        keywords = foreshadow_text.split('/')
+        keywords = foreshadow_text.split("/")
         if keywords:
             # 生成提示性描述
             main_keyword = keywords[0].strip()
@@ -145,11 +146,7 @@ class CoreForeshadowRepairer(BaseConsistencyRepairer):
         issues = checker.check_chapter(chapter_num)
 
         if not issues:
-            return ConsistencyRepairResult(
-                chapter=chapter_num,
-                success=True,
-                changes=0
-            )
+            return ConsistencyRepairResult(chapter=chapter_num, success=True, changes=0)
 
         # 修复问题
         return self.repair(chapter_num, issues)
@@ -157,15 +154,16 @@ class CoreForeshadowRepairer(BaseConsistencyRepairer):
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description='核心伏笔修复器')
-    parser.add_argument('--chapters', type=str, default='1-10', help='章节范围 (如 1-10)')
-    parser.add_argument('--dry-run', action='store_true', help='只输出不保存')
-    parser.add_argument('--project-root', type=str, default=None, help='项目根目录')
+
+    parser = argparse.ArgumentParser(description="核心伏笔修复器")
+    parser.add_argument("--chapters", type=str, default="1-10", help="章节范围 (如 1-10)")
+    parser.add_argument("--dry-run", action="store_true", help="只输出不保存")
+    parser.add_argument("--project-root", type=str, default=None, help="项目根目录")
     args = parser.parse_args()
 
     # 解析章节范围
-    if '-' in args.chapters:
-        start, end = args.chapters.split('-')
+    if "-" in args.chapters:
+        start, end = args.chapters.split("-")
         chapter_nums = list(range(int(start), int(end) + 1))
     else:
         chapter_nums = [int(args.chapters)]
@@ -187,5 +185,5 @@ def main():
     print(f"\n总计修复: {total_changes} 处伏笔")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -2,6 +2,7 @@
 """
 问题追踪工具测试
 """
+
 import json
 import sys
 import tempfile
@@ -24,13 +25,13 @@ class TestIssueTracker:
             "total_issues": 0,
             "by_severity": {"P0": 0, "P1": 0, "P2": 0},
             "by_status": {"open": 0, "in_progress": 0, "resolved": 0, "verified": 0},
-            "issues": []
+            "issues": [],
         }
 
-        with open(index_file, 'w') as f:
+        with open(index_file, "w") as f:
             json.dump(index, f)
 
-        with open(index_file, 'r') as f:
+        with open(index_file, "r") as f:
             loaded = json.load(f)
 
         assert loaded["version"] == "1.0"
@@ -48,14 +49,14 @@ class TestIssueTracker:
             "by_status": {"open": 2, "in_progress": 0, "resolved": 0, "verified": 0},
             "issues": [
                 {"chapter_id": "ch001", "severity": "P0", "status": "open"},
-                {"chapter_id": "ch002", "severity": "P1", "status": "open"}
-            ]
+                {"chapter_id": "ch002", "severity": "P1", "status": "open"},
+            ],
         }
 
-        with open(index_file, 'w') as f:
+        with open(index_file, "w") as f:
             json.dump(index, f)
 
-        with open(index_file, 'r') as f:
+        with open(index_file, "r") as f:
             loaded = json.load(f)
 
         assert loaded["total_issues"] == 2

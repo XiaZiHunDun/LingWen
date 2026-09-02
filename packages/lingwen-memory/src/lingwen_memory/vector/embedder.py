@@ -1,4 +1,5 @@
 """嵌入模型管理 — facade over pluggable embedding providers (F89)."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -45,9 +46,7 @@ class Embedder:
         """OpenAI 客户端（仅 provider=openai 时可用，兼容旧测试）。"""
         if hasattr(self._provider, "client"):
             return self._provider.client  # type: ignore[no-any-return]
-        raise AttributeError(
-            f"Embedder.client unavailable for provider={self.provider_name}"
-        )
+        raise AttributeError(f"Embedder.client unavailable for provider={self.provider_name}")
 
     def health_check(self) -> tuple[bool, str]:
         return self._provider.health_check()

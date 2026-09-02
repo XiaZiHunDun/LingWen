@@ -7,6 +7,7 @@ R3-014: ACTION_REGISTRY 是单一事实源 — HookEngine._register_default_acti
 2. 在 ACTION_REGISTRY 加一行映射
 无需改动 hook_engine.py。
 """
+
 from .base import ActionResult, BaseAction
 from .block_proceed import BlockProceedAction
 from .log_state_change import LogStateChangeAction

@@ -1,4 +1,5 @@
 """Phase 126 v16.2.4 T1: tests for shared/mode.py migrated utilities."""
+
 from __future__ import annotations
 
 from lingwen_creator.shared.mode import (
@@ -44,12 +45,14 @@ def test_creator_settings_dataclass_fields() -> None:
 def test_normalize_creation_mode_validation() -> None:
     """normalize_creation_mode rejects invalid mode."""
     import pytest
+
     with pytest.raises(ValueError):
         normalize_creation_mode("invalid_mode")
 
 
 def test_settings_from_project_config_accepts_any() -> None:
     """settings_from_project_config accepts duck-typed ProjectConfig (Any)."""
+
     class FakeConfig:
         creation_mode = CREATION_MODE_ADVANCE
         quality_profile = None

@@ -4,6 +4,7 @@ Phase 15.0 T1.4: /api/health route.
 
 集成 infra.health 模块，支持多组件健康检查。
 """
+
 from __future__ import annotations
 
 import os
@@ -32,6 +33,7 @@ _START_TIME = datetime.now(timezone.utc)
 
 def _register_health_checks(ctx: RoutesContext) -> None:
     """注册健康检查器"""
+
     # 数据库健康检查
     def check_db_connection() -> bool:
         try:
@@ -87,8 +89,8 @@ def register_health(app: FastAPI, ctx: RoutesContext) -> None:
         db_status = DatabaseStatus(status="healthy")
         try:
             if ctx.db.exists():
-                db_status.tables = len(ctx.db.get_tables()) if hasattr(ctx.db, 'get_tables') else 0
-                db_status.records = ctx.db.get_total_records() if hasattr(ctx.db, 'get_total_records') else 0
+                db_status.tables = len(ctx.db.get_tables()) if hasattr(ctx.db, "get_tables") else 0
+                db_status.records = ctx.db.get_total_records() if hasattr(ctx.db, "get_total_records") else 0
             else:
                 db_status.status = "not_found"
         except (OSError, RuntimeError, AttributeError) as e:

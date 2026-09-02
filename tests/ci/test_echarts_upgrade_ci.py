@@ -1,4 +1,5 @@
 """Phase 9.54 F43: ECharts 6.x upgrade contract tests."""
+
 from __future__ import annotations
 
 import json

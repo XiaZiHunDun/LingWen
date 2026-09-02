@@ -49,6 +49,7 @@ from infra.paths import ProjectPaths
 # Fixtures
 # ============================================================================
 
+
 @pytest.fixture
 def isolated_paths(monkeypatch, tmp_path):
     """
@@ -71,9 +72,7 @@ def isolated_paths(monkeypatch, tmp_path):
         d.mkdir(parents=True)
 
     # 创建 character_profiles.json 占位（ProjectPaths._validate 要求）
-    (characters_dir / "character_profiles.json").write_text(
-        '{"characters": []}', encoding="utf-8"
-    )
+    (characters_dir / "character_profiles.json").write_text('{"characters": []}', encoding="utf-8")
 
     paths = ProjectPaths.get(tmp_path)
     yield paths, chapters_dir, rules_dir
@@ -99,6 +98,7 @@ def _write_rules(rules_dir: Path, name: str, rules: list) -> Path:
 # Issue dataclass
 # ============================================================================
 
+
 class TestIssueDataclass:
     """Issue dataclass 默认值 + 严重性归一化"""
 
@@ -119,6 +119,7 @@ class TestIssueDataclass:
     def test_severity_normalized_from_enum(self):
         """传入 IssueSeverity 枚举 → __post_init__ 归一化为 str"""
         from lingwen_quality.consistency.engine.data_structures import IssueSeverity
+
         issue = Issue(
             chapter=2,
             dimension="d",
@@ -134,6 +135,7 @@ class TestIssueDataclass:
 # ============================================================================
 # Inspector 基类
 # ============================================================================
+
 
 class TestInspectorBase:
     """Inspector 抽象行为"""
@@ -167,13 +169,15 @@ class TestInspectorBase:
             def check(self, chapter_num):
                 content = self.read_chapter(chapter_num)
                 # 每章节产 1 个 Issue,description 含词数
-                return [Issue(
-                    chapter=chapter_num,
-                    dimension="d",
-                    issue_type="t",
-                    severity="P0",
-                    description=str(len(content.split())),
-                )]
+                return [
+                    Issue(
+                        chapter=chapter_num,
+                        dimension="d",
+                        issue_type="t",
+                        severity="P0",
+                        description=str(len(content.split())),
+                    )
+                ]
 
         inspector = CountingInspector(paths=paths)
         results = inspector.check_batch([1, 2, 3])
@@ -199,6 +203,7 @@ class TestInspectorBase:
 # ============================================================================
 # RuleBasedInspector
 # ============================================================================
+
 
 class TestRuleBasedInspector:
     def test_no_rules_returns_empty(self, isolated_paths):
@@ -233,6 +238,7 @@ class TestRuleBasedInspector:
 # LLMBasedInspector (lazy load)
 # ============================================================================
 
+
 class TestLLMBasedInspector:
     def test_check_raises_not_implemented(self, isolated_paths):
         paths, _, _ = isolated_paths
@@ -247,6 +253,7 @@ class TestLLMBasedInspector:
         # 桩: 预加载 infra.llm_service 模块,然后 patch LLMService.get
         # (LLMBasedInspector 在 property 内 import,模块不会直接持有引用)
         import infra.llm_service as llm_mod
+
         sentinel = MagicMock(name="LLMServiceSentinel")
         monkeypatch.setattr(llm_mod, "LLMService", MagicMock(get=MagicMock(return_value=sentinel)))
 
@@ -264,6 +271,7 @@ class TestLLMBasedInspector:
 # ============================================================================
 # Repairer 抽象基类 (R4-005)
 # ============================================================================
+
 
 class TestRepairerAbstract:
     def test_cannot_instantiate_directly(self, isolated_paths):
@@ -342,6 +350,7 @@ class TestRepairerAbstract:
 # RuleBasedRepairer
 # ============================================================================
 
+
 class TestRuleBasedRepairer:
     def test_replace_all_occurrences(self, isolated_paths):
         paths, _, _ = isolated_paths
@@ -396,6 +405,7 @@ class TestRuleBasedRepairer:
 # YAMLRuleRepairer
 # ============================================================================
 
+
 class TestYAMLRuleRepairer:
     def test_load_missing_file_returns_empty(self, isolated_paths):
         """rules_file 不存在时 _load_rules 返回 []"""
@@ -405,18 +415,26 @@ class TestYAMLRuleRepairer:
 
     def test_load_replacement_rule(self, isolated_paths):
         paths, _, rules_dir = isolated_paths
-        _write_rules(rules_dir, "t.yaml", [
-            {"type": "replacement", "source": "foo", "target": "bar", "description": "x"},
-        ])
+        _write_rules(
+            rules_dir,
+            "t.yaml",
+            [
+                {"type": "replacement", "source": "foo", "target": "bar", "description": "x"},
+            ],
+        )
         r = YAMLRuleRepairer(rules_file="t.yaml", paths=paths)
         assert r._get_rules() == [("foo", "bar", "x")]
 
     def test_deletion_rule_has_empty_target(self, isolated_paths):
         """type: deletion 时,target 应被强制设为空串"""
         paths, _, rules_dir = isolated_paths
-        _write_rules(rules_dir, "t.yaml", [
-            {"type": "deletion", "source": "bad", "description": "remove bad word"},
-        ])
+        _write_rules(
+            rules_dir,
+            "t.yaml",
+            [
+                {"type": "deletion", "source": "bad", "description": "remove bad word"},
+            ],
+        )
         r = YAMLRuleRepairer(rules_file="t.yaml", paths=paths)
         rules = r._get_rules()
         assert rules == [("bad", "", "remove bad word")]
@@ -424,18 +442,26 @@ class TestYAMLRuleRepairer:
     def test_skip_rule_without_source(self, isolated_paths):
         """source 为空的规则应被过滤"""
         paths, _, rules_dir = isolated_paths
-        _write_rules(rules_dir, "t.yaml", [
-            {"type": "replacement", "source": "", "target": "x", "description": "skip"},
-            {"type": "replacement", "source": "ok", "target": "y", "description": "keep"},
-        ])
+        _write_rules(
+            rules_dir,
+            "t.yaml",
+            [
+                {"type": "replacement", "source": "", "target": "x", "description": "skip"},
+                {"type": "replacement", "source": "ok", "target": "y", "description": "keep"},
+            ],
+        )
         r = YAMLRuleRepairer(rules_file="t.yaml", paths=paths)
         assert r._get_rules() == [("ok", "y", "keep")]
 
     def test_apply_rules_counts_occurrences(self, isolated_paths):
         paths, _, rules_dir = isolated_paths
-        _write_rules(rules_dir, "t.yaml", [
-            {"type": "replacement", "source": "x", "target": "y", "description": ""},
-        ])
+        _write_rules(
+            rules_dir,
+            "t.yaml",
+            [
+                {"type": "replacement", "source": "x", "target": "y", "description": ""},
+            ],
+        )
         r = YAMLRuleRepairer(rules_file="t.yaml", paths=paths)
         new, count = r._apply_rules("xxx and x", [])
         assert new == "yyy and y"
@@ -444,9 +470,13 @@ class TestYAMLRuleRepairer:
     def test_rules_cache(self, isolated_paths):
         """二次调用 _load_rules 应使用缓存"""
         paths, _, rules_dir = isolated_paths
-        _write_rules(rules_dir, "t.yaml", [
-            {"type": "replacement", "source": "a", "target": "b", "description": ""},
-        ])
+        _write_rules(
+            rules_dir,
+            "t.yaml",
+            [
+                {"type": "replacement", "source": "a", "target": "b", "description": ""},
+            ],
+        )
         r = YAMLRuleRepairer(rules_file="t.yaml", paths=paths)
         first = r._load_rules()
         second = r._load_rules()
@@ -455,9 +485,13 @@ class TestYAMLRuleRepairer:
     def test_repair_writes_when_changed(self, isolated_paths):
         paths, chapters_dir, rules_dir = isolated_paths
         _write_chapter(chapters_dir, 1, "old text")
-        _write_rules(rules_dir, "t.yaml", [
-            {"type": "replacement", "source": "old", "target": "new", "description": ""},
-        ])
+        _write_rules(
+            rules_dir,
+            "t.yaml",
+            [
+                {"type": "replacement", "source": "old", "target": "new", "description": ""},
+            ],
+        )
         r = YAMLRuleRepairer(rules_file="t.yaml", paths=paths)
         result = r.repair(1)
         assert result.success is True
@@ -468,6 +502,7 @@ class TestYAMLRuleRepairer:
 # ============================================================================
 # WorldviewChecker 集成测试
 # ============================================================================
+
 
 class TestWorldviewChecker:
     def test_detects_scifi_term(self, isolated_paths):
@@ -503,6 +538,7 @@ class TestWorldviewChecker:
 # AITraceChecker 集成测试
 # ============================================================================
 
+
 class TestAITraceChecker:
     def test_detects_ai_pattern(self, isolated_paths):
         paths, chapters_dir, _ = isolated_paths
@@ -528,6 +564,7 @@ class TestAITraceChecker:
 # ============================================================================
 # WorldviewRepairer 集成测试 (使用真实 YAML)
 # ============================================================================
+
 
 class TestWorldviewRepairer:
     def test_replaces_scifi_term_via_real_yaml(self, isolated_paths):
@@ -569,6 +606,7 @@ class TestWorldviewRepairer:
 # AITraceRepairer 集成测试 (使用真实 YAML)
 # ============================================================================
 
+
 class TestAITraceRepairer:
     def test_deletion_rule_removes_phrase(self, isolated_paths):
         """ai_trace_rules.yaml 里的 deletion 类型规则应清空目标短语"""
@@ -592,6 +630,7 @@ class TestAITraceRepairer:
 # ============================================================================
 # RepairResult dataclass
 # ============================================================================
+
 
 class TestRepairResult:
     def test_defaults(self):

@@ -2,6 +2,7 @@
 
 Models unchanged — only relocated for code organization.
 """
+
 from __future__ import annotations
 
 from typing import Optional
@@ -15,6 +16,7 @@ class CreatorOnboardingStep(BaseModel):
     detail: str
     note: str = ""
     mentions: list[str] = []
+
 
 class CreatorOnboardingResponse(BaseModel):
     slug: str
@@ -34,6 +36,7 @@ class CreatorOnboardingResponse(BaseModel):
     wizard_panel_dismissed: bool = False
     wizard_panel_collapsed: bool = False
 
+
 class CreatorOnboardingNotification(BaseModel):
     id: str
     step_id: str
@@ -42,23 +45,28 @@ class CreatorOnboardingNotification(BaseModel):
     created_at: Optional[str] = None
     read: bool = False
 
+
 class CreatorOnboardingNotificationsResponse(BaseModel):
     notifications: list[CreatorOnboardingNotification]
     unread: int
     handles: list[str] = []
+
 
 class CreatorOnboardingNotificationsAckRequest(BaseModel):
     notification_ids: list[str] = []
     all_notifications: bool = False
     handle: Optional[str] = None
 
+
 class CreatorOnboardingNotificationsAckResponse(BaseModel):
     acked: int
     unread: int
 
+
 class CreatorOnboardingNotificationDigestStep(BaseModel):
     step_id: str
     count: int
+
 
 class CreatorOnboardingNotificationDigestGroup(BaseModel):
     handle: str
@@ -67,10 +75,12 @@ class CreatorOnboardingNotificationDigestGroup(BaseModel):
     latest_at: Optional[str] = None
     excerpts: list[str] = []
 
+
 class CreatorOnboardingNotificationDigestResponse(BaseModel):
     unread: int
     group_count: int
     groups: list[CreatorOnboardingNotificationDigestGroup] = []
+
 
 class CreatorOnboardingDigestScheduleConfig(BaseModel):
     enabled: bool = False
@@ -83,6 +93,7 @@ class CreatorOnboardingDigestScheduleConfig(BaseModel):
     handle_quiet_hours: dict[str, dict[str, int]] = {}
     channel_retry_config: dict[str, dict[str, int]] = {}
 
+
 class CreatorOnboardingDigestScheduleSaveRequest(BaseModel):
     enabled: bool = True
     interval_hours: int = 24
@@ -93,11 +104,13 @@ class CreatorOnboardingDigestScheduleSaveRequest(BaseModel):
     handle_quiet_hours: dict[str, dict[str, int]] = {}
     channel_retry_config: dict[str, dict[str, int]] = {}
 
+
 class CreatorOnboardingDigestDispatchStats(BaseModel):
     sent_total: int = 0
     failed_total: int = 0
     last_sent_at: Optional[str] = None
     last_failure_at: Optional[str] = None
+
 
 class CreatorOnboardingDigestRetryItem(BaseModel):
     channel: str
@@ -106,21 +119,26 @@ class CreatorOnboardingDigestRetryItem(BaseModel):
     attempts: int = 0
     next_retry_at: Optional[str] = None
 
+
 class CreatorOnboardingDigestRetryQueueResponse(BaseModel):
     item_count: int
     items: list[CreatorOnboardingDigestRetryItem] = []
+
 
 class CreatorOnboardingDigestRetryProcessResponse(BaseModel):
     retried: int
     remaining: int
     dead_letter_count: int = 0
 
+
 class CreatorOnboardingDigestDeadLetterResponse(BaseModel):
     item_count: int
     items: list[CreatorOnboardingDigestRetryItem] = []
 
+
 class CreatorOnboardingDigestDeadLetterReplayRequest(BaseModel):
     index: int = 0
+
 
 class CreatorOnboardingDigestDeadLetterReplayResponse(BaseModel):
     replayed: bool
@@ -129,11 +147,13 @@ class CreatorOnboardingDigestDeadLetterReplayResponse(BaseModel):
     retry_queue_size: int = 0
     dead_letter_count: int = 0
 
+
 class CreatorOnboardingDigestDispatchResponse(BaseModel):
     sent: bool = False
     skipped: bool = False
     reason: Optional[str] = None
     last_sent_at: Optional[str] = None
+
 
 class CreatorOnboardingWebhookConfig(BaseModel):
     enabled: bool = False
@@ -141,17 +161,20 @@ class CreatorOnboardingWebhookConfig(BaseModel):
     mention_handles: list[str] = []
     signing_secret: str = ""
 
+
 class CreatorOnboardingWebhookSaveRequest(BaseModel):
     enabled: bool = True
     url: str = ""
     mention_handles: list[str] = []
     signing_secret: Optional[str] = None
 
+
 class CreatorOnboardingWebhookDispatchResponse(BaseModel):
     dispatched: int = 0
     skipped: bool = False
     status: Optional[int] = None
     error: Optional[str] = None
+
 
 class CreatorOnboardingEmailConfig(BaseModel):
     enabled: bool = False
@@ -162,6 +185,7 @@ class CreatorOnboardingEmailConfig(BaseModel):
     smtp_user: str = ""
     smtp_use_tls: bool = True
     from_address: str = ""
+
 
 class CreatorOnboardingEmailSaveRequest(BaseModel):
     enabled: bool = True
@@ -174,12 +198,15 @@ class CreatorOnboardingEmailSaveRequest(BaseModel):
     smtp_use_tls: bool = True
     from_address: str = ""
 
+
 class CreatorOnboardingProgressRequest(BaseModel):
     completed_step_ids: list[str] = []
     step_notes: Optional[dict[str, str]] = None
 
+
 class CreatorOnboardingNotesRequest(BaseModel):
     step_notes: dict[str, str]
+
 
 class CreatorOnboardingProgressResponse(BaseModel):
     completed_step_ids: list[str]

@@ -29,12 +29,7 @@ class LLMEnhancedChecker(BaseChecker):
         "knowledge": KNOWLEDGE_LLM_PROMPT,
     }
 
-    def __init__(
-        self,
-        base_checker: BaseChecker,
-        llm_service: LLMService,
-        checker_type: str
-    ):
+    def __init__(self, base_checker: BaseChecker, llm_service: LLMService, checker_type: str):
         super().__init__(base_checker.checker_type)
         self.base_checker = base_checker
         self.llm_service = llm_service
@@ -42,10 +37,7 @@ class LLMEnhancedChecker(BaseChecker):
         self.prompt_template = self.PROMPT_MAP.get(checker_type, "")
 
     def check(
-        self,
-        chapter_content: str,
-        chapter_num: int,
-        context: Optional[Dict[str, Any]] = None
+        self, chapter_content: str, chapter_num: int, context: Optional[Dict[str, Any]] = None
     ) -> List[Issue]:
         # Step 1: 规则检测
         rule_issues = self.base_checker.check(chapter_content, chapter_num, context)
@@ -71,18 +63,22 @@ class LLMEnhancedChecker(BaseChecker):
         """将LLMIssue转换为Issue"""
         issues = []
         for llm_issue in llm_issues:
-            severity = IssueSeverity.P0 if llm_issue.severity == "P0" else (
-                IssueSeverity.P1 if llm_issue.severity == "P1" else IssueSeverity.P2
+            severity = (
+                IssueSeverity.P0
+                if llm_issue.severity == "P0"
+                else (IssueSeverity.P1 if llm_issue.severity == "P1" else IssueSeverity.P2)
             )
-            issues.append(Issue(
-                id=f"LLM_{llm_issue.chapter or default_chapter:03d}_{llm_issue.type}",
-                severity=severity,
-                checker_type=self.base_checker.checker_type,
-                issue_type=llm_issue.type,
-                title=f"LLM检测-{llm_issue.type}: {llm_issue.description[:30]}",
-                description=llm_issue.description,
-                location=IssueLocation(chapter=llm_issue.chapter or default_chapter),
-                evidence=llm_issue.evidence,
-                suggestion=llm_issue.suggestion
-            ))
+            issues.append(
+                Issue(
+                    id=f"LLM_{llm_issue.chapter or default_chapter:03d}_{llm_issue.type}",
+                    severity=severity,
+                    checker_type=self.base_checker.checker_type,
+                    issue_type=llm_issue.type,
+                    title=f"LLM检测-{llm_issue.type}: {llm_issue.description[:30]}",
+                    description=llm_issue.description,
+                    location=IssueLocation(chapter=llm_issue.chapter or default_chapter),
+                    evidence=llm_issue.evidence,
+                    suggestion=llm_issue.suggestion,
+                )
+            )
         return issues

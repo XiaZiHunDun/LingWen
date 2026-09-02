@@ -8,6 +8,7 @@ Includes 23 Pydantic models covering the dashboard surface of the studio
 API: projects, active, summary, quality, quality-report, prose-heatmap,
 prose-diff, prose-judge, preflight, batch-run, batch-job.
 """
+
 from lingwen_shared.contracts.python.studio import (
     StudioActiveResponse,
     StudioBatchJobResponse,

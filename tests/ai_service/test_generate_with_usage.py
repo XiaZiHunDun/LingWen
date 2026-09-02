@@ -2,6 +2,7 @@
 
 3 default impl tests.
 """
+
 from __future__ import annotations
 
 from typing import Any, List
@@ -43,8 +44,7 @@ class TestAIProviderDefault:
         # (downstream Task 5-7 TieredRouter/AgentBase/MasterController 依赖)
         assert set(usage.keys()) == {"input_tokens", "output_tokens"}
         assert text == "response to: hello world"
-        assert usage == {"input_tokens": len("hello world") // 4,
-                         "output_tokens": len(text) // 4}
+        assert usage == {"input_tokens": len("hello world") // 4, "output_tokens": len(text) // 4}
         assert isinstance(usage["input_tokens"], int)
         assert isinstance(usage["output_tokens"], int)
 
@@ -85,8 +85,7 @@ class TestAnthropicProviderGenerateWithUsage:
         fake_client.messages.create.return_value = fake_response
 
         # Patch anthropic.Anthropic constructor
-        monkeypatch.setattr(anthropic_provider.anthropic, "Anthropic",
-                            lambda **kw: fake_client)
+        monkeypatch.setattr(anthropic_provider.anthropic, "Anthropic", lambda **kw: fake_client)
 
         config = ProviderConfig(api_key="sk-test", model="claude-test")
         provider = anthropic_provider.AnthropicProvider(config)
@@ -114,8 +113,7 @@ class TestOpenAIProviderGenerateWithUsage:
         fake_client.chat.completions.create.return_value = fake_response
 
         # Patch openai.OpenAI constructor
-        monkeypatch.setattr(openai_provider.openai, "OpenAI",
-                            lambda **kw: fake_client)
+        monkeypatch.setattr(openai_provider.openai, "OpenAI", lambda **kw: fake_client)
 
         config = ProviderConfig(api_key="sk-test", model="gpt-test")
         provider = openai_provider.OpenAIProvider(config)
@@ -146,8 +144,7 @@ class TestMiniMaxProviderGenerateWithUsage:
         fake_client.messages.create.return_value = fake_response
 
         # Patch anthropic.Anthropic constructor (minimax 走 anthropic SDK)
-        monkeypatch.setattr(minimax_provider.anthropic, "Anthropic",
-                            lambda **kw: fake_client)
+        monkeypatch.setattr(minimax_provider.anthropic, "Anthropic", lambda **kw: fake_client)
 
         config = ProviderConfig(api_key="sk-test", model="MiniMax-M2.7")
         provider = minimax_provider.MiniMaxProvider(config)
@@ -169,11 +166,14 @@ class TestTieredRouterGenerateWithUsage:
         class _RealUsageProvider:
             def __init__(self, tier: ModelTier) -> None:
                 self._tier = tier
+
             def generate(self, prompt: str, **kwargs) -> str:
                 return f"text from {self._tier.value}"
+
             def generate_with_usage(self, prompt: str, **kwargs):
                 return f"text from {self._tier.value}", {
-                    "input_tokens": 10, "output_tokens": 5,
+                    "input_tokens": 10,
+                    "output_tokens": 5,
                 }
 
         providers = {tier: _RealUsageProvider(tier) for tier in ModelTier}
@@ -191,8 +191,10 @@ class TestTieredRouterGenerateWithUsage:
         class _SpyProvider:
             def __init__(self) -> None:
                 self.calls = 0
+
             def generate(self, prompt: str, **kwargs) -> str:
                 return "text"
+
             def generate_with_usage(self, prompt: str, **kwargs):
                 self.calls += 1
                 return "text", {"input_tokens": 1, "output_tokens": 1}
@@ -203,6 +205,7 @@ class TestTieredRouterGenerateWithUsage:
         class _RecordingTracker:
             def __init__(self) -> None:
                 self.records = []
+
             def record(self, *args, **kwargs) -> None:
                 self.records.append((args, kwargs))
 

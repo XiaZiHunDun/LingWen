@@ -2,6 +2,7 @@
 
 Mirrors lines 655-717 of the original infra/cli/commands.py.
 """
+
 from lingwen_cli.options import UnifiedOptions
 
 from .base import Command
@@ -23,8 +24,8 @@ class LLMAnalyzeCommand(Command):
         Returns:
             Exit code
         """
-        chapter = getattr(options, 'chapter', None)
-        issue_file = getattr(options, 'issue_file', None)
+        chapter = getattr(options, "chapter", None)
+        issue_file = getattr(options, "issue_file", None)
 
         if not chapter:
             print("[错误] 需要提供 --chapter 参数")

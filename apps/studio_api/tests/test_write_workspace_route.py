@@ -8,6 +8,7 @@ Tests use `monkeypatch.chdir(tmp_path)` so write_chapter's relative
 `projects/{project}/03_内容仓库/04_正文` path resolves under the temp dir,
 keeping the real `projects/` tree untouched.
 """
+
 from __future__ import annotations
 
 from pathlib import Path

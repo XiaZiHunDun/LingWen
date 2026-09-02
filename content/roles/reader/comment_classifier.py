@@ -130,13 +130,21 @@ def classify_reader_feedback(feedback_text: str) -> Tuple[str, int, str]:
     for pattern, issue_type in P0_PATTERNS:
         if re.search(pattern, text):
             severity = 0
-            return (issue_type, severity, f"P0 detected: pattern '{pattern}' matched - severe logic inconsistency that invalidates major plot points")
+            return (
+                issue_type,
+                severity,
+                f"P0 detected: pattern '{pattern}' matched - severe logic inconsistency that invalidates major plot points",
+            )
 
     # Check P1 patterns
     for pattern, issue_type in P1_PATTERNS:
         if re.search(pattern, text):
             severity = 1
-            return (issue_type, severity, f"P1 detected: pattern '{pattern}' matched - character behavior or plot hole issue")
+            return (
+                issue_type,
+                severity,
+                f"P1 detected: pattern '{pattern}' matched - character behavior or plot hole issue",
+            )
 
     # Check P2 patterns
     for pattern, issue_type in P2_PATTERNS:

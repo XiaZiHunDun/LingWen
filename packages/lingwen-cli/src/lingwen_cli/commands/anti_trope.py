@@ -2,6 +2,7 @@
 
 Mirrors lines 588-648 of the original infra/cli/commands.py.
 """
+
 from lingwen_cli.options import UnifiedOptions
 
 from .base import Command
@@ -23,9 +24,9 @@ class AntiTropeCommand(Command):
         Returns:
             Exit code
         """
-        outline = getattr(options, 'outline', '')
-        count = getattr(options, 'count', 3)
-        format_output = getattr(options, 'format', True)
+        outline = getattr(options, "outline", "")
+        count = getattr(options, "count", 3)
+        format_output = getattr(options, "format", True)
 
         if not outline:
             print("[错误] 需要提供 --outline 参数")
@@ -52,13 +53,23 @@ class AntiTropeCommand(Command):
                 print(enhancer.format_options(options_list))
             else:
                 import json
-                print(json.dumps([{
-                    "setting": o.setting,
-                    "conflict": o.conflict,
-                    "character": o.character,
-                    "twist": o.twist,
-                    "anti_trope_tags": o.anti_trope_tags,
-                } for o in options_list], ensure_ascii=False, indent=2))
+
+                print(
+                    json.dumps(
+                        [
+                            {
+                                "setting": o.setting,
+                                "conflict": o.conflict,
+                                "character": o.character,
+                                "twist": o.twist,
+                                "anti_trope_tags": o.anti_trope_tags,
+                            }
+                            for o in options_list
+                        ],
+                        ensure_ascii=False,
+                        indent=2,
+                    )
+                )
 
             return 0
 

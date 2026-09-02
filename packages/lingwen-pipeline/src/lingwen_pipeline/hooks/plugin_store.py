@@ -9,6 +9,7 @@ Plugin Store - Hook插件注册与管理中心
 - 插件状态统计
 - 插件依赖验证
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -32,6 +33,7 @@ class PluginMetadata:
         enabled: 是否启用（默认 True）
         config: 插件特定配置
     """
+
     id: str
     name: str
     version: str
@@ -203,8 +205,7 @@ class PluginStore:
         results: List[PluginMetadata] = []
 
         for plugin in self._plugins.values():
-            if (query_lower in plugin.name.lower() or
-                query_lower in plugin.description.lower()):
+            if query_lower in plugin.name.lower() or query_lower in plugin.description.lower():
                 results.append(plugin)
 
         return results
@@ -219,10 +220,7 @@ class PluginStore:
         Returns:
             提供该钩子的插件列表（只返回已启用的）
         """
-        return [
-            p for p in self._plugins.values()
-            if p.enabled and hook_name in p.hooks
-        ]
+        return [p for p in self._plugins.values() if p.enabled and hook_name in p.hooks]
 
     def get_plugins_by_action(self, action_type: str) -> List[PluginMetadata]:
         """
@@ -234,10 +232,7 @@ class PluginStore:
         Returns:
             提供该动作类型的插件列表（只返回已启用的）
         """
-        return [
-            p for p in self._plugins.values()
-            if p.enabled and action_type in p.actions
-        ]
+        return [p for p in self._plugins.values() if p.enabled and action_type in p.actions]
 
     def get_plugin_count(self) -> dict:
         """
@@ -250,11 +245,7 @@ class PluginStore:
         enabled = sum(1 for p in self._plugins.values() if p.enabled)
         disabled = total - enabled
 
-        return {
-            "total": total,
-            "enabled": enabled,
-            "disabled": disabled
-        }
+        return {"total": total, "enabled": enabled, "disabled": disabled}
 
     def _validate_dependencies(self, plugin: PluginMetadata) -> tuple[bool, List[str]]:
         """

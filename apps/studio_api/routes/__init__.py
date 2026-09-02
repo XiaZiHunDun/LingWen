@@ -5,6 +5,7 @@ Each route module exposes a `register_X(app, ctx)` function; this package
 re-exports them and provides a single `register_all_routes(app, ctx)` entry
 point that dashboard.app.create_app calls once.
 """
+
 from __future__ import annotations
 
 from fastapi import FastAPI

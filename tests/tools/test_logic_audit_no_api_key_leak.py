@@ -14,6 +14,7 @@ Tests for tools.logic_audit — P0 fix: API key prefix print leak.
 
 这些是 leak-detector 类型的源文件扫描测试,够用即可。
 """
+
 import re
 import sys
 from pathlib import Path
@@ -54,10 +55,7 @@ class TestNoApiKeyPrefixPrint:
         source = _read_source()
         # 匹配 print(... 'API Key: ...) 的模式(松散匹配,兼容各种引号)
         bad = re.findall(r"print\s*\([^)]*['\"]API Key:['\"]?", source)
-        assert not bad, (
-            f"P0 安全: 检测到字面 'API Key:' 打印。stdout 不应泄漏 key。"
-            f" 匹配行: {bad}"
-        )
+        assert not bad, f"P0 安全: 检测到字面 'API Key:' 打印。stdout 不应泄漏 key。 匹配行: {bad}"
 
     def test_does_not_print_env_var_name_with_key(self):
         """不应该把 'ANTHROPIC_API_KEY' 直接打到 stdout(避免运维误改)"""
@@ -74,6 +72,4 @@ class TestNoApiKeyPrefixPrint:
                 # 例外:打印 env var 名(不含 value)是 ok 的
                 if "os.environ" in line and "[" not in line:
                     continue
-                pytest.fail(
-                    f"P0 安全: print 行包含 ANTHROPIC_API_KEY(可能是泄漏): {line!r}"
-                )
+                pytest.fail(f"P0 安全: print 行包含 ANTHROPIC_API_KEY(可能是泄漏): {line!r}")

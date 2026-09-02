@@ -24,9 +24,7 @@ class TestPacingChecker:
         """正常内容不触发节奏问题"""
         checker = PacingChecker()
         content = (
-            "清晨的阳光洒在窗台上。张三起床洗漱。"
-            "他走到厨房，准备早餐。一切都很平静。"
-            "吃完早餐后，他出门散步。"
+            "清晨的阳光洒在窗台上。张三起床洗漱。他走到厨房，准备早餐。一切都很平静。吃完早餐后，他出门散步。"
         )
         issues = checker.check(content, 1, {})
         assert issues == []
@@ -46,11 +44,7 @@ class TestPacingChecker:
     def test_check_climax_without_cooldown(self):
         """连续高潮无缓冲"""
         checker = PacingChecker()
-        content = (
-            "战斗攻击冲击爆发。战斗攻击碰撞对决。"
-            "战斗攻击冲击爆发。战斗攻击碰撞对决。"
-            "战斗攻击冲击爆发。"
-        )
+        content = "战斗攻击冲击爆发。战斗攻击碰撞对决。战斗攻击冲击爆发。战斗攻击碰撞对决。战斗攻击冲击爆发。"
         issues = checker.check(content, 1, {})
         # 可能触发节奏过密或高潮后无缓冲
         assert len(issues) >= 0  # 取决于具体实现
@@ -98,11 +92,7 @@ class TestPacingChecker:
 
     def test_measure_foreshadow_length(self):
         checker = PacingChecker()
-        content = (
-            "似乎可能也许将要准备预感担忧。"
-            "似乎可能也许将要。"
-            "正文开始。正文继续。正文结束。"
-        )
+        content = "似乎可能也许将要准备预感担忧。似乎可能也许将要。正文开始。正文继续。正文结束。"
         ratio = checker._measure_foreshadow_length(content)
         assert 0.0 <= ratio <= 1.0
 
@@ -125,14 +115,9 @@ class TestPacingChecker:
         checker = PacingChecker()
         mock_registry = MagicMock()
         # 创建 mock ripples — 需要 origin_ch 属性
-        mock_ripples = [
-            MagicMock(ripple_id=f"r{i}", wavefront=(5,), origin_ch=1)
-            for i in range(7)
-        ]
+        mock_ripples = [MagicMock(ripple_id=f"r{i}", wavefront=(5,), origin_ch=1) for i in range(7)]
         mock_registry.list_active.return_value = mock_ripples
-        mock_registry.get_ripple.side_effect = lambda rid: next(
-            r for r in mock_ripples if r.ripple_id == rid
-        )
+        mock_registry.get_ripple.side_effect = lambda rid: next(r for r in mock_ripples if r.ripple_id == rid)
         issues = checker.check_ripple_density(mock_registry, 5)
         assert len(issues) >= 1
         assert any("密度" in i.title for i in issues)
@@ -141,14 +126,9 @@ class TestPacingChecker:
         """正常涟漪数不触发"""
         checker = PacingChecker()
         mock_registry = MagicMock()
-        mock_ripples = [
-            MagicMock(ripple_id=f"r{i}", wavefront=(5,), origin_ch=1)
-            for i in range(3)
-        ]
+        mock_ripples = [MagicMock(ripple_id=f"r{i}", wavefront=(5,), origin_ch=1) for i in range(3)]
         mock_registry.list_active.return_value = mock_ripples
-        mock_registry.get_ripple.side_effect = lambda rid: next(
-            r for r in mock_ripples if r.ripple_id == rid
-        )
+        mock_registry.get_ripple.side_effect = lambda rid: next(r for r in mock_ripples if r.ripple_id == rid)
         issues = checker.check_ripple_density(mock_registry, 5)
         assert issues == []
 
@@ -156,14 +136,9 @@ class TestPacingChecker:
         """涟漪集中爆发"""
         checker = PacingChecker()
         mock_registry = MagicMock()
-        mock_ripples = [
-            MagicMock(ripple_id=f"r{i}", wavefront=(5, 6, 7), origin_ch=1)
-            for i in range(4)
-        ]
+        mock_ripples = [MagicMock(ripple_id=f"r{i}", wavefront=(5, 6, 7), origin_ch=1) for i in range(4)]
         mock_registry.list_active.return_value = mock_ripples
-        mock_registry.get_ripple.side_effect = lambda rid: next(
-            r for r in mock_ripples if r.ripple_id == rid
-        )
+        mock_registry.get_ripple.side_effect = lambda rid: next(r for r in mock_ripples if r.ripple_id == rid)
         issues = checker.check_ripple_density(mock_registry, 10)
         assert len(issues) >= 1
         assert any("集中" in i.title for i in issues)
@@ -181,16 +156,9 @@ class TestPacingChecker:
     def test_check_ripple_density_custom_thresholds(self):
         checker = PacingChecker()
         mock_registry = MagicMock()
-        mock_ripples = [
-            MagicMock(ripple_id=f"r{i}", wavefront=(5,), origin_ch=1)
-            for i in range(4)
-        ]
+        mock_ripples = [MagicMock(ripple_id=f"r{i}", wavefront=(5,), origin_ch=1) for i in range(4)]
         mock_registry.list_active.return_value = mock_ripples
-        mock_registry.get_ripple.side_effect = lambda rid: next(
-            r for r in mock_ripples if r.ripple_id == rid
-        )
+        mock_registry.get_ripple.side_effect = lambda rid: next(r for r in mock_ripples if r.ripple_id == rid)
         # 使用自定义阈值，4 > 3 触发
-        issues = checker.check_ripple_density(
-            mock_registry, 5, active_threshold=3
-        )
+        issues = checker.check_ripple_density(mock_registry, 5, active_threshold=3)
         assert len(issues) >= 1

@@ -1,4 +1,5 @@
 """Append-only JSONL event store for workflow events."""
+
 from __future__ import annotations
 
 import json
@@ -24,9 +25,7 @@ class JsonlCorruptLineError(Exception):
         self.line_no = line_no
         self.raw = raw
         self.original = original
-        super().__init__(
-            f"Corrupt line {line_no}: {original.__class__.__name__}: {raw[:80]!r}"
-        )
+        super().__init__(f"Corrupt line {line_no}: {original.__class__.__name__}: {raw[:80]!r}")
 
 
 @dataclass(frozen=True)
@@ -49,9 +48,7 @@ class WorkflowEvent:
         try:
             ULID.from_str(self.event_id)
         except ValueError as e:
-            raise ValueError(
-                f"WorkflowEvent.event_id must be a valid ULID, got {self.event_id!r}"
-            ) from e
+            raise ValueError(f"WorkflowEvent.event_id must be a valid ULID, got {self.event_id!r}") from e
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)

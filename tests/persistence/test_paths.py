@@ -5,6 +5,7 @@
 2. 相对项目根
 3. 5 个值互不相同 (relationship/budget 例外共用)
 """
+
 from __future__ import annotations
 
 from pathlib import Path

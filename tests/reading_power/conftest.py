@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 # Add project root to path like other tests in this project
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
 import pytest
 

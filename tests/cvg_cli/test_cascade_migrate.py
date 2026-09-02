@@ -1,4 +1,5 @@
 """Phase 9.36 F21: cascade v1→v2_weighted migration tests."""
+
 from __future__ import annotations
 
 import pytest

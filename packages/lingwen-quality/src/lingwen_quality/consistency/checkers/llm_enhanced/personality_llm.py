@@ -19,9 +19,7 @@ class LLMEnhancedPersonalityChecker(LLMEnhancedChecker):
         from ..personality_checker import PersonalityChecker
 
         super().__init__(
-            base_checker=PersonalityChecker(),
-            llm_service=LLMService(),
-            checker_type="personality"
+            base_checker=PersonalityChecker(), llm_service=LLMService(), checker_type="personality"
         )
 
     def _find_uncertain_regions(self, content: str, context: dict) -> List[dict]:
@@ -38,12 +36,14 @@ class LLMEnhancedPersonalityChecker(LLMEnhancedChecker):
 
         for pattern in personality_patterns:
             for m in re.finditer(pattern, content):
-                uncertain.append({
-                    "type": "personality_uncertain",
-                    "text": m.group(),
-                    "start": m.start(),
-                    "end": m.end(),
-                    "context": content[max(0, m.start()-50):m.end()+50]
-                })
+                uncertain.append(
+                    {
+                        "type": "personality_uncertain",
+                        "text": m.group(),
+                        "start": m.start(),
+                        "end": m.end(),
+                        "context": content[max(0, m.start() - 50) : m.end() + 50],
+                    }
+                )
 
         return uncertain

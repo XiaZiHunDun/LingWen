@@ -14,6 +14,7 @@ Doc 4 §10 Phase 6.4: 把 2s 轮询替换为 WebSocket 推送。
 - 2 断线清理
 - 1 边界 (无 controller → 503,400 等)
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -32,12 +33,14 @@ from apps.studio_api.app import create_app
 
 # === Controllable stub ===
 
+
 class _ControllableStub:
     """可手动 trigger 状态变化的 stub — 同步用 threading.Event 触发
 
     WebSocket 端点会调 get_active_workflow_status() 和 list_pending_decisions(),
     我们用 RLock 保护 state,允许测试线程修改并触发 push 事件。
     """
+
     def __init__(self) -> None:
         self._lock = threading.RLock()
         self._workflow_status: dict = {
@@ -76,6 +79,7 @@ class _ControllableStub:
 
 # === Fixtures ===
 
+
 @pytest.fixture
 def stub() -> _ControllableStub:
     return _ControllableStub()
@@ -103,6 +107,7 @@ def _wait_for_event(client: TestClient, timeout: float = 3.0) -> Optional[dict]:
 
 # === TestWSConnect ===
 
+
 class TestWSConnect:
     """WS 端点连接测试"""
 
@@ -126,6 +131,7 @@ class TestWSConnect:
 
 # === TestWSBroadcastOnChange ===
 
+
 class TestWSBroadcastOnChange:
     """状态变更时 broadcast 测试"""
 
@@ -139,17 +145,19 @@ class TestWSBroadcastOnChange:
             assert initial["type"] == "connected"
 
             # 触发状态变更
-            stub.set_workflow_status({
-                "is_active": True,
-                "workflow_name": "novel_writing",
-                "completed": 0,
-                "failed": 0,
-                "paused": True,
-                "paused_nodes": ["judge"],
-                "node_count": 4,
-                "steps": 1,
-                "pending_decisions": [],
-            })
+            stub.set_workflow_status(
+                {
+                    "is_active": True,
+                    "workflow_name": "novel_writing",
+                    "completed": 0,
+                    "failed": 0,
+                    "paused": True,
+                    "paused_nodes": ["judge"],
+                    "node_count": 4,
+                    "steps": 1,
+                    "pending_decisions": [],
+                }
+            )
 
             # 等 ≤ 2.5s 收到 broadcast
             msg = ws.receive_json()
@@ -165,15 +173,17 @@ class TestWSBroadcastOnChange:
         with client.websocket_connect("/api/ws/workflows") as ws:
             ws.receive_json()  # 跳过 connected
 
-            stub.add_pending_decision({
-                "decision_id": "dec_1",
-                "kind": "outline_judgment",
-                "node_id": "judge",
-                "prompt": "Approve?",
-                "options": ["approve", "revise"],
-                "priority": 8,
-                "status": "pending",
-            })
+            stub.add_pending_decision(
+                {
+                    "decision_id": "dec_1",
+                    "kind": "outline_judgment",
+                    "node_id": "judge",
+                    "prompt": "Approve?",
+                    "options": ["approve", "revise"],
+                    "priority": 8,
+                    "status": "pending",
+                }
+            )
 
             msg = ws.receive_json()
             assert msg["type"] == "decision.snapshot"
@@ -183,12 +193,11 @@ class TestWSBroadcastOnChange:
 
 # === TestWSMultiClient ===
 
+
 class TestWSMultiClient:
     """多客户端订阅测试"""
 
-    def test_broadcast_to_multiple_clients(
-        self, client: TestClient, stub: _ControllableStub
-    ):
+    def test_broadcast_to_multiple_clients(self, client: TestClient, stub: _ControllableStub):
         """同一状态变化应 broadcast 给所有连接的 client"""
         with client.websocket_connect("/api/ws/workflows") as ws1:
             with client.websocket_connect("/api/ws/workflows") as ws2:
@@ -199,17 +208,19 @@ class TestWSMultiClient:
                 assert m2["type"] == "connected"
 
                 # 触发变更
-                stub.set_workflow_status({
-                    "is_active": True,
-                    "workflow_name": "wf_x",
-                    "completed": 0,
-                    "failed": 0,
-                    "paused": True,
-                    "paused_nodes": ["n1"],
-                    "node_count": 2,
-                    "steps": 1,
-                    "pending_decisions": [],
-                })
+                stub.set_workflow_status(
+                    {
+                        "is_active": True,
+                        "workflow_name": "wf_x",
+                        "completed": 0,
+                        "failed": 0,
+                        "paused": True,
+                        "paused_nodes": ["n1"],
+                        "node_count": 2,
+                        "steps": 1,
+                        "pending_decisions": [],
+                    }
+                )
 
                 # 两个 client 都应收到 broadcast
                 m1 = ws1.receive_json()
@@ -222,29 +233,30 @@ class TestWSMultiClient:
 
 # === TestWSDisconnectCleanup ===
 
+
 class TestWSDisconnectCleanup:
     """断线清理测试"""
 
-    def test_client_disconnect_removes_from_manager(
-        self, client: TestClient, stub: _ControllableStub
-    ):
+    def test_client_disconnect_removes_from_manager(self, client: TestClient, stub: _ControllableStub):
         """client 关闭连接后,ConnectionManager 不应再向其发消息"""
         with client.websocket_connect("/api/ws/workflows") as ws:
             ws.receive_json()  # connected
 
         # 此时 ws 已关闭;后续 trigger 状态变化不应让 server 抛异常
         # 直接 trigger,不应有未处理异常
-        stub.set_workflow_status({
-            "is_active": True,
-            "workflow_name": "wf_after_close",
-            "completed": 0,
-            "failed": 0,
-            "paused": False,
-            "paused_nodes": [],
-            "node_count": 0,
-            "steps": 0,
-            "pending_decisions": [],
-        })
+        stub.set_workflow_status(
+            {
+                "is_active": True,
+                "workflow_name": "wf_after_close",
+                "completed": 0,
+                "failed": 0,
+                "paused": False,
+                "paused_nodes": [],
+                "node_count": 0,
+                "steps": 0,
+                "pending_decisions": [],
+            }
+        )
 
         # 等 1.5s 验证 server 不挂掉
         time.sleep(1.5)
@@ -253,6 +265,7 @@ class TestWSDisconnectCleanup:
 
 
 # === TestWSRequiresController ===
+
 
 class TestWSRequiresController:
     """master_controller=None 时 WS 端点应拒绝"""

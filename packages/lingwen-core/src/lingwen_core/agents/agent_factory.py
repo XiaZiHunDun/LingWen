@@ -7,6 +7,7 @@
 Why: 把"如何实例化"集中到一处，使 MasterController.__init__ 变为纯组合逻辑。
 每个 build_X 函数都接受最少必要输入，可以独立测试。
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -32,6 +33,7 @@ from .social_engine.writing_suggestion import WritingSuggestion
 
 class AgentToolsBundle(NamedTuple):
     """5 个核心 Agent 工具的打包"""
+
     outline_master: OutlineMasterTools
     character_designer: CharacterDesignerTools
     content_writer: ContentWriterTools
@@ -41,6 +43,7 @@ class AgentToolsBundle(NamedTuple):
 
 class SocialEngineBundle(NamedTuple):
     """5 个社交引擎组件的打包"""
+
     relationship_tracker: RelationshipTracker
     event_calculator: EventEffectCalculator
     conflict_alert: ConflictAlert

@@ -2,6 +2,7 @@
 
 Phase 15.0 P3-SPLIT: 从 master_controller.py 拆分的润色相关方法。
 """
+
 import logging
 from typing import Any, Dict, Optional, Tuple
 
@@ -30,21 +31,34 @@ class EditingMixin:
     def polish_chapter(self, content: str) -> str:
         """润色章节"""
         result = self._impl_polish_chapter(
-            chapter_num=0, content=content, style_guide=None, record_usage=False,
+            chapter_num=0,
+            content=content,
+            style_guide=None,
+            record_usage=False,
         )
         return result["content"]
 
     def polish_chapter_with_usage(
-        self, chapter_num: int, content: str, style_guide: Optional[Dict] = None,
+        self,
+        chapter_num: int,
+        content: str,
+        style_guide: Optional[Dict] = None,
     ):
         """润色章节 variant — 真实 usage."""
         result, usage = self._impl_polish_chapter(
-            chapter_num, content, style_guide, record_usage=True,
+            chapter_num,
+            content,
+            style_guide,
+            record_usage=True,
         )
         return result["content"], usage
 
     def _impl_polish_chapter(
-        self, chapter_num: int, content: str, style_guide: Optional[Dict], record_usage: bool,
+        self,
+        chapter_num: int,
+        content: str,
+        style_guide: Optional[Dict],
+        record_usage: bool,
     ):
         if record_usage:
             return self.polisher.polish_chapter_with_usage(chapter_num, content, style_guide)
@@ -53,20 +67,29 @@ class EditingMixin:
     def polish_emotional_pacing(self, content: str) -> str:
         """情绪节奏 variant"""
         result = self._impl_polish_emotional_pacing(
-            chapter_num=0, content=content, record_usage=False,
+            chapter_num=0,
+            content=content,
+            record_usage=False,
         )
         return result
 
     def polish_emotional_pacing_with_usage(
-        self, chapter_num: int, content: str,
+        self,
+        chapter_num: int,
+        content: str,
     ):
         """情绪节奏 variant — 真实 usage."""
         return self._impl_polish_emotional_pacing(
-            chapter_num, content, record_usage=True,
+            chapter_num,
+            content,
+            record_usage=True,
         )
 
     def _impl_polish_emotional_pacing(
-        self, chapter_num: int, content: str, record_usage: bool,
+        self,
+        chapter_num: int,
+        content: str,
+        record_usage: bool,
     ):
         polished = content
         usage_total = {"input_tokens": 0, "output_tokens": 0}
@@ -97,20 +120,29 @@ class EditingMixin:
     def polish_ai_trace_removal(self, content: str) -> str:
         """AI 痕迹 variant"""
         result = self._impl_polish_ai_trace_removal(
-            chapter_num=0, content=content, record_usage=False,
+            chapter_num=0,
+            content=content,
+            record_usage=False,
         )
         return result
 
     def polish_ai_trace_removal_with_usage(
-        self, chapter_num: int, content: str,
+        self,
+        chapter_num: int,
+        content: str,
     ):
         """AI 痕迹 variant — 真实 usage."""
         return self._impl_polish_ai_trace_removal(
-            chapter_num, content, record_usage=True,
+            chapter_num,
+            content,
+            record_usage=True,
         )
 
     def _impl_polish_ai_trace_removal(
-        self, chapter_num: int, content: str, record_usage: bool,
+        self,
+        chapter_num: int,
+        content: str,
+        record_usage: bool,
     ):
         cleaned = self.polisher.remove_ai_gloss(content)
         usage_total = {"input_tokens": 0, "output_tokens": 0}
@@ -137,7 +169,10 @@ class EditingMixin:
     ) -> Dict[str, Any]:
         """LLM S1-S8 8 维加权评分, 选高者."""
         result = self._impl_polish_merge_synthesis(
-            content_a, content_b, labels=labels, record_usage=False,
+            content_a,
+            content_b,
+            labels=labels,
+            record_usage=False,
         )
         return result
 
@@ -150,7 +185,10 @@ class EditingMixin:
     ):
         """polish_merge_synthesis variant — 真实 usage."""
         return self._impl_polish_merge_synthesis(
-            content_a, content_b, labels=labels, record_usage=True,
+            content_a,
+            content_b,
+            labels=labels,
+            record_usage=True,
         )
 
     def _impl_polish_merge_synthesis(
@@ -195,6 +233,7 @@ S8: 整体感染力
 
             try:
                 import json
+
                 data = json.loads(response)
                 scores_a = data.get("scores_a", {})
                 scores_b = data.get("scores_b", {})
@@ -202,14 +241,8 @@ S8: 整体感染力
                 raise self._MergeParseError("Failed to parse LLM response")
 
             weights = {k: 1.0 for k in _S1_S8_KEYS}
-            total_a = sum(
-                weights.get(k, 1.0) * _coerce_score(scores_a.get(k))
-                for k in _S1_S8_KEYS
-            )
-            total_b = sum(
-                weights.get(k, 1.0) * _coerce_score(scores_b.get(k))
-                for k in _S1_S8_KEYS
-            )
+            total_a = sum(weights.get(k, 1.0) * _coerce_score(scores_a.get(k)) for k in _S1_S8_KEYS)
+            total_b = sum(weights.get(k, 1.0) * _coerce_score(scores_b.get(k)) for k in _S1_S8_KEYS)
 
             winner = labels[0] if total_a >= total_b else labels[1]
             content = content_a if winner == labels[0] else content_b

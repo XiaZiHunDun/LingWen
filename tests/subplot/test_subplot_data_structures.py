@@ -9,6 +9,7 @@ Phase 1.2.a — RED tests for Plot dataclass + 3 enums + MAX_ACTIVE_SUBPLOTS.
 - PlotType (3) / PlotPurpose (8) / PlotStatus (6) — 数量固定
 - MAX_ACTIVE_SUBPLOTS = 5 — 1 主线 + ≤4 支线
 """
+
 from __future__ import annotations
 
 import dataclasses
@@ -38,14 +39,25 @@ class TestEnums:
         assert len(PlotPurpose) == 8
         # 8 个语义维度 (Doc 3 §3.1)
         assert {p.value for p in PlotPurpose} == {
-            "growth", "mystery", "payoff", "faction",
-            "romance", "pacing", "artifact", "theme",
+            "growth",
+            "mystery",
+            "payoff",
+            "faction",
+            "romance",
+            "pacing",
+            "artifact",
+            "theme",
         }
 
     def test_plot_status_has_6_values(self):
         assert len(PlotStatus) == 6
         assert {s.value for s in PlotStatus} == {
-            "draft", "active", "paused", "closing", "closed", "abandoned",
+            "draft",
+            "active",
+            "paused",
+            "closing",
+            "closed",
+            "abandoned",
         }
 
     def test_enums_are_str_enum(self):

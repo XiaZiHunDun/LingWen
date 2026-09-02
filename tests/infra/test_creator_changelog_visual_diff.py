@@ -1,4 +1,5 @@
 """Tests for template changelog visual diff."""
+
 from __future__ import annotations
 
 import pytest

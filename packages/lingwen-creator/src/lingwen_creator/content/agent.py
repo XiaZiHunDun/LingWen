@@ -7,6 +7,7 @@ Uses:
   - lingwen_creator.shared.mode (resolve_creator_settings)
   - lingwen_creator.volume.plan (load_volume_plan for context)
 """
+
 from __future__ import annotations
 
 import json
@@ -135,39 +136,96 @@ def _normalize_provider_mode(mode: str | None) -> str:
     return val if val in VALID_PROVIDER_MODES else "auto"
 
 
-def _mock_candidates(base_text: str, action_label: str, *, allow_fill: bool, lens: str) -> list[dict[str, Any]]:
+def _mock_candidates(
+    base_text: str, action_label: str, *, allow_fill: bool, lens: str
+) -> list[dict[str, Any]]:
     seed = base_text.strip() or "（待生成内容）"
     fill_note = "" if allow_fill else "（不补全世界观）"
     if lens == "roleplay":
         return [
-            {"id": "steady", "label": "内敛", "direction": "克制台词", "text": f"「……」\n（{action_label} · 内敛{fill_note}）"},
-            {"id": "balanced", "label": "平衡", "direction": "自然对话", "text": f"「你说什么？」\n（{action_label} · 平衡{fill_note}）"},
-            {"id": "bold", "label": "外放", "direction": "强情绪", "text": f"「别逼我！」\n（{action_label} · 外放{fill_note}）"},
+            {
+                "id": "steady",
+                "label": "内敛",
+                "direction": "克制台词",
+                "text": f"「……」\n（{action_label} · 内敛{fill_note}）",
+            },
+            {
+                "id": "balanced",
+                "label": "平衡",
+                "direction": "自然对话",
+                "text": f"「你说什么？」\n（{action_label} · 平衡{fill_note}）",
+            },
+            {
+                "id": "bold",
+                "label": "外放",
+                "direction": "强情绪",
+                "text": f"「别逼我！」\n（{action_label} · 外放{fill_note}）",
+            },
         ]
     if lens == "polish":
         snippet = seed.split("\n")[0][:80] if seed else seed
         return [
-            {"id": "steady", "label": "稳健", "direction": "句级微调", "text": f"{snippet}（{action_label} · 稳健{fill_note}）"},
-            {"id": "balanced", "label": "平衡", "direction": "节奏优化", "text": f"{snippet}——{action_label}（平衡{fill_note}）"},
-            {"id": "bold", "label": "大胆", "direction": "意象加密", "text": f"{snippet}！（{action_label} · 大胆{fill_note}）"},
+            {
+                "id": "steady",
+                "label": "稳健",
+                "direction": "句级微调",
+                "text": f"{snippet}（{action_label} · 稳健{fill_note}）",
+            },
+            {
+                "id": "balanced",
+                "label": "平衡",
+                "direction": "节奏优化",
+                "text": f"{snippet}——{action_label}（平衡{fill_note}）",
+            },
+            {
+                "id": "bold",
+                "label": "大胆",
+                "direction": "意象加密",
+                "text": f"{snippet}！（{action_label} · 大胆{fill_note}）",
+            },
         ]
     return [
-        {"id": "steady", "label": "稳健", "direction": "更稳健", "text": f"{seed}\n\n[{action_label} · 稳健候选{fill_note}]"},
-        {"id": "balanced", "label": "平衡", "direction": "更平衡", "text": f"{seed}\n\n[{action_label} · 平衡候选{fill_note}]"},
-        {"id": "bold", "label": "大胆", "direction": "更戏剧", "text": f"{seed}\n\n[{action_label} · 大胆候选{fill_note}]"},
+        {
+            "id": "steady",
+            "label": "稳健",
+            "direction": "更稳健",
+            "text": f"{seed}\n\n[{action_label} · 稳健候选{fill_note}]",
+        },
+        {
+            "id": "balanced",
+            "label": "平衡",
+            "direction": "更平衡",
+            "text": f"{seed}\n\n[{action_label} · 平衡候选{fill_note}]",
+        },
+        {
+            "id": "bold",
+            "label": "大胆",
+            "direction": "更戏剧",
+            "text": f"{seed}\n\n[{action_label} · 大胆候选{fill_note}]",
+        },
     ]
 
 
 def _mock_annotations(lens: str, action_label: str) -> list[dict[str, Any]]:
     if lens == "editor":
         return [
-            {"id": "e1", "level": "warn", "text": f"铺垫略长，进入「{action_label}」前可删 1 句环境描写", "paragraph": 1},
+            {
+                "id": "e1",
+                "level": "warn",
+                "text": f"铺垫略长，进入「{action_label}」前可删 1 句环境描写",
+                "paragraph": 1,
+            },
             {"id": "e2", "level": "info", "text": "对话信息量可再集中，避免解释性旁白", "paragraph": 2},
         ]
     if lens == "reviewer":
         return [
             {"id": "r1", "level": "warn", "text": "读者可能尚不清楚角色当下目标", "paragraph": 1},
-            {"id": "r2", "level": "info", "text": "因果承接尚可加强（上一段结果 → 本段反应）", "paragraph": 2},
+            {
+                "id": "r2",
+                "level": "info",
+                "text": "因果承接尚可加强（上一段结果 → 本段反应）",
+                "paragraph": 2,
+            },
         ]
     return []
 
@@ -253,9 +311,7 @@ async def _llm_agent_plan(prompt: str, *, advice_only: bool) -> dict[str, Any]:
     return parsed
 
 
-async def _llm_agent_plan_stream_tokens(
-    prompt: str, *, advice_only: bool
-) -> AsyncIterator[str]:
+async def _llm_agent_plan_stream_tokens(prompt: str, *, advice_only: bool) -> AsyncIterator[str]:
     from lingwen_llm.port_adapter import LLMServiceAdapter
     from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
@@ -285,12 +341,14 @@ def _coerce_plan_payload(
     for row in candidates[:3]:
         if not isinstance(row, dict) or not row.get("text"):
             continue
-        out_candidates.append({
-            "id": str(row.get("id") or "steady"),
-            "label": str(row.get("label") or "候选"),
-            "direction": str(row.get("direction") or ""),
-            "text": str(row.get("text")),
-        })
+        out_candidates.append(
+            {
+                "id": str(row.get("id") or "steady"),
+                "label": str(row.get("label") or "候选"),
+                "direction": str(row.get("direction") or ""),
+                "text": str(row.get("text")),
+            }
+        )
     out_advice = []
     for i, row in enumerate(advice[:4]):
         if not isinstance(row, dict):
@@ -357,11 +415,7 @@ def _mock_plan(
         candidates = candidates[:1]
 
     preview = execution_mode == "preview"
-    status = (
-        "候选已就绪（预览模式，不覆盖正文）"
-        if preview
-        else "请确认后应用（将创建回滚点）"
-    )
+    status = "候选已就绪（预览模式，不覆盖正文）" if preview else "请确认后应用（将创建回滚点）"
     return {
         "advice_only": False,
         "candidates": candidates,
@@ -387,7 +441,8 @@ def _assemble_plan_result(
 ) -> dict[str, Any]:
     preview = execution_mode == "preview"
     status = coerced.get("status_line") or (
-        "导演建议已就绪（只建议模式）" if coerced["advice_only"]
+        "导演建议已就绪（只建议模式）"
+        if coerced["advice_only"]
         else ("候选已就绪（预览模式）" if preview else "请确认后应用")
     )
     return {
@@ -401,7 +456,9 @@ def _assemble_plan_result(
     }
 
 
-def _yield_plan_preview_events(plan: dict[str, Any], *, chunk_source: str = "mock") -> Iterator[dict[str, Any]]:
+def _yield_plan_preview_events(
+    plan: dict[str, Any], *, chunk_source: str = "mock"
+) -> Iterator[dict[str, Any]]:
     if plan.get("advice_only"):
         for row in plan.get("advice") or []:
             text = str(row.get("text") or "").strip()

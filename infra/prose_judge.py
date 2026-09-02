@@ -1,4 +1,5 @@
 """Prose rubric v2 — LLM/offline judge reports and calibration helpers (Phase 12.03)."""
+
 from __future__ import annotations
 
 import json
@@ -144,7 +145,9 @@ def _chapter_issue_map(full_check_report: dict[str, Any]) -> dict[int, list[dict
     return out
 
 
-def _prose_p1_for_chapter(issues: list[dict[str, Any]], config: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+def _prose_p1_for_chapter(
+    issues: list[dict[str, Any]], config: dict[str, Any] | None = None
+) -> list[dict[str, Any]]:
     cfg = config or load_prose_config()
     return [
         i
@@ -231,10 +234,13 @@ async def _llm_judge_chapter(
     from lingwen_llm.port_adapter import LLMServiceAdapter
     from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
-    issue_lines = "\n".join(
-        f"- [{i.get('severity')}] {i.get('issue_type')}: {i.get('description', '')}"
-        for i in prose_p1_issues[:8]
-    ) or "(无 prose P1 规则项)"
+    issue_lines = (
+        "\n".join(
+            f"- [{i.get('severity')}] {i.get('issue_type')}: {i.get('description', '')}"
+            for i in prose_p1_issues[:8]
+        )
+        or "(无 prose P1 规则项)"
+    )
 
     prompt = (
         f"章节: ch{chapter_num:03d}\n\n"
@@ -460,14 +466,17 @@ def summarize_judge_report(
         "golden_chapters": judge_report.get("golden_chapters") or [],
         "weighted_avg": weighted_avg,
         "chapters": chapter_rows,
-        **{k: signals[k] for k in (
-            "high_priority_count",
-            "false_positive_candidate_count",
-            "review_needed_count",
-            "high_priority",
-            "false_positive_candidates",
-            "review_needed",
-        )},
+        **{
+            k: signals[k]
+            for k in (
+                "high_priority_count",
+                "false_positive_candidate_count",
+                "review_needed_count",
+                "high_priority",
+                "false_positive_candidates",
+                "review_needed",
+            )
+        },
     }
 
 
@@ -499,7 +508,12 @@ def sample_calibration_pack(
 
 
 def format_calibration_sample_markdown(slug: str, samples: list[dict[str, Any]]) -> str:
-    lines = [f"### {slug}", "", "| 章 | issue_type | 留/删/疑 | 备注 |", "|----|------------|----------|------|"]
+    lines = [
+        f"### {slug}",
+        "",
+        "| 章 | issue_type | 留/删/疑 | 备注 |",
+        "|----|------------|----------|------|",
+    ]
     if not samples:
         lines.append("| — | (无 prose P1 抽检项) | | |")
     else:
@@ -524,10 +538,9 @@ def _issue_signal_match(
     issue: dict[str, Any],
     signal_row: dict[str, Any],
 ) -> bool:
-    return (
-        int(issue.get("chapter") or 0) == int(signal_row.get("chapter") or 0)
-        and str(issue.get("issue_type") or "") == str(signal_row.get("issue_type") or "")
-    )
+    return int(issue.get("chapter") or 0) == int(signal_row.get("chapter") or 0) and str(
+        issue.get("issue_type") or ""
+    ) == str(signal_row.get("issue_type") or "")
 
 
 def suggest_calibration_verdict(

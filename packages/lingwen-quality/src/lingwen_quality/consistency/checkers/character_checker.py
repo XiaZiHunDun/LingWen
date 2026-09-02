@@ -25,6 +25,7 @@ DEFAULT_DETECTION_WINDOW = 200
 @dataclass
 class CharacterProfile:
     """角色设定档案"""
+
     name: str
     personality_tags: List[str]  # 性格标签
     speech_style: str  # 语言风格
@@ -36,8 +37,8 @@ class CharacterProfile:
 
 class CharacterChecker(BaseChecker):
     """角色一致性检查器"""
-    _checker_type = CheckerType.CHARACTER
 
+    _checker_type = CheckerType.CHARACTER
 
     def __init__(self, rules: Optional[Dict[str, Any]] = None):
         super().__init__(self._checker_type)
@@ -61,14 +62,11 @@ class CharacterChecker(BaseChecker):
                 {"trigger": "恐高", "forbidden_action": ["爬高", "站在高处", "俯视下方"]},
                 {"trigger": "旱鸭子", "forbidden_action": ["在水中游泳", "潜水", "水上战斗"]},
                 {"trigger": "不识字", "forbidden_action": ["阅读", "看书", "辨认文字"]},
-            ]
+            ],
         }
 
     def check(
-        self,
-        chapter_content: str,
-        chapter_num: int,
-        context: Optional[Dict[str, Any]] = None
+        self, chapter_content: str, chapter_num: int, context: Optional[Dict[str, Any]] = None
     ) -> List[Issue]:
         """
         检查角色一致性
@@ -83,7 +81,7 @@ class CharacterChecker(BaseChecker):
         """
         # 兼容多种调用方式：直接传list、通过context传list、或通过context传dict包装
         if context is not None and isinstance(context, dict):
-            raw_profiles = context.get('character_profiles', [])
+            raw_profiles = context.get("character_profiles", [])
             # 支持三种格式：
             # 1. list: [{}, {}, ...]
             # 2. dict with "characters": {"characters": [...], ...}
@@ -91,7 +89,7 @@ class CharacterChecker(BaseChecker):
             if isinstance(raw_profiles, list):
                 character_profiles = raw_profiles
             elif isinstance(raw_profiles, dict):
-                character_profiles = raw_profiles.get('characters', [])
+                character_profiles = raw_profiles.get("characters", [])
             else:
                 character_profiles = []
         elif isinstance(context, list):
@@ -118,14 +116,11 @@ class CharacterChecker(BaseChecker):
             abilities=profile_data.get("abilities", []),
             knowledge=profile_data.get("knowledge", []),
             forbids=profile_data.get("forbids", []),
-            opposites=profile_data.get("opposites", {})
+            opposites=profile_data.get("opposites", {}),
         )
 
     def _check_personality_conflicts(
-        self,
-        content: str,
-        chapter_num: int,
-        profile: CharacterProfile
+        self, content: str, chapter_num: int, profile: CharacterProfile
     ) -> List[Issue]:
         """检查性格关键词冲突"""
         opposites_map = self.rules.get("personality_opposites", {})
@@ -135,32 +130,26 @@ class CharacterChecker(BaseChecker):
         for tag, opposite in self._iter_opposites(profile, opposites_map):
             window_size = self._resolve_window_size(opposites_map, tag, default_window)
             if self._has_conflict_in_window(content, opposite, window_size, profile.name):
-                issues.append(self._create_personality_issue(
-                    chapter_num=chapter_num,
-                    character=profile.name,
-                    personality=tag,
-                    opposite=opposite,
-                    issue_type="性格-行为冲突"
-                ))
+                issues.append(
+                    self._create_personality_issue(
+                        chapter_num=chapter_num,
+                        character=profile.name,
+                        personality=tag,
+                        opposite=opposite,
+                        issue_type="性格-行为冲突",
+                    )
+                )
 
         return issues
 
-    def _iter_opposites(
-        self,
-        profile: CharacterProfile,
-        opposites_map: Dict[str, List[str]]
-    ):
+    def _iter_opposites(self, profile: CharacterProfile, opposites_map: Dict[str, List[str]]):
         """生成 (tag, opposite) 对，合并全局规则与角色自定义"""
         for tag in profile.personality_tags:
             yield from ((tag, opp) for opp in opposites_map.get(tag, []))
             yield from ((tag, opp) for opp in profile.opposites.get(tag, []))
 
     @staticmethod
-    def _resolve_window_size(
-        opposites_map: Dict[str, Any],
-        tag: str,
-        default: int
-    ) -> int:
+    def _resolve_window_size(opposites_map: Dict[str, Any], tag: str, default: int) -> int:
         """解析检测窗口：先查 tag 级覆盖，再回退到全局默认
 
         Supports both shapes:
@@ -174,7 +163,9 @@ class CharacterChecker(BaseChecker):
                 return override
         return default
 
-    def _has_conflict_in_window(self, content: str, pattern: str, window_size: int, char_name: str = "") -> bool:
+    def _has_conflict_in_window(
+        self, content: str, pattern: str, window_size: int, char_name: str = ""
+    ) -> bool:
         """检测窗口内是否存在冲突
 
         只有当 opposite 词与角色名在 window_size 字符内同时出现时才判定为冲突，
@@ -208,12 +199,7 @@ class CharacterChecker(BaseChecker):
             pos = idx + 1
 
     def _create_personality_issue(
-        self,
-        chapter_num: int,
-        character: str,
-        personality: str,
-        opposite: str,
-        issue_type: str
+        self, chapter_num: int, character: str, personality: str, opposite: str, issue_type: str
     ) -> Issue:
         """创建性格冲突问题"""
         return Issue(
@@ -222,18 +208,15 @@ class CharacterChecker(BaseChecker):
             checker_type=CheckerType.CHARACTER,
             issue_type=issue_type,
             title="角色性格-行为冲突",
-            description=f"性格为\"{personality}\"的{character}出现了\"{opposite}\"行为",
+            description=f'性格为"{personality}"的{character}出现了"{opposite}"行为',
             location=IssueLocation(chapter=chapter_num),
             evidence=f"角色设定：{personality}",
-            suggestion=f"将\"{opposite}\"改为符合\"{personality}\"性格的行为描述",
-            character=character
+            suggestion=f'将"{opposite}"改为符合"{personality}"性格的行为描述',
+            character=character,
         )
 
     def _check_behavior_conflicts(
-        self,
-        content: str,
-        chapter_num: int,
-        profile: CharacterProfile
+        self, content: str, chapter_num: int, profile: CharacterProfile
     ) -> List[Issue]:
         """检查行为逻辑冲突"""
         issues = []
@@ -247,22 +230,18 @@ class CharacterChecker(BaseChecker):
             if trigger in profile.forbids:
                 for action in forbidden_actions:
                     if action in content:
-                        issues.append(self._create_behavior_issue(
-                            chapter_num=chapter_num,
-                            character=profile.name,
-                            conflict=trigger,
-                            action=action
-                        ))
+                        issues.append(
+                            self._create_behavior_issue(
+                                chapter_num=chapter_num,
+                                character=profile.name,
+                                conflict=trigger,
+                                action=action,
+                            )
+                        )
 
         return issues
 
-    def _create_behavior_issue(
-        self,
-        chapter_num: int,
-        character: str,
-        conflict: str,
-        action: str
-    ) -> Issue:
+    def _create_behavior_issue(self, chapter_num: int, character: str, conflict: str, action: str) -> Issue:
         """创建行为冲突问题"""
         return Issue(
             id=f"char_{chapter_num}_{character}_行为冲突",
@@ -270,18 +249,15 @@ class CharacterChecker(BaseChecker):
             checker_type=CheckerType.CHARACTER,
             issue_type="行为逻辑冲突",
             title="角色行为与设定冲突",
-            description=f"角色{character}具有\"{conflict}\"的设定，但却执行了\"{action}\"",
+            description=f'角色{character}具有"{conflict}"的设定，但却执行了"{action}"',
             location=IssueLocation(chapter=chapter_num),
             evidence=f"角色设定：{conflict}",
             suggestion="修改行为或补充说明为何可以执行该行为",
-            character=character
+            character=character,
         )
 
     def _check_knowledge_conflicts(
-        self,
-        content: str,
-        chapter_num: int,
-        profile: CharacterProfile
+        self, content: str, chapter_num: int, profile: CharacterProfile
     ) -> List[Issue]:
         """检查知识技能冲突"""
         issues = []
@@ -297,22 +273,15 @@ class CharacterChecker(BaseChecker):
             if limit in profile.forbids:
                 for action in actions:
                     if action in content:
-                        issues.append(self._create_knowledge_issue(
-                            chapter_num=chapter_num,
-                            character=profile.name,
-                            limit=limit,
-                            action=action
-                        ))
+                        issues.append(
+                            self._create_knowledge_issue(
+                                chapter_num=chapter_num, character=profile.name, limit=limit, action=action
+                            )
+                        )
 
         return issues
 
-    def _create_knowledge_issue(
-        self,
-        chapter_num: int,
-        character: str,
-        limit: str,
-        action: str
-    ) -> Issue:
+    def _create_knowledge_issue(self, chapter_num: int, character: str, limit: str, action: str) -> Issue:
         """创建知识冲突问题"""
         return Issue(
             id=f"char_{chapter_num}_{character}_知识冲突",
@@ -320,18 +289,15 @@ class CharacterChecker(BaseChecker):
             checker_type=CheckerType.CHARACTER,
             issue_type="知识技能冲突",
             title="角色能力与行为冲突",
-            description=f"角色{character}具有\"{limit}\"的设定，但却执行了\"{action}\"",
+            description=f'角色{character}具有"{limit}"的设定，但却执行了"{action}"',
             location=IssueLocation(chapter=chapter_num),
             evidence=f"角色设定：{limit}",
             suggestion="修改行为或补充角色学习该技能的经过",
-            character=character
+            character=character,
         )
 
     def _check_speech_conflicts(
-        self,
-        content: str,
-        chapter_num: int,
-        profile: CharacterProfile
+        self, content: str, chapter_num: int, profile: CharacterProfile
     ) -> List[Issue]:
         """检查语言风格一致性"""
         issues = []
@@ -345,7 +311,7 @@ class CharacterChecker(BaseChecker):
             return issues
 
         # Combine all dialogue text for analysis
-        all_dialogue = ' '.join([d[0] or d[1] for d in dialogues])
+        all_dialogue = " ".join([d[0] or d[1] for d in dialogues])
 
         for tag in profile.personality_tags:
             opposites = opposites_map.get(tag, [])
@@ -355,23 +321,20 @@ class CharacterChecker(BaseChecker):
                 if opposite in all_dialogue:
                     # Find which specific dialogue contains the conflict
                     context = self._find_dialogue_context(content, opposite)
-                    issues.append(self._create_speech_issue(
-                        chapter_num=chapter_num,
-                        character=profile.name,
-                        personality=tag,
-                        opposite=opposite,
-                        context=context
-                    ))
+                    issues.append(
+                        self._create_speech_issue(
+                            chapter_num=chapter_num,
+                            character=profile.name,
+                            personality=tag,
+                            opposite=opposite,
+                            context=context,
+                        )
+                    )
 
         return issues
 
     def _create_speech_issue(
-        self,
-        chapter_num: int,
-        character: str,
-        personality: str,
-        opposite: str,
-        context: str
+        self, chapter_num: int, character: str, personality: str, opposite: str, context: str
     ) -> Issue:
         """创建语言风格冲突问题"""
         return Issue(
@@ -380,11 +343,11 @@ class CharacterChecker(BaseChecker):
             checker_type=CheckerType.CHARACTER,
             issue_type="语言风格冲突",
             title="角色语言风格与性格冲突",
-            description=f"性格为\"{personality}\"的{character}说出了\"{opposite}\"风格的话",
+            description=f'性格为"{personality}"的{character}说出了"{opposite}"风格的话',
             location=IssueLocation(chapter=chapter_num),
             evidence=f"角色设定：{personality} | 对话中出现的词：{opposite}",
-            suggestion=f"将\"{opposite}\"替换为符合\"{personality}\"性格的措辞",
-            character=character
+            suggestion=f'将"{opposite}"替换为符合"{personality}"性格的措辞',
+            character=character,
         )
 
     def _find_dialogue_context(self, content: str, keyword: str, window: int = 50) -> str:
@@ -398,7 +361,6 @@ class CharacterChecker(BaseChecker):
                 end = min(len(content), match.end() + window)
                 return f"...{content[start:end]}..."
         return ""
-
 
     def check_realtime(self, text: str, **kwargs) -> List[Issue]:
         """

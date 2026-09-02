@@ -16,6 +16,7 @@ MasterController / 5-Agent 工具作为 GoT 节点的可调用目标。
 - 决策面板 (Phase 4)
 - 22 步 → GoT 节点的 1:1 自动映射工具 (手工编写 workflow YAML)
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable, Optional, Union
@@ -47,7 +48,9 @@ if TYPE_CHECKING:
 # 2. 在本表加一行 handler
 # 3. workflow YAML 用新 scenario
 
-HandlerFn = Callable[["MasterController", dict[str, Any]], Union[dict[str, Any], tuple[dict[str, Any], dict[str, int]]]]
+HandlerFn = Callable[
+    ["MasterController", dict[str, Any]], Union[dict[str, Any], tuple[dict[str, Any], dict[str, int]]]
+]
 
 
 def _resolve_field(inputs: dict[str, Any], field: str, default: Any = None) -> Any:
@@ -63,7 +66,9 @@ def _resolve_field(inputs: dict[str, Any], field: str, default: Any = None) -> A
     return default
 
 
-def _handler_chapter_writing(master: MasterController, inputs: dict[str, Any]) -> tuple[dict[str, Any], dict[str, int]]:
+def _handler_chapter_writing(
+    master: MasterController, inputs: dict[str, Any]
+) -> tuple[dict[str, Any], dict[str, int]]:
     """scenario=chapter_writing → content_writer.generate_chapter
 
     inputs 期望含 chapter_num (顶层 或 上游 read_snapshot 的 output)
@@ -74,7 +79,10 @@ def _handler_chapter_writing(master: MasterController, inputs: dict[str, Any]) -
     """
     chapter_num = int(_resolve_field(inputs, "chapter_num", 0))
     if not chapter_num:
-        return {"_error": "chapter_num is required for chapter_writing"}, {"input_tokens": 0, "output_tokens": 0}
+        return {"_error": "chapter_num is required for chapter_writing"}, {
+            "input_tokens": 0,
+            "output_tokens": 0,
+        }
     result, usage = master.write_chapter_with_usage(
         chapter_num=chapter_num,
         outline=_resolve_field(inputs, "outline", {}),
@@ -88,7 +96,9 @@ def _handler_chapter_writing(master: MasterController, inputs: dict[str, Any]) -
     return result, usage
 
 
-def _handler_chapter_review(master: MasterController, inputs: dict[str, Any]) -> tuple[dict[str, Any], dict[str, int]]:
+def _handler_chapter_review(
+    master: MasterController, inputs: dict[str, Any]
+) -> tuple[dict[str, Any], dict[str, int]]:
     """scenario=chapter_review → auditor.audit_chapter
 
     inputs 期望含 content (来自 write_chapter 的 output.content) 和 chapter_num
@@ -100,7 +110,10 @@ def _handler_chapter_review(master: MasterController, inputs: dict[str, Any]) ->
     chapter_num = int(_resolve_field(inputs, "chapter_num", 0))
     content = _resolve_field(inputs, "content", "")
     if not chapter_num or not content:
-        return {"_error": "chapter_num and content are required for chapter_review"}, {"input_tokens": 0, "output_tokens": 0}
+        return {"_error": "chapter_num and content are required for chapter_review"}, {
+            "input_tokens": 0,
+            "output_tokens": 0,
+        }
     report, usage = master.audit_chapter_with_usage(
         chapter_num=chapter_num,
         content=content,
@@ -125,10 +138,14 @@ def _make_polish_handler(method_name: str) -> HandlerFn:
     返 (output_dict, usage_dict) tuple. 若 master 无 variant (旧 MC / stub),
     fallback 调原 method 返 zero usage tuple (defensive backward compat).
     """
+
     def handler(master: MasterController, inputs: dict[str, Any]) -> tuple[dict[str, Any], dict[str, int]]:
         content = _resolve_field(inputs, "content", "")
         if not content:
-            return {"_error": "content is required for polish scenarios"}, {"input_tokens": 0, "output_tokens": 0}
+            return {"_error": "content is required for polish scenarios"}, {
+                "input_tokens": 0,
+                "output_tokens": 0,
+            }
         chapter_num = int(_resolve_field(inputs, "chapter_num", 0))
         style_guide = _resolve_field(inputs, "style_guide", None)
         with_usage_method = getattr(master, f"{method_name}_with_usage", None)
@@ -149,10 +166,13 @@ def _make_polish_handler(method_name: str) -> HandlerFn:
         # Fallback: 旧 MC 无 variant (test stubs 等), 调原 method 兜底
         method = getattr(master, method_name)
         return {"content": method(content)}, {"input_tokens": 0, "output_tokens": 0}
+
     return handler
 
 
-def _handler_polish_merge(master: MasterController, inputs: dict[str, Any]) -> tuple[dict[str, Any], dict[str, int]]:
+def _handler_polish_merge(
+    master: MasterController, inputs: dict[str, Any]
+) -> tuple[dict[str, Any], dict[str, int]]:
     """scenario=polish_merge — 调 master.polish_merge_synthesis_with_usage 拿真实 usage.
 
     Phase 7.5: 收集 2 个上游 variant, 调 LLM 评分选高者.
@@ -229,6 +249,7 @@ SCENARIO_HANDLERS: dict[str, HandlerFn] = {
 
 
 # === AgentComputeFn ===
+
 
 class AgentComputeFn:
     """把 MasterController 方法包装为 ComputeFn 协议
@@ -371,9 +392,7 @@ class AgentComputeFn:
         # === Phase 8.8 NEW: 集中 budget enforcement (1 次,tuple+dict 双路径均覆盖) ===
         # 业务失败 _error 已在前面早 return,不会到这 — 超 budget 时 raise 让 scheduler 兜底
         if self._cost_tracker is not None:
-            self._cost_tracker.check_budget(
-                getattr(self._master, "_current_budget_usd", None)
-            )
+            self._cost_tracker.check_budget(getattr(self._master, "_current_budget_usd", None))
         # === END Phase 8.8 NEW ===
 
         # === Phase 8.12 NEW: 3-tier budget enforcement (per-run/per-day/per-week) ===
@@ -399,6 +418,7 @@ class AgentComputeFn:
 
 
 # === Workflow → GoTScheduler 工厂 ===
+
 
 def build_got_scheduler(
     master: MasterController,
@@ -447,6 +467,7 @@ def build_got_scheduler(
 
 
 # === 验证用 API ===
+
 
 def registered_scenarios() -> tuple[str, ...]:
     """返回 AgentComputeFn 已注册的 scenario 列表 (供调试 / 测试用)"""

@@ -1,4 +1,5 @@
 """Project-scoped character names for consistency checkers (Phase 10.06)."""
+
 from __future__ import annotations
 
 import json

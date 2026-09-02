@@ -2,6 +2,7 @@
 
 Doc 2 §5 SCENARIOS:hook_extraction 是 polisher scenario,提取章节钩子 (开篇钩/结尾钩)。
 """
+
 from __future__ import annotations
 
 from lingwen_prompt.templates import (

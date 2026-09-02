@@ -1,4 +1,5 @@
 """Phase 9.45 F34: cascade purge CLI + retention helper tests."""
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
@@ -71,28 +72,20 @@ class TestCascadeRetentionHelpers:
             parse_older_than("90x")
 
     def test_purge_dry_run_counts_without_delete(self, storage_with_runs):
-        result = purge_cascade_runs_older_than(
-            storage_with_runs, timedelta(days=90), execute=False
-        )
+        result = purge_cascade_runs_older_than(storage_with_runs, timedelta(days=90), execute=False)
         assert result.matched == 1
         assert result.deleted == 0
         assert len(storage_with_runs.get_cascade_runs("rip-1")) == 2
 
     def test_purge_execute_deletes_old_rows(self, storage_with_runs):
-        result = purge_cascade_runs_older_than(
-            storage_with_runs, timedelta(days=90), execute=True
-        )
+        result = purge_cascade_runs_older_than(storage_with_runs, timedelta(days=90), execute=True)
         assert result.matched == 1
         assert result.deleted == 1
         assert len(storage_with_runs.get_cascade_runs("rip-1")) == 1
 
     def test_purge_execute_idempotent_second_pass(self, storage_with_runs):
-        purge_cascade_runs_older_than(
-            storage_with_runs, timedelta(days=90), execute=True
-        )
-        second = purge_cascade_runs_older_than(
-            storage_with_runs, timedelta(days=90), execute=True
-        )
+        purge_cascade_runs_older_than(storage_with_runs, timedelta(days=90), execute=True)
+        second = purge_cascade_runs_older_than(storage_with_runs, timedelta(days=90), execute=True)
         assert second.matched == 0
         assert second.deleted == 0
 

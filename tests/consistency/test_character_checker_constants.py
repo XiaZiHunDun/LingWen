@@ -3,6 +3,7 @@
 防止硬编码 200 再次潜入代码 - 任何对 DEFAULT_DETECTION_WINDOW 的修改
 必须显式更新测试,而不是悄悄改字面量。
 """
+
 from lingwen_quality.consistency.checkers import character_checker
 
 

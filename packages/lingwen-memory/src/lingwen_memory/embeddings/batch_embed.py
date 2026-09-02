@@ -2,6 +2,7 @@
 
 提供批量将章节内容向量化的功能，支持将向量存储到 Qdrant 集合。
 """
+
 from typing import Any, Dict, List, Optional
 
 from lingwen_memory.vector.embedder import Embedder
@@ -66,7 +67,7 @@ class BatchEmbedder:
 
         # 分批处理
         for i in range(0, len(chapters), batch_size):
-            batch = chapters[i:i + batch_size]
+            batch = chapters[i : i + batch_size]
             embedded_ids.extend(self._process_batch(batch, text_field, id_field, metadata_fields))
 
         return embedded_ids
@@ -120,7 +121,9 @@ class BatchEmbedder:
         vectors = self.embedder.embed_texts(texts)
 
         if not vectors or len(vectors) != len(batch):
-            raise Exception(f"Embedding failed: expected {len(batch)} vectors, got {len(vectors) if vectors else 0}")
+            raise Exception(
+                f"Embedding failed: expected {len(batch)} vectors, got {len(vectors) if vectors else 0}"
+            )
 
         # 构建向量点
         points = []
@@ -140,11 +143,13 @@ class BatchEmbedder:
             if id_field != "chapter_id":
                 payload["chapter_id"] = chapter[id_field]
 
-            points.append({
-                "id": point_id,
-                "vector": vector,
-                "payload": payload,
-            })
+            points.append(
+                {
+                    "id": point_id,
+                    "vector": vector,
+                    "payload": payload,
+                }
+            )
 
         # 存储到 Qdrant
         self.qdrant_wrapper.upsert(self.collection_name, points)
@@ -185,7 +190,7 @@ class BatchEmbedder:
 
         # 分批处理
         for i in range(0, len(segments), batch_size):
-            batch = segments[i:i + batch_size]
+            batch = segments[i : i + batch_size]
 
             # 提取文本
             texts = [segment[text_field] for segment in batch]
@@ -214,11 +219,13 @@ class BatchEmbedder:
                     if key not in (id_field, text_field):
                         payload[key] = value
 
-                points.append({
-                    "id": point_id,
-                    "vector": vector,
-                    "payload": payload,
-                })
+                points.append(
+                    {
+                        "id": point_id,
+                        "vector": vector,
+                        "payload": payload,
+                    }
+                )
 
             # 存储到 Qdrant
             if points:
@@ -260,9 +267,9 @@ def find_similar_chapters(
     query_filter = None
     if filters:
         from qdrant_client.models import FieldCondition, Filter, MatchValue
+
         conditions = [
-            FieldCondition(key=field, match=MatchValue(value=value))
-            for field, value in filters.items()
+            FieldCondition(key=field, match=MatchValue(value=value)) for field, value in filters.items()
         ]
         query_filter = Filter(must=conditions) if conditions else None
 

@@ -13,6 +13,7 @@ Doc 2 §6.3 + Doc 4 §2: 简单任务 → HAIKU 4.5,中等 → SONNET 4.6,复杂
 - SONNET 4.6: $3 input / $15 output
 - OPUS 4.5:   $15 input / $75 output
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -87,6 +88,5 @@ def compute_cost(input_tokens: int, output_tokens: int, tier: ModelTier) -> floa
         raise ValueError(f"tokens must be non-negative: input={input_tokens}, output={output_tokens}")
     cfg = MODEL_TIERS[tier]
     return (
-        input_tokens / 1_000_000 * cfg.input_cost_per_1m
-        + output_tokens / 1_000_000 * cfg.output_cost_per_1m
+        input_tokens / 1_000_000 * cfg.input_cost_per_1m + output_tokens / 1_000_000 * cfg.output_cost_per_1m
     )

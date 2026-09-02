@@ -13,6 +13,7 @@ trigger_ripple_id→ripple_id, cascade_nodes/cascade_edges keys, and the
 extended CascadeResponse fields (cascade_actions / generated_at /
 bfs_algorithm_version).
 """
+
 from __future__ import annotations
 
 from apps.studio_api.cvg_adapter import (
@@ -128,8 +129,22 @@ def test_cascade_storage_to_presentation_composes_nodes_and_edges():
     storage = {
         "cascade_id": "c-001",
         "nodes": [
-            {"node_id": "n-1", "label": "Alice", "chapter_id": 10, "depth": 0, "title": "Alice (vol 1)", "status": "applied"},
-            {"node_id": "n-2", "label": "Bob", "chapter_id": 50, "depth": 1, "title": "Bob (vol 1)", "status": "applied"},
+            {
+                "node_id": "n-1",
+                "label": "Alice",
+                "chapter_id": 10,
+                "depth": 0,
+                "title": "Alice (vol 1)",
+                "status": "applied",
+            },
+            {
+                "node_id": "n-2",
+                "label": "Bob",
+                "chapter_id": 50,
+                "depth": 1,
+                "title": "Bob (vol 1)",
+                "status": "applied",
+            },
         ],
         "edges": [
             {"edge_id": "e-1", "source": "n-1", "target": "n-2"},
@@ -153,27 +168,41 @@ def test_cascade_storage_to_presentation_composes_nodes_and_edges():
 
 def test_cascade_node_storage_to_presentation_maps_dimension_to_status():
     """Storage node dimension field should populate presentation status (default 'applied')."""
-    result_char = cascade_node_storage_to_presentation({
-        "id": "n1", "chapter": 1, "title": "T", "dimension": "character",
-        "volume": 1, "depth": 1,
-    })
+    result_char = cascade_node_storage_to_presentation(
+        {
+            "id": "n1",
+            "chapter": 1,
+            "title": "T",
+            "dimension": "character",
+            "volume": 1,
+            "depth": 1,
+        }
+    )
     assert result_char.status == "character"  # dimension mapped to status
 
-    result_default = cascade_node_storage_to_presentation({
-        "id": "n2", "chapter": 2, "title": "T2", "volume": 1, "depth": 1,
-    })
+    result_default = cascade_node_storage_to_presentation(
+        {
+            "id": "n2",
+            "chapter": 2,
+            "title": "T2",
+            "volume": 1,
+            "depth": 1,
+        }
+    )
     assert result_default.status == "applied"  # default when no dimension
 
 
 def test_cascade_edge_storage_to_presentation_maps_from_node_id_and_to_node_id():
     """Storage edge (from_node_id, to_node_id) must map to presentation (source, target)."""
-    result = cascade_edge_storage_to_presentation({
-        "id": "e1",
-        "from_node_id": "n1",
-        "to_node_id": "n2",
-        "relationship_type": "reference",
-        "weight": 0.5,
-    })
+    result = cascade_edge_storage_to_presentation(
+        {
+            "id": "e1",
+            "from_node_id": "n1",
+            "to_node_id": "n2",
+            "relationship_type": "reference",
+            "weight": 0.5,
+        }
+    )
     assert result.source == "n1"
     assert result.target == "n2"
     assert result.relation == "reference"
@@ -182,20 +211,28 @@ def test_cascade_edge_storage_to_presentation_maps_from_node_id_and_to_node_id()
 
 def test_cascade_storage_to_presentation_maps_trigger_ripple_id_and_computes_totals():
     """Storage cascade (trigger_ripple_id + cascade_nodes + cascade_edges) must map correctly."""
-    result = cascade_storage_to_presentation({
-        "trigger_ripple_id": "r1",
-        "cascade_nodes": [
-            {"id": "n1", "chapter": 1, "title": "T1", "dimension": "character", "volume": 1, "depth": 1},
-            {"id": "n2", "chapter": 2, "title": "T2", "dimension": "setting", "volume": 1, "depth": 2},
-        ],
-        "cascade_edges": [
-            {"id": "e1", "from_node_id": "n1", "to_node_id": "n2", "relationship_type": "ref", "weight": 0.3},
-        ],
-        "cascade_actions": [{"type": "apply", "target": "ch1"}],
-        "depth_reached": 2,
-        "generated_at": "2026-08-30T12:00:00",
-        "bfs_algorithm_version": "v1",
-    })
+    result = cascade_storage_to_presentation(
+        {
+            "trigger_ripple_id": "r1",
+            "cascade_nodes": [
+                {"id": "n1", "chapter": 1, "title": "T1", "dimension": "character", "volume": 1, "depth": 1},
+                {"id": "n2", "chapter": 2, "title": "T2", "dimension": "setting", "volume": 1, "depth": 2},
+            ],
+            "cascade_edges": [
+                {
+                    "id": "e1",
+                    "from_node_id": "n1",
+                    "to_node_id": "n2",
+                    "relationship_type": "ref",
+                    "weight": 0.3,
+                },
+            ],
+            "cascade_actions": [{"type": "apply", "target": "ch1"}],
+            "depth_reached": 2,
+            "generated_at": "2026-08-30T12:00:00",
+            "bfs_algorithm_version": "v1",
+        }
+    )
     assert result.ripple_id == "r1"
     assert len(result.nodes) == 2
     assert result.nodes[0].node_id == "n1"
@@ -223,7 +260,13 @@ def test_cascade_preview_storage_to_presentation_populates_counts():
                 {"id": "n3", "dimension": "plot_point", "chapter": 3, "volume": 1, "title": "P1", "depth": 3},
             ],
             "cascade_edges": [
-                {"id": "e1", "from_node_id": "n1", "to_node_id": "n2", "relationship_type": "ref", "weight": 0.5},
+                {
+                    "id": "e1",
+                    "from_node_id": "n1",
+                    "to_node_id": "n2",
+                    "relationship_type": "ref",
+                    "weight": 0.5,
+                },
             ],
             "cascade_actions": [{"type": "apply"}],
             "depth_reached": 3,
@@ -259,6 +302,7 @@ def test_reference_graph_storage_to_presentation_maps_node_id_and_chapter_id():
     by_dimension is COMPUTED from node dimensions (storage lacks it).
     """
     from apps.studio_api.cvg_adapter import reference_graph_storage_to_presentation
+
     storage = {
         "nodes": [
             {"id": "n1", "chapter": 5, "dimension": "character", "volume": 1, "title": "Alice"},
@@ -298,6 +342,7 @@ def test_reference_graph_storage_to_presentation_handles_already_presentation_ke
     presentation-shape (node_id/chapter_id/source/target), pass through.
     """
     from apps.studio_api.cvg_adapter import reference_graph_storage_to_presentation
+
     storage = {
         "nodes": [
             {"node_id": "n1", "chapter_id": 5, "dimension": "character", "volume": 1},
@@ -336,7 +381,13 @@ def test_cascade_run_storage_to_presentation_basic():
             {"id": "n1", "dimension": "character", "volume": 1, "chapter": 5, "title": "Lin"},
         ],
         "cascade_edges": [
-            {"id": "e1", "from_node_id": "n1", "to_node_id": "n2", "relationship_type": "mentions", "weight": 1.0},
+            {
+                "id": "e1",
+                "from_node_id": "n1",
+                "to_node_id": "n2",
+                "relationship_type": "mentions",
+                "weight": 1.0,
+            },
         ],
         "cascade_actions": [{"action": "update", "chapter": 5}],
     }
@@ -410,6 +461,7 @@ def test_cascade_broadcast_log_storage_to_presentation_handles_dataclass():
 def test_get_dim_dict_input():
     """Phase 126 v16.5 #N.11.f: _get_dim reads dimension from dict."""
     from apps.studio_api.cvg_adapter import _get_dim
+
     assert _get_dim({"dimension": "character"}) == "character"
     assert _get_dim({"dimension": None}) is None
     assert _get_dim({}) is None

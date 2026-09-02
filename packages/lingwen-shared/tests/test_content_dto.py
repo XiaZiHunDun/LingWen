@@ -19,6 +19,7 @@ DTO names (per spec §3.3):
 - Logic check: CreatorLogicCheckResponse
 - Dashboard: CreatorChapterPreview + CreatorOutlineSaveRequest + CreatorBodySaveRequest
 """
+
 from __future__ import annotations
 
 import pytest
@@ -85,9 +86,7 @@ def test_batch_history_export_response_has_count_and_jobs() -> None:
 
 
 def test_preferences_response_has_creation_mode() -> None:
-    resp = CreatorPreferencesResponse(
-        creation_mode="studio", quality_profile="studio_full"
-    )
+    resp = CreatorPreferencesResponse(creation_mode="studio", quality_profile="studio_full")
     assert resp.creation_mode == "studio"
 
 
@@ -127,9 +126,7 @@ def test_logic_check_response_p0_count_default_and_explicit() -> None:
 
 
 def test_chapter_preview_minimal() -> None:
-    prev = CreatorChapterPreview(
-        chapter_id=42, project_slug="proj-1", outline="", body=""
-    )
+    prev = CreatorChapterPreview(chapter_id=42, project_slug="proj-1", outline="", body="")
     assert prev.chapter_id == 42
 
 

@@ -1,4 +1,5 @@
 """Tests for emit_chapter disk persistence."""
+
 from __future__ import annotations
 
 import json
@@ -21,7 +22,8 @@ def isolated_paths(tmp_path, monkeypatch):
     (tmp_path / "03_内容仓库" / "04_正文").mkdir(parents=True)
     (tmp_path / "03_内容仓库" / "角色设定").mkdir(parents=True)
     (tmp_path / "03_内容仓库" / "角色设定" / "character_profiles.json").write_text(
-        "{}", encoding="utf-8",
+        "{}",
+        encoding="utf-8",
     )
     index_script = tmp_path / "03_内容仓库" / "update_index.py"
     index_script.write_text(

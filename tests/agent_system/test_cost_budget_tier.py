@@ -11,6 +11,7 @@ Phase 8.15: adds .tier: ModelTier | None for per-tier budget alarm.
 - scope='tier' + tier → message 含 [tier=opus]
 - scope='run' (Phase 8.8/8.12 旧 path) → message 0 tier_msg 0 scope_msg (default 0 变)
 """
+
 from __future__ import annotations
 
 from lingwen_llm.providers.cost_tracker import CostBudgetExceeded
@@ -26,7 +27,10 @@ def test_cost_budget_exceeded_tier_default_none():
 def test_cost_budget_exceeded_tier_field_set():
     """Phase 8.15: tier field 接受 ModelTier (str enum 序列化 .value 在 __str__)."""
     exc = CostBudgetExceeded(
-        used_usd=1.5, budget_usd=1.0, scope="tier", tier=ModelTier.OPUS,
+        used_usd=1.5,
+        budget_usd=1.0,
+        scope="tier",
+        tier=ModelTier.OPUS,
     )
     assert exc.tier == ModelTier.OPUS
     assert exc.scope == "tier"

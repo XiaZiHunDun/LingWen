@@ -15,6 +15,7 @@ Doc 3 (主线/支线模型 v1.0) §4: 6 状态机 + 7 阶段模型。
 - 7 阶段的精细化进度计算 (Phase 1.5+,需要章节级 constraint 触发数据)
 - 状态机的撤销/重做 (1.5+)
 """
+
 from __future__ import annotations
 
 from lingwen_core.domain.subplot import Plot, PlotStatus
@@ -32,35 +33,35 @@ CLOSING_MIN_CHAPTERS = 2
 
 # 7 阶段模型 (按时间顺序)
 STAGES: tuple[str, ...] = (
-    "seed",       # 1-2 ch, 钩子引入
-    "build",      # 5-15 ch, 发展
-    "escalate",   # 5-10 ch, 升级
-    "climax",     # 2-5 ch, 高潮
-    "resolve",    # 3-5 ch, 收束
-    "close",      # 1-2 ch, 标记 CLOSED
-    "echo",       # 0+ ch, 偶发回响
+    "seed",  # 1-2 ch, 钩子引入
+    "build",  # 5-15 ch, 发展
+    "escalate",  # 5-10 ch, 升级
+    "climax",  # 2-5 ch, 高潮
+    "resolve",  # 3-5 ch, 收束
+    "close",  # 1-2 ch, 标记 CLOSED
+    "echo",  # 0+ ch, 偶发回响
 )
 
 # 各阶段典型章数范围 (min, max)
 STAGE_TYPICAL_RANGES: dict[str, tuple[int, int]] = {
-    "seed":     (1, 2),
-    "build":    (5, 15),
+    "seed": (1, 2),
+    "build": (5, 15),
     "escalate": (5, 10),
-    "climax":   (2, 5),
-    "resolve":  (3, 5),
-    "close":    (1, 2),
-    "echo":     (0, 0),
+    "climax": (2, 5),
+    "resolve": (3, 5),
+    "close": (1, 2),
+    "echo": (0, 0),
 }
 
 # 阶段边界 (进度百分比) — 用于 get_current_stage
 # 总和 1.0,顺序与 STAGES 一致
 _STAGE_PROGRESS_BOUNDS: tuple[tuple[str, float, float], ...] = (
-    ("seed",     0.00, 0.05),
-    ("build",    0.05, 0.40),
+    ("seed", 0.00, 0.05),
+    ("build", 0.05, 0.40),
     ("escalate", 0.40, 0.65),
-    ("climax",   0.65, 0.80),
-    ("resolve",  0.80, 0.95),
-    ("close",    0.95, 1.00),
+    ("climax", 0.65, 0.80),
+    ("resolve", 0.80, 0.95),
+    ("close", 0.95, 1.00),
 )
 
 

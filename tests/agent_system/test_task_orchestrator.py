@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 
 # Add project root to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
 from lingwen_core.agents.orchestration.task_orchestrator import TaskOrchestrator
 
@@ -17,8 +17,8 @@ class MockStateManager:
     """模拟状态管理器"""
 
     def __init__(self):
-        self._current_step = 'STEP_14'
-        self._timestamp = '2026-05-20T00:00:00'
+        self._current_step = "STEP_14"
+        self._timestamp = "2026-05-20T00:00:00"
 
     def get_current_step(self) -> str:
         return self._current_step
@@ -27,7 +27,7 @@ class MockStateManager:
         self._current_step = step
 
     def update_timestamp(self) -> None:
-        self._timestamp = '2026-05-20T12:00:00'
+        self._timestamp = "2026-05-20T12:00:00"
 
 
 @pytest.fixture
@@ -47,11 +47,9 @@ def mock_event_bus():
 @pytest.fixture
 def orchestrator(mock_state_manager, mock_event_bus):
     """Fixture: 创建TaskOrchestrator实例"""
-    with patch('lingwen_core.agents.orchestration.task_orchestrator.EventBus', return_value=mock_event_bus):
+    with patch("lingwen_core.agents.orchestration.task_orchestrator.EventBus", return_value=mock_event_bus):
         return TaskOrchestrator(
-            state_manager=mock_state_manager,
-            event_bus=mock_event_bus,
-            state_file="workflow_state.json"
+            state_manager=mock_state_manager, event_bus=mock_event_bus, state_file="workflow_state.json"
         )
 
 
@@ -60,30 +58,30 @@ class TestStepAdvancement:
 
     def test_advance_step_valid_transition(self, orchestrator):
         """测试合法步骤转换"""
-        is_valid, error = orchestrator.advance_step('STEP_15')
+        is_valid, error = orchestrator.advance_step("STEP_15")
         assert is_valid is True
         assert error == ""
 
     def test_advance_step_invalid_transition(self, orchestrator):
         """测试非法步骤转换（跳过STEP_15）"""
-        is_valid, error = orchestrator.advance_step('STEP_16')
+        is_valid, error = orchestrator.advance_step("STEP_16")
         assert is_valid is False
         assert "非法状态转换" in error
 
     def test_advance_step_backward_not_allowed(self, orchestrator):
         """测试后退不允许"""
-        is_valid, error = orchestrator.advance_step('STEP_13')
+        is_valid, error = orchestrator.advance_step("STEP_13")
         assert is_valid is False
 
     def test_get_allowed_steps(self, orchestrator):
         """测试获取允许的步骤"""
         allowed = orchestrator.get_allowed_steps()
-        assert 'STEP_15' in allowed
+        assert "STEP_15" in allowed
 
     def test_can_advance_to(self, orchestrator):
         """测试检查是否可以转换"""
-        assert orchestrator.can_advance_to('STEP_15') is True
-        assert orchestrator.can_advance_to('STEP_16') is False
+        assert orchestrator.can_advance_to("STEP_15") is True
+        assert orchestrator.can_advance_to("STEP_16") is False
 
 
 class TestTaskManagement:
@@ -92,10 +90,7 @@ class TestTaskManagement:
     def test_dispatch_task(self, orchestrator):
         """测试分发任务"""
         task_id = orchestrator.dispatch_task(
-            task_name="write_chapter",
-            agent="content_writer",
-            context={"chapter": 1},
-            priority=0
+            task_name="write_chapter", agent="content_writer", context={"chapter": 1}, priority=0
         )
         assert task_id is not None
         assert len(task_id) == 8  # UUID前8位
@@ -107,18 +102,8 @@ class TestTaskManagement:
         而不是 _task_queue。验证最后一个 dispatch 的任务（按 priority 排序）应
         在 _active_tasks 中存在。
         """
-        orchestrator.dispatch_task(
-            task_name="low_priority",
-            agent="content_writer",
-            context={},
-            priority=-1
-        )
-        orchestrator.dispatch_task(
-            task_name="high_priority",
-            agent="auditor",
-            context={},
-            priority=1
-        )
+        orchestrator.dispatch_task(task_name="low_priority", agent="content_writer", context={}, priority=-1)
+        orchestrator.dispatch_task(task_name="high_priority", agent="auditor", context={}, priority=1)
         # 同步调度：所有任务都在 _active_tasks，_task_queue 为空
         pending = orchestrator.get_pending_tasks()
         assert pending == []
@@ -130,11 +115,7 @@ class TestTaskManagement:
 
     def test_start_task(self, orchestrator):
         """测试开始任务（R2-008：dispatch_task 已自动 start_task）"""
-        task_id = orchestrator.dispatch_task(
-            task_name="test_task",
-            agent="content_writer",
-            context={}
-        )
+        task_id = orchestrator.dispatch_task(task_name="test_task", agent="content_writer", context={})
         # 同步调度：任务已直接进入 _active_tasks
         # start_task 在新语义下不应再被调用
         active = orchestrator.get_active_tasks()
@@ -144,11 +125,7 @@ class TestTaskManagement:
 
     def test_verify_task(self, orchestrator):
         """测试验证任务完成"""
-        task_id = orchestrator.dispatch_task(
-            task_name="test_task",
-            agent="content_writer",
-            context={}
-        )
+        task_id = orchestrator.dispatch_task(task_name="test_task", agent="content_writer", context={})
         orchestrator.start_task(task_id)
 
         result = {"status": "completed", "output": "chapter_content"}
@@ -168,11 +145,7 @@ class TestTaskManagement:
 
     def test_fail_task(self, orchestrator):
         """测试任务失败"""
-        task_id = orchestrator.dispatch_task(
-            task_name="test_task",
-            agent="content_writer",
-            context={}
-        )
+        task_id = orchestrator.dispatch_task(task_name="test_task", agent="content_writer", context={})
         orchestrator.start_task(task_id)
 
         # 在fail之前获取任务引用
@@ -211,7 +184,7 @@ class TestWorkflowStatus:
     def test_get_current_step(self, orchestrator):
         """测试获取当前步骤"""
         step = orchestrator.get_current_step()
-        assert step == 'STEP_14'
+        assert step == "STEP_14"
 
     def test_get_workflow_status(self, orchestrator):
         """测试获取工作流整体状态（R2-008：同步调度后任务在 active）"""
@@ -235,15 +208,15 @@ class TestStepCallbacks:
     def test_register_step_callback(self, orchestrator):
         """测试注册步骤回调"""
         callback = Mock()
-        orchestrator.register_step_callback('STEP_15', callback)
+        orchestrator.register_step_callback("STEP_15", callback)
         # 回调注册不会立即执行，需要触发步骤转换
 
     def test_step_callback_triggered_on_advance(self, orchestrator):
         """测试步骤转换时触发回调"""
         callback = Mock()
-        orchestrator.register_step_callback('STEP_15', callback)
+        orchestrator.register_step_callback("STEP_15", callback)
 
-        orchestrator.advance_step('STEP_15')
+        orchestrator.advance_step("STEP_15")
 
         # 回调被调用（通过EventBus）
         # 注意：由于是mock，这里只验证不报错
@@ -282,5 +255,5 @@ class TestReset:
         assert len(active) == 0
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

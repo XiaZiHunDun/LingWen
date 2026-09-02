@@ -2,6 +2,7 @@
 
 Migrated from infra/creator_logic_check.py in Phase 126 v16.2.4.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -25,10 +26,7 @@ def _issues_meet_fail_threshold(issues, fail_severity: str | None) -> bool:
     threshold = _SEVERITY_RANK.get(str(fail_severity).upper())
     if threshold is None:
         return True
-    return any(
-        _SEVERITY_RANK.get(issue.severity.value, 99) <= threshold
-        for issue in issues
-    )
+    return any(_SEVERITY_RANK.get(issue.severity.value, 99) <= threshold for issue in issues)
 
 
 def run_creator_logic_check(

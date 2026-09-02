@@ -8,6 +8,7 @@ Verifies:
 - Each DTO can be constructed with required fields
 - Pydantic v2 validation enforces types (extra='ignore', Optional defaults)
 """
+
 from __future__ import annotations
 
 
@@ -32,6 +33,7 @@ def test_health_dtos_importable() -> None:
 def test_database_status_basic_shape() -> None:
     """DatabaseStatus accepts status + optional fields."""
     from lingwen_shared.contracts.python.health import DatabaseStatus
+
     obj = DatabaseStatus(status="ok", error=None, tables=42, records=1000)
     assert obj.status == "ok"
     assert obj.tables == 42
@@ -44,6 +46,7 @@ def test_health_response_full_shape() -> None:
         HealthResponse,
         MemoryUsage,
     )
+
     hr = HealthResponse(
         status="ok",
         service="studio",
@@ -61,6 +64,7 @@ def test_health_response_full_shape() -> None:
 def test_overview_response_shape() -> None:
     """OverviewResponse numeric fields."""
     from lingwen_shared.contracts.python.health import OverviewResponse
+
     obj = OverviewResponse(
         total_chapters=100,
         total_hooks=500,
@@ -74,10 +78,18 @@ def test_overview_response_shape() -> None:
 def test_chapters_response_nested() -> None:
     """ChaptersResponse contains list of ChapterData."""
     from lingwen_shared.contracts.python.health import ChapterData, ChaptersResponse
-    obj = ChaptersResponse(chapters=[ChapterData(
-        chapter=1, hook_count=5, hook_strength_avg=0.8,
-        coolpoint_count=3, coolpoint_density=2.5,
-    )])
+
+    obj = ChaptersResponse(
+        chapters=[
+            ChapterData(
+                chapter=1,
+                hook_count=5,
+                hook_strength_avg=0.8,
+                coolpoint_count=3,
+                coolpoint_density=2.5,
+            )
+        ]
+    )
     assert len(obj.chapters) == 1
     assert obj.chapters[0].chapter == 1
 
@@ -85,9 +97,15 @@ def test_chapters_response_nested() -> None:
 def test_production_rollup_response_shape() -> None:
     """ProductionRollupResponse default batches=[]."""
     from lingwen_shared.contracts.python.health import ProductionRollupResponse
+
     obj = ProductionRollupResponse(
-        records_dir="/x", record_count=1, pilot_count=1, batch_count=0,
-        total_cost_usd=0.5, chapters_with_records=10, batches=[],
+        records_dir="/x",
+        record_count=1,
+        pilot_count=1,
+        batch_count=0,
+        total_cost_usd=0.5,
+        chapters_with_records=10,
+        batches=[],
     )
     assert obj.batch_count == 0
 
@@ -95,9 +113,15 @@ def test_production_rollup_response_shape() -> None:
 def test_production_rollup_response_latest_recorded_at() -> None:
     """ProductionRollupResponse.latest_recorded_at accepts ISO string."""
     from lingwen_shared.contracts.python.health import ProductionRollupResponse
+
     obj = ProductionRollupResponse(
-        records_dir="/x", record_count=1, pilot_count=1, batch_count=0,
-        total_cost_usd=0.5, chapters_with_records=10, batches=[],
+        records_dir="/x",
+        record_count=1,
+        pilot_count=1,
+        batch_count=0,
+        total_cost_usd=0.5,
+        chapters_with_records=10,
+        batches=[],
         latest_recorded_at="2026-08-30T00:00:00Z",
     )
     assert obj.latest_recorded_at == "2026-08-30T00:00:00Z"
@@ -106,9 +130,13 @@ def test_production_rollup_response_latest_recorded_at() -> None:
 def test_extra_fields_ignored() -> None:
     """extra='ignore' allows unknown fields (forward compat)."""
     from lingwen_shared.contracts.python.health import OverviewResponse
+
     obj = OverviewResponse(
-        total_chapters=1, total_hooks=1, avg_hook_strength=0.5,
-        total_coolpoints=1, avg_coolpoint_density=0.5,
+        total_chapters=1,
+        total_hooks=1,
+        avg_hook_strength=0.5,
+        total_coolpoints=1,
+        avg_coolpoint_density=0.5,
         unknown_field="x",  # type: ignore[call-arg]
     )
     assert obj.total_chapters == 1
@@ -119,10 +147,13 @@ def test_chapter_data_has_body_default_false() -> None:
     """v16.5 #N.14 T3: ChapterData declares `has_body` field; legacy callers
     that don't set it get default False (forward-compat)."""
     from lingwen_shared.contracts.python.health import ChapterData
+
     obj = ChapterData(
         chapter=1,
-        hook_count=0, hook_strength_avg=0.0,
-        coolpoint_count=0, coolpoint_density=0.0,
+        hook_count=0,
+        hook_strength_avg=0.0,
+        coolpoint_count=0,
+        coolpoint_density=0.0,
     )
     assert obj.has_body is False
 
@@ -132,9 +163,13 @@ def test_chapter_data_has_body_explicit_true() -> None:
     (lingwen_creator.content.dashboard emits this per-row; Pydantic was
     dropping via extra='ignore' before field was declared)."""
     from lingwen_shared.contracts.python.health import ChapterData
+
     obj = ChapterData(
-        chapter=1, has_body=True,
-        hook_count=0, hook_strength_avg=0.0,
-        coolpoint_count=0, coolpoint_density=0.0,
+        chapter=1,
+        has_body=True,
+        hook_count=0,
+        hook_strength_avg=0.0,
+        coolpoint_count=0,
+        coolpoint_density=0.0,
     )
     assert obj.has_body is True

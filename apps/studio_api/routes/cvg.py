@@ -9,6 +9,7 @@ tests monkeypatch `dashboard.app._default_storage` via `monkeypatch.setattr(app_
 Because the patch is on the module, this route module must look up `_default_storage`
 through the module object (not a captured reference) for the patch to take effect.
 """
+
 from __future__ import annotations
 
 import csv
@@ -104,9 +105,7 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
         (chapter_id/source_volume/impact_volumes) via cvg_adapter.
         """
         storage = _app_module._default_storage()
-        ripples = storage.get_ripples(
-            status=status_filter, volume=volume, limit=limit, offset=offset
-        )
+        ripples = storage.get_ripples(status=status_filter, volume=volume, limit=limit, offset=offset)
         # Phase 126 v16.5 #N.11.d: convert to canonical presentation shape FIRST
         # (no more hybrid storage-roundtrip for filter/sort). The presentation
         # shape now carries impact_score (see N.11.d), so filter/sort on
@@ -131,9 +130,7 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
         for r in all_ripples:
             by_status[r.status] = by_status.get(r.status, 0) + 1
             by_volume[str(r.trigger_volume)] = by_volume.get(str(r.trigger_volume), 0) + 1
-        return RippleStatsResponse(
-            total=len(all_ripples), by_status=by_status, by_volume=by_volume
-        )
+        return RippleStatsResponse(total=len(all_ripples), by_status=by_status, by_volume=by_volume)
 
     @app.get("/api/cvg/reference-graph", response_model=CanonicalReferenceGraphResponse)
     def get_reference_graph(
@@ -157,9 +154,7 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
             dimension=dimension,
             limit=limit,
         )
-        return cvg_adapter.reference_graph_storage_to_presentation(
-            storage_response.model_dump()
-        )
+        return cvg_adapter.reference_graph_storage_to_presentation(storage_response.model_dump())
 
     @app.get("/api/cvg/ripples/{ripple_id}", response_model=RippleDetailResponse)
     def get_ripple_detail(ripple_id: str) -> RippleDetailResponse:
@@ -167,9 +162,7 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
         storage = _app_module._default_storage()
         ripple = storage.get_ripple_by_id(ripple_id)
         if ripple is None:
-            raise HTTPException(
-                status_code=404, detail=f"ripple {ripple_id} not found"
-            )
+            raise HTTPException(status_code=404, detail=f"ripple {ripple_id} not found")
         return _ripple_to_detail(ripple, storage)
 
     @app.post("/api/cvg/ripples/{ripple_id}/apply", response_model=RippleActionResponse)
@@ -183,17 +176,14 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
         Phase 9.14: 加 Optional body (RippleActionRequest), 不传 body 仍 work (backward compat)。
         """
         from infra.cross_volume.storage import ConflictError
+
         storage = _app_module._default_storage()
         actor = body.actor if body and body.actor else "user"
         origin = body.origin if body and body.origin else "ui"
         try:
-            ripple = storage.update_ripple_status(
-                ripple_id, "applied", actor=actor, origin=origin
-            )
+            ripple = storage.update_ripple_status(ripple_id, "applied", actor=actor, origin=origin)
         except KeyError:
-            raise HTTPException(
-                status_code=404, detail=f"ripple {ripple_id} not found"
-            )
+            raise HTTPException(status_code=404, detail=f"ripple {ripple_id} not found")
         except ValueError as e:
             raise HTTPException(status_code=422, detail=str(e))
         except ConflictError as e:
@@ -214,17 +204,14 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
         Phase 9.14: 加 Optional body (RippleActionRequest), 不传 body 仍 work (backward compat)。
         """
         from infra.cross_volume.storage import ConflictError
+
         storage = _app_module._default_storage()
         actor = body.actor if body and body.actor else "user"
         origin = body.origin if body and body.origin else "ui"
         try:
-            ripple = storage.update_ripple_status(
-                ripple_id, "rejected", actor=actor, origin=origin
-            )
+            ripple = storage.update_ripple_status(ripple_id, "rejected", actor=actor, origin=origin)
         except KeyError:
-            raise HTTPException(
-                status_code=404, detail=f"ripple {ripple_id} not found"
-            )
+            raise HTTPException(status_code=404, detail=f"ripple {ripple_id} not found")
         except ValueError as e:
             raise HTTPException(status_code=422, detail=str(e))
         except ConflictError as e:
@@ -276,8 +263,15 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
             return Response(content=body, media_type="application/json")
         output = io.StringIO()
         fieldnames = [
-            "id", "ripple_id", "action", "prev_status", "new_status",
-            "actor", "origin", "reason", "created_at",
+            "id",
+            "ripple_id",
+            "action",
+            "prev_status",
+            "new_status",
+            "actor",
+            "origin",
+            "reason",
+            "created_at",
         ]
         writer = csv.DictWriter(output, fieldnames=fieldnames, extrasaction="ignore")
         writer.writeheader()
@@ -332,7 +326,9 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
         if live_depth is not None:
             try:
                 cascade = storage.preview_cascade(
-                    ripple_id, max_depth=live_depth, max_nodes_cap=nodes_cap,
+                    ripple_id,
+                    max_depth=live_depth,
+                    max_nodes_cap=nodes_cap,
                 )
             except ValueError as e:
                 raise HTTPException(400, str(e))
@@ -374,7 +370,9 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
         if live_depth is not None:
             try:
                 cascade = storage.preview_cascade(
-                    ripple_id, max_depth=live_depth, max_nodes_cap=nodes_cap,
+                    ripple_id,
+                    max_depth=live_depth,
+                    max_nodes_cap=nodes_cap,
                 )
             except ValueError as e:
                 raise HTTPException(400, str(e))
@@ -419,28 +417,30 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
             validated_depth = _validate_max_depth_v9_20(max_depth)
             try:
                 cascaded = storage.preview_cascade(
-                    ripple_id, max_depth=validated_depth, max_nodes_cap=nodes_cap,
+                    ripple_id,
+                    max_depth=validated_depth,
+                    max_nodes_cap=nodes_cap,
                 )
             except KeyError:
                 raise HTTPException(404, f"Ripple {ripple_id} not found")
             except ValueError as e:
                 raise HTTPException(400, str(e))
-            run_id = storage.record_cascade_run(
-                ripple_id, cascaded, max_depth=validated_depth
-            )
+            run_id = storage.record_cascade_run(ripple_id, cascaded, max_depth=validated_depth)
             run = storage.get_cascade_run_by_id(run_id)
             # Phase 126 v16.5 #N.11.b: v9_20 persist branch also uses canonical
             # presentation CascadeRunResponse via cvg_adapter (consistent with
             # 3 dedicated cascade-runs endpoints).
-            return cvg_adapter.cascade_run_storage_to_presentation(
-                _dataclass_to_dict(run)
-            ).model_dump(mode="json")
+            return cvg_adapter.cascade_run_storage_to_presentation(_dataclass_to_dict(run)).model_dump(
+                mode="json"
+            )
 
         live_depth = _validate_max_depth(max_depth)
         if live_depth is not None:
             try:
                 cascade = storage.preview_cascade(
-                    ripple_id, max_depth=live_depth, max_nodes_cap=nodes_cap,
+                    ripple_id,
+                    max_depth=live_depth,
+                    max_nodes_cap=nodes_cap,
                 )
             except ValueError as e:
                 raise HTTPException(400, str(e))
@@ -481,8 +481,13 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
         """
         storage = _app_module._default_storage()
         runs = storage.get_cascade_runs(
-            ripple_id, limit=limit, offset=offset,
-            status=status, min_depth=min_depth, max_depth=max_depth, algorithm=algorithm,
+            ripple_id,
+            limit=limit,
+            offset=offset,
+            status=status,
+            min_depth=min_depth,
+            max_depth=max_depth,
+            algorithm=algorithm,
         )
         return [cvg_adapter.cascade_run_storage_to_presentation(_dataclass_to_dict(r)) for r in runs]
 
@@ -537,21 +542,23 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
             raise HTTPException(404, f"Cascade run {run_id} not found")
         run = storage.get_cascade_run_by_id(run_id)
         if flipped:
-            notify_cascade_cancel(CascadeCancelPayload(
-                run_id=run_id,
-                ripple_id=ripple_id,
-                reason=body.reason,
-            ))
+            notify_cascade_cancel(
+                CascadeCancelPayload(
+                    run_id=run_id,
+                    ripple_id=ripple_id,
+                    reason=body.reason,
+                )
+            )
         # Phase 126 v16.5 #N.11.b: route enriches presentation response with
         # cancel-specific fields (cancelled_at = now, triggered_by = "system").
         # model_copy(update={...}) avoids model_dump() + dict mutation round-trip
         # and preserves Pydantic v2 model identity.
-        return cvg_adapter.cascade_run_storage_to_presentation(
-            _dataclass_to_dict(run)
-        ).model_copy(update={
-            "cancelled_at": datetime.now(timezone.utc).isoformat(),
-            "triggered_by": "system",
-        })
+        return cvg_adapter.cascade_run_storage_to_presentation(_dataclass_to_dict(run)).model_copy(
+            update={
+                "cancelled_at": datetime.now(timezone.utc).isoformat(),
+                "triggered_by": "system",
+            }
+        )
 
     @app.get(
         "/api/ripples/cascade/{ripple_id}/broadcast-log",
@@ -566,9 +573,7 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
         Phase 126 v16.5 #N.11.c: serves canonical presentation via cvg_adapter.
         """
         storage = _app_module._default_storage()
-        rows = storage.get_cascade_broadcast_logs(
-            ripple_id, limit=limit, offset=offset
-        )
+        rows = storage.get_cascade_broadcast_logs(ripple_id, limit=limit, offset=offset)
         return [cvg_adapter.cascade_broadcast_log_storage_to_presentation(r) for r in rows]
 
     # ==================== Phase 9.13: CVG WebSocket endpoint ====================

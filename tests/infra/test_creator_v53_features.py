@@ -1,4 +1,5 @@
 """Tests for creator v5.3 diff outline side-by-side, batch export, wizard collapse memory."""
+
 from __future__ import annotations
 
 import pytest

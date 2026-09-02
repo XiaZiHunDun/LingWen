@@ -4,6 +4,7 @@ Phase 18.1 — 伏笔域实体。
 
 伏笔 = 提前埋设的故事元素, 计划在后续章节回收。
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -43,8 +44,7 @@ class Foreshadow:
                 )
         if self.resolved_ch is not None and self.resolved_ch < self.planted_ch:
             raise ValueError(
-                f"Foreshadow.resolved_ch ({self.resolved_ch}) must be "
-                f">= planted_ch ({self.planted_ch})"
+                f"Foreshadow.resolved_ch ({self.resolved_ch}) must be >= planted_ch ({self.planted_ch})"
             )
 
 

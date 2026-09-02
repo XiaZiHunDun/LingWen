@@ -9,6 +9,7 @@ from infra.reading_power.rule_matcher import RuleMatcher, SuspectedSegment
 
 logger = logging.getLogger(__name__)
 
+
 class ReadingPowerEngine:
     """
     追读力系统主编排器
@@ -39,7 +40,9 @@ class ReadingPowerEngine:
         # Step 2: 根据疑似段落数量决定分析策略
         if len(suspected) > 10:
             # 疑似段落过多，使用规则结果（可能误报较多）
-            logger.info(f"Chapter {chapter_num}: {len(suspected)} suspected segments, using rule-based results")
+            logger.info(
+                f"Chapter {chapter_num}: {len(suspected)} suspected segments, using rule-based results"
+            )
             hooks, coolpoints = self._merge_rule_results(suspected)
         elif self.llm_analyzer and len(suspected) > 0:
             # 疑似段落在合理范围，使用LLM深度分析
@@ -67,12 +70,7 @@ class ReadingPowerEngine:
         # Step 4: 更新摘要
         self._update_chapter_summary(chapter_num, hooks, coolpoints)
 
-        return AnalysisResult(
-            hooks=hooks,
-            coolpoints=coolpoints,
-            raw_response="",
-            success=True
-        )
+        return AnalysisResult(hooks=hooks, coolpoints=coolpoints, raw_response="", success=True)
 
     def _merge_rule_results(self, suspected: List[SuspectedSegment]) -> tuple:
         """将规则匹配结果转换为标准格式"""
@@ -81,39 +79,43 @@ class ReadingPowerEngine:
 
         for seg in suspected:
             if seg.segment_type == "hook":
-                hooks.append({
-                    "type": seg.pattern_name,
-                    "strength": seg.confidence,
-                    "position": seg.position,
-                    "content": seg.content,
-                    "llm_analyzed": False
-                })
+                hooks.append(
+                    {
+                        "type": seg.pattern_name,
+                        "strength": seg.confidence,
+                        "position": seg.position,
+                        "content": seg.content,
+                        "llm_analyzed": False,
+                    }
+                )
             else:
-                coolpoints.append({
-                    "pattern": seg.pattern_name,
-                    "density": seg.confidence,
-                    "combo_with": [],
-                    "content": seg.content,
-                    "llm_analyzed": False
-                })
+                coolpoints.append(
+                    {
+                        "pattern": seg.pattern_name,
+                        "density": seg.confidence,
+                        "combo_with": [],
+                        "content": seg.content,
+                        "llm_analyzed": False,
+                    }
+                )
 
         return hooks, coolpoints
 
-    def _update_chapter_summary(self, chapter_num: int,
-                                  hooks: List[Dict],
-                                  coolpoints: List[Dict]) -> None:
+    def _update_chapter_summary(self, chapter_num: int, hooks: List[Dict], coolpoints: List[Dict]) -> None:
         """更新章节摘要"""
         hook_count = len(hooks)
         hook_strength_avg = sum(h.get("strength", 0) for h in hooks) / hook_count if hook_count > 0 else 0.0
         coolpoint_count = len(coolpoints)
-        coolpoint_density = sum(c.get("density", 0) for c in coolpoints) / coolpoint_count if coolpoint_count > 0 else 0.0
+        coolpoint_density = (
+            sum(c.get("density", 0) for c in coolpoints) / coolpoint_count if coolpoint_count > 0 else 0.0
+        )
 
         self.db.update_chapter_summary(
             chapter=chapter_num,
             hook_count=hook_count,
             hook_strength_avg=hook_strength_avg,
             coolpoint_count=coolpoint_count,
-            coolpoint_density=coolpoint_density
+            coolpoint_density=coolpoint_density,
         )
 
     def get_chapter_reading_power(self, chapter_num: int) -> Dict[str, Any]:
@@ -122,8 +124,4 @@ class ReadingPowerEngine:
         hooks = self.hook_tracker.get_hooks(chapter_num)
         coolpoints = self.coolpoint_tracker.get_coolpoints(chapter_num)
 
-        return {
-            "summary": summary or {},
-            "hooks": hooks,
-            "coolpoints": coolpoints
-        }
+        return {"summary": summary or {}, "hooks": hooks, "coolpoints": coolpoints}

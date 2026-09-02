@@ -1,4 +1,5 @@
 """Build novel_writing initial_inputs from content_repo chapter outlines (canon mode)."""
+
 from __future__ import annotations
 
 import os
@@ -58,11 +59,7 @@ def parse_chapter_outline_markdown(text: str) -> dict[str, Any]:
     events = _BULLET.findall(_section("核心事件"))
     foreshadow = _BULLET.findall(_section("伏笔铺设"))
     chars_raw = _section("关键人物")
-    characters = [
-        c.strip()
-        for c in re.split(r"[,，、]", chars_raw)
-        if c.strip()
-    ]
+    characters = [c.strip() for c in re.split(r"[,，、]", chars_raw) if c.strip()]
     overview = _section("本章概述").replace("\n", " ").strip()
 
     word_target = _DEFAULT_WORD_TARGET
@@ -128,10 +125,12 @@ def build_canon_chapter_spec(
 
     events: list[str] = []
     if cfg.role == "testbed" and chapter_num > cfg.max_chapter:
-        events.extend([
-            f"紧接「{prev_title}」结尾续写，保持星陨纪元终章后/epilogue 语气",
-            "铁蛋、小九、星辰、莫言等守护者联盟视角；林夜与苏琳以星光/意识形式出现",
-        ])
+        events.extend(
+            [
+                f"紧接「{prev_title}」结尾续写，保持星陨纪元终章后/epilogue 语气",
+                "铁蛋、小九、星辰、莫言等守护者联盟视角；林夜与苏琳以星光/意识形式出现",
+            ]
+        )
     else:
         events.append(f"紧接「{prev_title}」结尾续写，保持《{cfg.name}》叙事语气")
 
@@ -188,10 +187,7 @@ def build_canon_initial_inputs(
         project=cfg,
     )
     canon_names = list(spec.get("canon_characters") or [])
-    characters = [
-        {"name": name, "role": "canon"}
-        for name in spec.pop("canon_characters", [])
-    ]
+    characters = [{"name": name, "role": "canon"} for name in spec.pop("canon_characters", [])]
     outline = {
         "title": cfg.name,
         "genre": cfg.genre,

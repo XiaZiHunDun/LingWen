@@ -1,5 +1,6 @@
 # infra/cross_volume/reference_graph.py
 """Phase 9.10: CrossVolumeReferenceGraph container + ReferenceNode + ReferenceEdge."""
+
 import heapq
 import logging
 from collections import deque
@@ -19,8 +20,14 @@ MAX_NODES_CAP_UPPER = 1000
 
 DimensionT = Literal["character", "foreshadow", "setting", "plot_point"]
 RelationshipT = Literal[
-    "mentions", "evolves", "foreshadows", "pays_off",
-    "appears_with", "causes", "conflicts_with", "supports",
+    "mentions",
+    "evolves",
+    "foreshadows",
+    "pays_off",
+    "appears_with",
+    "causes",
+    "conflicts_with",
+    "supports",
 ]
 
 
@@ -74,6 +81,7 @@ class CascadedRipple:
     Captures all downstream nodes/edges/actions reachable within depth 3.
     Immutable, JSON-serializable (cascade_* use tuple, depth_reached int).
     """
+
     trigger_ripple_id: str
     cascade_nodes: tuple[ReferenceNode, ...]
     cascade_edges: tuple[ReferenceEdge, ...]
@@ -278,9 +286,7 @@ class CrossVolumeReferenceGraph:
             ValueError: max_nodes_cap out of range (1..MAX_NODES_CAP_UPPER).
         """
         if max_nodes_cap < 1 or max_nodes_cap > MAX_NODES_CAP_UPPER:
-            raise ValueError(
-                f"max_nodes_cap must be 1..{MAX_NODES_CAP_UPPER}, got {max_nodes_cap}"
-            )
+            raise ValueError(f"max_nodes_cap must be 1..{MAX_NODES_CAP_UPPER}, got {max_nodes_cap}")
         algorithm_version = "v2_weighted" if weighted else "v1"
 
         # Phase 9.16: priority queue entry = (neg_weight, node_id, node_obj, depth)
@@ -298,9 +304,7 @@ class CrossVolumeReferenceGraph:
                 # 起点用 weight=1.0 (最高, 实际 visited 已防 revisit)
                 heapq.heappush(pq, (-1.0, n, node, 1))
         else:
-            queue: deque[tuple[str, int]] = deque(
-                (n, 1) for n in ripple.affected_nodes if n in self._nodes
-            )
+            queue: deque[tuple[str, int]] = deque((n, 1) for n in ripple.affected_nodes if n in self._nodes)
 
         collected_nodes: list[ReferenceNode] = []
         collected_edges: list[ReferenceEdge] = []
@@ -341,13 +345,15 @@ class CrossVolumeReferenceGraph:
                 # Phase 9.16: weight 走 edge.weight (优先) 而非 neighbor.payload
                 hop_weight = edge_obj.weight if edge_obj is not None else 0.5
                 # 1 proposed_action per hop
-                collected_actions.append({
-                    "action": "propagate",
-                    "from": current_id,
-                    "to": neighbor.id,
-                    "depth": depth,
-                    "weight": hop_weight,
-                })
+                collected_actions.append(
+                    {
+                        "action": "propagate",
+                        "from": current_id,
+                        "to": neighbor.id,
+                        "depth": depth,
+                        "weight": hop_weight,
+                    }
+                )
                 if depth < max_depth:
                     if weighted:
                         heapq.heappush(pq, (-hop_weight, neighbor.id, neighbor, depth + 1))

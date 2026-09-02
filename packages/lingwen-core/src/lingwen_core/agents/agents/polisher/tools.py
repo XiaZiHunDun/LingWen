@@ -47,9 +47,7 @@ class PolisherTools(AgentBase):
         串联 3 个路径, 每个 LLM 调用 try/except 兜底, 失败不致命。
         返回 dict: {content, reader, issues, chapter_num}
         """
-        return self._impl_polish_chapter(
-            chapter_num, content, style_guide, reader_id, record_usage=False
-        )
+        return self._impl_polish_chapter(chapter_num, content, style_guide, reader_id, record_usage=False)
 
     def polish_chapter_with_usage(
         self,
@@ -70,9 +68,7 @@ class PolisherTools(AgentBase):
         Returns:
             (result_dict, usage_dict) tuple, usage = 2 LLM sum
         """
-        return self._impl_polish_chapter(
-            chapter_num, content, style_guide, reader_id, record_usage=True
-        )
+        return self._impl_polish_chapter(chapter_num, content, style_guide, reader_id, record_usage=True)
 
     def _impl_polish_chapter(
         self,
@@ -153,12 +149,16 @@ class PolisherTools(AgentBase):
         system = get_dialogue_system_prompt(effective_reader)
         if record_usage:
             return self.chat_with_usage(
-                prompt=prompt, system=system,
-                temperature=0.5, max_tokens=DEFAULT_MAX_TOKENS,
+                prompt=prompt,
+                system=system,
+                temperature=0.5,
+                max_tokens=DEFAULT_MAX_TOKENS,
             )
         return self.chat(
-            prompt=prompt, system=system,
-            temperature=0.5, max_tokens=DEFAULT_MAX_TOKENS,
+            prompt=prompt,
+            system=system,
+            temperature=0.5,
+            max_tokens=DEFAULT_MAX_TOKENS,
         )
 
     def adjust_pacing_llm(
@@ -190,12 +190,16 @@ class PolisherTools(AgentBase):
         system = get_pacing_system_prompt(effective_reader)
         if record_usage:
             return self.chat_with_usage(
-                prompt=prompt, system=system,
-                temperature=0.4, max_tokens=DEFAULT_MAX_TOKENS,
+                prompt=prompt,
+                system=system,
+                temperature=0.4,
+                max_tokens=DEFAULT_MAX_TOKENS,
             )
         return self.chat(
-            prompt=prompt, system=system,
-            temperature=0.4, max_tokens=DEFAULT_MAX_TOKENS,
+            prompt=prompt,
+            system=system,
+            temperature=0.4,
+            max_tokens=DEFAULT_MAX_TOKENS,
         )
 
     # ==================== 规则方法 (保留, 不破坏 test_agent_tools.py) ====================

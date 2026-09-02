@@ -10,6 +10,7 @@ v16.5 #N.12 status: protocol signatures match LLMServiceAdapter async surface
               aligned with ``lingwen_shared.contracts.python.llm.LLMTask``
               (canonical, established in v16.5 #1).
 """
+
 from __future__ import annotations
 
 from typing import Any, AsyncIterator, Protocol

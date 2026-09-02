@@ -37,6 +37,7 @@ def isolated_engine(monkeypatch, tmp_path):
 
     # 2) 隔离 SQLite 状态库到 tmp_path
     from lingwen_pipeline.state import database as dbmod
+
     fake_db_path = tmp_path / "wf.db"
     dbmod.WorkflowDB(fake_db_path)
     # 替换 WorkflowDB 构造（无参时返回我们的 fake 实例）
@@ -65,53 +66,53 @@ class TestChineseNumberConversion:
 
     def test_chinese_to_number_simple(self):
         """测试个位数转换"""
-        assert self.engine.chinese_to_number('一') == 1
-        assert self.engine.chinese_to_number('五') == 5
-        assert self.engine.chinese_to_number('九') == 9
+        assert self.engine.chinese_to_number("一") == 1
+        assert self.engine.chinese_to_number("五") == 5
+        assert self.engine.chinese_to_number("九") == 9
 
     def test_chinese_to_number_teen(self):
         """测试十位数转换"""
-        assert self.engine.chinese_to_number('十') == 10
-        assert self.engine.chinese_to_number('十五') == 15
-        assert self.engine.chinese_to_number('九十九') == 99
+        assert self.engine.chinese_to_number("十") == 10
+        assert self.engine.chinese_to_number("十五") == 15
+        assert self.engine.chinese_to_number("九十九") == 99
 
     def test_chinese_to_number_hundreds(self):
         """测试百位数转换"""
-        assert self.engine.chinese_to_number('一百') == 100
-        assert self.engine.chinese_to_number('二百') == 200
-        assert self.engine.chinese_to_number('三百五十') == 350
+        assert self.engine.chinese_to_number("一百") == 100
+        assert self.engine.chinese_to_number("二百") == 200
+        assert self.engine.chinese_to_number("三百五十") == 350
 
     def test_chinese_to_number_thousands(self):
         """测试千位数转换"""
-        assert self.engine.chinese_to_number('一千') == 1000
-        assert self.engine.chinese_to_number('三千五百') == 3500
+        assert self.engine.chinese_to_number("一千") == 1000
+        assert self.engine.chinese_to_number("三千五百") == 3500
 
     def test_chinese_to_number_complex(self):
         """测试复杂中文数字（两百九十五）"""
-        assert self.engine.chinese_to_number('二百九十五') == 295
+        assert self.engine.chinese_to_number("二百九十五") == 295
 
     def test_chinese_to_number_invalid(self):
         """测试无效输入"""
-        assert self.engine.chinese_to_number('') is None
-        assert self.engine.chinese_to_number('abc') is None
+        assert self.engine.chinese_to_number("") is None
+        assert self.engine.chinese_to_number("abc") is None
 
     def test_number_to_chinese_simple(self):
         """测试阿拉伯数字转中文（个位）"""
-        assert self.engine.number_to_chinese(1) == '一'
-        assert self.engine.number_to_chinese(5) == '五'
-        assert self.engine.number_to_chinese(9) == '九'
+        assert self.engine.number_to_chinese(1) == "一"
+        assert self.engine.number_to_chinese(5) == "五"
+        assert self.engine.number_to_chinese(9) == "九"
 
     def test_number_to_chinese_teen(self):
         """测试阿拉伯数字转中文（十位）"""
-        assert self.engine.number_to_chinese(10) == '十'
-        assert self.engine.number_to_chinese(15) == '十五'
-        assert self.engine.number_to_chinese(20) == '二十'
+        assert self.engine.number_to_chinese(10) == "十"
+        assert self.engine.number_to_chinese(15) == "十五"
+        assert self.engine.number_to_chinese(20) == "二十"
 
     def test_number_to_chinese_hundreds(self):
         """测试阿拉伯数字转中文（百位）"""
-        assert self.engine.number_to_chinese(100) == '一百'
-        assert self.engine.number_to_chinese(200) == '二百'
-        assert self.engine.number_to_chinese(350) == '三百五十'
+        assert self.engine.number_to_chinese(100) == "一百"
+        assert self.engine.number_to_chinese(200) == "二百"
+        assert self.engine.number_to_chinese(350) == "三百五十"
 
     def test_number_to_chinese_roundtrip(self):
         """测试往返转换一致性"""
@@ -227,15 +228,11 @@ class TestVerificationEngine:
         """检测到重复章节标题（用 fixture 写入控制内容）"""
         engine, content_dir, _tmp = isolated_engine
         # 写一个正常章节
-        (content_dir / "ch001.md").write_text(
-            "# 第一章 测试\n这是一段普通正文。", encoding="utf-8"
-        )
+        (content_dir / "ch001.md").write_text("# 第一章 测试\n这是一段普通正文。", encoding="utf-8")
         # 写一个章节号不匹配（"ch999" 在 ch001.md 里）
         # check_chapter_number_mismatch 检测 ch001 内部出现 ch999 字样
         # 用 check_repeat_content 测：写两个内容高度相似
-        (content_dir / "ch002.md").write_text(
-            "# 第二章 测试\n这是一段普通正文。", encoding="utf-8"
-        )
+        (content_dir / "ch002.md").write_text("# 第二章 测试\n这是一段普通正文。", encoding="utf-8")
         result = engine.check_repeat_content(1)
         # 实际行为：返回包含 duplicate_count 等字段的 dict 或 None
         # 不强制 assert 真值，只验证不崩溃 + 类型正确
@@ -251,37 +248,33 @@ class TestVerificationResults:
         result = engine.verify_chapter(9999)
         # 不存在章节不应崩
         assert isinstance(result, dict)
-        assert 'chapter' in result
+        assert "chapter" in result
 
     def test_verify_chapter_with_fake_content(self, isolated_engine):
         """用 fixture 章节验证 verify_chapter 完整结构"""
         engine, content_dir, _tmp = isolated_engine
-        (content_dir / "ch042.md").write_text(
-            "# 第四十二章 测试章节\n## 一\n一些内容。\n",
-            encoding="utf-8"
-        )
+        (content_dir / "ch042.md").write_text("# 第四十二章 测试章节\n## 一\n一些内容。\n", encoding="utf-8")
         result = engine.verify_chapter(42)
-        assert 'chapter' in result
-        assert 'verified_at' in result
-        assert 'issues_found' in result
-        assert 'status' in result
-        assert result['status'] in ['PASSED', 'FAILED']
+        assert "chapter" in result
+        assert "verified_at" in result
+        assert "issues_found" in result
+        assert "status" in result
+        assert result["status"] in ["PASSED", "FAILED"]
 
     def test_verify_sample_structure(self, isolated_engine):
         """测试随机抽样返回结构（用 fixture 内容）"""
         engine, content_dir, _tmp = isolated_engine
         for i in [1, 2, 3, 4, 5]:
             (content_dir / f"ch{i:03d}.md").write_text(
-                f"# 第{engine.number_to_chinese(i)}章 测试\n## 一\n内容。\n",
-                encoding="utf-8"
+                f"# 第{engine.number_to_chinese(i)}章 测试\n## 一\n内容。\n", encoding="utf-8"
             )
         result = engine.verify_sample(sample_size=3)
-        assert 'verified_at' in result
-        assert 'sample_size' in result
-        assert result['sample_size'] == 3
-        assert 'results' in result
-        assert 'summary' in result
-        assert len(result['results']) == 3
+        assert "verified_at" in result
+        assert "sample_size" in result
+        assert result["sample_size"] == 3
+        assert "results" in result
+        assert "summary" in result
+        assert len(result["results"]) == 3
 
 
 class TestR5004Consolidation:
@@ -307,6 +300,7 @@ class TestR5004Consolidation:
         """
         import importlib
         from pathlib import Path
+
         # 重新 import 拿到未 patch 状态
         fresh_rve = importlib.import_module("run_verify_engine")
         # 顶层 file 自身路径
@@ -334,11 +328,9 @@ class TestR5004Consolidation:
         engine.save_state()
         # 创建一个会"污染"的 JSON(应被忽略)
         polluted_json = tmp_path / "should_be_ignored.json"
-        polluted_json.write_text(
-            json.dumps({"issues_found": {"WRONG": ["from_json"]}}),
-            encoding="utf-8"
-        )
+        polluted_json.write_text(json.dumps({"issues_found": {"WRONG": ["from_json"]}}), encoding="utf-8")
         from unittest.mock import patch
+
         with patch.object(rve, "LEGACY_WORKFLOW_FILE", polluted_json):
             fresh = rve.VerificationEngine()
             # SQLite 优先 → 应读 SQLite 数据
@@ -352,15 +344,13 @@ class TestR5004Consolidation:
         """
         # 准备一个 JSON 文件作为 fallback
         legacy = tmp_path / "workflow_state.json"
-        legacy.write_text(
-            json.dumps({"issues_found": {"ch2": ["legacy_issue"]}}),
-            encoding="utf-8"
-        )
+        legacy.write_text(json.dumps({"issues_found": {"ch2": ["legacy_issue"]}}), encoding="utf-8")
         # 把 LEGACY_WORKFLOW_FILE 重定向到我们准备的 JSON
         from unittest.mock import patch
 
         # 隔离 SQLite + CONTENT_DIR (用全新 tmp_path 避免 fixture 冲突)
         from lingwen_pipeline.state import database as dbmod
+
         own_tmp = tmp_path / "fallback_test"
         own_tmp.mkdir()
         fake_db = own_tmp / "wf.db"
@@ -369,14 +359,16 @@ class TestR5004Consolidation:
         def patched_init(self, db_path=None):
             original_init(self, fake_db)
 
-        with patch.object(rve, "LEGACY_WORKFLOW_FILE", legacy), \
-             patch.object(dbmod.WorkflowDB, "__init__", patched_init), \
-             patch.object(rve, "CONTENT_DIR", own_tmp / "content"), \
-             patch.object(rve, "OPINION_DIR", own_tmp / "opinion"):
+        with (
+            patch.object(rve, "LEGACY_WORKFLOW_FILE", legacy),
+            patch.object(dbmod.WorkflowDB, "__init__", patched_init),
+            patch.object(rve, "CONTENT_DIR", own_tmp / "content"),
+            patch.object(rve, "OPINION_DIR", own_tmp / "opinion"),
+        ):
             fresh = rve.VerificationEngine()
             # 应回退到 JSON 数据
             assert fresh.state.get("issues_found", {}).get("ch2") == ["legacy_issue"]
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v', '--tb=short'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v", "--tb=short"])

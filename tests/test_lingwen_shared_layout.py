@@ -6,6 +6,7 @@ Verifies:
 - packages/lingwen-shared/pyproject.toml declares [project] section
 - lingwen-shared has hyphen name (packaging) but underscore module (importable)
 """
+
 from __future__ import annotations
 
 import re
@@ -36,9 +37,7 @@ def test_lingwen_shared_in_workspace_members() -> None:
 
 def test_lingwen_shared_directory_exists() -> None:
     """packages/lingwen-shared/ directory must exist."""
-    assert (REPO_ROOT / "packages" / "lingwen-shared").is_dir(), (
-        "packages/lingwen-shared/ directory missing"
-    )
+    assert (REPO_ROOT / "packages" / "lingwen-shared").is_dir(), "packages/lingwen-shared/ directory missing"
 
 
 def test_lingwen_shared_pyproject_exists() -> None:

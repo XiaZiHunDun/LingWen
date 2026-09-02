@@ -35,6 +35,7 @@ class SquadResult:
         errors: 执行过程中的错误
         elapsed_ms: 执行耗时（毫秒）
     """
+
     agent_name: str
     findings: List[Any] = field(default_factory=list)
     errors: List[str] = field(default_factory=list)
@@ -62,6 +63,7 @@ class AggregatedResult:
         passed: 是否通过（无 critical 发现项）
         total_elapsed_ms: 总耗时
     """
+
     squad_results: List[SquadResult] = field(default_factory=list)
     total_findings: int = 0
     critical_count: int = 0
@@ -106,7 +108,7 @@ class AgentSquad:
 
     def __init__(
         self,
-        router: Optional['AIRouter'] = None,
+        router: Optional["AIRouter"] = None,
         enabled: bool = False,
     ):
         """初始化 Agent 编队
@@ -175,9 +177,7 @@ class AgentSquad:
                 total_elapsed_ms=0.0,
             )
 
-        logger.info(
-            "AgentSquad: running %d agents in sequence", len(self._agents)
-        )
+        logger.info("AgentSquad: running %d agents in sequence", len(self._agents))
 
         squad_results: List[SquadResult] = []
         total_start = time.time()
@@ -190,39 +190,46 @@ class AgentSquad:
             try:
                 findings = agent.run(context)
                 elapsed = (time.time() - agent_start) * 1000
-                squad_results.append(SquadResult(
-                    agent_name=name,
-                    findings=findings if isinstance(findings, list) else [],
-                    elapsed_ms=elapsed,
-                ))
+                squad_results.append(
+                    SquadResult(
+                        agent_name=name,
+                        findings=findings if isinstance(findings, list) else [],
+                        elapsed_ms=elapsed,
+                    )
+                )
                 logger.info(
                     "AgentSquad: agent '%s' completed, %d findings, %.1fms",
-                    name, len(findings) if isinstance(findings, list) else 0, elapsed,
+                    name,
+                    len(findings) if isinstance(findings, list) else 0,
+                    elapsed,
                 )
             except Exception as e:
                 elapsed = (time.time() - agent_start) * 1000
-                logger.error(
-                    "AgentSquad: agent '%s' failed: %s", name, e
+                logger.error("AgentSquad: agent '%s' failed: %s", name, e)
+                squad_results.append(
+                    SquadResult(
+                        agent_name=name,
+                        errors=[str(e)],
+                        elapsed_ms=elapsed,
+                    )
                 )
-                squad_results.append(SquadResult(
-                    agent_name=name,
-                    errors=[str(e)],
-                    elapsed_ms=elapsed,
-                ))
 
         total_elapsed = (time.time() - total_start) * 1000
 
         # 聚合统计
         total_findings = sum(r.total_findings for r in squad_results)
         critical_count = sum(
-            sum(1 for f in r.findings if getattr(f, "severity", "") == "critical")
-            for r in squad_results
+            sum(1 for f in r.findings if getattr(f, "severity", "") == "critical") for r in squad_results
         )
         passed = critical_count == 0
 
         logger.info(
             "AgentSquad: completed. %d agents, %d findings, %d critical, passed=%s, %.1fms",
-            len(squad_results), total_findings, critical_count, passed, total_elapsed,
+            len(squad_results),
+            total_findings,
+            critical_count,
+            passed,
+            total_elapsed,
         )
 
         return AggregatedResult(
@@ -233,9 +240,7 @@ class AgentSquad:
             total_elapsed_ms=total_elapsed,
         )
 
-    def run_parallel(
-        self, context: Dict[str, Any]
-    ) -> AggregatedResult:
+    def run_parallel(self, context: Dict[str, Any]) -> AggregatedResult:
         """并行执行编队检查（使用线程池）
 
         Args:
@@ -267,9 +272,7 @@ class AgentSquad:
                 total_elapsed_ms=0.0,
             )
 
-        logger.info(
-            "AgentSquad: running %d agents in parallel", len(self._agents)
-        )
+        logger.info("AgentSquad: running %d agents in parallel", len(self._agents))
 
         squad_results: List[SquadResult] = []
         total_start = time.time()
@@ -294,16 +297,15 @@ class AgentSquad:
                 )
 
         with ThreadPoolExecutor(max_workers=len(self._agents)) as executor:
-            futures = {
-                executor.submit(_run_agent, name, agent): name
-                for name, agent in self._agents.items()
-            }
+            futures = {executor.submit(_run_agent, name, agent): name for name, agent in self._agents.items()}
             for future in as_completed(futures):
                 result = future.result()
                 squad_results.append(result)
                 logger.info(
                     "AgentSquad: agent '%s' completed, %d findings, %.1fms",
-                    result.agent_name, result.total_findings, result.elapsed_ms,
+                    result.agent_name,
+                    result.total_findings,
+                    result.elapsed_ms,
                 )
 
         total_elapsed = (time.time() - total_start) * 1000
@@ -311,14 +313,17 @@ class AgentSquad:
         # 聚合统计
         total_findings = sum(r.total_findings for r in squad_results)
         critical_count = sum(
-            sum(1 for f in r.findings if getattr(f, "severity", "") == "critical")
-            for r in squad_results
+            sum(1 for f in r.findings if getattr(f, "severity", "") == "critical") for r in squad_results
         )
         passed = critical_count == 0
 
         logger.info(
             "AgentSquad: parallel completed. %d agents, %d findings, %d critical, passed=%s, %.1fms",
-            len(squad_results), total_findings, critical_count, passed, total_elapsed,
+            len(squad_results),
+            total_findings,
+            critical_count,
+            passed,
+            total_elapsed,
         )
 
         return AggregatedResult(

@@ -16,6 +16,7 @@ Doc 4 §10 Phase 6.5: CLI + dashboard 多进程写 decisions.json 防止 race co
 - with_lock reload + save 原子性
 - 跨进程 with_lock 不丢数据 (multiprocessing 真子进程,确保 fcntl 真的跨进程生效)
 """
+
 from __future__ import annotations
 
 import json
@@ -37,12 +38,11 @@ from lingwen_core.agents.decision_queue import (
 
 # POSIX 才有 fcntl.flock; Windows 上测试 skip
 IS_POSIX = platform.system() != "Windows"
-SKIP_IF_NOT_POSIX = pytest.mark.skipif(
-    not IS_POSIX, reason="FileLock uses fcntl.flock (POSIX only)"
-)
+SKIP_IF_NOT_POSIX = pytest.mark.skipif(not IS_POSIX, reason="FileLock uses fcntl.flock (POSIX only)")
 
 
 # === TestFileLockBasic ===
+
 
 @SKIP_IF_NOT_POSIX
 class TestFileLockBasic:
@@ -79,6 +79,7 @@ class TestFileLockBasic:
 
 # === TestFileLockMutualExclusion ===
 
+
 @SKIP_IF_NOT_POSIX
 class TestFileLockMutualExclusion:
     """FileLock 互斥测试 (线程级)"""
@@ -109,12 +110,15 @@ class TestFileLockMutualExclusion:
 
         # first 应完整执行,second 在 first 释放后才进入
         assert order == [
-            "first_enter", "first_exit",
-            "second_enter", "second_exit",
+            "first_enter",
+            "first_exit",
+            "second_enter",
+            "second_exit",
         ]
 
 
 # === TestHumanDecisionQueueWithLock ===
+
 
 @SKIP_IF_NOT_POSIX
 class TestHumanDecisionQueueWithLock:
@@ -181,6 +185,7 @@ class TestHumanDecisionQueueWithLock:
 
 # === TestCrossProcessNoDataLoss ===
 
+
 @SKIP_IF_NOT_POSIX
 @pytest.mark.timeout(10)
 class TestCrossProcessNoDataLoss:
@@ -243,12 +248,11 @@ class TestCrossProcessNoDataLoss:
         final = HumanDecisionQueue(state_dir=state_dir)
         assert len(final._decisions) == n
         for d in final._decisions.values():
-            assert d.status.value == "resolved", (
-                f"decision {d.decision_id} still {d.status.value}, race?"
-            )
+            assert d.status.value == "resolved", f"decision {d.decision_id} still {d.status.value}, race?"
 
 
 # === TestFileLockTimeout (optional) ===
+
 
 @SKIP_IF_NOT_POSIX
 class TestFileLockTimeout:

@@ -10,6 +10,7 @@
 当前阈值(excellent=3.0/pass=1.5)已校准，因模式覆盖受限。
 随着模式增加，阈值将逐步调整至标准值(Shannon≥3.5/2.5)。
 """
+
 import logging
 import math
 import re
@@ -36,8 +37,8 @@ class SentenceDiversityChecker(BaseChecker):
     句式多样性检测器
     使用Shannon多样性指数计算句式分布
     """
-    _checker_type = CheckerType.SENTENCE_DIVERSITY
 
+    _checker_type = CheckerType.SENTENCE_DIVERSITY
 
     # 句式模式定义（从YAML加载，带有默认回退机制）
     DIVERSE_PATTERNS, TEMPLATE_PATTERNS = _load_patterns_from_yaml()
@@ -45,10 +46,10 @@ class SentenceDiversityChecker(BaseChecker):
     # 评分阈值（S3标准，校准后适配新增陈述句兜底）
     # Shannon指数受句式种类数影响，6种以上可达标
     THRESHOLDS = {
-        'excellent': 3.0,
-        'pass': 1.5,
-        'fail': 1.5,
-        'template_ratio': 30.0,
+        "excellent": 3.0,
+        "pass": 1.5,
+        "fail": 1.5,
+        "template_ratio": 30.0,
     }
 
     # 模块级缓存 - 预编译所有正则表达式
@@ -60,7 +61,7 @@ class SentenceDiversityChecker(BaseChecker):
         super().__init__(self._checker_type)
         if chapters_dir is None:
             project_root = Path(__file__).parent.parent.parent.parent
-            chapters_dir = project_root / '03_内容仓库' / '04_正文'
+            chapters_dir = project_root / "03_内容仓库" / "04_正文"
         self.chapters_dir = Path(chapters_dir)
 
     @classmethod
@@ -104,7 +105,7 @@ class SentenceDiversityChecker(BaseChecker):
     # 注意：__init__ 在上方Lines 319-324已定义，此处不重复
 
     def _count_sentences(self, content: str) -> int:
-        return len(re.findall(r'[。！？]', content))
+        return len(re.findall(r"[。！？]", content))
 
     def _calculate_shannon_index(self, distribution: Dict[str, int], total: int) -> float:
         if total == 0:
@@ -117,10 +118,10 @@ class SentenceDiversityChecker(BaseChecker):
         return diversity_index
 
     def score_chapter(self, chapter_num: int) -> Tuple[float, Dict[str, int]]:
-        ch_file = self.chapters_dir / f'ch{chapter_num:03d}.md'
+        ch_file = self.chapters_dir / f"ch{chapter_num:03d}.md"
         if not ch_file.exists():
             return 0.0, {}
-        content = ch_file.read_text(encoding='utf-8')
+        content = ch_file.read_text(encoding="utf-8")
         return self.score_content(content)
 
     def score_content(self, content: str) -> Tuple[float, Dict[str, int]]:
@@ -141,16 +142,16 @@ class SentenceDiversityChecker(BaseChecker):
         uncovered = total_sentences - covered
         if uncovered > 0:
             all_dist = distribution.copy()
-            all_dist['_other'] = uncovered
+            all_dist["_other"] = uncovered
             diversity_index = self._calculate_shannon_index(all_dist, total_sentences)
 
         return round(diversity_index, 2), distribution
 
     def get_pattern_ratios(self, chapter_num: int) -> List[PatternRatio]:
-        ch_file = self.chapters_dir / f'ch{chapter_num:03d}.md'
+        ch_file = self.chapters_dir / f"ch{chapter_num:03d}.md"
         if not ch_file.exists():
             return []
-        content = ch_file.read_text(encoding='utf-8')
+        content = ch_file.read_text(encoding="utf-8")
         return self.get_pattern_ratios_from_content(content)
 
     def get_pattern_ratios_from_content(self, content: str) -> List[PatternRatio]:
@@ -168,20 +169,22 @@ class SentenceDiversityChecker(BaseChecker):
         ratios = []
         for name, count in distribution.items():
             pct = (count / total_sentences) * 100
-            ratios.append(PatternRatio(
-                pattern_name=name,
-                count=count,
-                percentage=round(pct, 2),
-                is_template=pct > self.THRESHOLDS['template_ratio']
-            ))
+            ratios.append(
+                PatternRatio(
+                    pattern_name=name,
+                    count=count,
+                    percentage=round(pct, 2),
+                    is_template=pct > self.THRESHOLDS["template_ratio"],
+                )
+            )
         ratios.sort(key=lambda x: x.percentage, reverse=True)
         return ratios
 
     def detect_template_sentences(self, chapter_num: int) -> List[TemplateSentence]:
-        ch_file = self.chapters_dir / f'ch{chapter_num:03d}.md'
+        ch_file = self.chapters_dir / f"ch{chapter_num:03d}.md"
         if not ch_file.exists():
             return []
-        content = ch_file.read_text(encoding='utf-8')
+        content = ch_file.read_text(encoding="utf-8")
         return self.detect_template_sentences_from_content(content)
 
     def detect_template_sentences_from_content(self, content: str) -> List[TemplateSentence]:
@@ -196,25 +199,24 @@ class SentenceDiversityChecker(BaseChecker):
             if matches:
                 count = len(matches)
                 pct = (count / total_sentences) * 100
-                if pct > self.THRESHOLDS['template_ratio']:
-                    example = matches[0] if matches else ''
+                if pct > self.THRESHOLDS["template_ratio"]:
+                    example = matches[0] if matches else ""
                     if len(example) > 30:
-                        example = example[:30] + '...'
-                    template_sentences.append(TemplateSentence(
-                        pattern_name=template_name,
-                        template_example=example,
-                        count=count,
-                        percentage=round(pct, 2),
-                        replacement_suggestions=suggestions
-                    ))
+                        example = example[:30] + "..."
+                    template_sentences.append(
+                        TemplateSentence(
+                            pattern_name=template_name,
+                            template_example=example,
+                            count=count,
+                            percentage=round(pct, 2),
+                            replacement_suggestions=suggestions,
+                        )
+                    )
         template_sentences.sort(key=lambda x: x.percentage, reverse=True)
         return template_sentences
 
     def check(
-        self,
-        chapter_content: str,
-        chapter_num: int,
-        context: Optional[Dict[str, Any]] = None
+        self, chapter_content: str, chapter_num: int, context: Optional[Dict[str, Any]] = None
     ) -> List[Issue]:
         """执行检查，返回标准Issue列表"""
         diversity_issue = self.check_chapter(chapter_num)
@@ -222,28 +224,30 @@ class SentenceDiversityChecker(BaseChecker):
             return []
 
         # 转换严重度
-        severity_map = {'HIGH': IssueSeverity.P1, 'MEDIUM': IssueSeverity.P2, 'LOW': IssueSeverity.P3}
+        severity_map = {"HIGH": IssueSeverity.P1, "MEDIUM": IssueSeverity.P2, "LOW": IssueSeverity.P3}
         severity = severity_map.get(diversity_issue.severity, IssueSeverity.P2)
 
-        return [Issue(
-            id=f"diversity-{chapter_num}-{diversity_issue.score}",
-            severity=severity,
-            checker_type=CheckerType.SENTENCE_DIVERSITY,
-            issue_type="sentence_diversity_low",
-            title="句式多样性不足",
-            description=diversity_issue.description,
-            location=IssueLocation(chapter=chapter_num),
-            evidence=f"Shannon指数={diversity_issue.score}",
-            suggestion="增加句式变化，避免重复使用相同句式结构",
-        )]
+        return [
+            Issue(
+                id=f"diversity-{chapter_num}-{diversity_issue.score}",
+                severity=severity,
+                checker_type=CheckerType.SENTENCE_DIVERSITY,
+                issue_type="sentence_diversity_low",
+                title="句式多样性不足",
+                description=diversity_issue.description,
+                location=IssueLocation(chapter=chapter_num),
+                evidence=f"Shannon指数={diversity_issue.score}",
+                suggestion="增加句式变化，避免重复使用相同句式结构",
+            )
+        ]
 
     def check_chapter(self, chapter_num: int) -> Optional[DiversityIssue]:
         score, distribution = self.score_chapter(chapter_num)
         templates = self.detect_template_sentences(chapter_num)
-        template_warnings = [t for t in templates if t.percentage > self.THRESHOLDS['template_ratio']]
+        template_warnings = [t for t in templates if t.percentage > self.THRESHOLDS["template_ratio"]]
 
-        ch_file = self.chapters_dir / f'ch{chapter_num:03d}.md'
-        content = ch_file.read_text(encoding='utf-8') if ch_file.exists() else ''
+        ch_file = self.chapters_dir / f"ch{chapter_num:03d}.md"
+        content = ch_file.read_text(encoding="utf-8") if ch_file.exists() else ""
         total_sentences = self._count_sentences(content)
         pattern_variety = len(distribution)
 
@@ -255,41 +259,38 @@ class SentenceDiversityChecker(BaseChecker):
                     dominant_pct = pct
 
         issues_desc = []
-        if score < self.THRESHOLDS['fail']:
+        if score < self.THRESHOLDS["fail"]:
             issues_desc.append(f"Shannon指数{score:.2f}低于阈值{self.THRESHOLDS['fail']}")
         if pattern_variety < 6:
             issues_desc.append(f"句式种类仅{pattern_variety}种，少于6种")
         if dominant_pct > 40:
             issues_desc.append(f"单一句式占比{dominant_pct:.0f}%超过40%")
         if template_warnings:
-            template_names = ', '.join([t.pattern_name for t in template_warnings[:3]])
+            template_names = ", ".join([t.pattern_name for t in template_warnings[:3]])
             issues_desc.append(f"模板句问题：{template_names}")
 
         if not issues_desc:
             return None
 
         if score < 2.0 or dominant_pct > 50 or len(template_warnings) >= 2:
-            severity = 'HIGH'
+            severity = "HIGH"
         elif score < 2.5 or dominant_pct > 40 or template_warnings:
-            severity = 'MEDIUM'
+            severity = "MEDIUM"
         else:
-            severity = 'LOW'
+            severity = "LOW"
 
         return DiversityIssue(
-            chapter=f'ch{chapter_num:03d}',
-            score=score,
-            severity=severity,
-            description='; '.join(issues_desc)
+            chapter=f"ch{chapter_num:03d}", score=score, severity=severity, description="; ".join(issues_desc)
         )
 
     def check_all(self, limit: Optional[int] = None) -> List[DiversityIssue]:
         issues = []
-        chapter_files = sorted(self.chapters_dir.glob('ch*.md'))
+        chapter_files = sorted(self.chapters_dir.glob("ch*.md"))
         if limit:
             chapter_files = chapter_files[:limit]
 
         for ch_file in chapter_files:
-            match = re.match(r'ch(\d+)\.md', ch_file.name)
+            match = re.match(r"ch(\d+)\.md", ch_file.name)
             if match:
                 ch_num = int(match.group(1))
                 issue = self.check_chapter(ch_num)
@@ -301,8 +302,8 @@ class SentenceDiversityChecker(BaseChecker):
         if not issues:
             return "✅ 句式多样性检查通过：所有章节评分合格"
 
-        high_issues = [i for i in issues if i.severity == 'HIGH']
-        medium_issues = [i for i in issues if i.severity == 'MEDIUM']
+        high_issues = [i for i in issues if i.severity == "HIGH"]
+        medium_issues = [i for i in issues if i.severity == "MEDIUM"]
 
         report = ["# 句式多样性检查报告\n"]
         report.append("## 汇总\n")
@@ -341,20 +342,21 @@ class SentenceDiversityChecker(BaseChecker):
         return "\n".join(lines)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
+
     checker = SentenceDiversityChecker()
 
     limit = None
-    if len(sys.argv) > 1 and sys.argv[1] == '--limit':
+    if len(sys.argv) > 1 and sys.argv[1] == "--limit":
         limit = int(sys.argv[2]) if len(sys.argv) > 2 else 50
 
-    template_mode = '--template' in sys.argv
+    template_mode = "--template" in sys.argv
 
     if template_mode:
-        chapter_files = sorted(checker.chapters_dir.glob('ch*.md'))[:limit or 9999]
+        chapter_files = sorted(checker.chapters_dir.glob("ch*.md"))[: limit or 9999]
         for ch_file in chapter_files:
-            match = re.match(r'ch(\d+)\.md', ch_file.name)
+            match = re.match(r"ch(\d+)\.md", ch_file.name)
             if match:
                 ch_num = int(match.group(1))
                 templates = checker.detect_template_sentences(ch_num)
@@ -365,7 +367,7 @@ if __name__ == '__main__':
         issues = checker.check_all(limit=limit)
         if issues:
             print(checker.generate_report(issues))
-            high_count = len([i for i in issues if i.severity == 'HIGH'])
+            high_count = len([i for i in issues if i.severity == "HIGH"])
             print(f"\n总计: {len(issues)}章节有问题（{high_count} HIGH）")
             sys.exit(1) if high_count > 0 else sys.exit(0)
         else:

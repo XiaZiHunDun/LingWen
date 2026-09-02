@@ -14,6 +14,7 @@ Phase 8.15 在 AgentComputeFn.__init__ 加 budget_service_by_tier kwarg,
 - 顺序: total (Phase 8.8) → run/day/week (Phase 8.12) → tier (Phase 8.15),
   total 先 raise 不走到 tier check (deterministic ordering).
 """
+
 from __future__ import annotations
 
 import sqlite3
@@ -43,9 +44,7 @@ def _make_node(scenario: str) -> ThoughtNode:
     )
 
 
-def _make_compute(
-    master: Any, cost_tracker: CostTracker, budget_service: Any
-) -> AgentComputeFn:
+def _make_compute(master: Any, cost_tracker: CostTracker, budget_service: Any) -> AgentComputeFn:
     """构造一个 AgentComputeFn (含 cost_tracker + budget_service)."""
     return AgentComputeFn(
         master=master,
@@ -133,9 +132,7 @@ class TestAgentComputeFnBudget:
             compute(_make_node("chapter_writing"), {"chapter_num": 1})
         assert exc.value.scope == "week"
 
-    def test_compute_fn_no_budget_service_unchanged(
-        self, tmp_path: Path
-    ) -> None:
+    def test_compute_fn_no_budget_service_unchanged(self, tmp_path: Path) -> None:
         """budget_service=None, 旧 Phase 8.8 path 0 改 (check_budget 仍工作)"""
         master = MagicMock()
         master._current_budget_usd = 0.0001  # 极小, cost_tracker > 立即超
@@ -160,9 +157,7 @@ class TestAgentComputeFnBudget:
         exc = CostBudgetExceeded(used_usd=0.2, budget_usd=0.1, scenario="test")
         assert exc.scope == "run"
 
-    def test_compute_fn_window_expired_does_not_raise(
-        self, tmp_path: Path
-    ) -> None:
+    def test_compute_fn_window_expired_does_not_raise(self, tmp_path: Path) -> None:
         """set day 昨天 → window 失效 → 不 raise (即使 cost > budget)"""
         from lingwen_core.agents.budget_persistence import BudgetService
 
@@ -210,9 +205,7 @@ class TestAgentComputeFnByTier:
         # 没有 raise 即可
         assert compute._budget_service_by_tier is None
 
-    def test_compute_fn_with_tier_budget_service_checks_tiers(
-        self, tmp_path: Path
-    ) -> None:
+    def test_compute_fn_with_tier_budget_service_checks_tiers(self, tmp_path: Path) -> None:
         """Phase 8.15: 注入 budget_service_by_tier 后, compute 调 check_all_tiers.
 
         通过 compute.__call__ 走完整 path: stub handler 喂 cost,
@@ -235,9 +228,7 @@ class TestAgentComputeFnByTier:
         svc.init_db()
         svc.set_by_tier(ModelTier.OPUS, 0.1)  # tier budget 极小, 必超
 
-        compute = AgentComputeFn(
-            master, cost_tracker=tracker, budget_service_by_tier=svc
-        )
+        compute = AgentComputeFn(master, cost_tracker=tracker, budget_service_by_tier=svc)
 
         with pytest.raises(CostBudgetExceeded) as exc:
             compute(_make_node("chapter_writing"), {"chapter_num": 1})
@@ -258,9 +249,7 @@ class TestAgentComputeFnByTier:
         assert exc_info.value.tier == ModelTier.SONNET
         assert "tier=sonnet" in str(exc_info.value)
 
-    def test_compute_fn_tier_budget_checked_after_total_check(
-        self, tmp_path: Path
-    ) -> None:
+    def test_compute_fn_tier_budget_checked_after_total_check(self, tmp_path: Path) -> None:
         """Phase 8.15: total budget 先 raise, 不走到 tier check (顺序保).
 
         Phase 8.8 CostTracker.check_budget 走 _current_budget_usd (total cap);

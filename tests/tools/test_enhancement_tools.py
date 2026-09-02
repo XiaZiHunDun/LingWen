@@ -36,7 +36,8 @@ class TestAntiTropeEnhancer:
     def test_generate_options_returns_list(self):
         """测试生成选项返回列表"""
         import asyncio
-        with patch.object(AntiTropeEnhancer, '__init__', lambda x: None):
+
+        with patch.object(AntiTropeEnhancer, "__init__", lambda x: None):
             enhancer = AntiTropeEnhancer()
             enhancer._llm = MagicMock()
             enhancer._config = MagicMock()
@@ -47,7 +48,7 @@ class TestAntiTropeEnhancer:
             enhancer._llm.execute = AsyncMock(return_value=mock_response)
 
             # Use actual method
-            with patch('tools.anti_trope_enhancer.LLMServiceAdapter') as MockLLM:
+            with patch("tools.anti_trope_enhancer.LLMServiceAdapter") as MockLLM:
                 MockLLM.return_value = MagicMock()
                 MockLLM.return_value.execute = AsyncMock(return_value=mock_response)
 
@@ -68,7 +69,7 @@ class TestAntiTropeEnhancer:
                 character="沉默主角",
                 twist="盟友背叛",
                 anti_trope_tags=["反套路"],
-                match_score=0.8
+                match_score=0.8,
             )
         ]
 
@@ -115,7 +116,7 @@ class TestLLMQualityAnalyzer:
             repair_decision=RepairDecision.REQUIRED,
             reasoning="角色行为逻辑矛盾",
             repair_suggestion="需要修复",
-            confidence=0.95
+            confidence=0.95,
         )
 
         assert result.severity == SeverityDecision.P0
@@ -133,14 +134,14 @@ class TestLLMQualityAnalyzer:
                 repair_decision=RepairDecision.OPTIONAL,
                 reasoning="",
                 repair_suggestion="",
-                confidence=0.5
+                confidence=0.5,
             ),
             AnalysisResult(
                 severity=SeverityDecision.P0,
                 repair_decision=RepairDecision.REQUIRED,
                 reasoning="",
                 repair_suggestion="",
-                confidence=0.9
+                confidence=0.9,
             ),
         ]
 
@@ -157,7 +158,7 @@ class TestLLMQualityAnalyzer:
                 repair_decision=RepairDecision.OPTIONAL,
                 reasoning="",
                 repair_suggestion="",
-                confidence=0.5
+                confidence=0.5,
             ),
         ]
 

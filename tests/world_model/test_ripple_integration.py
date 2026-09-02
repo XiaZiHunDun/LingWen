@@ -9,6 +9,7 @@ Doc 1 §3.4 worked example + 紧急工况验证:
 
 镜像 Phase 1.2 `test_subplot_integration.py` 风格。
 """
+
 from __future__ import annotations
 
 import json
@@ -34,12 +35,14 @@ from infra.world_model.queries import predict_collapse_risk as predict_collapse_
 
 # === Helpers ===
 
+
 def _tmp_registry(tmp_path: Path) -> RippleRegistry:
     """创建使用 tmp_path 的 RippleRegistry (避免污染 .state/ripples/)"""
     return RippleRegistry(base_dir=tmp_path / "ripples")
 
 
 # === TestEndToEndWorkedExample ===
+
 
 class TestEndToEndWorkedExample:
     """Doc 1 §3.4 worked example: ch010 林尘身份 → ch200 强平复"""
@@ -49,16 +52,16 @@ class TestEndToEndWorkedExample:
         eng = RippleEngine()
 
         # ch010: 挖坑 (林尘是星月之子)
-        ripple = eng.register(
-            reg, "ripple_identity_001", "林尘是星月之子", 10, planned_resolve_ch=200
-        )
+        ripple = eng.register(reg, "ripple_identity_001", "林尘是星月之子", 10, planned_resolve_ch=200)
         assert ripple.state == RippleState.OPEN
         assert ripple.wavefront == (10,)
         assert reg.count_open() == 1
 
         # ch050: 涟漪扩散 (暗皇追踪)
         ripple = eng.propagate(
-            reg, "ripple_identity_001", 50,
+            reg,
+            "ripple_identity_001",
+            50,
             affected_nodes=(NodeId(NodeType.CHARACTER, "暗皇"),),
         )
         assert ripple.state == RippleState.PROPAGATING
@@ -100,6 +103,7 @@ class TestEndToEndWorkedExample:
 
 
 # === TestCollapseAlarm ===
+
 
 class TestCollapseAlarm:
     """Doc 1 §3.4: 累计未平复 > 10 → 崩塌风险 > 0.7 → > 0.8 报警"""
@@ -173,6 +177,7 @@ class TestCollapseAlarm:
 
 # === TestEngineRegistryQueriesIntegration ===
 
+
 class TestEngineRegistryQueriesIntegration:
     """全链路:Engine 操作 → Registry 状态 → Queries 反馈"""
 
@@ -224,6 +229,7 @@ class TestEngineRegistryQueriesIntegration:
 
 # === TestJSONPersistence ===
 
+
 class TestJSONPersistence:
     """registry.save() → JSON → registry.load() → ripple 状态保持"""
 
@@ -271,14 +277,18 @@ class TestJSONPersistence:
 
 # === TestMultipleResolutionModes ===
 
+
 class TestMultipleResolutionModes:
     """3 种平复模式 (STRONG/WEAK/UNRESOLVED) 都能完成生命周期"""
 
-    @pytest.mark.parametrize("mode", [
-        ResolutionMode.STRONG,
-        ResolutionMode.WEAK,
-        ResolutionMode.UNRESOLVED,
-    ])
+    @pytest.mark.parametrize(
+        "mode",
+        [
+            ResolutionMode.STRONG,
+            ResolutionMode.WEAK,
+            ResolutionMode.UNRESOLVED,
+        ],
+    )
     def test_all_modes_lead_to_resolved(self, tmp_path: Path, mode):
         reg = _tmp_registry(tmp_path)
         eng = RippleEngine()
@@ -292,6 +302,7 @@ class TestMultipleResolutionModes:
 
 
 # === TestImportContract ===
+
 
 class TestImportContract:
     """Public API 完整性:所有 1.5 符号从顶层可导入"""
@@ -309,6 +320,7 @@ class TestImportContract:
             predict_collapse_risk,
             suggest_resolution_chapter,
         )
+
         # 全部可绑定 + 类型断言
         assert RippleEngine is not None
         assert RippleRegistry is not None
@@ -323,6 +335,8 @@ class TestImportContract:
     def test_queries_module_path_consistent(self):
         """queries.predict_collapse_risk 应与 __init__ 导出的一致"""
         from infra.world_model import predict_collapse_risk as top
+
         assert top is predict_collapse_risk_q
         from infra.world_model import detect_unresolved_ripples as top_d
+
         assert top_d is detect_unresolved_ripples_q

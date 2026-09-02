@@ -1,4 +1,5 @@
 """Tests for creator v5.1 diff save confirm, batch history replay, studio entry hint."""
+
 from __future__ import annotations
 
 from lingwen_creator.content.ui_profile import resolve_creator_ui_profile

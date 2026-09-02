@@ -1,4 +1,5 @@
 """Tests for full-check report parse/generate (Phase 10.07)."""
+
 from __future__ import annotations
 
 from pathlib import Path

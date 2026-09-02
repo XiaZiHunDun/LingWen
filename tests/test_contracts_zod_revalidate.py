@@ -5,6 +5,7 @@ Verifies:
 - Detects drift when TS types are intentionally modified
 - Passes when TS types match OpenAPI-derived zod
 """
+
 from __future__ import annotations
 
 import subprocess
@@ -95,8 +96,7 @@ def test_zod_revalidate_passes_on_clean_state() -> None:
         timeout=60,
     )
     assert result.returncode == 0, (
-        f"zod_revalidate.py unexpectedly failed:\n"
-        f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
+        f"zod_revalidate.py unexpectedly failed:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
     )
 
 
@@ -136,6 +136,5 @@ def test_zod_revalidate_detects_drift() -> None:
         timeout=60,
     )
     assert result.returncode != 0, (
-        f"zod_revalidate.py should have detected drift but exited 0:\n"
-        f"STDOUT:\n{result.stdout}"
+        f"zod_revalidate.py should have detected drift but exited 0:\nSTDOUT:\n{result.stdout}"
     )

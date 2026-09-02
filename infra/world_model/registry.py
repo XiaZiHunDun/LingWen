@@ -13,6 +13,7 @@ Doc 1 §3.4 (涟漪机制 v1.0) — RippleRegistry: CRUD + 10 限制 + JSON 持�
 - 并发锁 (单进程使用,Phase 2+)
 - 10-limit 紧急豁免 (climax periods may allow 11,Phase 2+)
 """
+
 from __future__ import annotations
 
 import json
@@ -76,12 +77,11 @@ class RippleRegistry:
             OpenRippleLimitExceeded: OPEN+PROPAGATING+RESOLVING 数已达 10
         """
         if ripple.ripple_id in self._ripples:
-            raise DuplicateRippleIdError(
-                f"ripple_id {ripple.ripple_id!r} already exists"
-            )
+            raise DuplicateRippleIdError(f"ripple_id {ripple.ripple_id!r} already exists")
         # 10 限制:计入 OPEN + PROPAGATING + RESOLVING (RESOLVED 终态不计)
         if (
-            ripple.state in (
+            ripple.state
+            in (
                 RippleState.OPEN,
                 RippleState.PROPAGATING,
                 RippleState.RESOLVING,
@@ -89,8 +89,7 @@ class RippleRegistry:
             and self.count_open() >= MAX_OPEN_RIPPLOTS
         ):
             raise OpenRippleLimitExceeded(
-                f"cannot add {ripple.ripple_id!r}: open ripple limit "
-                f"({MAX_OPEN_RIPPLOTS}) reached"
+                f"cannot add {ripple.ripple_id!r}: open ripple limit ({MAX_OPEN_RIPPLOTS}) reached"
             )
         self._ripples[ripple.ripple_id] = ripple
 
@@ -113,16 +112,10 @@ class RippleRegistry:
 
     def list_active(self) -> tuple[Ripple, ...]:
         """列出所有未 RESOLVED 的 ripple (OPEN + PROPAGATING + RESOLVING)"""
-        return tuple(
-            r for r in self._ripples.values()
-            if r.state != RippleState.RESOLVED
-        )
+        return tuple(r for r in self._ripples.values() if r.state != RippleState.RESOLVED)
 
     def list_resolved(self) -> tuple[Ripple, ...]:
-        return tuple(
-            r for r in self._ripples.values()
-            if r.state == RippleState.RESOLVED
-        )
+        return tuple(r for r in self._ripples.values() if r.state == RippleState.RESOLVED)
 
     def list_all(self) -> tuple[Ripple, ...]:
         return tuple(self._ripples.values())

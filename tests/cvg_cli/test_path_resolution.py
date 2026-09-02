@@ -7,6 +7,7 @@ deprecation), exit 2 when db 不存在。
 RED: import `lingwen_cli.path_utils.resolve_project_db_path` — helper
 不存 → ImportError → RED。
 """
+
 from __future__ import annotations
 
 import os
@@ -38,9 +39,7 @@ class TestResolveProjectDbPath:
             path_utils.resolve_project_db_path()
         assert exc_info.value.code == 2
 
-    def test_env_unset_cwd_fallback_with_warning(
-        self, tmp_path, monkeypatch, capsys
-    ):
+    def test_env_unset_cwd_fallback_with_warning(self, tmp_path, monkeypatch, capsys):
         """env 未设 + CWD 有 .state/ripple.db → fallback + WARNING."""
         monkeypatch.delenv("LINGWEN_PROJECT_ROOT", raising=False)
         state_dir = tmp_path / ".state"
@@ -54,9 +53,7 @@ class TestResolveProjectDbPath:
         assert "WARNING" in captured.err
         assert "LINGWEN_PROJECT_ROOT" in captured.err
 
-    def test_env_unset_no_fallback_exits_2(
-        self, tmp_path, monkeypatch, capsys
-    ):
+    def test_env_unset_no_fallback_exits_2(self, tmp_path, monkeypatch, capsys):
         """env 未设 + CWD 无 .state/ripple.db → exit 2."""
         monkeypatch.delenv("LINGWEN_PROJECT_ROOT", raising=False)
         # tmp_path 存在 but no .state/ripple.db inside

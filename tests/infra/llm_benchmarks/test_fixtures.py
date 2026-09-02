@@ -1,4 +1,5 @@
 """Tests for infra.llm_benchmarks.fixtures."""
+
 from __future__ import annotations
 
 from pathlib import Path

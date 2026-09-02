@@ -7,6 +7,7 @@
 - 确保角色性别描述的一致性
 - 修复代词和称谓的混用问题
 """
+
 import re
 import sys
 from pathlib import Path
@@ -28,11 +29,11 @@ class GenderConsistencyRepairer(BaseConsistencyRepairer):
         """获取性别一致性修复规则"""
         return [
             # 常见性别混淆 - 他/她
-            ('她他', '他', '他她混淆'),
-            ('他她', '她', '他她混淆'),
+            ("她他", "他", "他她混淆"),
+            ("他她", "她", "他她混淆"),
             # 动作性别不匹配
-            ('她（', '她'),
-            ('他（', '他'),
+            ("她（", "她"),
+            ("他（", "他"),
         ]
 
     def _apply_fixes(self, content: str, issues: List[Any] = None) -> Tuple[str, int, List[str]]:
@@ -66,14 +67,15 @@ class GenderConsistencyRepairer(BaseConsistencyRepairer):
 
     def _fix_with_character_profiles(self, content):
         """基于角色档案修复性别错误"""
-        profiles_path = self.project_root / 'context' / 'character_profiles.yaml'
+        profiles_path = self.project_root / "context" / "character_profiles.yaml"
 
         if not profiles_path.exists():
             return content, 0, []
 
         try:
             import yaml
-            with open(profiles_path, 'r', encoding='utf-8') as f:
+
+            with open(profiles_path, "r", encoding="utf-8") as f:
                 profiles = yaml.safe_load(f)
 
             count = 0
@@ -82,7 +84,7 @@ class GenderConsistencyRepairer(BaseConsistencyRepairer):
 
             # 遍历角色档案，检测性别引用错误
             for char_name, char_data in profiles.items():
-                gender = char_data.get('gender', '')
+                gender = char_data.get("gender", "")
                 if not gender:
                     continue
 
@@ -99,11 +101,11 @@ class GenderConsistencyRepairer(BaseConsistencyRepairer):
                     if pattern in result:
                         cnt = result.count(pattern)
                         # 修复性别混淆
-                        if gender == 'male' and '她' in pattern:
-                            result = result.replace(pattern, pattern.replace('她', '他'))
+                        if gender == "male" and "她" in pattern:
+                            result = result.replace(pattern, pattern.replace("她", "他"))
                             count += cnt
-                        elif gender == 'female' and '他' in pattern:
-                            result = result.replace(pattern, pattern.replace('他', '她'))
+                        elif gender == "female" and "他" in pattern:
+                            result = result.replace(pattern, pattern.replace("他", "她"))
                             count += cnt
 
                 if count > 0:
@@ -126,17 +128,15 @@ class GenderConsistencyRepairer(BaseConsistencyRepairer):
 
         # 检测他/她混淆
         confusion_patterns = [
-            r'她他',
-            r'他她',
+            r"她他",
+            r"他她",
         ]
 
         for pattern in confusion_patterns:
             for match in re.finditer(pattern, content):
-                issues.append((
-                    match.start(),
-                    'gender_confusion',
-                    f"发现 '{match.group()}' - 可能存在性别混淆"
-                ))
+                issues.append(
+                    (match.start(), "gender_confusion", f"发现 '{match.group()}' - 可能存在性别混淆")
+                )
 
         # 检测动作与性别不匹配
         # 这是一个简化实现
@@ -146,10 +146,10 @@ class GenderConsistencyRepairer(BaseConsistencyRepairer):
 def parse_chapters(chapters_str):
     """解析章节范围字符串"""
     chapters = []
-    for part in chapters_str.split(','):
+    for part in chapters_str.split(","):
         part = part.strip()
-        if '-' in part:
-            start, end = part.split('-')
+        if "-" in part:
+            start, end = part.split("-")
             chapters.extend(range(int(start), int(end) + 1))
         else:
             chapters.append(int(part))
@@ -158,11 +158,12 @@ def parse_chapters(chapters_str):
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description='性别一致性修复器 - 修复性别引用错误')
-    parser.add_argument('--chapters', type=str, default='1-10', help='章节范围 (如: 1-10,15,20-25)')
-    parser.add_argument('--dry-run', action='store_true', help='只输出不保存')
-    parser.add_argument('--verbose', action='store_true', help='详细输出')
-    parser.add_argument('--check-only', action='store_true', help='仅检测问题，不修复')
+
+    parser = argparse.ArgumentParser(description="性别一致性修复器 - 修复性别引用错误")
+    parser.add_argument("--chapters", type=str, default="1-10", help="章节范围 (如: 1-10,15,20-25)")
+    parser.add_argument("--dry-run", action="store_true", help="只输出不保存")
+    parser.add_argument("--verbose", action="store_true", help="详细输出")
+    parser.add_argument("--check-only", action="store_true", help="仅检测问题，不修复")
     args = parser.parse_args()
 
     repairer = GenderConsistencyRepairer()
@@ -200,12 +201,14 @@ def main():
 
             if args.dry_run:
                 print(f"\n=== 章节 {ch:03d} 修复预览 ===")
-                print(result.new_content[:500] + "..." if len(result.new_content) > 500 else result.new_content)
+                print(
+                    result.new_content[:500] + "..." if len(result.new_content) > 500 else result.new_content
+                )
 
     print(f"\n总计: {total_changes} 处修复")
     if args.dry_run:
         print("(dry-run 模式，未保存)")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

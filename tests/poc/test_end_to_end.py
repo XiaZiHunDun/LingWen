@@ -11,6 +11,7 @@ Phase 1.4 PoC — 1+4 端到端跑通 (no LLM, 纯逻辑).
   + subplot 状态正确转换 (ACTIVE → CLOSING/ACTIVE)
 - 不调用真实 LLM (用 Mock compute_fn)
 """
+
 from __future__ import annotations
 
 import pytest
@@ -60,8 +61,7 @@ class TestPoCSubplotState:
         result = run_poc(chapters=3)
         # 3 章内,subplot 应保持 ACTIVE
         for plot_id, status in result.subplot_statuses.items():
-            assert status in {"DRAFT", "ACTIVE", "PAUSED"}, \
-                f"{plot_id} status: {status}"
+            assert status in {"DRAFT", "ACTIVE", "PAUSED"}, f"{plot_id} status: {status}"
 
 
 class TestPoCWorldSnapshot:

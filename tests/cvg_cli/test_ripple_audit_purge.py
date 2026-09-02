@@ -1,4 +1,5 @@
 """Phase 9.61 F52: ripple-audit purge CLI + retention helper tests."""
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
@@ -60,37 +61,27 @@ class TestAuditRetentionHelpers:
         assert parse_older_than("30d") == timedelta(days=30)
 
     def test_purge_dry_run_counts_without_delete(self, storage_with_audit_rows):
-        result = purge_audit_entries_older_than(
-            storage_with_audit_rows, timedelta(days=90), execute=False
-        )
+        result = purge_audit_entries_older_than(storage_with_audit_rows, timedelta(days=90), execute=False)
         assert result.matched == 1
         assert result.deleted == 0
         assert storage_with_audit_rows.count_audit_entries_created_before("9999-01-01") == 3
 
     def test_purge_execute_deletes_old_rows(self, storage_with_audit_rows):
-        result = purge_audit_entries_older_than(
-            storage_with_audit_rows, timedelta(days=90), execute=True
-        )
+        result = purge_audit_entries_older_than(storage_with_audit_rows, timedelta(days=90), execute=True)
         assert result.matched == 1
         assert result.deleted == 1
         assert storage_with_audit_rows.count_audit_entries_created_before("9999-01-01") == 2
 
     def test_purge_execute_idempotent_second_pass(self, storage_with_audit_rows):
-        purge_audit_entries_older_than(
-            storage_with_audit_rows, timedelta(days=90), execute=True
-        )
-        second = purge_audit_entries_older_than(
-            storage_with_audit_rows, timedelta(days=90), execute=True
-        )
+        purge_audit_entries_older_than(storage_with_audit_rows, timedelta(days=90), execute=True)
+        second = purge_audit_entries_older_than(storage_with_audit_rows, timedelta(days=90), execute=True)
         assert second.matched == 0
         assert second.deleted == 0
 
 
 class TestRippleAuditPurgeCLI:
     def test_parser_purge_flags(self):
-        args = create_parser().parse_args(
-            ["ripple-audit", "purge", "--older-than", "30d"]
-        )
+        args = create_parser().parse_args(["ripple-audit", "purge", "--older-than", "30d"])
         assert args.command == "ripple-audit"
         assert args.audit_action == "purge"
         assert args.older_than == "30d"

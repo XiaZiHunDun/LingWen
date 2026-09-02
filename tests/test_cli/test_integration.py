@@ -22,10 +22,12 @@ def test_lingwen_help():
     result = _run_lingwen("--help")
     assert result.returncode == 0
 
+
 def test_lingwen_doctor():
     result = _run_lingwen("doctor")
     assert result.returncode == 0
     assert "系统诊断" in result.stdout
+
 
 def test_lingwen_status():
     result = _run_lingwen("status", "1-3")

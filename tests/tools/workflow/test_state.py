@@ -7,6 +7,7 @@ NOTE: TestAdvanceStep.test_advance_step_stores_previous_step patches
 binding). state.py must import as `from . import events; events._trigger_event(...)`
 for this patch to take effect — that's the monkeypatch-friendly pattern.
 """
+
 import json
 from unittest.mock import patch
 
@@ -93,10 +94,8 @@ class TestGetState:
         from infra.tools.workflow.lib import get_state
 
         json_path = sample_workflow_json.parent / "workflow_state.json"
-        data = {
-            "phases": ["PHASE_1", "PHASE_2", "PHASE_3"]
-        }
-        with open(json_path, 'w', encoding='utf-8') as f:
+        data = {"phases": ["PHASE_1", "PHASE_2", "PHASE_3"]}
+        with open(json_path, "w", encoding="utf-8") as f:
             json.dump(data, f)
 
         result = get_state("phases.1")
@@ -192,7 +191,7 @@ class TestAdvanceStep:
 
         set_state("current_step", "STEP_14")
 
-        with patch('infra.tools.workflow.lib.events._trigger_event') as mock_trigger:
+        with patch("infra.tools.workflow.lib.events._trigger_event") as mock_trigger:
             advance_step("STEP_15")
 
             calls = mock_trigger.call_args_list
@@ -284,22 +283,16 @@ class TestGetStateReadLock:
         # 过滤掉 init_sqlite() 产生的 CREATE TABLE 噪声(它们是幂等的)
         # 只保留 PRAGMA / BEGIN / SELECT / COMMIT
         txn_sqls = [
-            s for s in upper_sqls
+            s
+            for s in upper_sqls
             if any(k in s for k in ("BEGIN", "COMMIT", "SELECT", "JOURNAL_MODE", "BUSY_TIMEOUT"))
         ]
-        assert any(s.strip() == "BEGIN" for s in txn_sqls), (
-            f"get_state should issue BEGIN; got: {txn_sqls}"
-        )
-        assert any(s.strip() == "COMMIT" for s in txn_sqls), (
-            f"get_state should issue COMMIT; got: {txn_sqls}"
-        )
+        assert any(s.strip() == "BEGIN" for s in txn_sqls), f"get_state should issue BEGIN; got: {txn_sqls}"
+        assert any(s.strip() == "COMMIT" for s in txn_sqls), f"get_state should issue COMMIT; got: {txn_sqls}"
         # SELECT 必须在 BEGIN 之后、且 BEGIN 之后的第一个 COMMIT 之前
         begin_idx = next(i for i, s in enumerate(txn_sqls) if s.strip() == "BEGIN")
         select_idx = next(i for i, s in enumerate(txn_sqls) if "SELECT" in s and i > begin_idx)
-        commit_idx = next(
-            i for i, s in enumerate(txn_sqls)
-            if s.strip() == "COMMIT" and i > select_idx
-        )
+        commit_idx = next(i for i, s in enumerate(txn_sqls) if s.strip() == "COMMIT" and i > select_idx)
         assert begin_idx < select_idx < commit_idx, (
             f"SELECT must be wrapped by BEGIN/COMMIT; "
             f"begin={begin_idx} select={select_idx} commit={commit_idx}; txn_sqls={txn_sqls}"
@@ -322,6 +315,7 @@ class TestGetStateReadLock:
 
         # 单独写线程
         import threading
+
         commit_done = threading.Event()
 
         def mutator():

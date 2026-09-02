@@ -4,6 +4,7 @@ Mirrors lines 28-71 of the original infra/cli/commands.py. Each concrete
 command (check/repair/verify/etc.) imports from this module and inherits the
 `Command` ABC plus the get_range/format_chapter_summary helpers.
 """
+
 from abc import ABC, abstractmethod
 from typing import List
 

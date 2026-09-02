@@ -19,6 +19,7 @@ Doc 1 §3.4 + Doc 3 联动:Ripple RESOLVED 时,联动其相关 subplot。
 - 跨包事务 (atomic commit/rollback,Phase 3+)
 - 异步联动 (Phase 3+)
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
@@ -40,6 +41,7 @@ if TYPE_CHECKING:
 # 在运行时 lazy import 读取
 def _get_closing_min_chapters() -> int:
     from infra.subplot.lifecycle import CLOSING_MIN_CHAPTERS
+
     return CLOSING_MIN_CHAPTERS
 
 
@@ -80,9 +82,8 @@ class _SubplotRegistryLike(Protocol):
 
 # ============ 核心 API ============
 
-def link_subplot_to_ripple(
-    plot: "Plot", ripple: "Ripple", link_kind: str = "primary"
-) -> "Plot":
+
+def link_subplot_to_ripple(plot: "Plot", ripple: "Ripple", link_kind: str = "primary") -> "Plot":
     """加入 ripple_id 到 plot.related_ripples (idempotent)
 
     Args:
@@ -100,9 +101,7 @@ def link_subplot_to_ripple(
     """
     if ripple.ripple_id in plot.related_ripples:
         return plot  # 幂等:已存在则原样返回
-    return replace(
-        plot, related_ripples=(*plot.related_ripples, ripple.ripple_id)
-    )
+    return replace(plot, related_ripples=(*plot.related_ripples, ripple.ripple_id))
 
 
 def apply_ripple_resolution(
@@ -166,10 +165,7 @@ def apply_ripple_resolution(
             plot_id=plot.plot_id,
             from_status=plot.status,
             to_status=PlotStatus.CLOSING,
-            reason=(
-                f"ripple {ripple_id} resolved"
-                + (" (dry-run)" if not auto_close else "")
-            ),
+            reason=(f"ripple {ripple_id} resolved" + (" (dry-run)" if not auto_close else "")),
         )
 
         if auto_close:

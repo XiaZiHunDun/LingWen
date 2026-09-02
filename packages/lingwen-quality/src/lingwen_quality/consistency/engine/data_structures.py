@@ -17,6 +17,7 @@ from typing import Any, Dict, List, Optional
 
 class IssueSeverity(Enum):
     """问题严重程度"""
+
     P0 = "P0"  # 致命：逻辑硬伤，影响阅读
     P1 = "P1"  # 严重：一致性冲突，需要修改
     P2 = "P2"  # 中等：轻微不一致，建议修改
@@ -25,13 +26,15 @@ class IssueSeverity(Enum):
 
 class ConfidenceLevel(Enum):
     """检测置信度"""
-    HIGH = "HIGH"   # 置信度>85%，可直接处理
+
+    HIGH = "HIGH"  # 置信度>85%，可直接处理
     MEDIUM = "MED"  # 置信度60-85%，需LLM复核
-    LOW = "LOW"     # 置信度<60%，人工审核
+    LOW = "LOW"  # 置信度<60%，人工审核
 
 
 class CheckerType(Enum):
     """检查器类型"""
+
     CHARACTER = "character_checker"
     ITEM = "item_checker"
     TIMELINE = "timeline_checker"
@@ -68,8 +71,9 @@ class CheckerType(Enum):
 
 class CheckScope(Enum):
     """检查范围"""
-    ALL = "all"           # 全部8个检查器
-    CRITICAL = "critical" # 仅critical级别
+
+    ALL = "all"  # 全部8个检查器
+    CRITICAL = "critical"  # 仅critical级别
     IMPORTANT = "important"  # critical + important
     STANDARD = "standard"  # 标准检查
 
@@ -77,6 +81,7 @@ class CheckScope(Enum):
 @dataclass
 class IssueLocation:
     """问题位置"""
+
     chapter: int
     paragraph: Optional[int] = None
     line: Optional[int] = None
@@ -110,6 +115,7 @@ class Issue:
         suggestion: 修改建议
         created_at: 创建时间
     """
+
     id: str
     severity: IssueSeverity
     checker_type: CheckerType
@@ -181,6 +187,7 @@ class Issue:
 @dataclass
 class CheckerPerformance:
     """检查器性能统计"""
+
     checker_type: str
     total_detections: int = 0
     false_positive_count: int = 0
@@ -200,15 +207,15 @@ class CheckerPerformance:
         self.false_positive_rate = self.false_positive_count / max(self.total_detections, 1)
         # 更新平均置信度分数
         self.avg_confidence_score = (
-            (self.avg_confidence_score * (self.total_detections - 1) + confidence_score)
-            / self.total_detections
-        )
+            self.avg_confidence_score * (self.total_detections - 1) + confidence_score
+        ) / self.total_detections
         self.last_updated = datetime.now()
 
 
 @dataclass
 class IssueFeedback:
     """问题反馈（用于自检）"""
+
     issue_id: str
     checker_type: str
     chapter_num: int
@@ -236,6 +243,7 @@ class ForeshadowAlert:
         message: 人类可读的预警消息
         created_at: 创建时间
     """
+
     alert_type: str
     thread_id: str
     content: str
@@ -266,6 +274,7 @@ class ForeshadowAlert:
 @dataclass
 class CheckerResult:
     """单个检查器的检查结果"""
+
     checker_type: CheckerType
     issues: List[Issue] = field(default_factory=list)
     foreshadow_alerts: List[ForeshadowAlert] = field(default_factory=list)
@@ -296,14 +305,15 @@ class CheckerResult:
 @dataclass
 class QualityDimension:
     """质量维度评分"""
-    s1_plot_completeness: float = 5.0   # S1 剧情完整性
+
+    s1_plot_completeness: float = 5.0  # S1 剧情完整性
     s2_logic_consistency: float = 5.0  # S2 逻辑自洽
-    s3_writing_style: float = 5.0       # S3 文笔风格
-    s4_emotional_resonance: float = 5.0 # S4 情感共鸣
-    s5_pacing_control: float = 5.0      # S5 节奏控制
-    s6_readability: float = 5.0         # S6 可读性
+    s3_writing_style: float = 5.0  # S3 文笔风格
+    s4_emotional_resonance: float = 5.0  # S4 情感共鸣
+    s5_pacing_control: float = 5.0  # S5 节奏控制
+    s6_readability: float = 5.0  # S6 可读性
     s7_protagonist_charm: float = 5.0  # S7 主角魅力
-    s8_character_arc: float = 5.0      # S8 人物弧光
+    s8_character_arc: float = 5.0  # S8 人物弧光
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -320,8 +330,14 @@ class QualityDimension:
     def overall_score(self) -> float:
         """计算综合评分"""
         weights = {
-            "S1": 0.20, "S2": 0.20, "S3": 0.15, "S4": 0.10,
-            "S5": 0.10, "S6": 0.10, "S7": 0.08, "S8": 0.07
+            "S1": 0.20,
+            "S2": 0.20,
+            "S3": 0.15,
+            "S4": 0.10,
+            "S5": 0.10,
+            "S6": 0.10,
+            "S7": 0.08,
+            "S8": 0.07,
         }
         scores = self.to_dict()
         return sum(scores[k] * weights[k] for k in weights) * 20  # 转换为100分制
@@ -358,6 +374,7 @@ class ConsistencyReport:
         verdict: 通过判定
         metadata: 元数据
     """
+
     chapter: int
     check_time: datetime = field(default_factory=datetime.now)
     check_scope: CheckScope = CheckScope.ALL
@@ -457,6 +474,7 @@ class RealtimeIssue:
 
     用于写作过程中的即时预警
     """
+
     severity: IssueSeverity
     checker_type: CheckerType
     message: str

@@ -1,4 +1,5 @@
 """Email dispatch for creator onboarding @mention notifications."""
+
 from __future__ import annotations
 
 import json

@@ -1,4 +1,5 @@
 """Tests for merge preset package semver labels."""
+
 from __future__ import annotations
 
 import pytest

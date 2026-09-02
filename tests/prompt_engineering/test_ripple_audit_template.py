@@ -8,6 +8,7 @@ SCENARIOS 中已有 ripple_audit 描述,但缺 YAML 模板。
 - 必需字段存在 (scenario/version/agent_role/system_prompt/user_prompt)
 - 模板可被 render_template 渲染 (含 chapter_num / active_ripples / collapse_risk)
 """
+
 from __future__ import annotations
 
 from lingwen_prompt.templates import (

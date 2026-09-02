@@ -1,4 +1,5 @@
 """Webhook dispatch for creator onboarding @mention notifications."""
+
 from __future__ import annotations
 
 import hashlib
@@ -101,7 +102,11 @@ def _post_webhook(project_root: Path | str, url: str, payload: dict[str, Any]) -
     try:
         with urllib.request.urlopen(request, timeout=_WEBHOOK_TIMEOUT_SEC) as response:
             status = getattr(response, "status", 200)
-        return {"dispatched": 1, "status": status, "signed": bool(load_webhook_config(project_root).get("signing_secret"))}
+        return {
+            "dispatched": 1,
+            "status": status,
+            "signed": bool(load_webhook_config(project_root).get("signing_secret")),
+        }
     except urllib.error.URLError as exc:
         return {"dispatched": 0, "error": str(exc.reason or exc)}
 

@@ -8,6 +8,7 @@ Phase 18.2 — 章节写作用例。
 
 execute() 返回 ChapterWrittenEvent，上游（studio_api / saga）订阅。
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

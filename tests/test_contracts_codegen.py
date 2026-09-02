@@ -4,6 +4,7 @@ Verifies:
 - tooling/contracts/generate.py runs without error
 - contracts/ts/{world,workspace,quality}.ts contain expected interface names
 """
+
 from __future__ import annotations
 
 import subprocess
@@ -29,8 +30,7 @@ def test_codegen_runs_successfully() -> None:
         timeout=60,
     )
     assert result.returncode == 0, (
-        f"generate.py failed (exit {result.returncode}):\n"
-        f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
+        f"generate.py failed (exit {result.returncode}):\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
     )
 
     ts_dir = REPO_ROOT / "packages" / "lingwen-shared" / "src" / "lingwen_shared" / "contracts" / "ts"
@@ -41,14 +41,7 @@ def test_codegen_runs_successfully() -> None:
 def test_world_ts_contains_character_dto() -> None:
     """Generated world.ts must export CharacterDTO interface."""
     ts_file = (
-        REPO_ROOT
-        / "packages"
-        / "lingwen-shared"
-        / "src"
-        / "lingwen_shared"
-        / "contracts"
-        / "ts"
-        / "world.ts"
+        REPO_ROOT / "packages" / "lingwen-shared" / "src" / "lingwen_shared" / "contracts" / "ts" / "world.ts"
     )
     content = ts_file.read_text(encoding="utf-8")
     assert "interface CharacterDTO" in content or "export interface CharacterDTO" in content, (

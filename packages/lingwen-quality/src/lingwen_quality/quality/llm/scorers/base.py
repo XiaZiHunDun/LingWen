@@ -12,7 +12,8 @@ from typing import Any, Dict
 @dataclass
 class ScoredResult:
     """评分结果"""
-    score: float           # 0-100
+
+    score: float  # 0-100
     reason: str = ""
 
 

@@ -209,12 +209,14 @@ def register_regression_check(chapter_id: str, reason: str = "") -> List[str]:
     for rel_id in related:
         # Check if already in queue
         if not any(item["chapter_id"] == rel_id for item in queue["pending"]):
-            queue["pending"].append({
-                "chapter_id": rel_id,
-                "triggered_by": chapter_id,
-                "reason": reason or f"Proximity/plot regression from {chapter_id}",
-                "registered_at": datetime.now().strftime("%Y-%m-%d"),
-            })
+            queue["pending"].append(
+                {
+                    "chapter_id": rel_id,
+                    "triggered_by": chapter_id,
+                    "reason": reason or f"Proximity/plot regression from {chapter_id}",
+                    "registered_at": datetime.now().strftime("%Y-%m-%d"),
+                }
+            )
 
     save_regression_queue(queue)
 
@@ -339,7 +341,9 @@ if __name__ == "__main__":
     elif args.command == "register":
         related = register_regression_check(args.chapter_id, args.reason)
         print(f"Registered regression for {args.chapter_id}")
-        print(f"Related chapters ({len(related)}): {', '.join(related[:10])}{'...' if len(related) > 10 else ''}")
+        print(
+            f"Related chapters ({len(related)}): {', '.join(related[:10])}{'...' if len(related) > 10 else ''}"
+        )
 
     elif args.command == "pending":
         pending = get_pending_regression_checks()

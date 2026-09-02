@@ -66,15 +66,11 @@ class ContractPersister:
         if payload.chapter_brief is not None:
             chapter_num = payload.chapter_brief.get("chapter_number")
             if chapter_num is not None:
-                self._write_json(
-                    self.paths.chapter_json(chapter_num), payload.chapter_brief
-                )
+                self._write_json(self.paths.chapter_json(chapter_num), payload.chapter_brief)
 
         # Write Markdown versions
         self._write_markdown(self.paths.master_md, self._render_master_markdown)
-        self._write_markdown(
-            self.paths.anti_patterns_md, self._render_anti_patterns_markdown
-        )
+        self._write_markdown(self.paths.anti_patterns_md, self._render_anti_patterns_markdown)
 
         if payload.chapter_brief is not None:
             chapter_num = payload.chapter_brief.get("chapter_number")
@@ -148,9 +144,7 @@ class ContractPersister:
             if self.MARKER_BEGIN in existing and self.MARKER_END in existing:
                 # Replace only the marker content
                 pattern = re.compile(
-                    re.escape(self.MARKER_BEGIN)
-                    + r".*?"
-                    + re.escape(self.MARKER_END),
+                    re.escape(self.MARKER_BEGIN) + r".*?" + re.escape(self.MARKER_END),
                     re.DOTALL,
                 )
                 new_content = pattern.sub(marked_content, existing)

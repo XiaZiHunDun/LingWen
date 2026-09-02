@@ -16,6 +16,7 @@ Phase 1.3 — Doc 2 (提示词工程 v1.0) §7: 模板加载 + 渲染。
 - Jinja2 模板 (Phase 1.5+,现用 {key} 占位符)
 - 模板继承 / 片段 (Phase 1.5+)
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -26,7 +27,11 @@ import yaml
 
 # 必需字段
 _REQUIRED_FIELDS = (
-    "scenario", "version", "agent_role", "system_prompt", "user_prompt",
+    "scenario",
+    "version",
+    "agent_role",
+    "system_prompt",
+    "user_prompt",
 )
 
 
@@ -135,9 +140,7 @@ def load_template(
     # 验证必需字段
     for field_name in _REQUIRED_FIELDS:
         if field_name not in data:
-            raise TemplateParseError(
-                f"missing required field: {field_name!r}", path
-            )
+            raise TemplateParseError(f"missing required field: {field_name!r}", path)
 
     # 构造 Template
     constraints = data.get("constraints_block") or []
@@ -183,12 +186,8 @@ def render_template(
     return RenderedPrompt(
         system_prompt=_fill_placeholders(template.system_prompt, context),
         user_prompt=_fill_placeholders(template.user_prompt, context),
-        constraints_block="\n".join(
-            _fill_placeholders(s, context) for s in template.constraints_block
-        ),
-        requirements_block="\n".join(
-            _fill_placeholders(s, context) for s in template.requirements_block
-        ),
+        constraints_block="\n".join(_fill_placeholders(s, context) for s in template.constraints_block),
+        requirements_block="\n".join(_fill_placeholders(s, context) for s in template.requirements_block),
         output_schema=template.output_schema,
     )
 

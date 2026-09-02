@@ -9,6 +9,7 @@ Verified field-by-field equivalence with the previous backend
 implementation (DecisionResponse has same 13 fields + extra='ignore';
 Resolve/Defer/CancelDecisionRequest bodies match).
 """
+
 from lingwen_shared.contracts.python.decisions import (
     CancelDecisionRequest,
     DecisionResponse,

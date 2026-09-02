@@ -1,4 +1,5 @@
 """Tests for infra.project_init minimal-short scaffold."""
+
 from __future__ import annotations
 
 import os

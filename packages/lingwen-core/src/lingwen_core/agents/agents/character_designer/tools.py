@@ -25,21 +25,20 @@ class CharacterDesignerTools:
             "abilities": requirements.get("abilities", []),
             "voice_pattern": requirements.get("voice_pattern", ""),
             "relationships": [],
-            "character_arc": {}
+            "character_arc": {},
         }
         self.schema.validate(character)
         return character
 
-    def add_relationship(self, character: Dict, target: str, relationship_type: str, trust: float = 0.5, conflict: float = 0.1) -> Dict:
+    def add_relationship(
+        self, character: Dict, target: str, relationship_type: str, trust: float = 0.5, conflict: float = 0.1
+    ) -> Dict:
         """添加关系"""
         if "relationships" not in character:
             character["relationships"] = []
-        character["relationships"].append({
-            "target": target,
-            "type": relationship_type,
-            "trust": trust,
-            "conflict": conflict
-        })
+        character["relationships"].append(
+            {"target": target, "type": relationship_type, "trust": trust, "conflict": conflict}
+        )
         return character
 
     def save_character(self, character: Dict, file_path: str):

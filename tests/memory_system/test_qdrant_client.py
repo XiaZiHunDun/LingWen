@@ -1,4 +1,5 @@
 """QdrantClientWrapper 测试 (TDD 模式)"""
+
 from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
@@ -279,6 +280,9 @@ class TestQdrantClientWrapperEdgeCases:
     def test_config_file_not_found(self):
         """测试配置文件不存在"""
         with patch("lingwen_memory.vector.qdrant_client.QdrantClient"):
-            with patch("lingwen_memory.vector.qdrant_client.load_yaml", side_effect=FileNotFoundError("Config not found")):
+            with patch(
+                "lingwen_memory.vector.qdrant_client.load_yaml",
+                side_effect=FileNotFoundError("Config not found"),
+            ):
                 with pytest.raises(RuntimeError, match="Failed to load configuration"):
                     QdrantClientWrapper()

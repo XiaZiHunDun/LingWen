@@ -1,4 +1,5 @@
 """File-size guard: lint tracked files for size limits per extension."""
+
 from __future__ import annotations
 
 import sys
@@ -48,7 +49,9 @@ ALLOWLIST.add("packages/lingwen-memory/src/lingwen_memory/gateway/query_engine.p
 ALLOWLIST.add("packages/lingwen-memory/src/lingwen_memory/vector/qdrant_client.py")  # Phase 17.6
 ALLOWLIST.add("infra/permission.py")  # Phase 17
 ALLOWLIST.add("infra/prose_judge.py")  # Phase 17
-ALLOWLIST.add("packages/lingwen-pipeline/src/lingwen_pipeline/state_machine.py")  # Phase 17.8 (was infra/state_machine.py)
+ALLOWLIST.add(
+    "packages/lingwen-pipeline/src/lingwen_pipeline/state_machine.py"
+)  # Phase 17.8 (was infra/state_machine.py)
 ALLOWLIST.add("infra/tool.py")  # Phase 17
 ALLOWLIST.add("tools/comprehensive_quality_check.py")  # Phase 17
 ALLOWLIST.add("tools/legacy/llm_outline_quality_check.py")  # Phase 17
@@ -108,7 +111,9 @@ ALLOWLIST.add("tests/hooks/test_hook_engine.py")  # Phase 19.3
 ALLOWLIST.add("tests/test_inspector_repairer.py")  # Phase 19.3
 
 # === Phase 19.4 (methodology split) ===
-ALLOWLIST.add("content/roles/methodology/PART3_工具集/提示词模板库/version_manager.py")  # Phase 19.4 (was 11_方法论/.../version_manager.py, moved in 17.14)
+ALLOWLIST.add(
+    "content/roles/methodology/PART3_工具集/提示词模板库/version_manager.py"
+)  # Phase 19.4 (was 11_方法论/.../version_manager.py, moved in 17.14)
 
 # === Phase 19.5 (third-party asset) ===
 ALLOWLIST.add("trae比赛/novel-writing-assistant/_shared/js/mermaid.min.js")  # Phase 19.5

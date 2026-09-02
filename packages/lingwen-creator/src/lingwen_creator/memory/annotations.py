@@ -1,4 +1,5 @@
 """Per-asset memory annotations (note, pin) stored in project state."""
+
 from __future__ import annotations
 
 import json

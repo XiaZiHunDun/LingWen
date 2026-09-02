@@ -5,6 +5,7 @@ Doc 1 §3.4 核心 query:
 - predict_collapse_risk: len(stale) / MAX_OPEN_RIPPLOTS
 - suggest_resolution_chapter: origin_ch + int(1.0 / max(decay_rate, 0.1))
 """
+
 from __future__ import annotations
 
 import pytest
@@ -22,6 +23,7 @@ from infra.world_model.queries import (
 
 # === Stub registry ===
 
+
 class _StubRegistry:
     def __init__(self, ripples: tuple[Ripple, ...] = ()) -> None:
         self._ripples = {r.ripple_id: r for r in ripples}
@@ -30,8 +32,12 @@ class _StubRegistry:
         return tuple(self._ripples.values())
 
 
-def _ripple(ripple_id: str, state: RippleState = RippleState.OPEN,
-            planned_resolve_ch: int = 10, decay_rate: float = 0.2) -> Ripple:
+def _ripple(
+    ripple_id: str,
+    state: RippleState = RippleState.OPEN,
+    planned_resolve_ch: int = 10,
+    decay_rate: float = 0.2,
+) -> Ripple:
     return Ripple(
         ripple_id=ripple_id,
         origin_event="e",
@@ -43,6 +49,7 @@ def _ripple(ripple_id: str, state: RippleState = RippleState.OPEN,
 
 
 # === TestDetectUnresolvedRipples ===
+
 
 class TestDetectUnresolvedRipples:
     def test_empty_registry_returns_empty(self):
@@ -67,11 +74,13 @@ class TestDetectUnresolvedRipples:
 
     def test_propagating_and_resolving_count_as_unresolved(self):
         # 任意非 RESOLVED 状态都计 unresolved
-        reg = _StubRegistry((
-            _ripple("r_open", state=RippleState.OPEN, planned_resolve_ch=1),
-            _ripple("r_prop", state=RippleState.PROPAGATING, planned_resolve_ch=1),
-            _ripple("r_resv", state=RippleState.RESOLVING, planned_resolve_ch=1),
-        ))
+        reg = _StubRegistry(
+            (
+                _ripple("r_open", state=RippleState.OPEN, planned_resolve_ch=1),
+                _ripple("r_prop", state=RippleState.PROPAGATING, planned_resolve_ch=1),
+                _ripple("r_resv", state=RippleState.RESOLVING, planned_resolve_ch=1),
+            )
+        )
         stale = detect_unresolved_ripples(reg, current_ch=100)
         assert len(stale) == 3
 
@@ -88,6 +97,7 @@ class TestDetectUnresolvedRipples:
 
 
 # === TestPredictCollapseRisk ===
+
 
 class TestPredictCollapseRisk:
     def test_zero_stale_zero_risk(self):
@@ -113,6 +123,7 @@ class TestPredictCollapseRisk:
 
 
 # === TestSuggestResolutionChapter ===
+
 
 class TestSuggestResolutionChapter:
     def test_default_decay_rate_0_2_suggests_5_ch(self):

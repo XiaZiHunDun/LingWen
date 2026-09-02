@@ -2,6 +2,7 @@
 
 Doc 2 §5 SCENARIOS:subplot_suggest 是 outline_master scenario,每 5 章建议支线开/关。
 """
+
 from __future__ import annotations
 
 from lingwen_prompt.templates import (

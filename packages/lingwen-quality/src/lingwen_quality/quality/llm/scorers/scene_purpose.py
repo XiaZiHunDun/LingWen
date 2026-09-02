@@ -57,10 +57,7 @@ class ScenePurposeScorer(BaseScorer):
         # 限制分数范围
         score = max(0, min(100, score))
 
-        return ScoredResult(
-            score=score,
-            reason="; ".join(reasons) if reasons else "场景目的评分完成"
-        )
+        return ScoredResult(score=score, reason="; ".join(reasons) if reasons else "场景目的评分完成")
 
     def _check_purpose_fulfilled(self, content: str, purpose: str) -> bool:
         """检查章节目的是否达成"""
@@ -75,11 +72,7 @@ class ScenePurposeScorer(BaseScorer):
 
     def _analyze_scene_elements(self, content: str) -> Dict[str, bool]:
         """分析场景要素"""
-        elements = {
-            "has_conflict": False,
-            "has_development": False,
-            "has_revelation": False
-        }
+        elements = {"has_conflict": False, "has_development": False, "has_revelation": False}
 
         # 检查冲突
         conflict_markers = ["冲突", "矛盾", "争吵", "对立", "战斗"]

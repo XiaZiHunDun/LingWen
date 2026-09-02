@@ -8,6 +8,7 @@ Real upstream module (preserved at infra/cross_volume/incremental_backfill.py)
 is still importable via the legacy path; this stub is the drop-in replacement
 for Phase 17 callers. Phase 18 will replace it with a domain package entity.
 """
+
 from __future__ import annotations
 
 import os

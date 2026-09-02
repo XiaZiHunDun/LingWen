@@ -1,4 +1,5 @@
 """Phase 9.61 F52: ripple_audit retention / purge helpers."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -9,9 +10,7 @@ from infra.cross_volume.cascade_retention import PurgeResult, parse_older_than
 __all__ = ["PurgeResult", "parse_older_than", "purge_audit_entries_older_than"]
 
 
-def purge_audit_entries_older_than(
-    storage, older_than: timedelta, *, execute: bool
-) -> PurgeResult:
+def purge_audit_entries_older_than(storage, older_than: timedelta, *, execute: bool) -> PurgeResult:
     """Count or delete ripple_audit rows with created_at older than cutoff."""
     cutoff = datetime.now(timezone.utc) - older_than
     cutoff_iso = cutoff.isoformat()

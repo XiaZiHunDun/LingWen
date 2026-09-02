@@ -1,4 +1,5 @@
 """Phase 11.13: Playwright live-backend 8/8 — WS + CI contract."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -39,17 +40,11 @@ class TestE2eLive1113:
         wf = FRONTEND_CI.read_text(encoding="utf-8")
         assert "e2e-live:" in wf
         assert "pnpm e2e:live" in wf
-        assert "LINGWEN_E2E_LIVE: \"1\"" in wf or "LINGWEN_E2E_LIVE: '1'" in wf
+        assert 'LINGWEN_E2E_LIVE: "1"' in wf or "LINGWEN_E2E_LIVE: '1'" in wf
 
     def test_live_backend_helper_novel_factory_root(self):
         helper = (
-            NOVEL_FACTORY
-            / "dashboard"
-            / "frontend"
-            / "tests"
-            / "e2e-smoke"
-            / "helpers"
-            / "live-backend.js"
+            NOVEL_FACTORY / "dashboard" / "frontend" / "tests" / "e2e-smoke" / "helpers" / "live-backend.js"
         )
         text = helper.read_text(encoding="utf-8")
         assert "../../../../.." in text

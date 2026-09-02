@@ -51,10 +51,7 @@ class VoiceConsistencyScorer(BaseScorer):
         # 限制分数范围
         score = max(0, min(100, score))
 
-        return ScoredResult(
-            score=score,
-            reason="; ".join(reasons) if reasons else "声音一致性评分完成"
-        )
+        return ScoredResult(score=score, reason="; ".join(reasons) if reasons else "声音一致性评分完成")
 
     def _analyze_speech_pattern(self, content: str, character_name: str) -> Dict[str, bool]:
         """分析角色语言风格"""

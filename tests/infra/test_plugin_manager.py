@@ -10,6 +10,7 @@ After fix: load_plugins() correctly discovers providers via canonical
 'lingwen_llm.providers.X' module path, populating _plugins with all 3 providers
 (minimax, anthropic, openai).
 """
+
 import pytest
 from lingwen_llm.providers.plugin_manager import PluginManager
 
@@ -29,15 +30,9 @@ def test_load_plugins_populates_all_three_providers(fresh_plugin_manager):
     pm.load_plugins()
 
     discovered = set(pm._plugins.keys())
-    assert "minimax" in discovered, (
-        f"minimax provider missing; discovered: {sorted(discovered)}"
-    )
-    assert "anthropic" in discovered, (
-        f"anthropic provider missing; discovered: {sorted(discovered)}"
-    )
-    assert "openai" in discovered, (
-        f"openai provider missing; discovered: {sorted(discovered)}"
-    )
+    assert "minimax" in discovered, f"minimax provider missing; discovered: {sorted(discovered)}"
+    assert "anthropic" in discovered, f"anthropic provider missing; discovered: {sorted(discovered)}"
+    assert "openai" in discovered, f"openai provider missing; discovered: {sorted(discovered)}"
 
 
 def test_load_plugins_logs_no_broken_import_warnings(fresh_plugin_manager, caplog):
@@ -53,13 +48,9 @@ def test_load_plugins_logs_no_broken_import_warnings(fresh_plugin_manager, caplo
         pm.load_plugins()
 
     # Filter for the specific broken-import warnings the bug would emit
-    broken_import_warnings = [
-        record for record in caplog.records
-        if "Failed to load" in record.getMessage()
-    ]
+    broken_import_warnings = [record for record in caplog.records if "Failed to load" in record.getMessage()]
     assert broken_import_warnings == [], (
-        f"Expected no broken-import warnings, got: "
-        f"{[r.getMessage() for r in broken_import_warnings]}"
+        f"Expected no broken-import warnings, got: {[r.getMessage() for r in broken_import_warnings]}"
     )
 
 

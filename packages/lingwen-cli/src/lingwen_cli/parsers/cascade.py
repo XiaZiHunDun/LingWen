@@ -3,6 +3,7 @@
 Phase 9.21: 'cascade' 变 subparser group 容纳 'run' + 'cancel' 两 action.
 Backward compat 注意: 'lingwen.py cascade rip-1' 旧用法变 'cascade run rip-1'.
 """
+
 import argparse
 
 
@@ -29,15 +30,22 @@ def add_cascade_parser(subparsers: argparse._SubParsersAction) -> argparse.Argum
     )
     run_p.add_argument("ripple_id", type=str, help="Ripple id to trace (e.g. 'rip-1')")
     run_p.add_argument(
-        "--max-depth", type=int, default=3, choices=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        "--max-depth",
+        type=int,
+        default=3,
+        choices=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
         help="Max BFS depth 1..10 (default 3)",
     )
     run_p.add_argument(
-        "--max-nodes-cap", type=int, default=100,
+        "--max-nodes-cap",
+        type=int,
+        default=100,
         help="Max BFS nodes collected 1..1000 (default 100, Phase 9.32 F16)",
     )
     run_p.add_argument(
-        "--persist", action="store_true", default=False,
+        "--persist",
+        action="store_true",
+        default=False,
         help="Persist cascade run to cascade_runs table (off by default)",
     )
 
@@ -47,7 +55,9 @@ def add_cascade_parser(subparsers: argparse._SubParsersAction) -> argparse.Argum
     )
     cancel_p.add_argument("run_id", type=int, help="Cascade run id to cancel")
     cancel_p.add_argument(
-        "--reason", type=str, default="",
+        "--reason",
+        type=str,
+        default="",
         help="Optional cancel reason (logged + WS payload, not persisted)",
     )
 

@@ -61,14 +61,14 @@ class SQLiteBackend(StateBackend):
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
+
         self._storage.with_transaction(_do)
 
     def get(self, key: str) -> Optional[Any]:
         """获取指定键的值"""
+
         def _do(conn):
-            row = conn.execute(
-                "SELECT value FROM workflow_state WHERE key = ?", (key,)
-            ).fetchone()
+            row = conn.execute("SELECT value FROM workflow_state WHERE key = ?", (key,)).fetchone()
             return row["value"] if row is not None else None
 
         value_str = self._storage.with_connection(_do)
@@ -91,19 +91,21 @@ class SQLiteBackend(StateBackend):
             value_str = str(value)
 
         def _do(conn) -> None:
-            conn.execute("""
+            conn.execute(
+                """
                 INSERT OR REPLACE INTO workflow_state (key, value, updated_at)
                 VALUES (?, ?, CURRENT_TIMESTAMP)
-            """, (key, value_str))
+            """,
+                (key, value_str),
+            )
 
         self._storage.with_transaction(_do)
 
     def delete(self, key: str) -> bool:
         """删除指定键"""
+
         def _do(conn) -> int:
-            cursor = conn.execute(
-                "DELETE FROM workflow_state WHERE key = ?", (key,)
-            )
+            cursor = conn.execute("DELETE FROM workflow_state WHERE key = ?", (key,))
             return cursor.rowcount
 
         deleted_count = self._storage.with_transaction(_do)
@@ -111,15 +113,13 @@ class SQLiteBackend(StateBackend):
 
     def list_keys(self, prefix: Optional[str] = None) -> list[str]:
         """列出所有键"""
+
         def _do(conn):
             if prefix:
                 return conn.execute(
-                    "SELECT key FROM workflow_state WHERE key LIKE ?",
-                    (f"{prefix}%",)
+                    "SELECT key FROM workflow_state WHERE key LIKE ?", (f"{prefix}%",)
                 ).fetchall()
-            return conn.execute(
-                "SELECT key FROM workflow_state"
-            ).fetchall()
+            return conn.execute("SELECT key FROM workflow_state").fetchall()
 
         rows = self._storage.with_connection(_do)
         return [row["key"] for row in rows]

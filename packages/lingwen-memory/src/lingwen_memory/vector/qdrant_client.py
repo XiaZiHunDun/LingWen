@@ -11,6 +11,7 @@
 - timeout: 单次请求超时（默认30秒）
 - retry: 自动重试机制（默认3次）
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -50,6 +51,7 @@ def with_retry(max_retries: int = 3, delay: float = 1.0, backoff: float = 2.0):
     Returns:
         装饰器函数
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -70,7 +72,9 @@ def with_retry(max_retries: int = 3, delay: float = 1.0, backoff: float = 2.0):
                     else:
                         logger.error(f"All {max_retries} attempts failed for {func.__name__}: {e}")
             raise last_exception
+
         return wrapper
+
     return decorator
 
 
@@ -235,7 +239,9 @@ class QdrantClientWrapper:
             ValueError: 集合不存在
         """
         if collection_name not in self.collections:
-            raise ValueError(f"Collection '{collection_name}' not found. Available: {list(self.collections.keys())}")
+            raise ValueError(
+                f"Collection '{collection_name}' not found. Available: {list(self.collections.keys())}"
+            )
 
         return self.collections[collection_name]
 
@@ -293,7 +299,9 @@ class QdrantClientWrapper:
             ValueError: 集合不存在
         """
         if collection_name not in self.collections:
-            raise ValueError(f"Collection '{collection_name}' not found. Available: {list(self.collections.keys())}")
+            raise ValueError(
+                f"Collection '{collection_name}' not found. Available: {list(self.collections.keys())}"
+            )
 
     @with_retry(max_retries=3, delay=1.0)
     def upsert(self, collection_name: str, points: list[dict]) -> None:
@@ -331,7 +339,9 @@ class QdrantClientWrapper:
         # 清除该集合的缓存
         self._search_cache.clear_collection(collection_name)
 
-    def upsert_batch(self, collection_name: str, points: list[dict], batch_size: Optional[int] = None) -> None:
+    def upsert_batch(
+        self, collection_name: str, points: list[dict], batch_size: Optional[int] = None
+    ) -> None:
         """批量 upsert 向量点，分批提交
 
         Args:
@@ -368,7 +378,7 @@ class QdrantClientWrapper:
         # 分批提交
         total = len(qdrant_points)
         for i in range(0, total, batch_size):
-            batch = qdrant_points[i:i + batch_size]
+            batch = qdrant_points[i : i + batch_size]
             self._client.upsert(collection_name=collection_name, points=batch)
 
         # 清除该集合的缓存
@@ -466,7 +476,9 @@ class QdrantClientWrapper:
 
             # 构建缓存键（使用JSON序列化float向量，因为float无法直接hash）
             filter_hash = _make_filter_hash(query_filter)
-            vector_hash = hashlib.md5(json.dumps(list(query_vector), sort_keys=True).encode()).hexdigest()[:16]
+            vector_hash = hashlib.md5(json.dumps(list(query_vector), sort_keys=True).encode()).hexdigest()[
+                :16
+            ]
             cache_key = f"{collection_name}:{vector_hash}:{top_k}:{filter_hash}"
 
             # 检查缓存
@@ -571,7 +583,9 @@ class QdrantClientWrapper:
             ValueError: 集合类型未知
         """
         if collection_name not in self.collections:
-            raise ValueError(f"Unknown collection type: {collection_name}. Available: {list(self.collections.keys())}")
+            raise ValueError(
+                f"Unknown collection type: {collection_name}. Available: {list(self.collections.keys())}"
+            )
 
         collection_info = self.collections[collection_name]
 

@@ -2,6 +2,7 @@
 
 Phase 18.0 — 一致性检查器接口契约。
 """
+
 from __future__ import annotations
 
 from typing import Any, Protocol, runtime_checkable

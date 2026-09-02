@@ -52,6 +52,7 @@ v16.5 #N.9+ tasks:
 - Update dashboard typed wrappers if field semantics change (consult
   ``apps/dashboard/src/api/cvg.ts`` consumers).
 """
+
 from __future__ import annotations
 
 from dataclasses import asdict, is_dataclass
@@ -235,8 +236,8 @@ def cascade_storage_to_presentation(storage: dict[str, Any]) -> CascadeResponse:
     edges_raw = storage.get("edges") or storage.get("cascade_edges", [])
     nodes = [cascade_node_storage_to_presentation(n) for n in nodes_raw]
     edges = [cascade_edge_storage_to_presentation(e) for e in edges_raw]
-    max_depth = storage.get("max_depth") or storage.get("depth_reached") or max(
-        (n.depth for n in nodes), default=0
+    max_depth = (
+        storage.get("max_depth") or storage.get("depth_reached") or max((n.depth for n in nodes), default=0)
     )
     return CascadeResponse(
         ripple_id=(
@@ -279,15 +280,9 @@ def cascade_preview_storage_to_presentation(
     """
     nodes_raw = storage.get("nodes") or storage.get("cascade_nodes", [])
     edges_raw = storage.get("edges") or storage.get("cascade_edges", [])
-    affected_chapters = sum(
-        1 for n in nodes_raw if _get_dim(n) in ("plot_point", "foreshadow")
-    )
-    affected_characters = sum(
-        1 for n in nodes_raw if _get_dim(n) == "character"
-    )
-    affected_settings = sum(
-        1 for n in nodes_raw if _get_dim(n) == "setting"
-    )
+    affected_chapters = sum(1 for n in nodes_raw if _get_dim(n) in ("plot_point", "foreshadow"))
+    affected_characters = sum(1 for n in nodes_raw if _get_dim(n) == "character")
+    affected_settings = sum(1 for n in nodes_raw if _get_dim(n) == "setting")
     actions_raw = storage.get("cascade_actions") or []
     return CascadePreviewResponse(
         ripple_id=ripple_id,
@@ -455,10 +450,7 @@ def reference_graph_storage_to_presentation(
                 "source": e.get("source") or e.get("from_node_id", ""),
                 "target": e.get("target") or e.get("to_node_id", ""),
                 "relation": (
-                    e.get("relation")
-                    or e.get("relationship_type")
-                    or e.get("relationship")
-                    or "reference"
+                    e.get("relation") or e.get("relationship_type") or e.get("relationship") or "reference"
                 ),
                 "weight": e.get("weight"),
             }
@@ -466,9 +458,7 @@ def reference_graph_storage_to_presentation(
             "source": getattr(e, "source", "") or getattr(e, "from_node_id", ""),
             "target": getattr(e, "target", "") or getattr(e, "to_node_id", ""),
             "relation": (
-                getattr(e, "relation", None)
-                or getattr(e, "relationship_type", None)
-                or "reference"
+                getattr(e, "relation", None) or getattr(e, "relationship_type", None) or "reference"
             ),
             "weight": getattr(e, "weight", None),
         }

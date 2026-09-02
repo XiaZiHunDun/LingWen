@@ -1,4 +1,5 @@
 """Tests for creator v3.7 features."""
+
 from __future__ import annotations
 
 from unittest.mock import patch

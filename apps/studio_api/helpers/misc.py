@@ -2,6 +2,7 @@
 Phase 15.0 T1.3: misc helpers (UI mount, etc.).
 
 """
+
 from __future__ import annotations
 
 import os
@@ -27,5 +28,3 @@ def _maybe_mount_dashboard_ui(app: FastAPI) -> None:
     @app.get("/", include_in_schema=False)
     async def dashboard_index() -> FileResponse:
         return FileResponse(dist / "index.html")
-
-

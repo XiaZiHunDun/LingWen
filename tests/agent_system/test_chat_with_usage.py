@@ -2,6 +2,7 @@
 
 3 tests: AgentBase (TieredRouter new path + AIRouter fallback) + fallback mode.
 """
+
 from __future__ import annotations
 
 from typing import Any

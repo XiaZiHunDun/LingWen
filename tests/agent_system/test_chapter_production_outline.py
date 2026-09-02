@@ -1,4 +1,5 @@
 """Tests for canon production outline builder."""
+
 from __future__ import annotations
 
 import pytest
@@ -40,10 +41,12 @@ def isolated_paths(tmp_path):
     (tmp_path / "03_内容仓库" / "04_正文").mkdir(parents=True)
     (tmp_path / "03_内容仓库" / "角色设定").mkdir(parents=True)
     (tmp_path / "03_内容仓库" / "角色设定" / "character_profiles.json").write_text(
-        "{}", encoding="utf-8",
+        "{}",
+        encoding="utf-8",
     )
     (tmp_path / "03_内容仓库" / "04_正文" / "ch360_大纲.md").write_text(
-        SAMPLE_OUTLINE, encoding="utf-8",
+        SAMPLE_OUTLINE,
+        encoding="utf-8",
     )
     paths = ProjectPaths.get(tmp_path)
     yield paths

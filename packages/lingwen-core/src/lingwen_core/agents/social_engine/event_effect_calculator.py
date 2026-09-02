@@ -18,7 +18,7 @@ class EventEffectCalculator:
         "promise_made": {"trust_delta": 0.15, "conflict_delta": 0},
         "promise_broken": {"trust_delta": -0.25, "conflict_delta": 0.15},
         "team_win": {"trust_delta": 0.2, "conflict_delta": -0.1},
-        "competition_win": {"trust_delta": -0.15, "conflict_delta": 0.2}
+        "competition_win": {"trust_delta": -0.15, "conflict_delta": 0.2},
     }
 
     def __init__(self, rules_file: Optional[str] = None):
@@ -27,7 +27,7 @@ class EventEffectCalculator:
 
     def _load_rules(self) -> Dict:
         if self.rules_file and Path(self.rules_file).exists():
-            with open(self.rules_file, 'r', encoding='utf-8') as f:
+            with open(self.rules_file, "r", encoding="utf-8") as f:
                 return yaml.safe_load(f).get("event_effects", self.DEFAULT_RULES)
         return self.DEFAULT_RULES
 

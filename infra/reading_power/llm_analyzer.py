@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional
 @dataclass
 class SuspectedSegment:
     """A segment suspected of containing reading power elements"""
+
     segment_type: str  # "hook" or "coolpoint"
     pattern_name: str
     content: str
@@ -52,6 +53,7 @@ ANALYZE_HOOKS_PROMPT = """分析以下小说段落，识别其中的追读力元
 @dataclass
 class AnalysisResult:
     """Result from LLM analysis of reading power elements"""
+
     hooks: List[Dict[str, Any]]
     coolpoints: List[Dict[str, Any]]
     raw_response: str
@@ -72,8 +74,7 @@ class LLMAnalyzer:
         """
         self.ai_service = ai_service
 
-    def analyze(self, suspected_segments: List[SuspectedSegment],
-                chapter_text: str) -> AnalysisResult:
+    def analyze(self, suspected_segments: List[SuspectedSegment], chapter_text: str) -> AnalysisResult:
         """
         对疑似段落进行LLM深度分析
 
@@ -85,18 +86,15 @@ class LLMAnalyzer:
             AnalysisResult: 分析结果
         """
         if not suspected_segments:
-            return AnalysisResult(
-                hooks=[],
-                coolpoints=[],
-                raw_response="",
-                success=True
-            )
+            return AnalysisResult(hooks=[], coolpoints=[], raw_response="", success=True)
 
         # 构建上下文
-        context = "\n".join([
-            f"[{seg.segment_type}] {seg.pattern_name}: {seg.content}"
-            for seg in suspected_segments[:10]  # 限制分析数量
-        ])
+        context = "\n".join(
+            [
+                f"[{seg.segment_type}] {seg.pattern_name}: {seg.content}"
+                for seg in suspected_segments[:10]  # 限制分析数量
+            ]
+        )
 
         # 如果原始文本不太长，也附上完整文本
         if len(chapter_text) < 2000:
@@ -108,7 +106,7 @@ class LLMAnalyzer:
 
         try:
             response = self.ai_service.completion(prompt)
-            raw = response.content if hasattr(response, 'content') else str(response)
+            raw = response.content if hasattr(response, "content") else str(response)
 
             # 解析JSON
             result = self._parse_json_response(raw)
@@ -117,16 +115,10 @@ class LLMAnalyzer:
                 hooks=result.get("hooks", []),
                 coolpoints=result.get("coolpoints", []),
                 raw_response=raw,
-                success=True
+                success=True,
             )
         except Exception as e:
-            return AnalysisResult(
-                hooks=[],
-                coolpoints=[],
-                raw_response="",
-                success=False,
-                error=str(e)
-            )
+            return AnalysisResult(hooks=[], coolpoints=[], raw_response="", success=False, error=str(e))
 
     def _parse_json_response(self, raw: str) -> Dict[str, Any]:
         """

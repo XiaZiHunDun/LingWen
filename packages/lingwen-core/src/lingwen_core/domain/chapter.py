@@ -12,6 +12,7 @@ Phase 19+ Sub1 — PhysicalLine / MentalLine 加 to_dict / from_dict
 infra/world_model/data_structures.py:154-201 等价,以便 shim 替换时
 无需迁移消费者代码）。
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

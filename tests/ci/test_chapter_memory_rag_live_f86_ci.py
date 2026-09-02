@@ -1,4 +1,5 @@
 """Phase 9.94 F86: CI contract — MEMORY_RAG=live preflight + runbook §19."""
+
 from __future__ import annotations
 
 from pathlib import Path

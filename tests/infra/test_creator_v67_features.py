@@ -1,4 +1,5 @@
 """Tests for creator v6.7 print preview, status stack chart, switch history."""
+
 from __future__ import annotations
 
 from lingwen_creator.content.ui_profile import resolve_creator_ui_profile

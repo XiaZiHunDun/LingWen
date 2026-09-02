@@ -8,6 +8,7 @@ max_depth, status="completed"), 走 CascadedRipple.bfs_algorithm_version
 控制写入的 algorithm column. fixture 用 _make_cascaded helper 构造
 (跟 tests/cross_volume/test_cascade_runs_filters.py 1:1 pattern).
 """
+
 from datetime import datetime, timezone
 
 import pytest
@@ -51,8 +52,13 @@ def client_with_runs(tmp_path, monkeypatch):
     g.add_edge(ReferenceEdge(id="e12", from_node_id="n1", to_node_id="n2"))
     storage._graph = g
     ripple = CrossVolumeRipple(
-        id="rip-1", trigger_volume=1, trigger_chapter=1,
-        affected_nodes=("n1",), affected_edges=(), proposed_actions=(), status="pending",
+        id="rip-1",
+        trigger_volume=1,
+        trigger_chapter=1,
+        affected_nodes=("n1",),
+        affected_edges=(),
+        proposed_actions=(),
+        status="pending",
     )
     storage.append_ripple(ripple)
 
@@ -90,6 +96,7 @@ def client_with_runs(tmp_path, monkeypatch):
         conn.commit()
 
     from apps.studio_api import app as app_module
+
     monkeypatch.setattr(app_module, "_default_storage", lambda: storage)
     return TestClient(create_app())
 

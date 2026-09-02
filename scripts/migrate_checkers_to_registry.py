@@ -8,6 +8,7 @@ For each unique CheckerType class:
 
 Skips 3 conflict classes (CoreForeshadow/CoreProps/DialogueAuthenticity) - handled in Phase C.
 """
+
 import re
 import sys
 from pathlib import Path
@@ -48,7 +49,7 @@ MIGRATIONS = [
 ]
 
 CLASS_DEF_RE = re.compile(
-    r'^(class\s+{class_name}\s*\(\s*BaseChecker\s*\):.*?)([\s\S]*?)(def\s+__init__\s*\([^)]*\)\s*->?\s*[^{]*:)',
+    r"^(class\s+{class_name}\s*\(\s*BaseChecker\s*\):.*?)([\s\S]*?)(def\s+__init__\s*\([^)]*\)\s*->?\s*[^{]*:)",
     re.MULTILINE,
 )
 
@@ -68,7 +69,7 @@ def migrate_one(filename: str, class_name: str, enum_value: str) -> tuple[bool, 
     # Step 1: Find the class declaration line and insert _checker_type after it
     # Match `class XxxChecker(BaseChecker):` with optional docstring
     class_pattern = re.compile(
-        rf'^class\s+{re.escape(class_name)}\s*\(\s*BaseChecker\s*\)\s*:\s*$',
+        rf"^class\s+{re.escape(class_name)}\s*\(\s*BaseChecker\s*\)\s*:\s*$",
         re.MULTILINE,
     )
     m = class_pattern.search(original)
@@ -94,9 +95,7 @@ def migrate_one(filename: str, class_name: str, enum_value: str) -> tuple[bool, 
 
     # Step 2: Insert `_checker_type = CheckerType.XXX` line
     new_text = (
-        original[:insert_pos]
-        + f"\n    _checker_type = CheckerType.{enum_value}\n"
-        + original[insert_pos:]
+        original[:insert_pos] + f"\n    _checker_type = CheckerType.{enum_value}\n" + original[insert_pos:]
     )
 
     # Step 3: Replace super().__init__(CheckerType.XXX) with super().__init__(self._checker_type)

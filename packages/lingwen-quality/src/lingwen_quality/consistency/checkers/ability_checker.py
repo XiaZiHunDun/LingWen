@@ -18,8 +18,8 @@ from .base_checker import BaseChecker
 
 class AbilityChecker(BaseChecker):
     """能力一致性检查器"""
-    _checker_type = CheckerType.ABILITY
 
+    _checker_type = CheckerType.ABILITY
 
     def __init__(self, rules: Optional[Dict[str, Any]] = None):
         super().__init__(self._checker_type)
@@ -27,10 +27,7 @@ class AbilityChecker(BaseChecker):
         self._ability_log: Dict[str, List[str]] = {}  # 角色 -> 能力使用记录
 
     def check(
-        self,
-        chapter_content: str,
-        chapter_num: int,
-        context: Optional[Dict[str, Any]] = None
+        self, chapter_content: str, chapter_num: int, context: Optional[Dict[str, Any]] = None
     ) -> List[Issue]:
         """
         检查能力一致性
@@ -50,27 +47,18 @@ class AbilityChecker(BaseChecker):
         character_abilities = context.get("character_abilities", {})
 
         # 检查能力使用冲突
-        issues.extend(self._check_ability_usage(
-            chapter_content, chapter_num, character_abilities
-        ))
+        issues.extend(self._check_ability_usage(chapter_content, chapter_num, character_abilities))
 
         # 检查能力强度矛盾
-        issues.extend(self._check_ability_strength(
-            chapter_content, chapter_num, character_abilities
-        ))
+        issues.extend(self._check_ability_strength(chapter_content, chapter_num, character_abilities))
 
         # 检查学习曲线
-        issues.extend(self._check_learning_curve(
-            chapter_content, chapter_num, character_abilities
-        ))
+        issues.extend(self._check_learning_curve(chapter_content, chapter_num, character_abilities))
 
         return issues
 
     def _check_ability_usage(
-        self,
-        content: str,
-        chapter_num: int,
-        character_abilities: Dict[str, List[str]]
+        self, content: str, chapter_num: int, character_abilities: Dict[str, List[str]]
     ) -> List[Issue]:
         """检查能力使用冲突"""
         issues = []
@@ -88,26 +76,25 @@ class AbilityChecker(BaseChecker):
                 if limit in abilities:
                     for trigger in triggers:
                         if trigger in content and char_name in content:
-                            issues.append(Issue(
-                                id=f"ability_{chapter_num}_{char_name}_使用冲突",
-                                severity=IssueSeverity.P1,
-                                checker_type=CheckerType.ABILITY,
-                                issue_type="能力使用冲突",
-                                title="能力与行为冲突",
-                                description=f"角色{char_name}设定为\"{limit}\"，但执行了\"{trigger}\"",
-                                location=IssueLocation(chapter=chapter_num),
-                                evidence=f"角色设定：{limit}",
-                                suggestion="修改行为或补充角色学习经过",
-                                character=char_name
-                            ))
+                            issues.append(
+                                Issue(
+                                    id=f"ability_{chapter_num}_{char_name}_使用冲突",
+                                    severity=IssueSeverity.P1,
+                                    checker_type=CheckerType.ABILITY,
+                                    issue_type="能力使用冲突",
+                                    title="能力与行为冲突",
+                                    description=f'角色{char_name}设定为"{limit}"，但执行了"{trigger}"',
+                                    location=IssueLocation(chapter=chapter_num),
+                                    evidence=f"角色设定：{limit}",
+                                    suggestion="修改行为或补充角色学习经过",
+                                    character=char_name,
+                                )
+                            )
 
         return issues
 
     def _check_ability_strength(
-        self,
-        content: str,
-        chapter_num: int,
-        character_abilities: Dict[str, List[str]]
+        self, content: str, chapter_num: int, character_abilities: Dict[str, List[str]]
     ) -> List[Issue]:
         """检查能力强度矛盾"""
         issues = []
@@ -123,27 +110,27 @@ class AbilityChecker(BaseChecker):
             for pattern, desc in strength_patterns:
                 if char_name in content:
                     import re
+
                     if re.search(pattern, content):
-                        issues.append(Issue(
-                            id=f"ability_{chapter_num}_{char_name}_强度矛盾",
-                            severity=IssueSeverity.P2,
-                            checker_type=CheckerType.ABILITY,
-                            issue_type="能力强度矛盾",
-                            title="能力强度突变",
-                            description=f"角色{char_name}的能力出现突然变化（{desc}），缺乏铺垫",
-                            location=IssueLocation(chapter=chapter_num),
-                            evidence=f"文本描述：{desc}",
-                            suggestion="补充能力变化的合理原因或过渡描写",
-                            character=char_name
-                        ))
+                        issues.append(
+                            Issue(
+                                id=f"ability_{chapter_num}_{char_name}_强度矛盾",
+                                severity=IssueSeverity.P2,
+                                checker_type=CheckerType.ABILITY,
+                                issue_type="能力强度矛盾",
+                                title="能力强度突变",
+                                description=f"角色{char_name}的能力出现突然变化（{desc}），缺乏铺垫",
+                                location=IssueLocation(chapter=chapter_num),
+                                evidence=f"文本描述：{desc}",
+                                suggestion="补充能力变化的合理原因或过渡描写",
+                                character=char_name,
+                            )
+                        )
 
         return issues
 
     def _check_learning_curve(
-        self,
-        content: str,
-        chapter_num: int,
-        character_abilities: Dict[str, List[str]]
+        self, content: str, chapter_num: int, character_abilities: Dict[str, List[str]]
     ) -> List[Issue]:
         """检查学习曲线矛盾"""
         issues = []
@@ -157,19 +144,22 @@ class AbilityChecker(BaseChecker):
         for char_name in character_abilities.keys():
             for pattern in learning_patterns:
                 import re
+
                 if re.search(pattern, content) and char_name in content:
-                    issues.append(Issue(
-                        id=f"ability_{chapter_num}_{char_name}_学习曲线",
-                        severity=IssueSeverity.P2,
-                        checker_type=CheckerType.ABILITY,
-                        issue_type="学习曲线矛盾",
-                        title="能力学习缺乏过渡",
-                        description=f"角色{char_name}刚学习的能力就被熟练使用",
-                        location=IssueLocation(chapter=chapter_num),
-                        evidence="刚学就熟练使用",
-                        suggestion="增加学习过程的描写或说明学习背景",
-                        character=char_name
-                    ))
+                    issues.append(
+                        Issue(
+                            id=f"ability_{chapter_num}_{char_name}_学习曲线",
+                            severity=IssueSeverity.P2,
+                            checker_type=CheckerType.ABILITY,
+                            issue_type="学习曲线矛盾",
+                            title="能力学习缺乏过渡",
+                            description=f"角色{char_name}刚学习的能力就被熟练使用",
+                            location=IssueLocation(chapter=chapter_num),
+                            evidence="刚学就熟练使用",
+                            suggestion="增加学习过程的描写或说明学习背景",
+                            character=char_name,
+                        )
+                    )
 
         return issues
 

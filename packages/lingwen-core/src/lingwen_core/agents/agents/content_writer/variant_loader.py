@@ -10,6 +10,7 @@ Usage:
     config = load_writer_variant("writer_b")  # 支持full name
     config = load_writer_variant(2)  # 支持数字索引
 """
+
 import os
 from pathlib import Path
 from typing import Dict, Optional, Union
@@ -49,8 +50,16 @@ ALIASES = {
 
 # 数字索引映射
 NUMERIC_MAP = {
-    1: "a", 2: "b", 3: "c", 4: "d", 5: "e",
-    6: "f", 7: "g", 8: "h", 9: "i", 10: "j",
+    1: "a",
+    2: "b",
+    3: "c",
+    4: "d",
+    5: "e",
+    6: "f",
+    7: "g",
+    8: "h",
+    9: "i",
+    10: "j",
 }
 
 # 缓存
@@ -207,11 +216,13 @@ def list_available_writers() -> list:
     for wid in WRITER_IDS.keys():
         try:
             config = load_writer_variant(wid)
-            writers.append({
-                "writer_id": wid,
-                "name": config.get("name", f"作家{wid.upper()}"),
-                "specialty": config.get("specialization", {}).get("primary", []),
-            })
+            writers.append(
+                {
+                    "writer_id": wid,
+                    "name": config.get("name", f"作家{wid.upper()}"),
+                    "specialty": config.get("specialization", {}).get("primary", []),
+                }
+            )
         except FileNotFoundError:
             continue
     return writers
@@ -234,26 +245,57 @@ def get_variant_for_scene(scene_type: str) -> Optional[str]:
     """
     scene_to_writer = {
         # 战斗/玄幻
-        "比武": "a", "战斗": "a", "升级": "a", "爽文": "a",
-        "宗门": "a", "生死对决": "a",
+        "比武": "a",
+        "战斗": "a",
+        "升级": "a",
+        "爽文": "a",
+        "宗门": "a",
+        "生死对决": "a",
         # 情感/都市
-        "情感": "b", "都市": "b", "家庭": "b",
+        "情感": "b",
+        "都市": "b",
+        "家庭": "b",
         # 科幻/设定
-        "科幻": "c", "设定": "c", "末世": "c", "星际": "c", "世界观": "c",
+        "科幻": "c",
+        "设定": "c",
+        "末世": "c",
+        "星际": "c",
+        "世界观": "c",
         # 悬疑/节奏
-        "悬疑": "d", "节奏": "d", "惊悚": "d", "反转": "d",
+        "悬疑": "d",
+        "节奏": "d",
+        "惊悚": "d",
+        "反转": "d",
         # 古言/文笔
-        "古言": "e", "文笔": "e", "仙侠": "e", "武侠": "e", "意境": "e",
+        "古言": "e",
+        "文笔": "e",
+        "仙侠": "e",
+        "武侠": "e",
+        "意境": "e",
         # 奇幻/魔法
-        "奇幻": "f", "魔法": "f", "异世界": "f", "西幻": "f",
+        "奇幻": "f",
+        "魔法": "f",
+        "异世界": "f",
+        "西幻": "f",
         # 现实/职场 — "职场" 也在此处(原 line 240 重复定义,移除)
-        "现实": "g", "职场": "g", "社会": "g", "人性": "g",
+        "现实": "g",
+        "职场": "g",
+        "社会": "g",
+        "人性": "g",
         # 校园/青春
-        "校园": "h", "青春": "h", "成长": "h",
+        "校园": "h",
+        "青春": "h",
+        "成长": "h",
         # 推理/悬疑
-        "推理": "i", "侦探": "i", "犯罪": "i", "逻辑": "i",
+        "推理": "i",
+        "侦探": "i",
+        "犯罪": "i",
+        "逻辑": "i",
         # 历史/战争
-        "历史": "j", "战争": "j", "军事": "j", "权谋": "j",
+        "历史": "j",
+        "战争": "j",
+        "军事": "j",
+        "权谋": "j",
     }
 
     return scene_to_writer.get(scene_type)

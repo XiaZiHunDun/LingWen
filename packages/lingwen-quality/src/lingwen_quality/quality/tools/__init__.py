@@ -8,9 +8,7 @@ Quality Tools - 统一质量工具入口
 import warnings
 
 warnings.warn(
-    "lingwen_quality.quality.tools 已弃用，请使用 tools/ 下的工具。",
-    DeprecationWarning,
-    stacklevel=2
+    "lingwen_quality.quality.tools 已弃用，请使用 tools/ 下的工具。", DeprecationWarning, stacklevel=2
 )
 
 # 推荐使用的工具入口

@@ -15,6 +15,7 @@ Closure state → context field map:
 - _validate_max_depth(...)             → ctx.validate_max_depth (callable)
 - _validate_max_nodes_cap(...)         → ctx.validate_max_nodes_cap (callable)
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

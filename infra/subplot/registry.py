@@ -13,6 +13,7 @@ Doc 3 (主线/支线模型 v1.0) §5: PlotRegistry — CRUD + 5 限制 + 持久�
 - 并发锁 (单进程使用,Phase 1.5+)
 - SQLite 后端 (1.5+)
 """
+
 from __future__ import annotations
 
 import json
@@ -87,8 +88,7 @@ class PlotRegistry:
             and self.count_active_subplots() >= MAX_ACTIVE_SUBPLOTS
         ):
             raise SubplotLimitExceeded(
-                f"cannot add {plot.plot_id!r}: active subplot limit "
-                f"({MAX_ACTIVE_SUBPLOTS}) reached"
+                f"cannot add {plot.plot_id!r}: active subplot limit ({MAX_ACTIVE_SUBPLOTS}) reached"
             )
         self._plots[plot.plot_id] = plot
 
@@ -111,8 +111,7 @@ class PlotRegistry:
 
     def list_active_subplots(self) -> tuple[Plot, ...]:
         return tuple(
-            p for p in self._plots.values()
-            if p.status == PlotStatus.ACTIVE and p.type == PlotType.SUBPLOT
+            p for p in self._plots.values() if p.status == PlotStatus.ACTIVE and p.type == PlotType.SUBPLOT
         )
 
     def count_active(self) -> int:
@@ -157,17 +156,14 @@ class PlotRegistry:
         # 1. 状态机校验 (优先 — 任何状态转换都要先过这关)
         if not can_transition(old.status, new_status):
             raise ValueError(
-                f"invalid status transition for {plot_id!r}: "
-                f"{old.status.name} -> {new_status.name}"
+                f"invalid status transition for {plot_id!r}: {old.status.name} -> {new_status.name}"
             )
 
         # 2. CLOSING 校验: 必须 close_ch - current_ch >= 2
         if new_status == PlotStatus.CLOSING:
             resolved_close_ch = close_ch if close_ch is not None else old.close_ch
             if resolved_close_ch is None:
-                raise ValueError(
-                    f"close_ch is required when transitioning {plot_id!r} to CLOSING"
-                )
+                raise ValueError(f"close_ch is required when transitioning {plot_id!r} to CLOSING")
             if resolved_close_ch - current_ch < CLOSING_MIN_CHAPTERS:
                 raise ValueError(
                     f"CLOSING must last >= {CLOSING_MIN_CHAPTERS} chapters: "

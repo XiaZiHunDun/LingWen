@@ -13,6 +13,7 @@ Routes:
 - /api/creator/settings-docs/restore (POST)
 
 """
+
 from __future__ import annotations
 
 from fastapi import FastAPI, HTTPException

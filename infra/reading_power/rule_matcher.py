@@ -14,6 +14,7 @@ from infra.reading_power.db import ReadingPowerDB
 
 class SuspectedSegment(NamedTuple):
     """A suspected segment found during scanning."""
+
     segment_type: str  # "hook" or "coolpoint"
     pattern_name: str
     content: str
@@ -69,14 +70,16 @@ class RuleMatcher:
                         end = min(len(chapter_text), match.end() + 40)
                         context = chapter_text[start:end]
 
-                        results.append(SuspectedSegment(
-                            segment_type="hook",
-                            pattern_name=hook_type,
-                            content=context,
-                            confidence=min(confidence, 1.0),
-                            position=position,
-                            offset=match.start()
-                        ))
+                        results.append(
+                            SuspectedSegment(
+                                segment_type="hook",
+                                pattern_name=hook_type,
+                                content=context,
+                                confidence=min(confidence, 1.0),
+                                position=position,
+                                offset=match.start(),
+                            )
+                        )
 
         # Scan coolpoints
         coolpoint_key = "coolpoint_patterns"
@@ -91,14 +94,16 @@ class RuleMatcher:
                         end = min(len(chapter_text), match.end() + 40)
                         context = chapter_text[start:end]
 
-                        results.append(SuspectedSegment(
-                            segment_type="coolpoint",
-                            pattern_name=pattern_name,
-                            content=context,
-                            confidence=min(confidence, 1.0),
-                            position=position,
-                            offset=match.start()
-                        ))
+                        results.append(
+                            SuspectedSegment(
+                                segment_type="coolpoint",
+                                pattern_name=pattern_name,
+                                content=context,
+                                confidence=min(confidence, 1.0),
+                                position=position,
+                                offset=match.start(),
+                            )
+                        )
 
         return sorted(results, key=lambda x: x.confidence, reverse=True)
 

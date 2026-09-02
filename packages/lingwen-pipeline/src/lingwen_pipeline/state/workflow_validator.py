@@ -9,55 +9,78 @@ from infra.logging_config import logger
 # Value: 允许转换到的目标步骤列表
 VALID_TRANSITIONS = {
     # PHASE_0 初始化
-    'STEP_00': ['STEP_01'],
+    "STEP_00": ["STEP_01"],
     # PHASE_1 构思期
-    'STEP_01': ['STEP_02'],
-    'STEP_02': ['STEP_03'],
-    'STEP_03': ['STEP_04'],
-    'STEP_04': ['PHASE_2_START'],
+    "STEP_01": ["STEP_02"],
+    "STEP_02": ["STEP_03"],
+    "STEP_03": ["STEP_04"],
+    "STEP_04": ["PHASE_2_START"],
     # PHASE_2 规划期
-    'STEP_05': ['STEP_06'],
-    'STEP_06': ['STEP_07'],
-    'STEP_07': ['STEP_08'],
-    'STEP_08': ['PHASE_3_START'],
+    "STEP_05": ["STEP_06"],
+    "STEP_06": ["STEP_07"],
+    "STEP_07": ["STEP_08"],
+    "STEP_08": ["PHASE_3_START"],
     # PHASE_3 验证期
-    'STEP_09': ['STEP_10'],
-    'STEP_10': ['STEP_11'],
-    'STEP_11': ['PHASE_4_START'],
+    "STEP_09": ["STEP_10"],
+    "STEP_10": ["STEP_11"],
+    "STEP_11": ["PHASE_4_START"],
     # PHASE_4 写作期
-    'STEP_12': ['STEP_13'],
-    'STEP_13': ['STEP_14'],
+    "STEP_12": ["STEP_13"],
+    "STEP_13": ["STEP_14"],
     # PHASE_5 修改期
-    'STEP_14': ['STEP_15'],
-    'STEP_15': ['STEP_16'],
+    "STEP_14": ["STEP_15"],
+    "STEP_15": ["STEP_16"],
     # PHASE_6 审核期
-    'STEP_16': ['STEP_17', 'STEP_16', 'STEP_18a'],  # 允许重审，退回重写，或进入LLM质检
-    'STEP_17': ['STEP_18'],
-    'STEP_18': ['STEP_18a', 'STEP_16'],  # 验证失败可退回重写或进入LLM质检，禁止直接跳转到STEP_19
-    'STEP_18a': ['STEP_18b'],  # 角色一致性深度检测
-    'STEP_18b': ['STEP_18c'],  # 逻辑矛盾全面扫描
-    'STEP_18c': ['STEP_18d'],  # 伏笔回收完整性验证
-    'STEP_18d': ['STEP_18e'],  # 情感节奏诊断
-    'STEP_18e': ['STEP_19', 'STEP_18a'],  # 修复完成后进入汇总，或重修问题章节
+    "STEP_16": ["STEP_17", "STEP_16", "STEP_18a"],  # 允许重审，退回重写，或进入LLM质检
+    "STEP_17": ["STEP_18"],
+    "STEP_18": ["STEP_18a", "STEP_16"],  # 验证失败可退回重写或进入LLM质检，禁止直接跳转到STEP_19
+    "STEP_18a": ["STEP_18b"],  # 角色一致性深度检测
+    "STEP_18b": ["STEP_18c"],  # 逻辑矛盾全面扫描
+    "STEP_18c": ["STEP_18d"],  # 伏笔回收完整性验证
+    "STEP_18d": ["STEP_18e"],  # 情感节奏诊断
+    "STEP_18e": ["STEP_19", "STEP_18a"],  # 修复完成后进入汇总，或重修问题章节
     # PHASE_7 完成期
-    'STEP_19': ['STEP_20'],
-    'STEP_20': ['STEP_21'],
-    'STEP_21': ['PHASE_COMPLETE'],
+    "STEP_19": ["STEP_20"],
+    "STEP_20": ["STEP_21"],
+    "STEP_21": ["PHASE_COMPLETE"],
 }
 
 # 用于测试的便捷常量
 ALL_STEPS = [
-    'STEP_00', 'STEP_01', 'STEP_02', 'STEP_03', 'STEP_04',
-    'STEP_05', 'STEP_06', 'STEP_07', 'STEP_08',
-    'STEP_09', 'STEP_10', 'STEP_11',
-    'STEP_12', 'STEP_13', 'STEP_14', 'STEP_15',
-    'STEP_16', 'STEP_17', 'STEP_18',
-    'STEP_18a', 'STEP_18b', 'STEP_18c', 'STEP_18d', 'STEP_18e',  # LLM质检步骤
-    'STEP_19', 'STEP_20', 'STEP_21',
+    "STEP_00",
+    "STEP_01",
+    "STEP_02",
+    "STEP_03",
+    "STEP_04",
+    "STEP_05",
+    "STEP_06",
+    "STEP_07",
+    "STEP_08",
+    "STEP_09",
+    "STEP_10",
+    "STEP_11",
+    "STEP_12",
+    "STEP_13",
+    "STEP_14",
+    "STEP_15",
+    "STEP_16",
+    "STEP_17",
+    "STEP_18",
+    "STEP_18a",
+    "STEP_18b",
+    "STEP_18c",
+    "STEP_18d",
+    "STEP_18e",  # LLM质检步骤
+    "STEP_19",
+    "STEP_20",
+    "STEP_21",
     # 阶段标记（转换目标）
-    'PHASE_2_START', 'PHASE_3_START', 'PHASE_4_START',
-    'PHASE_5_START', 'PHASE_5_LLM_QUALITY_START',
-    'PHASE_COMPLETE',
+    "PHASE_2_START",
+    "PHASE_3_START",
+    "PHASE_4_START",
+    "PHASE_5_START",
+    "PHASE_5_LLM_QUALITY_START",
+    "PHASE_COMPLETE",
 ]
 
 
@@ -113,8 +136,14 @@ def is_valid_step(step: str) -> bool:
     if step in VALID_TRANSITIONS:
         return True
     # 阶段标记（如 PHASE_2_START, PHASE_3_START 等）是有效的转换目标
-    if step in ('PHASE_COMPLETE', 'PHASE_2_START', 'PHASE_3_START',
-                'PHASE_4_START', 'PHASE_5_START', 'PHASE_5_LLM_QUALITY_START'):
+    if step in (
+        "PHASE_COMPLETE",
+        "PHASE_2_START",
+        "PHASE_3_START",
+        "PHASE_4_START",
+        "PHASE_5_START",
+        "PHASE_5_LLM_QUALITY_START",
+    ):
         return True
     # ALL_STEPS 中定义的其他步骤
     if step in ALL_STEPS:
@@ -123,20 +152,20 @@ def is_valid_step(step: str) -> bool:
 
 
 # 模块自测
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("workflow_validator 自测")
     print("=" * 50)
 
     # 测试合法转换
     valid_cases = [
-        ('STEP_14', 'STEP_15'),
-        ('STEP_15', 'STEP_16'),
-        ('STEP_16', 'STEP_17'),
-        ('STEP_16', 'STEP_16'),  # 重审
-        ('STEP_18', 'STEP_18a'),  # LLM质检流程
-        ('STEP_18', 'STEP_16'),  # 退回重写
-        ('STEP_18e', 'STEP_19'),  # LLM质检完成后进入汇总
-        ('STEP_21', 'PHASE_COMPLETE'),
+        ("STEP_14", "STEP_15"),
+        ("STEP_15", "STEP_16"),
+        ("STEP_16", "STEP_17"),
+        ("STEP_16", "STEP_16"),  # 重审
+        ("STEP_18", "STEP_18a"),  # LLM质检流程
+        ("STEP_18", "STEP_16"),  # 退回重写
+        ("STEP_18e", "STEP_19"),  # LLM质检完成后进入汇总
+        ("STEP_21", "PHASE_COMPLETE"),
     ]
 
     print("\n合法转换测试:")
@@ -150,13 +179,13 @@ if __name__ == '__main__':
 
     # 测试非法转换
     invalid_cases = [
-        ('STEP_14', 'STEP_16'),   # 跳过STEP_15
-        ('STEP_14', 'STEP_17'),   # 跳过STEP_15/16
-        ('STEP_12', 'STEP_14'),   # 跳过STEP_13
-        ('STEP_21', 'STEP_19'),   # 倒退
-        ('STEP_15', 'STEP_13'),   # 倒退
-        ('STEP_99', 'STEP_01'),   # 无效步骤
-        ('STEP_18', 'STEP_19'),  # 跳过LLM质检流程
+        ("STEP_14", "STEP_16"),  # 跳过STEP_15
+        ("STEP_14", "STEP_17"),  # 跳过STEP_15/16
+        ("STEP_12", "STEP_14"),  # 跳过STEP_13
+        ("STEP_21", "STEP_19"),  # 倒退
+        ("STEP_15", "STEP_13"),  # 倒退
+        ("STEP_99", "STEP_01"),  # 无效步骤
+        ("STEP_18", "STEP_19"),  # 跳过LLM质检流程
     ]
 
     print("\n非法转换测试:")

@@ -39,9 +39,7 @@ class ForbiddenPatternsValidator(BaseValidator):
 
         passed = len(issues) == 0
         return ValidationResult(
-            passed=passed,
-            issues=issues,
-            severity=IssueSeverity.P1 if issues else IssueSeverity.P2
+            passed=passed, issues=issues, severity=IssueSeverity.P1 if issues else IssueSeverity.P2
         )
 
     def _detect_ai_patterns(self, content: str) -> List[str]:
@@ -74,7 +72,7 @@ class ForbiddenPatternsValidator(BaseValidator):
         words = content.split()
         if len(words) >= 10:
             for i in range(len(words) - 9):
-                window = words[i:i+5]
+                window = words[i : i + 5]
                 if len(set(window)) == 1:
                     issues.append(f"检测到重复表达：'{' '.join(window)}'")
                     break

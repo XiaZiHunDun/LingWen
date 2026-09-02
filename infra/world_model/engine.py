@@ -11,6 +11,7 @@ RippleEngine 不持有状态 (stateless service),所有状态变更通过
 - 跨卷 ripple 谱系 (Phase 3+)
 - `pacing_checker` 集成 `wavefront` (Phase 2+,detector wiring)
 """
+
 from __future__ import annotations
 
 import dataclasses
@@ -62,9 +63,7 @@ class RippleEngine:
         - registry.add_ripple 自动校验重复 + 10-limit
         """
         if planned_resolve_ch <= origin_ch:
-            raise ValueError(
-                f"planned_resolve_ch ({planned_resolve_ch}) must be > origin_ch ({origin_ch})"
-            )
+            raise ValueError(f"planned_resolve_ch ({planned_resolve_ch}) must be > origin_ch ({origin_ch})")
         ripple = Ripple(
             ripple_id=ripple_id,
             origin_event=origin_event,
@@ -102,9 +101,7 @@ class RippleEngine:
                 f"(only OPEN|PROPAGATING allowed)"
             )
         new_wavefront = (
-            ripple.wavefront
-            if current_ch in ripple.wavefront
-            else ripple.wavefront + (current_ch,)
+            ripple.wavefront if current_ch in ripple.wavefront else ripple.wavefront + (current_ch,)
         )
         new_ripple = dataclasses.replace(
             ripple,
@@ -137,9 +134,7 @@ class RippleEngine:
         """平复:任意非 RESOLVED → RESOLVED,set resolved_ch=current_ch"""
         ripple = self._get_or_raise(registry, ripple_id)
         if not can_transition(ripple, RippleState.RESOLVED):
-            raise ValueError(
-                f"cannot resolve ripple {ripple_id!r} from state {ripple.state.value!r}"
-            )
+            raise ValueError(f"cannot resolve ripple {ripple_id!r} from state {ripple.state.value!r}")
         new_ripple = dataclasses.replace(
             ripple,
             state=RippleState.RESOLVED,

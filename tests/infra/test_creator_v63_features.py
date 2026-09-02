@@ -1,4 +1,5 @@
 """Tests for creator v6.3 diff highlight export, weekly summary, capability matrix."""
+
 from __future__ import annotations
 
 from lingwen_creator.content.ui_profile import resolve_creator_ui_profile

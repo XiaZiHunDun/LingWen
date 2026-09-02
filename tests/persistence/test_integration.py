@@ -7,6 +7,7 @@
 4. 6 storage 都能用 :memory: 初始化不抛
 5. dashboard 兼容 shim 仍能传 init_if_missing
 """
+
 from __future__ import annotations
 
 import pytest
@@ -49,9 +50,7 @@ class TestEndToEnd:
                 ("n1", "test", 1, 1, "Test", "Desc", "{}", "2024-01-01", "test"),
             )
             conn.commit()
-            row = conn.execute(
-                "SELECT title FROM reference_nodes WHERE id = 'n1'"
-            ).fetchone()
+            row = conn.execute("SELECT title FROM reference_nodes WHERE id = 'n1'").fetchone()
             assert row["title"] == "Test"
         finally:
             conn.close()

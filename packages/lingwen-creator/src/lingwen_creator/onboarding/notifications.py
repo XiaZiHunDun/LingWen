@@ -1,4 +1,5 @@
 """Persist @mention notifications for creator onboarding wizard notes."""
+
 from __future__ import annotations
 
 import json
@@ -192,10 +193,7 @@ def build_notification_digest(
             {
                 "handle": group["handle"],
                 "count": group["count"],
-                "steps": [
-                    {"step_id": sid, "count": count}
-                    for sid, count in sorted(group["steps"].items())
-                ],
+                "steps": [{"step_id": sid, "count": count} for sid, count in sorted(group["steps"].items())],
                 "latest_at": group["latest_at"],
                 "excerpts": group["excerpts"][:3],
             },

@@ -4,6 +4,7 @@ Phase 18.1 — 角色域实体。
 
 Character 是 NodeType.CHARACTER 的特化,带人物弧光追踪。
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

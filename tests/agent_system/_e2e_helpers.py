@@ -11,6 +11,7 @@
 - 同时显式传入 MasterControllerConfig(空 providers,env_var 无关),
   避免 load_default_config() 在没有 API key 时抛 RuntimeError
 """
+
 from __future__ import annotations
 
 import importlib
@@ -126,6 +127,7 @@ def make_master_with_router(
             _RecordingRouter,
             _UsageRecordingProvider,
         )
+
         recording_router = _RecordingRouter(_UsageRecordingProvider())
         master = MasterController(
             state_dir=str(state_dir),
@@ -192,28 +194,26 @@ def _make_real_router(provider_name: str) -> AIRouter:
     """
     if provider_name not in _PROVIDER_REGISTRY:
         raise ValueError(
-            f"Unsupported provider_name: {provider_name!r}. "
-            f"Supported: {list(_PROVIDER_REGISTRY.keys())}"
+            f"Unsupported provider_name: {provider_name!r}. Supported: {list(_PROVIDER_REGISTRY.keys())}"
         )
     spec = _PROVIDER_REGISTRY[provider_name]
     api_key = os.environ.get(spec["env_var"])
     if not api_key:
-        raise KeyError(
-            f"Provider {provider_name!r} requires env var {spec['env_var']!r} "
-            f"to be set"
-        )
+        raise KeyError(f"Provider {provider_name!r} requires env var {spec['env_var']!r} to be set")
 
     # Lazy import 避免循环 + 允许 provider 缺依赖时 (e.g. openai 包未装) fail gracefully
     module_path, class_name = spec["class_path"].rsplit(".", 1)
     module = importlib.import_module(module_path)
     provider_cls = getattr(module, class_name)
 
-    provider = provider_cls(ProviderConfig(
-        api_key=api_key,
-        model=spec["default_model"],
-        timeout=180,  # 1 LLM call 留 180s headroom
-        max_retries=1,  # fail-fast
-    ))
+    provider = provider_cls(
+        ProviderConfig(
+            api_key=api_key,
+            model=spec["default_model"],
+            timeout=180,  # 1 LLM call 留 180s headroom
+            max_retries=1,  # fail-fast
+        )
+    )
     return AIRouter(
         config={provider_name: provider.config},
         primary_provider=provider_name,

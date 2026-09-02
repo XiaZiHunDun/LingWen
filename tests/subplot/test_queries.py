@@ -8,6 +8,7 @@ Phase 1.2.g — RED tests for 3 query functions.
 - detect_constraint_saturation(registry, current_ch): 返回 ≥3 个 constraint
   在未来 5 章内触发的 plot_id
 """
+
 from __future__ import annotations
 
 import pytest
@@ -76,10 +77,14 @@ class TestCanOpenNewSubplot:
     def test_main_does_not_block_opening(self):
         """MAIN 类型不占 subplot 名额"""
         r = PlotRegistry()
-        r.add_plot(Plot(
-            plot_id="main-001", type=PlotType.MAIN,
-            title="主线", status=PlotStatus.ACTIVE,
-        ))
+        r.add_plot(
+            Plot(
+                plot_id="main-001",
+                type=PlotType.MAIN,
+                title="主线",
+                status=PlotStatus.ACTIVE,
+            )
+        )
         for i in range(5):
             r.add_plot(_subplot(f"sub-{i}"))
         # 5 subplot 满了,即使有 1 main 也不能开
@@ -103,10 +108,15 @@ class TestSuggestSubplotToClose:
     def test_skips_main_type(self):
         """MAIN 不在候选范围"""
         r = PlotRegistry()
-        r.add_plot(Plot(
-            plot_id="main-001", type=PlotType.MAIN,
-            title="主线", status=PlotStatus.ACTIVE, birth_ch=1,
-        ))
+        r.add_plot(
+            Plot(
+                plot_id="main-001",
+                type=PlotType.MAIN,
+                title="主线",
+                status=PlotStatus.ACTIVE,
+                birth_ch=1,
+            )
+        )
         r.add_plot(_subplot("sub-1", birth_ch=10))
         assert suggest_subplot_to_close(r) == "sub-1"
 
@@ -128,8 +138,11 @@ class TestDetectConstraintSaturation:
         """未来 5 章内 ≥ 3 个 constraint 触发 → saturation"""
         r = PlotRegistry()
         p = Plot(
-            plot_id="busy", type=PlotType.SUBPLOT, title="busy",
-            status=PlotStatus.ACTIVE, purpose=PlotPurpose.MYSTERY,
+            plot_id="busy",
+            type=PlotType.SUBPLOT,
+            title="busy",
+            status=PlotStatus.ACTIVE,
+            purpose=PlotPurpose.MYSTERY,
             constraints_generated=("ch52: 神秘人", "ch53: 线索", "ch54: 真相"),
         )
         r.add_plot(p)
@@ -140,8 +153,11 @@ class TestDetectConstraintSaturation:
         """只有 2 个 constraint → 不算 saturation"""
         r = PlotRegistry()
         p = Plot(
-            plot_id="moderate", type=PlotType.SUBPLOT, title="m",
-            status=PlotStatus.ACTIVE, purpose=PlotPurpose.MYSTERY,
+            plot_id="moderate",
+            type=PlotType.SUBPLOT,
+            title="m",
+            status=PlotStatus.ACTIVE,
+            purpose=PlotPurpose.MYSTERY,
             constraints_generated=("ch51: 线索", "ch52: 真相"),
         )
         r.add_plot(p)
@@ -151,8 +167,11 @@ class TestDetectConstraintSaturation:
         """3 个 constraint 但都在 5 章外 → 不算"""
         r = PlotRegistry()
         p = Plot(
-            plot_id="slow", type=PlotType.SUBPLOT, title="s",
-            status=PlotStatus.ACTIVE, purpose=PlotPurpose.MYSTERY,
+            plot_id="slow",
+            type=PlotType.SUBPLOT,
+            title="s",
+            status=PlotStatus.ACTIVE,
+            purpose=PlotPurpose.MYSTERY,
             constraints_generated=("ch60: 线索", "ch70: 真相", "ch80: 结局"),
         )
         r.add_plot(p)
@@ -162,8 +181,11 @@ class TestDetectConstraintSaturation:
         """constraint 格式: 'chXX: 描述' — 解析 ch 后的数字"""
         r = PlotRegistry()
         p = Plot(
-            plot_id="p1", type=PlotType.SUBPLOT, title="p",
-            status=PlotStatus.ACTIVE, purpose=PlotPurpose.MYSTERY,
+            plot_id="p1",
+            type=PlotType.SUBPLOT,
+            title="p",
+            status=PlotStatus.ACTIVE,
+            purpose=PlotPurpose.MYSTERY,
             constraints_generated=("ch55: 事件A", "ch56: 事件B", "ch57: 事件C"),
         )
         r.add_plot(p)
@@ -173,8 +195,11 @@ class TestDetectConstraintSaturation:
         """constraint 格式宽松:只要有数字就算"""
         r = PlotRegistry()
         p = Plot(
-            plot_id="p1", type=PlotType.SUBPLOT, title="p",
-            status=PlotStatus.ACTIVE, purpose=PlotPurpose.MYSTERY,
+            plot_id="p1",
+            type=PlotType.SUBPLOT,
+            title="p",
+            status=PlotStatus.ACTIVE,
+            purpose=PlotPurpose.MYSTERY,
             constraints_generated=("第55章: A", "第56章: B", "第57章: C"),
         )
         r.add_plot(p)
@@ -184,8 +209,11 @@ class TestDetectConstraintSaturation:
         """非 active subplot 不计入 saturation"""
         r = PlotRegistry()
         p = Plot(
-            plot_id="p1", type=PlotType.SUBPLOT, title="p",
-            status=PlotStatus.PAUSED, purpose=PlotPurpose.MYSTERY,
+            plot_id="p1",
+            type=PlotType.SUBPLOT,
+            title="p",
+            status=PlotStatus.PAUSED,
+            purpose=PlotPurpose.MYSTERY,
             constraints_generated=("ch52: A", "ch53: B", "ch54: C"),
         )
         r.add_plot(p)

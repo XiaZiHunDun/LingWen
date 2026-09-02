@@ -16,6 +16,7 @@ Phase 1.4 PoC — Doc 1-4 集成验证。
 - 真实 LLM 集成 (Mock)
 - 实际写文件 (emit_chapter 用 mock)
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -52,9 +53,11 @@ from infra.world_model import (
 
 # === Result types ===
 
+
 @dataclass(frozen=True)
 class PoCResult:
     """PoC 执行结果"""
+
     chapters: int
     completed: bool
     main_plot_count: int
@@ -69,6 +72,7 @@ class PoCResult:
 @dataclass(frozen=True)
 class ScaleEstimate:
     """scale_estimate 输出:从 PoC 数据外推到 target_chapters"""
+
     source_chapters: int
     target_chapters: int
     scale_factor: float
@@ -78,6 +82,7 @@ class ScaleEstimate:
 
 
 # === Synthetic world ===
+
 
 def build_test_world(chapters: int = 5) -> WorldSnapshot:
     """构造合成 WorldSnapshot 用于 PoC
@@ -92,24 +97,39 @@ def build_test_world(chapters: int = 5) -> WorldSnapshot:
 
     nodes: dict[NodeId, KeyPoint] = {
         linchen: KeyPoint(
-            id=linchen, attrs={"name": "林尘", "role": "protagonist"},
-            status="ACTIVE", first_ch=1, last_ch=max(chapters, 1),
+            id=linchen,
+            attrs={"name": "林尘", "role": "protagonist"},
+            status="ACTIVE",
+            first_ch=1,
+            last_ch=max(chapters, 1),
         ),
         anhuan: KeyPoint(
-            id=anhuan, attrs={"name": "暗皇", "role": "mystery"},
-            status="ACTIVE", first_ch=1, last_ch=max(chapters, 1),
+            id=anhuan,
+            attrs={"name": "暗皇", "role": "mystery"},
+            status="ACTIVE",
+            first_ch=1,
+            last_ch=max(chapters, 1),
         ),
         jianzong: KeyPoint(
-            id=jianzong, attrs={"name": "剑宗", "role": "faction"},
-            status="ACTIVE", first_ch=1, last_ch=max(chapters, 1),
+            id=jianzong,
+            attrs={"name": "剑宗", "role": "faction"},
+            status="ACTIVE",
+            first_ch=1,
+            last_ch=max(chapters, 1),
         ),
         qingyun: KeyPoint(
-            id=qingyun, attrs={"name": "青云宗", "role": "location"},
-            status="ACTIVE", first_ch=1, last_ch=max(chapters, 1),
+            id=qingyun,
+            attrs={"name": "青云宗", "role": "location"},
+            status="ACTIVE",
+            first_ch=1,
+            last_ch=max(chapters, 1),
         ),
         xingyun: KeyPoint(
-            id=xingyun, attrs={"name": "星陨剑", "role": "artifact"},
-            status="ACTIVE", first_ch=1, last_ch=max(chapters, 1),
+            id=xingyun,
+            attrs={"name": "星陨剑", "role": "artifact"},
+            status="ACTIVE",
+            first_ch=1,
+            last_ch=max(chapters, 1),
         ),
     }
 
@@ -129,6 +149,7 @@ def build_test_world(chapters: int = 5) -> WorldSnapshot:
 
 
 # === Plot builders ===
+
 
 def _build_main_plot() -> Plot:
     return Plot(
@@ -229,6 +250,7 @@ def _build_registry() -> PlotRegistry:
 
 # === Mock compute_fn (无 LLM,每节点 ~50 token 成本) ===
 
+
 def _mock_compute(node, inputs):
     """模拟 LLM compute — 50 token / 节点, 输出 chapter 标记的 mock 内容"""
     chapter = inputs.get("chapter", 0) if isinstance(inputs, dict) else 0
@@ -243,6 +265,7 @@ def _mock_compute(node, inputs):
 
 
 # === Main entry point ===
+
 
 def run_poc(chapters: int = 5) -> PoCResult:
     """1 main + 4 subplots × N chapters 端到端
@@ -285,12 +308,13 @@ def run_poc(chapters: int = 5) -> PoCResult:
             scenario="chapter_writing",
             agent_role=scenario["agent_role"],
             inputs=(
-                ContextItem(key="world", source="infra.world_model.WorldSnapshot",
-                            required=True, token_estimate=500),
-                ContextItem(key="plots", source="infra.subplot.PlotRegistry",
-                            required=True, token_estimate=200),
-                ContextItem(key="chapter_num", source="int",
-                            required=True, token_estimate=10),
+                ContextItem(
+                    key="world", source="infra.world_model.WorldSnapshot", required=True, token_estimate=500
+                ),
+                ContextItem(
+                    key="plots", source="infra.subplot.PlotRegistry", required=True, token_estimate=200
+                ),
+                ContextItem(key="chapter_num", source="int", required=True, token_estimate=10),
             ),
             output_schema=dict,  # mock:用 dict
             temperature=0.7,
@@ -302,9 +326,11 @@ def run_poc(chapters: int = 5) -> PoCResult:
 
         # 每章重新加载 workflow (fresh graph,不跨章共享 cache/state)
         graph = load_workflow("novel_writing")
+
         def compute_with_chapter(node, inputs):
             inputs_with_ch = {**inputs, "chapter": context_chapter}
             return _mock_compute(node, inputs_with_ch)
+
         sched = GoTScheduler(
             graph=graph,
             compute_fn=compute_with_chapter,
@@ -316,12 +342,14 @@ def run_poc(chapters: int = 5) -> PoCResult:
         total_failed += summary.failed
         total_cost += summary.total_cost_tokens
 
-        chapter_summaries.append({
-            "chapter": ch,
-            "nodes_completed": summary.completed,
-            "nodes_failed": summary.failed,
-            "cost_tokens": summary.total_cost_tokens,
-        })
+        chapter_summaries.append(
+            {
+                "chapter": ch,
+                "nodes_completed": summary.completed,
+                "nodes_failed": summary.failed,
+                "cost_tokens": summary.total_cost_tokens,
+            }
+        )
 
     # 3. 收集 subplot 状态 (结束时仍是 ACTIVE,5 章内不会 CLOSING)
     # 用 .name 取 enum 名称(大写),与 PlotStatus.ACTIVE.name 一致
@@ -341,6 +369,7 @@ def run_poc(chapters: int = 5) -> PoCResult:
 
 
 # === Scale estimation ===
+
 
 def scale_estimate(poc: PoCResult, target_chapters: int = 50) -> ScaleEstimate:
     """从 PoC 结果外推到 target_chapters

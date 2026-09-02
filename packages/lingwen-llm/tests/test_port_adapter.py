@@ -3,6 +3,7 @@
 Adapter wraps concrete infra.llm_service.LLMService. Tests use a fake
 LLMService to avoid real LLM calls.
 """
+
 from __future__ import annotations
 
 import inspect

@@ -2,6 +2,7 @@
 
 Models unchanged — only relocated for code organization.
 """
+
 from __future__ import annotations
 
 from typing import Any, Optional
@@ -18,6 +19,7 @@ class CreatorSettingsDocsResponse(BaseModel):
     pillars_revision: str
     global_outline_revision: str
 
+
 class CreatorSettingsDocsSaveRequest(BaseModel):
     pillars_text: Optional[str] = None
     global_outline_text: Optional[str] = None
@@ -28,6 +30,7 @@ class CreatorSettingsDocsSaveRequest(BaseModel):
     merge_snapshot_id: Optional[str] = None
     pillars_merge_snapshot_id: Optional[str] = None
     global_outline_merge_snapshot_id: Optional[str] = None
+
 
 class CreatorMergePresetPackage(BaseModel):
     id: str
@@ -41,22 +44,26 @@ class CreatorMergePresetPackage(BaseModel):
     pillars_merge_source: str
     global_outline_merge_source: str
 
+
 class CreatorMergePresetGraphNode(BaseModel):
     id: str
     name: str
     scope: str
     version_label: Optional[str] = None
 
+
 class CreatorMergePresetGraphEdge(BaseModel):
     from_pkg: str
     to: str
     relation: str = "depends_on"
+
 
 class CreatorMergePresetGraphResponse(BaseModel):
     node_count: int
     edge_count: int
     nodes: list[CreatorMergePresetGraphNode]
     edges: list[CreatorMergePresetGraphEdge]
+
 
 class CreatorMergePresetConflict(BaseModel):
     type: str
@@ -65,9 +72,11 @@ class CreatorMergePresetConflict(BaseModel):
     path: list[str] = []
     message: str = ""
 
+
 class CreatorMergePresetConflictsResponse(BaseModel):
     conflict_count: int
     conflicts: list[CreatorMergePresetConflict] = []
+
 
 class CreatorMergePresetConflictFix(BaseModel):
     id: str
@@ -79,9 +88,11 @@ class CreatorMergePresetConflictFix(BaseModel):
     label: str = ""
     applicable: bool = False
 
+
 class CreatorMergePresetConflictFixesResponse(BaseModel):
     fix_count: int
     fixes: list[CreatorMergePresetConflictFix] = []
+
 
 class CreatorMergePresetConflictFixApplyRequest(BaseModel):
     package_id: str
@@ -89,11 +100,13 @@ class CreatorMergePresetConflictFixApplyRequest(BaseModel):
     dependency_id: Optional[str] = None
     version_label: Optional[str] = None
 
+
 class CreatorMergePresetConflictFixApplyResponse(BaseModel):
     package_id: str
     action: str
     conflict_count: int
     package: CreatorMergePresetPackage
+
 
 class CreatorMergePresetImportPreflightResponse(BaseModel):
     would_import: int
@@ -101,9 +114,11 @@ class CreatorMergePresetImportPreflightResponse(BaseModel):
     conflicts: list[CreatorMergePresetConflict] = []
     blocked: bool = False
 
+
 class CreatorMergePresetApplyAllFixesResponse(BaseModel):
     applied: int
     conflict_count: int
+
 
 class CreatorMergePresetImportDiffPreviewResponse(BaseModel):
     added: list[str] = []
@@ -111,6 +126,7 @@ class CreatorMergePresetImportDiffPreviewResponse(BaseModel):
     removed: list[str] = []
     unchanged_count: int = 0
     replace: bool = False
+
 
 class CreatorMergePresetToposortResponse(BaseModel):
     order: list[str] = []
@@ -120,21 +136,25 @@ class CreatorMergePresetToposortResponse(BaseModel):
     edges: list[dict[str, str]] = []
     edge_count: int = 0
 
+
 class CreatorMergePresetChangelogEntry(BaseModel):
     changed_at: Optional[str] = None
     action: str = "update"
     changed_fields: list[str] = []
     snapshot: dict[str, Any] = {}
 
+
 class CreatorMergePresetChangelogResponse(BaseModel):
     package_id: str
     entry_count: int
     entries: list[CreatorMergePresetChangelogEntry] = []
 
+
 class CreatorMergePresetChangelogDiffChange(BaseModel):
     field: str
     before: Any = None
     after: Any = None
+
 
 class CreatorMergePresetChangelogDiffResponse(BaseModel):
     package_id: str
@@ -144,23 +164,28 @@ class CreatorMergePresetChangelogDiffResponse(BaseModel):
     change_count: int = 0
     changes: list[CreatorMergePresetChangelogDiffChange] = []
 
+
 class CreatorMergePresetFactoryPullPreflightResponse(BaseModel):
     would_import: int
     conflict_count: int
     conflicts: list[CreatorMergePresetConflict] = []
     blocked: bool = False
 
+
 class CreatorMergePresetToposortApplyResponse(BaseModel):
     reordered: int
     order: list[str] = []
+
 
 class CreatorMergePresetFactoryConflictResponse(BaseModel):
     conflict_count: int
     conflicts: list[CreatorMergePresetConflict] = []
 
+
 class CreatorMergePresetFactoryConflictResolveRequest(BaseModel):
     package_id: str
     strategy: str = "prefer_factory"
+
 
 class CreatorMergePresetFactoryConflictResolveResponse(BaseModel):
     package_id: str
@@ -168,8 +193,10 @@ class CreatorMergePresetFactoryConflictResolveResponse(BaseModel):
     action: str
     packages: list[CreatorMergePresetPackage] = []
 
+
 class CreatorMergePresetFactoryPublishRequest(BaseModel):
     package_id: str
+
 
 class CreatorMergePresetFactoryPublishResponse(BaseModel):
     id: str
@@ -177,9 +204,11 @@ class CreatorMergePresetFactoryPublishResponse(BaseModel):
     description: str = ""
     scope: str = "factory"
 
+
 class CreatorMergePresetFactoryPullRequest(BaseModel):
     package_ids: list[str]
     conflict_strategies: dict[str, str] = {}
+
 
 class CreatorMergePresetFactoryPullResponse(BaseModel):
     imported: int
@@ -188,22 +217,27 @@ class CreatorMergePresetFactoryPullResponse(BaseModel):
     package_ids: list[str]
     skipped_package_ids: list[str] = []
 
+
 class CreatorMergePresetFactoryDeleteResponse(BaseModel):
     id: str
     deleted: bool
 
+
 class CreatorMergePresetPackagesResponse(BaseModel):
     packages: list[CreatorMergePresetPackage]
+
 
 class CreatorMergePresetPackagesExportResponse(BaseModel):
     schema_version: str
     packages: list[dict[str, Any]]
     count: int
 
+
 class CreatorMergePresetPackagesImportRequest(BaseModel):
     schema_version: Optional[str] = None
     packages: list[dict[str, Any]]
     replace: bool = False
+
 
 class CreatorMergePresetPackagesImportResponse(BaseModel):
     imported: int
@@ -211,12 +245,15 @@ class CreatorMergePresetPackagesImportResponse(BaseModel):
     replaced: bool
     packages: list[CreatorMergePresetPackage]
 
+
 class CreatorDiffCollabNotesRequest(BaseModel):
     notes: dict[str, str] = {}
+
 
 class CreatorDiffCollabNotesResponse(BaseModel):
     notes: dict[str, str] = {}
     count: int = 0
+
 
 class CreatorMergePreferencesExportResponse(BaseModel):
     schema_version: str
@@ -224,6 +261,7 @@ class CreatorMergePreferencesExportResponse(BaseModel):
     global_prefs: dict[str, Any] = Field(alias="global")
 
     model_config = {"populate_by_name": True}
+
 
 class CreatorMergePreferencesImportRequest(BaseModel):
     schema_version: Optional[str] = None
@@ -233,12 +271,14 @@ class CreatorMergePreferencesImportRequest(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+
 class CreatorMergePreferencesImportResponse(BaseModel):
     scope: str
     project: Optional[dict[str, Any]] = None
     global_prefs: Optional[dict[str, Any]] = Field(default=None, alias="global")
 
     model_config = {"populate_by_name": True}
+
 
 class CreatorMergePreferencesResponse(BaseModel):
     pillars_merge_source: str
@@ -248,20 +288,24 @@ class CreatorMergePreferencesResponse(BaseModel):
     global_outline_merge_snapshot_id: Optional[str] = None
     uses_global_default: bool = False
 
+
 class CreatorSettingsDiffPart(BaseModel):
     changed: bool
     lines_added: int
     lines_removed: int
     snippet: list[str]
 
+
 class CreatorSettingsDiffResponse(BaseModel):
     has_changes: bool
     pillars: CreatorSettingsDiffPart
     global_outline: CreatorSettingsDiffPart
 
+
 class CreatorSettingsThreeWayPair(BaseModel):
     pillars: CreatorSettingsDiffPart
     global_outline: CreatorSettingsDiffPart
+
 
 class CreatorSettingsThreeWayResponse(BaseModel):
     has_changes: bool
@@ -272,19 +316,23 @@ class CreatorSettingsThreeWayResponse(BaseModel):
     disk_vs_history: Optional[CreatorSettingsThreeWayPair] = None
     editor_vs_history: Optional[CreatorSettingsThreeWayPair] = None
 
+
 class CreatorSettingsThreeWayRequest(BaseModel):
     pillars_text: str
     global_outline_text: str
     snapshot_id: Optional[str] = None
+
 
 class CreatorSettingsMergeFieldPreview(BaseModel):
     source: str
     vs_disk: CreatorSettingsDiffPart
     vs_editor: CreatorSettingsDiffPart
 
+
 class CreatorSettingsMergePreviewResponse(BaseModel):
     pillars: CreatorSettingsMergeFieldPreview
     global_outline: CreatorSettingsMergeFieldPreview
+
 
 class CreatorSettingsMergePreviewRequest(BaseModel):
     pillars_text: str
@@ -295,6 +343,7 @@ class CreatorSettingsMergePreviewRequest(BaseModel):
     pillars_merge_snapshot_id: Optional[str] = None
     global_outline_merge_snapshot_id: Optional[str] = None
 
+
 class CreatorSettingsHistorySnapshot(BaseModel):
     id: str
     saved_at: Optional[str] = None
@@ -304,10 +353,12 @@ class CreatorSettingsHistorySnapshot(BaseModel):
     pillars_lines: int
     global_outline_lines: int
 
+
 class CreatorSettingsHistoryResponse(BaseModel):
     slug: str
     snapshots: list[CreatorSettingsHistorySnapshot]
     count: int
+
 
 class CreatorSettingsRestoreRequest(BaseModel):
     snapshot_id: str

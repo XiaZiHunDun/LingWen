@@ -2,6 +2,7 @@
 
 提供查询构建、混合搜索和调试工具。
 """
+
 import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
@@ -10,9 +11,10 @@ from typing import Any, Dict, List, Optional, Tuple
 @dataclass
 class PerformanceMetrics:
     """性能指标数据类"""
+
     total_queries: int = 0
     total_latency_ms: float = 0.0
-    min_latency_ms: float = float('inf')
+    min_latency_ms: float = float("inf")
     max_latency_ms: float = 0.0
     cache_hits: int = 0
     cache_misses: int = 0
@@ -89,9 +91,7 @@ class PerformanceMonitor:
             else 0.0
         )
         cache_total = self._metrics.cache_hits + self._metrics.cache_misses
-        cache_hit_rate = (
-            self._metrics.cache_hits / cache_total if cache_total > 0 else 0.0
-        )
+        cache_hit_rate = self._metrics.cache_hits / cache_total if cache_total > 0 else 0.0
         avg_embedding_time = (
             self._metrics.embedding_time_ms / self._metrics.embedding_calls
             if self._metrics.embedding_calls > 0
@@ -102,7 +102,7 @@ class PerformanceMonitor:
             "total_queries": self._metrics.total_queries,
             "avg_latency_ms": round(avg_latency, 3),
             "min_latency_ms": round(
-                self._metrics.min_latency_ms if self._metrics.min_latency_ms != float('inf') else 0.0, 3
+                self._metrics.min_latency_ms if self._metrics.min_latency_ms != float("inf") else 0.0, 3
             ),
             "max_latency_ms": round(self._metrics.max_latency_ms, 3),
             "cache_hit_rate": round(cache_hit_rate, 3),
@@ -169,7 +169,7 @@ class HybridSearch:
         query: str,
         filters: Optional[Dict[str, Any]] = None,
         top_k: int = 5,
-        collection: str = "chapters_seg"
+        collection: str = "chapters_seg",
     ) -> List[Dict[str, Any]]:
         """执行混合搜索
 
@@ -193,9 +193,7 @@ class HybridSearch:
         conditions = []
         if filters:
             for field, value in filters.items():
-                conditions.append(
-                    FieldCondition(key=field, match=MatchValue(value=value))
-                )
+                conditions.append(FieldCondition(key=field, match=MatchValue(value=value)))
         qdrant_filter = Filter(must=conditions) if conditions else None
 
         # 执行搜索
@@ -219,11 +217,7 @@ class ScoreDebugger:
         self._debug_info: List[Dict[str, Any]] = []
 
     def record_score(
-        self,
-        query: str,
-        result_id: str,
-        score: float,
-        metadata: Optional[Dict[str, Any]] = None
+        self, query: str, result_id: str, score: float, metadata: Optional[Dict[str, Any]] = None
     ) -> None:
         """记录评分详情
 
@@ -233,12 +227,9 @@ class ScoreDebugger:
             score: 相似度分数
             metadata: 附加元数据
         """
-        self._debug_info.append({
-            "query": query,
-            "result_id": result_id,
-            "score": score,
-            "metadata": metadata or {}
-        })
+        self._debug_info.append(
+            {"query": query, "result_id": result_id, "score": score, "metadata": metadata or {}}
+        )
 
     def get_debug_info(self) -> List[Dict[str, Any]]:
         """获取调试信息"""
@@ -250,9 +241,5 @@ class ScoreDebugger:
 
     def get_top_scores(self, n: int = 10) -> List[Dict[str, Any]]:
         """获取最高分数的结果"""
-        sorted_results = sorted(
-            self._debug_info,
-            key=lambda x: x["score"],
-            reverse=True
-        )
+        sorted_results = sorted(self._debug_info, key=lambda x: x["score"], reverse=True)
         return sorted_results[:n]

@@ -15,6 +15,7 @@ Phase 1.3 — Doc 2 (提示词工程 v1.0) §6: 声明式 I/O pipeline。
 - transform = "truncate_NNN" 之外的高级策略 (Phase 1.5+)
 - 复杂时间序列压缩
 """
+
 from __future__ import annotations
 
 import re
@@ -46,9 +47,7 @@ class BudgetOverflowError(ContextBuilderError):
     def __init__(self, total: int, budget: int) -> None:
         self.total = total
         self.budget = budget
-        super().__init__(
-            f"context budget overflow: total={total} > budget={budget}"
-        )
+        super().__init__(f"context budget overflow: total={total} > budget={budget}")
 
 
 @dataclass
@@ -179,9 +178,7 @@ class ContextBuilder:
                     transforms.append(item.transform)
                     total_tokens += item.token_estimate
                     continue
-                data[item.key] = self._summarizer.summarize(
-                    str(value), target_chars
-                )
+                data[item.key] = self._summarizer.summarize(str(value), target_chars)
                 transforms.append(item.transform)
             elif item.transform.startswith("truncate_"):
                 # truncate_NNN: 截断到 NNN chars

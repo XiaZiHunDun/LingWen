@@ -5,7 +5,7 @@ import tempfile
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
 from lingwen_core.agents.social_engine.event_effect_calculator import EventEffectCalculator
 
@@ -17,6 +17,7 @@ def test_event_effect_calculator_init():
         calc = EventEffectCalculator(rules_file)
         assert calc is not None
 
+
 def test_calculate_effects_save_life():
     """测试计算save_life事件效果"""
     calc = EventEffectCalculator()
@@ -25,12 +26,14 @@ def test_calculate_effects_save_life():
     assert result["trust_delta"] > 0
     assert result["conflict_delta"] < 0
 
+
 def test_calculate_effects_betrayal():
     """测试计算betrayal事件效果"""
     calc = EventEffectCalculator()
     result = calc.calculate_effects("betrayal")
     assert result["trust_delta"] < 0
     assert result["conflict_delta"] > 0
+
 
 def test_calculate_effects_physical_conflict():
     """测试计算physical_conflict事件效果"""
@@ -39,6 +42,7 @@ def test_calculate_effects_physical_conflict():
     assert "trust_delta" in result
     assert "conflict_delta" in result
 
+
 def test_calculate_effects_share_secret():
     """测试计算share_secret事件效果"""
     calc = EventEffectCalculator()
@@ -46,12 +50,14 @@ def test_calculate_effects_share_secret():
     assert result["trust_delta"] > 0
     assert result["intimate_only"] is True
 
+
 def test_calculate_effects_unknown():
     """测试计算未知事件效果"""
     calc = EventEffectCalculator()
     result = calc.calculate_effects("unknown_event")
     assert result["trust_delta"] == 0
     assert result["conflict_delta"] == 0
+
 
 def test_apply_event():
     """测试应用事件到关系追踪器"""

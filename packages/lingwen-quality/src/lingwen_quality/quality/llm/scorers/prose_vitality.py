@@ -40,7 +40,7 @@ class ProseVitalityScorer(BaseScorer):
             reasons.append("词汇重复较多")
 
         # 句式变化检查
-        sentence_endings = re.findall(r'[，。！？；：""''（）]', content)
+        sentence_endings = re.findall(r'[，。！？；：""' "（）]", content)
         if len(set(sentence_endings)) >= 4:
             score += 15
             reasons.append("句式变化丰富")
@@ -66,7 +66,4 @@ class ProseVitalityScorer(BaseScorer):
         # 限制分数范围
         score = max(0, min(100, score))
 
-        return ScoredResult(
-            score=score,
-            reason="; ".join(reasons) if reasons else "散文活力评分完成"
-        )
+        return ScoredResult(score=score, reason="; ".join(reasons) if reasons else "散文活力评分完成")

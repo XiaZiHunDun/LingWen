@@ -1,4 +1,5 @@
 """ripple-scan command — Phase 9.34 F19 LLM scanner confidence calibration."""
+
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock

@@ -1,4 +1,5 @@
 """Tests for creator v4.0 companion edit + advance batch summary + wizard expand."""
+
 from __future__ import annotations
 
 import pytest

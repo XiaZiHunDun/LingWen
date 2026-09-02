@@ -11,6 +11,7 @@
 Pattern 跟 tests/agent_system/test_dashboard_budget_endpoints.py 1:1 mirror
 (Phase 8.12 _make_test_client + MasterControllerAdapter._controller singleton).
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -55,7 +56,9 @@ class TestBudgetByTierEndpoints:
         """GET /api/budgets/by-tier 返 3 tier dict (haiku/sonnet/opus, Enum 顺序)."""
         client, service = _make_test_client(tmp_path)
         # 设 opus + sonnet (haiku 未设)
-        service.set_by_tier(__import__("lingwen_llm.providers.model_tiers", fromlist=["ModelTier"]).ModelTier.OPUS, 1.0)
+        service.set_by_tier(
+            __import__("lingwen_llm.providers.model_tiers", fromlist=["ModelTier"]).ModelTier.OPUS, 1.0
+        )
         response = client.get("/api/budgets/by-tier")
         assert response.status_code == 200
         data = response.json()
@@ -77,6 +80,7 @@ class TestBudgetByTierEndpoints:
         assert body == {"ok": True, "tier": "opus", "usd": 1.0}
         # Verify persisted via service (mirror test_put_budgets_day_persists)
         from lingwen_llm.providers.model_tiers import ModelTier
+
         current = service.get_by_tier(ModelTier.OPUS)
         assert current is not None
         assert current.usd == 1.0
@@ -94,9 +98,7 @@ class TestBudgetByTierEndpoints:
         response = client.put("/api/budgets/by-tier/opus", json={"usd": -0.01})
         assert response.status_code == 422
 
-    def test_set_budget_by_tier_endpoint_returns_503_when_service_none(
-        self, tmp_path: Path
-    ) -> None:
+    def test_set_budget_by_tier_endpoint_returns_503_when_service_none(self, tmp_path: Path) -> None:
         """PUT /api/budgets/by-tier/opus → 503 (master.budget_service_by_tier = None)."""
         from apps.studio_api.app import create_app
         from apps.studio_api.protocols import MasterControllerAdapter

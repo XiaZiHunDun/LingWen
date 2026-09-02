@@ -2,6 +2,7 @@
 
 原 llm_quality_deep_check.py 第 57-438 行 LLMQualityChecker 类。
 """
+
 import json
 import re
 from typing import Dict, List, Optional
@@ -31,7 +32,7 @@ class LLMQualityChecker:
         ch_file = self.chapters_dir / f"ch{chapter_num:03d}.md"
         if not ch_file.exists():
             return None
-        return ch_file.read_text(encoding='utf-8')
+        return ch_file.read_text(encoding="utf-8")
 
     def load_chapters(self, chapter_nums: List[int]) -> Dict[int, str]:
         """批量加载章节"""
@@ -65,7 +66,7 @@ class LLMQualityChecker:
 {content[:3000]}
 
 请分析以下角色的行为和对话一致性：
-{', '.join(main_characters)}
+{", ".join(main_characters)}
 
 检测维度：
 1. 角色言行一致性（性格设定vs实际表现）
@@ -81,9 +82,7 @@ class LLMQualityChecker:
 """
 
         response = await self.llm.generate(
-            prompt=prompt,
-            system="你是一个专业的小说质量审核专家，擅长角色一致性分析。",
-            model="default"
+            prompt=prompt, system="你是一个专业的小说质量审核专家，擅长角色一致性分析。", model="default"
         )
         report.llm_calls = 1
 
@@ -93,7 +92,7 @@ class LLMQualityChecker:
                 data = json.loads(response)
             except json.JSONDecodeError:
                 # LLM returned markdown report with embedded JSON - extract the JSON part
-                json_match = re.search(r'\{.*\}|\[.*\]', response, re.DOTALL)
+                json_match = re.search(r"\{.*\}|\[.*\]", response, re.DOTALL)
                 if json_match:
                     data = json.loads(json_match.group())
                 else:
@@ -116,16 +115,18 @@ class LLMQualityChecker:
             report.issues = [Issue(**i) for i in normalized_issues]
         except Exception as e:
             # Parse failed, report the error
-            report.issues = [Issue(
-                chapter=chapter_num,
-                dimension="S9_角色一致性",
-                issue_type="character_inconsistency",
-                severity="P2",
-                description=f"LLM解析失败: {str(e)[:100]}",
-                location="全文",
-                evidence=response[:200] if len(response) > 200 else response,
-                suggestion=""
-            )]
+            report.issues = [
+                Issue(
+                    chapter=chapter_num,
+                    dimension="S9_角色一致性",
+                    issue_type="character_inconsistency",
+                    severity="P2",
+                    description=f"LLM解析失败: {str(e)[:100]}",
+                    location="全文",
+                    evidence=response[:200] if len(response) > 200 else response,
+                    suggestion="",
+                )
+            ]
             report.score = 0.5
 
         report.score = max(0, 1 - len(report.issues) * 0.1)
@@ -137,7 +138,9 @@ class LLMQualityChecker:
         self.cache.set("llm_character", chapter_num, content, report.to_dict())
         return report
 
-    async def scan_logic_contradictions(self, chapter_num: int, content: str, context_chapters: List[int] = None) -> QualityReport:
+    async def scan_logic_contradictions(
+        self, chapter_num: int, content: str, context_chapters: List[int] = None
+    ) -> QualityReport:
         """
         STEP_18b: 逻辑矛盾全面扫描
         检测时间线、因果链、设定冲突
@@ -184,7 +187,7 @@ class LLMQualityChecker:
         response = await self.llm.generate(
             prompt=prompt,
             system="你是一个专业的小说逻辑审核专家，擅长发现时间线和因果矛盾。",
-            model="default"
+            model="default",
         )
         report.llm_calls = 1
 
@@ -194,7 +197,7 @@ class LLMQualityChecker:
                 data = json.loads(response)
             except json.JSONDecodeError:
                 # LLM returned markdown report with embedded JSON - extract the JSON part
-                json_match = re.search(r'\{.*\}|\[.*\]', response, re.DOTALL)
+                json_match = re.search(r"\{.*\}|\[.*\]", response, re.DOTALL)
                 if json_match:
                     data = json.loads(json_match.group())
                 else:
@@ -228,7 +231,9 @@ class LLMQualityChecker:
         self.cache.set("llm_logic", chapter_num, content, report.to_dict())
         return report
 
-    async def verify_foreshadow_completeness(self, chapter_num: int, content: str, outline_content: str = None) -> QualityReport:
+    async def verify_foreshadow_completeness(
+        self, chapter_num: int, content: str, outline_content: str = None
+    ) -> QualityReport:
         """
         STEP_18c: 伏笔回收完整性验证
         对照章节大纲检查伏笔铺设与回收
@@ -246,7 +251,7 @@ class LLMQualityChecker:
         outline_file = self.chapters_dir / f"ch{chapter_num:03d}_大纲.md"
         if not outline_content:
             if outline_file.exists():
-                outline_content = outline_file.read_text(encoding='utf-8')
+                outline_content = outline_file.read_text(encoding="utf-8")
             else:
                 outline_content = "无章节大纲"
 
@@ -274,7 +279,7 @@ class LLMQualityChecker:
         response = await self.llm.generate(
             prompt=prompt,
             system="你是一个专业的小说伏笔审核专家，擅长分析伏笔的铺设与回收。",
-            model="default"
+            model="default",
         )
         report.llm_calls = 1
 
@@ -284,7 +289,7 @@ class LLMQualityChecker:
                 data = json.loads(response)
             except json.JSONDecodeError:
                 # LLM returned markdown report with embedded JSON - extract the JSON part
-                json_match = re.search(r'\{.*\}|\[.*\]', response, re.DOTALL)
+                json_match = re.search(r"\{.*\}|\[.*\]", response, re.DOTALL)
                 if json_match:
                     data = json.loads(json_match.group())
                 else:
@@ -353,7 +358,7 @@ score说明：0.8+优秀，0.6-0.8良好，0.4-0.6一般，<0.4需改进
         response = await self.llm.generate(
             prompt=prompt,
             system="你是一个专业的小说情感节奏分析专家，擅长诊断爽点和情感共鸣。",
-            model="default"
+            model="default",
         )
         report.llm_calls = 1
 
@@ -363,7 +368,7 @@ score说明：0.8+优秀，0.6-0.8良好，0.4-0.6一般，<0.4需改进
                 data = json.loads(response)
             except json.JSONDecodeError:
                 # LLM returned markdown report with embedded JSON - extract the JSON part
-                json_match = re.search(r'\{.*\}|\[.*\]', response, re.DOTALL)
+                json_match = re.search(r"\{.*\}|\[.*\]", response, re.DOTALL)
                 if json_match:
                     data = json.loads(json_match.group())
                 else:

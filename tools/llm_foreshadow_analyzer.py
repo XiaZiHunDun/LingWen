@@ -30,20 +30,22 @@ from lingwen_llm.port_adapter import LLMServiceAdapter
 @dataclass
 class ForeshadowRecord:
     """伏笔记录"""
-    chapter: int                    # 章节号
-    text: str                       # 伏笔原文
-    category: str                   # 类别：explicit（明显）/ implicit（隐含）
-    confidence: float               # 置信度 0-1
-    is_released: bool               # 是否已回收
+
+    chapter: int  # 章节号
+    text: str  # 伏笔原文
+    category: str  # 类别：explicit（明显）/ implicit（隐含）
+    confidence: float  # 置信度 0-1
+    is_released: bool  # 是否已回收
     release_chapter: Optional[int]  # 回收章节
-    release_quality: str            # 回收质量：natural（自然）/ abrupt（突兀）/ weak（弱）
-    connection_to_main: str          # 与主线关联度：strong/medium/weak/none
-    suggestion: str = ""             # 改进建议
+    release_quality: str  # 回收质量：natural（自然）/ abrupt（突兀）/ weak（弱）
+    connection_to_main: str  # 与主线关联度：strong/medium/weak/none
+    suggestion: str = ""  # 改进建议
 
 
 @dataclass
 class ForeshadowAnalysisReport:
     """伏笔分析报告"""
+
     chapter: int
     total_foreshadows: int = 0
     explicit_foreshadows: int = 0
@@ -84,10 +86,10 @@ class ForeshadowAnalysisReport:
                     "release_chapter": r.release_chapter,
                     "release_quality": r.release_quality,
                     "connection_to_main": r.connection_to_main,
-                    "suggestion": r.suggestion
+                    "suggestion": r.suggestion,
                 }
                 for r in self.records
-            ]
+            ],
         }
 
 
@@ -96,29 +98,58 @@ class ForeshadowAnalyzer:
 
     # 隐含伏笔关键词（不如明显，但可作为辅助判断）
     IMPLICIT_KEYWORDS = [
-        "奇怪", "异常", "似乎", "好像", "难道", "为何", "什么原样",
-        "不对劲", "隐隐", "模糊", "若有若无", "似曾相识", "说不清",
-        "总觉得", "事后", "后来", "果然", "不出所料", "正如所料"
+        "奇怪",
+        "异常",
+        "似乎",
+        "好像",
+        "难道",
+        "为何",
+        "什么原样",
+        "不对劲",
+        "隐隐",
+        "模糊",
+        "若有若无",
+        "似曾相识",
+        "说不清",
+        "总觉得",
+        "事后",
+        "后来",
+        "果然",
+        "不出所料",
+        "正如所料",
     ]
 
     # 明显伏笔关键词
     EXPLICIT_KEYWORDS = [
-        "伏笔", "悬念", "预示", "预兆", "暗示", "预言", "命运",
-        "将来", "终有一天", "迟早", "必将", "注定", "因果"
+        "伏笔",
+        "悬念",
+        "预示",
+        "预兆",
+        "暗示",
+        "预言",
+        "命运",
+        "将来",
+        "终有一天",
+        "迟早",
+        "必将",
+        "注定",
+        "因果",
     ]
 
     def __init__(self, llm_service: Optional[LLMServiceAdapter] = None):
         self.llm = llm_service or LLMServiceAdapter()
         self.project_root = PROJECT_ROOT
         self.chapters_dir = self.project_root / "03_内容仓库" / "04_正文"
-        self.foreshadow_table_file = self.project_root / "06_意见仓库" / "07_一致性检查" / "foreshadow_table.json"
+        self.foreshadow_table_file = (
+            self.project_root / "06_意见仓库" / "07_一致性检查" / "foreshadow_table.json"
+        )
 
     def load_chapter(self, chapter_num: int) -> Optional[str]:
         """加载章节内容"""
         ch_file = self.chapters_dir / f"ch{chapter_num:03d}.md"
         if not ch_file.exists():
             return None
-        return ch_file.read_text(encoding='utf-8')
+        return ch_file.read_text(encoding="utf-8")
 
     def load_chapters(self, chapter_nums: List[int]) -> Dict[int, str]:
         """批量加载章节"""
@@ -147,10 +178,7 @@ class ForeshadowAnalyzer:
             return "unknown", 0.0
 
     async def analyze_chapter_foreshadows(
-        self,
-        chapter_num: int,
-        content: str,
-        context_chapters: Optional[Dict[int, str]] = None
+        self, chapter_num: int, content: str, context_chapters: Optional[Dict[int, str]] = None
     ) -> ForeshadowAnalysisReport:
         """
         分析单章节的伏笔铺设与回收
@@ -245,7 +273,7 @@ class ForeshadowAnalyzer:
         response = await self.llm.generate(
             prompt=prompt,
             system="你是一个专业的小说伏笔分析专家，擅长识别隐含伏笔和评估伏笔回收质量。",
-            model="default"
+            model="default",
         )
         report.llm_calls = 1
 
@@ -254,7 +282,7 @@ class ForeshadowAnalyzer:
             try:
                 data = json.loads(response)
             except json.JSONDecodeError:
-                json_match = re.search(r'\{.*\}|\[.*\]', response, re.DOTALL)
+                json_match = re.search(r"\{.*\}|\[.*\]", response, re.DOTALL)
                 if json_match:
                     data = json.loads(json_match.group())
                 else:
@@ -274,22 +302,30 @@ class ForeshadowAnalyzer:
                     release_chapter=fs.get("release_chapter"),
                     release_quality=fs.get("release_quality", "none"),
                     connection_to_main=fs.get("connection_to_main", "none"),
-                    suggestion=fs.get("suggestion", "")
+                    suggestion=fs.get("suggestion", ""),
                 )
                 report.records.append(record)
 
             # 更新统计
             report.total_foreshadows = summary.get("total_foreshadows", len(report.records))
-            report.explicit_foreshadows = summary.get("explicit_count", sum(1 for r in report.records if r.category == "explicit"))
-            report.implicit_foreshadows = summary.get("implicit_count", sum(1 for r in report.records if r.category in ["implicit", "structural"]))
-            report.released_count = summary.get("released_count", sum(1 for r in report.records if r.is_released))
+            report.explicit_foreshadows = summary.get(
+                "explicit_count", sum(1 for r in report.records if r.category == "explicit")
+            )
+            report.implicit_foreshadows = summary.get(
+                "implicit_count", sum(1 for r in report.records if r.category in ["implicit", "structural"])
+            )
+            report.released_count = summary.get(
+                "released_count", sum(1 for r in report.records if r.is_released)
+            )
             report.unreleased_count = report.total_foreshadows - report.released_count
 
             # 计算回收率和分数
             if report.total_foreshadows > 0:
                 report.recovery_rate = report.released_count / report.total_foreshadows
                 # 分数 = 回收率 * 0.7 + 平均置信度 * 0.3
-                avg_confidence = sum(r.confidence for r in report.records) / len(report.records) if report.records else 0
+                avg_confidence = (
+                    sum(r.confidence for r in report.records) / len(report.records) if report.records else 0
+                )
                 report.score = report.recovery_rate * 0.7 + avg_confidence * 0.3
             else:
                 report.score = 1.0  # 无伏笔视为满分
@@ -300,21 +336,14 @@ class ForeshadowAnalyzer:
         return report
 
     async def analyze_chapters_batch(
-        self,
-        chapter_nums: List[int],
-        parallel: bool = True,
-        max_workers: int = 5
+        self, chapter_nums: List[int], parallel: bool = True, max_workers: int = 5
     ) -> Dict[int, ForeshadowAnalysisReport]:
         """批量分析章节伏笔"""
         reports = {}
         contents = self.load_chapters(chapter_nums)
 
         async def _run_one(ch: int) -> None:
-            context = {
-                c: contents[c]
-                for c in contents
-                if abs(c - ch) <= 10 and c != ch
-            }
+            context = {c: contents[c] for c in contents if abs(c - ch) <= 10 and c != ch}
             try:
                 reports[ch] = await self.analyze_chapter_foreshadows(ch, contents[ch], context)
             except Exception as e:
@@ -335,27 +364,26 @@ class ForeshadowAnalyzer:
 
         return reports
 
-    def generate_foreshadow_table(
-        self,
-        reports: Dict[int, ForeshadowAnalysisReport]
-    ) -> List[dict]:
+    def generate_foreshadow_table(self, reports: Dict[int, ForeshadowAnalysisReport]) -> List[dict]:
         """生成伏笔追踪表"""
         table = []
 
         for ch in sorted(reports.keys()):
             report = reports[ch]
             for record in report.records:
-                table.append({
-                    "chapter": record.chapter,
-                    "text": record.text,
-                    "category": record.category,
-                    "confidence": record.confidence,
-                    "is_released": record.is_released,
-                    "release_chapter": record.release_chapter,
-                    "release_quality": record.release_quality,
-                    "connection_to_main": record.connection_to_main,
-                    "suggestion": record.suggestion
-                })
+                table.append(
+                    {
+                        "chapter": record.chapter,
+                        "text": record.text,
+                        "category": record.category,
+                        "confidence": record.confidence,
+                        "is_released": record.is_released,
+                        "release_chapter": record.release_chapter,
+                        "release_quality": record.release_quality,
+                        "connection_to_main": record.connection_to_main,
+                        "suggestion": record.suggestion,
+                    }
+                )
 
         # 按章节排序
         table.sort(key=lambda x: (x["chapter"], -x["confidence"]))
@@ -370,10 +398,10 @@ class ForeshadowAnalyzer:
             "total_foreshadows": len(table),
             "released_count": sum(1 for t in table if t["is_released"]),
             "recovery_rate": sum(1 for t in table if t["is_released"]) / len(table) if table else 0,
-            "table": table
+            "table": table,
         }
 
-        output_file.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding='utf-8')
+        output_file.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"伏笔追踪表已保存: {output_file}")
         print(f"  总伏笔数: {len(table)}")
         print(f"  已回收: {data['released_count']}")
@@ -383,10 +411,10 @@ class ForeshadowAnalyzer:
 def parse_chapter_range(chapters_str: str) -> List[int]:
     """解析章节范围字符串"""
     chapters = []
-    for part in chapters_str.split(','):
+    for part in chapters_str.split(","):
         part = part.strip()
-        if '-' in part:
-            start, end = map(int, part.split('-'))
+        if "-" in part:
+            start, end = map(int, part.split("-"))
             chapters.extend(range(start, end + 1))
         else:
             chapters.append(int(part))
@@ -398,12 +426,12 @@ def main():
 
 
 async def _async_main():
-    parser = argparse.ArgumentParser(description='LLM伏笔分析器 - S11伏笔回收率增强')
-    parser.add_argument('--chapters', type=str, default='1-360', help='章节范围')
-    parser.add_argument('--parallel', action='store_true', default=True, help='并行处理')
-    parser.add_argument('--sequential', dest='parallel', action='store_false', help='顺序处理')
-    parser.add_argument('--output', type=str, help='伏笔追踪表输出路径')
-    parser.add_argument('--workers', type=int, default=5, help='并行工作线程数')
+    parser = argparse.ArgumentParser(description="LLM伏笔分析器 - S11伏笔回收率增强")
+    parser.add_argument("--chapters", type=str, default="1-360", help="章节范围")
+    parser.add_argument("--parallel", action="store_true", default=True, help="并行处理")
+    parser.add_argument("--sequential", dest="parallel", action="store_false", help="顺序处理")
+    parser.add_argument("--output", type=str, help="伏笔追踪表输出路径")
+    parser.add_argument("--workers", type=int, default=5, help="并行工作线程数")
 
     args = parser.parse_args()
     chapters = parse_chapter_range(args.chapters)
@@ -415,9 +443,7 @@ async def _async_main():
 
     analyzer = ForeshadowAnalyzer()
     reports = await analyzer.analyze_chapters_batch(
-        chapters,
-        parallel=args.parallel,
-        max_workers=args.workers
+        chapters, parallel=args.parallel, max_workers=args.workers
     )
 
     # 生成伏笔追踪表
@@ -453,5 +479,5 @@ async def _async_main():
     print(f"质量评级: {grade}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

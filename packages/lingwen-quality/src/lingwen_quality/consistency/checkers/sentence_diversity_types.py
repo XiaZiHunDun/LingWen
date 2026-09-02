@@ -26,6 +26,7 @@ class DiversityIssue:
 @dataclass
 class TemplateSentence:
     """模板句检测结果"""
+
     pattern_name: str
     template_example: str
     count: int
@@ -36,6 +37,7 @@ class TemplateSentence:
 @dataclass
 class PatternRatio:
     """句式占比信息"""
+
     pattern_name: str
     count: int
     percentage: float

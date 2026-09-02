@@ -26,9 +26,7 @@ class TestCorePropsChecker:
         ch1_dir = Path(self.tmpdir)
         ch1_file = ch1_dir / "ch001.md"
         ch1_file.write_text(
-            "这是一段文字。【道具:木勺】出现在这里。"
-            "【道具:地窖】也在这里。"
-            "母亲在厨房忙碌，父亲在院子里。"
+            "这是一段文字。【道具:木勺】出现在这里。【道具:地窖】也在这里。母亲在厨房忙碌，父亲在院子里。"
         )
         checker = CorePropsChecker(chapters_dir=self.tmpdir)
         props = checker.extract_ch1_props()
@@ -124,10 +122,8 @@ class TestCorePropsChecker:
 
     def test_generate_report_with_issues(self):
         issues = [
-            PropIssue(chapter="ch001", prop_name="木勺", severity="HIGH",
-                       description="道具'木勺'完全消失"),
-            PropIssue(chapter="ch001", prop_name="地窖", severity="MEDIUM",
-                       description="道具'地窖'再现不足"),
+            PropIssue(chapter="ch001", prop_name="木勺", severity="HIGH", description="道具'木勺'完全消失"),
+            PropIssue(chapter="ch001", prop_name="地窖", severity="MEDIUM", description="道具'地窖'再现不足"),
         ]
         checker = CorePropsChecker(chapters_dir=self.tmpdir)
         report = checker.generate_report(issues)

@@ -11,6 +11,7 @@ Phase 1.4 — Doc 4 (GoT 适配设计 v1.0) §4: 节点输出缓存。
 - clear(): 清空缓存 (测试用)
 - size(): 缓存条目数
 """
+
 from __future__ import annotations
 
 import hashlib

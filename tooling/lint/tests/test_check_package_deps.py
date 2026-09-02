@@ -6,6 +6,7 @@
 - apps/studio-api 可以 import packages/lingwen-*（应用层）
 - 同包内可互相 import。
 """
+
 import subprocess
 import sys
 from pathlib import Path
@@ -17,7 +18,8 @@ SCRIPT = REPO / "tooling" / "lint" / "check_package_deps.py"
 def _run(args):
     return subprocess.run(
         [sys.executable, str(SCRIPT), *args],
-        capture_output=True, text=True,
+        capture_output=True,
+        text=True,
         cwd=str(REPO),
     )
 

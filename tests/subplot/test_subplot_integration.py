@@ -6,6 +6,7 @@
 - Queries (can_open / suggest / saturation) 协同
 - 跨包引用: Plot.protagonist_link → world_model.NodeId
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -151,8 +152,10 @@ class TestEndToEndLifecycle:
         """DRAFT → ACTIVE 转换"""
         registry = PlotRegistry(tmp_path)
         draft = Plot(
-            plot_id="draft-1", type=PlotType.SUBPLOT,
-            title="草稿", status=PlotStatus.DRAFT,
+            plot_id="draft-1",
+            type=PlotType.SUBPLOT,
+            title="草稿",
+            status=PlotStatus.DRAFT,
         )
         registry.add_plot(draft)
         assert registry.get_plot("draft-1").status == PlotStatus.DRAFT
@@ -165,8 +168,10 @@ class TestEndToEndLifecycle:
         """CLOSING ≥ 2 章校验"""
         registry = PlotRegistry(tmp_path)
         p = Plot(
-            plot_id="p1", type=PlotType.SUBPLOT,
-            title="x", status=PlotStatus.ACTIVE,
+            plot_id="p1",
+            type=PlotType.SUBPLOT,
+            title="x",
+            status=PlotStatus.ACTIVE,
         )
         registry.add_plot(p)
 
@@ -186,10 +191,14 @@ class TestEndToEndLifecycle:
         """5 满后,PAUSED 让出位置,可开新支线"""
         registry = PlotRegistry(tmp_path)
         for i in range(5):
-            registry.add_plot(Plot(
-                plot_id=f"sub-{i}", type=PlotType.SUBPLOT,
-                title=f"s{i}", status=PlotStatus.ACTIVE,
-            ))
+            registry.add_plot(
+                Plot(
+                    plot_id=f"sub-{i}",
+                    type=PlotType.SUBPLOT,
+                    title=f"s{i}",
+                    status=PlotStatus.ACTIVE,
+                )
+            )
         assert not can_open_new_subplot(registry)
 
         # PAUSED 一个,腾出位置
@@ -197,10 +206,14 @@ class TestEndToEndLifecycle:
         assert can_open_new_subplot(registry)
 
         # 可以开第 5 个
-        registry.add_plot(Plot(
-            plot_id="sub-new", type=PlotType.SUBPLOT,
-            title="new", status=PlotStatus.ACTIVE,
-        ))
+        registry.add_plot(
+            Plot(
+                plot_id="sub-new",
+                type=PlotType.SUBPLOT,
+                title="new",
+                status=PlotStatus.ACTIVE,
+            )
+        )
 
 
 class TestWorldSnapshotSubplots:
@@ -236,7 +249,8 @@ class TestWorldSnapshotSubplots:
     def test_world_snapshot_subplots_consistency_hash_changes(self):
         """加 subplot → consistency_hash 应变化"""
         snap1 = WorldSnapshot(
-            snapshot_id="s1", chapter=1,
+            snapshot_id="s1",
+            chapter=1,
             timestamp=datetime(2026, 1, 1),
             nodes={NodeId(NodeType.CHARACTER, "林尘"): _lin_chen()},
         )
@@ -278,12 +292,16 @@ class TestQueriesIntegration:
         registry = PlotRegistry(tmp_path)
         # 高密度约束的 subplot
         p = Plot(
-            plot_id="busy", type=PlotType.SUBPLOT,
-            title="busy", purpose=PlotPurpose.MYSTERY,
+            plot_id="busy",
+            type=PlotType.SUBPLOT,
+            title="busy",
+            purpose=PlotPurpose.MYSTERY,
             status=PlotStatus.ACTIVE,
             birth_ch=40,
             constraints_generated=(
-                "ch51: 事件A", "ch52: 事件B", "ch53: 事件C",  # 3 个在 50-55 范围内
+                "ch51: 事件A",
+                "ch52: 事件B",
+                "ch53: 事件C",  # 3 个在 50-55 范围内
             ),
         )
         registry.add_plot(p)

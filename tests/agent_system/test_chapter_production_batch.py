@@ -1,4 +1,5 @@
 """Phase 9.81 F73: batch chapter production runner (0 real LLM in default CI)."""
+
 from __future__ import annotations
 
 import json
@@ -245,13 +246,19 @@ class TestRunProductionBatch:
 
         monkeypatch.setenv("LINGWEN_REAL_LLM", "1")
         monkeypatch.setenv("MINIMAX_API_KEY", "sk-test")
-        code = mod.main([
-            "--dry-run",
-            "--start-chapter", "364",
-            "--max-chapters", "2",
-            "--budget-usd", "0.10",
-            "--state-dir", str(tmp_path),
-        ])
+        code = mod.main(
+            [
+                "--dry-run",
+                "--start-chapter",
+                "364",
+                "--max-chapters",
+                "2",
+                "--budget-usd",
+                "0.10",
+                "--state-dir",
+                str(tmp_path),
+            ]
+        )
         assert code == 0
 
     def test_save_batch_summary(self, tmp_path):
@@ -275,10 +282,15 @@ class TestRunProductionBatch:
         from lingwen_core.agents import chapter_production_batch as mod
 
         monkeypatch.delenv("LINGWEN_REAL_LLM", raising=False)
-        code = mod.main([
-            "--preflight-only",
-            "--start-chapter", "361",
-            "--max-chapters", "3",
-            "--state-dir", str(tmp_path),
-        ])
+        code = mod.main(
+            [
+                "--preflight-only",
+                "--start-chapter",
+                "361",
+                "--max-chapters",
+                "3",
+                "--state-dir",
+                str(tmp_path),
+            ]
+        )
         assert code in (0, 1)

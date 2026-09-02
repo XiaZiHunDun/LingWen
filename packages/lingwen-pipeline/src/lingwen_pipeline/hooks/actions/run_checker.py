@@ -2,6 +2,7 @@
 """
 运行检查器动作 - 在Hook中触发一致性检查或质量门禁
 """
+
 from __future__ import annotations
 
 import sys
@@ -33,11 +34,7 @@ class RunCheckerAction(BaseAction):
     def action_type(self) -> str:
         return "run_checker"
 
-    def execute(
-        self,
-        params: Dict[str, Any],
-        context: Dict[str, Any]
-    ) -> ActionResult:
+    def execute(self, params: Dict[str, Any], context: Dict[str, Any]) -> ActionResult:
         """
         执行检查器
 
@@ -67,10 +64,7 @@ class RunCheckerAction(BaseAction):
             elif checker_name == "quality_gate":
                 result = self._run_quality_gate(chapter_range, threshold, context)
             else:
-                return ActionResult(
-                    success=False,
-                    error=f"Unknown checker: {checker_name}"
-                )
+                return ActionResult(success=False, error=f"Unknown checker: {checker_name}")
 
             return ActionResult(success=True, output=result)
 
@@ -78,11 +72,7 @@ class RunCheckerAction(BaseAction):
             logger.error(f"RunChecker: {checker_name} failed - {e}")
             return ActionResult(success=False, error=str(e))
 
-    def _run_consistency_check(
-        self,
-        chapter_range: str,
-        context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _run_consistency_check(self, chapter_range: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """运行一致性检查引擎"""
         # 动态导入避免循环依赖
         import re
@@ -96,6 +86,7 @@ class RunCheckerAction(BaseAction):
         else:
             # 从项目根目录推导章节目录
             from pathlib import Path
+
             project_root = Path(__file__).resolve().parents[2]
             str(project_root / "03_内容仓库" / "04_正文")
 
@@ -108,7 +99,7 @@ class RunCheckerAction(BaseAction):
             range_start, range_end = 1, 360
         elif chapter_range == "current":
             chapter_id = context.get("chapter_id", "ch001")
-            match = re.search(r'ch(\d+)', chapter_id)
+            match = re.search(r"ch(\d+)", chapter_id)
             range_start = int(match.group(1)) if match else 1
             range_end = range_start
         elif "-" in str(chapter_range):
@@ -123,23 +114,23 @@ class RunCheckerAction(BaseAction):
             if "chapters_dir" in context:
                 ch_path = Path(context["chapters_dir"]) / f"ch{ch_num:03d}.md"
                 if ch_path.exists():
-                    with open(ch_path, 'r', encoding='utf-8') as f:
+                    with open(ch_path, "r", encoding="utf-8") as f:
                         chapter_content = f.read()
             report = engine.check_chapter(ch_num, chapter_content, scope=CheckScope.ALL)
             chapter_results.append(report.to_dict())
 
         # Summarize
-        total_issues = sum(len(r.get('issues', [])) for r in chapter_results)
+        total_issues = sum(len(r.get("issues", [])) for r in chapter_results)
         summary = {
             "checked_chapters": len(chapter_results),
             "total_issues": total_issues,
-            "chapter_range": f"{range_start}-{range_end}"
+            "chapter_range": f"{range_start}-{range_end}",
         }
         return {
             "checker": "consistency_engine",
             "results": chapter_results,
             "summary": summary,
-            "chapter_range": chapter_range
+            "chapter_range": chapter_range,
         }
 
     def _get_chapters_dir(self, context: Dict[str, Any]) -> str:
@@ -151,10 +142,7 @@ class RunCheckerAction(BaseAction):
         return str(project_root / "03_内容仓库" / "04_正文")
 
     def _run_quality_gate(
-        self,
-        chapter_range: str,
-        threshold: str | None,
-        context: Dict[str, Any]
+        self, chapter_range: str, threshold: str | None, context: Dict[str, Any]
     ) -> Dict[str, Any]:
         """运行质量门禁检查"""
         from infra.tools.consistency.run_quality_checks import run_quality_checks
@@ -163,9 +151,7 @@ class RunCheckerAction(BaseAction):
 
         # 调用质量检查
         results = run_quality_checks(
-            chapters_dir=chapters_dir,
-            chapter_range=chapter_range,
-            threshold=threshold
+            chapters_dir=chapters_dir, chapter_range=chapter_range, threshold=threshold
         )
 
         return {
@@ -173,5 +159,5 @@ class RunCheckerAction(BaseAction):
             "passed": results.get("passed", False),
             "score": results.get("score", 0),
             "threshold": threshold,
-            "chapter_range": chapter_range
+            "chapter_range": chapter_range,
         }

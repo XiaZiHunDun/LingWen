@@ -1,4 +1,5 @@
 """Tests for infra.creator_onboarding_progress."""
+
 from __future__ import annotations
 
 import pytest

@@ -1,4 +1,5 @@
 """OpenAI embeddings provider (default / backward compatible)."""
+
 from __future__ import annotations
 
 import os
@@ -16,9 +17,7 @@ class OpenAIEmbeddingProvider:
     def __init__(self, *, model: str, dimension: int, api_key: str | None = None):
         key = api_key or os.environ.get("OPENAI_API_KEY", "")
         if not key:
-            raise EmbeddingProviderError(
-                "OPENAI_API_KEY required for embedding provider=openai"
-            )
+            raise EmbeddingProviderError("OPENAI_API_KEY required for embedding provider=openai")
         self.model = model
         self.dimension = dimension
         self._client = OpenAI(api_key=key)

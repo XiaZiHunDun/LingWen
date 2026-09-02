@@ -9,6 +9,7 @@ Dashboard WebSocket support (Phase 6.4).
   - workflow.status (active workflow 状态变化)
   - decision.snapshot (pending decisions 列表变化)
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -119,9 +120,7 @@ async def start_broadcast_task(
     Returns:
         asyncio.Task 句柄
     """
-    return asyncio.create_task(
-        _broadcast_loop(manager, controller, stop_event, poll_interval)
-    )
+    return asyncio.create_task(_broadcast_loop(manager, controller, stop_event, poll_interval))
 
 
 async def _broadcast_loop(
@@ -154,17 +153,21 @@ async def _broadcast_loop(
                 continue
 
             if last_workflow is None or not _events_equal(last_workflow, cur_workflow):
-                await manager.broadcast({
-                    "type": EVENT_WORKFLOW_STATUS,
-                    "payload": cur_workflow,
-                })
+                await manager.broadcast(
+                    {
+                        "type": EVENT_WORKFLOW_STATUS,
+                        "payload": cur_workflow,
+                    }
+                )
                 last_workflow = cur_workflow
 
             if last_decisions is None or not _events_equal(last_decisions, cur_decisions):
-                await manager.broadcast({
-                    "type": EVENT_DECISION_SNAPSHOT,
-                    "payload": cur_decisions,
-                })
+                await manager.broadcast(
+                    {
+                        "type": EVENT_DECISION_SNAPSHOT,
+                        "payload": cur_decisions,
+                    }
+                )
                 last_decisions = cur_decisions
 
             await asyncio.sleep(poll_interval)

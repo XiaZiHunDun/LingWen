@@ -65,14 +65,14 @@ class BatchRepairer:
         """
         results = {}
 
-        if track == 'worldview':
+        if track == "worldview":
             repairer = self.worldview_repairer
-            track_name = '世界观统一'
-        elif track == 'ai_trace':
+            track_name = "世界观统一"
+        elif track == "ai_trace":
             repairer = self.ai_trace_repairer
-            track_name = 'AI痕迹消除'
-        elif track == 'all':
-            track_name = '全量修复'
+            track_name = "AI痕迹消除"
+        elif track == "all":
+            track_name = "全量修复"
         else:
             raise ValueError(f"Unknown track: {track}")
 
@@ -80,7 +80,7 @@ class BatchRepairer:
         modified_chapters = 0
 
         for ch in chapter_nums:
-            if track == 'all':
+            if track == "all":
                 # 执行两轨
                 w_result = self.worldview_repairer.repair(ch)
                 a_result = self.ai_trace_repairer.repair(ch)
@@ -105,11 +105,12 @@ class BatchRepairer:
             "modified_chapters": modified_chapters,
             "total_changes": total_changes,
             "dry_run": dry_run,
-            "details": results
+            "details": results,
         }
 
-    def repair_batch(self, chapter_nums: List[int], tracks: List[str] = None,
-                     dry_run: bool = False) -> Dict[str, Any]:
+    def repair_batch(
+        self, chapter_nums: List[int], tracks: List[str] = None, dry_run: bool = False
+    ) -> Dict[str, Any]:
         """
         批量修复（多轨）
 
@@ -121,7 +122,7 @@ class BatchRepairer:
         Returns:
             修复结果
         """
-        tracks = tracks or ['worldview', 'ai_trace']
+        tracks = tracks or ["worldview", "ai_trace"]
         results = {}
 
         for track in tracks:
@@ -157,34 +158,34 @@ class BatchRepairer:
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description='批量修复工具')
-    parser.add_argument('--chapters', type=str, default='1-120',
-                        help='章节范围，如 "1-120" 或 "1,5,10"')
-    parser.add_argument('--track', type=str, default='all',
-                        choices=['worldview', 'ai_trace', 'all'],
-                        help='修复轨道')
-    parser.add_argument('--dry-run', action='store_true',
-                        help='只输出不保存')
-    parser.add_argument('--limit', type=int, default=None,
-                        help='限制处理章节数量')
-    parser.add_argument('--output', type=str, default=None,
-                        help='输出JSON文件路径')
-    parser.add_argument('--verify', action='store_true',
-                        help='修复后自动跑 verify_quality 闭环检查(informational,不强制 re-repair)')
+
+    parser = argparse.ArgumentParser(description="批量修复工具")
+    parser.add_argument("--chapters", type=str, default="1-120", help='章节范围，如 "1-120" 或 "1,5,10"')
+    parser.add_argument(
+        "--track", type=str, default="all", choices=["worldview", "ai_trace", "all"], help="修复轨道"
+    )
+    parser.add_argument("--dry-run", action="store_true", help="只输出不保存")
+    parser.add_argument("--limit", type=int, default=None, help="限制处理章节数量")
+    parser.add_argument("--output", type=str, default=None, help="输出JSON文件路径")
+    parser.add_argument(
+        "--verify",
+        action="store_true",
+        help="修复后自动跑 verify_quality 闭环检查(informational,不强制 re-repair)",
+    )
 
     args = parser.parse_args()
 
     # 解析章节范围
     chapters = []
-    for part in args.chapters.split(','):
-        if '-' in part:
-            start, end = map(int, part.split('-'))
+    for part in args.chapters.split(","):
+        if "-" in part:
+            start, end = map(int, part.split("-"))
             chapters.extend(range(start, end + 1))
         else:
             chapters.append(int(part))
 
     if args.limit:
-        chapters = chapters[:args.limit]
+        chapters = chapters[: args.limit]
 
     print(f"待处理章节: {len(chapters)} 个 (ch{chapters[0]:03d}-ch{chapters[-1]:03d})")
     print(f"模式: {'干跑(dry-run)' if args.dry_run else '实际修改'}")
@@ -192,7 +193,7 @@ def main():
 
     repairer = BatchRepairer()
 
-    if args.track == 'all':
+    if args.track == "all":
         results = repairer.repair_batch(chapters, dry_run=args.dry_run)
     else:
         results = {args.track: repairer.repair_track(chapters, args.track, args.dry_run)}
@@ -210,7 +211,7 @@ def main():
     if args.output:
         output_path = Path(args.output)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             json.dump(results, f, ensure_ascii=False, indent=2)
         print(f"\n结果已保存: {output_path}")
 
@@ -231,5 +232,5 @@ def main():
             print(f"  ⚠ 仍有 {wv_issues + ai_issues} 个问题(可能为检测器误报,需人工 review)")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -1,4 +1,5 @@
 """Phase 9.96 F87: CI contract — Analytics production cost trend."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -28,13 +29,9 @@ class TestAnalyticsProductionCostTrendF87:
         assert "fetchProductionCostTrend" in api.read_text(encoding="utf-8")
 
     def test_vitest_specs_exist(self):
-        assert (
-            FRONTEND / "tests" / "unit" / "analytics-production-cost-trend.spec.js"
-        ).is_file()
+        assert (FRONTEND / "tests" / "unit" / "analytics-production-cost-trend.spec.js").is_file()
         spec = FRONTEND / "tests" / "unit" / "analytics-page.spec.ts"
         assert "production-cost-trend-kpi" in spec.read_text(encoding="utf-8")
 
     def test_dashboard_trend_pytest(self):
-        assert (
-            NOVEL_FACTORY / "tests" / "dashboard" / "test_app_production_records_trend_f87.py"
-        ).is_file()
+        assert (NOVEL_FACTORY / "tests" / "dashboard" / "test_app_production_records_trend_f87.py").is_file()

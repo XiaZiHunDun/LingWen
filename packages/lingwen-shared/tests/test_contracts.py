@@ -5,6 +5,7 @@ Verifies:
 - Each DTO can be constructed with required fields
 - Pydantic v2 validation enforces types (e.g. canon_level Literal)
 """
+
 from __future__ import annotations
 
 import pytest
@@ -44,6 +45,7 @@ def test_quality_dtos_importable() -> None:
 def test_character_dto_validates_canon_level() -> None:
     """CharacterDTO.canon_level must be one of Draft/Secondary/Primary."""
     from lingwen_shared.contracts.python.world import CharacterDTO
+
     # Valid construction
     char = CharacterDTO(id=1, slug="lin_zhi", name="林栀", canon_level="Primary")
     assert char.canon_level == "Primary"
@@ -55,6 +57,7 @@ def test_character_dto_validates_canon_level() -> None:
 def test_proposal_dto_has_payload_type_discriminator() -> None:
     """ProposalDTO must have kind field as Literal discriminator."""
     from lingwen_shared.contracts.python.world import CharacterUpdatePayload, ProposalDTO
+
     payload = CharacterUpdatePayload(name="new name")
     p = ProposalDTO(
         kind="character.update",
@@ -69,6 +72,7 @@ def test_proposal_dto_has_payload_type_discriminator() -> None:
 def test_chapter_dto_basic_shape() -> None:
     """ChapterDTO must accept slug + title + content basics."""
     from lingwen_shared.contracts.python.workspace import ChapterDTO
+
     chap = ChapterDTO(
         project_slug="lin_zhi",
         chapter_number=1,
@@ -82,6 +86,7 @@ def test_chapter_dto_basic_shape() -> None:
 def test_quality_score_dto_basic_shape() -> None:
     """QualityScoreDTO must accept score + dimensions."""
     from lingwen_shared.contracts.python.quality import QualityScoreDTO
+
     qs = QualityScoreDTO(
         chapter_id="ch001",
         overall_score=0.85,

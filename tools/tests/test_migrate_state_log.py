@@ -8,7 +8,8 @@ from pathlib import Path
 def _run(script: Path, src: Path, dst: Path) -> subprocess.CompletedProcess:
     return subprocess.run(
         [sys.executable, str(script), "--src", str(src), "--dst", str(dst)],
-        capture_output=True, text=True,
+        capture_output=True,
+        text=True,
     )
 
 
@@ -33,11 +34,7 @@ def test_migrate_minimal(tmp_path: Path):
 
 def test_blank_lines_are_skipped(tmp_path: Path):
     log = tmp_path / "state_history.log"
-    log.write_text(
-        "\n"
-        "{not json\n"
-        '{"event": "STEP_BUMP", "data": {"step": "STEP_12"}, "source": "agent"}\n'
-    )
+    log.write_text('\n{not json\n{"event": "STEP_BUMP", "data": {"step": "STEP_12"}, "source": "agent"}\n')
     out = tmp_path / "events.jsonl"
     script = Path(__file__).resolve().parents[1] / "migrate_state_log.py"
     result = _run(script, log, out)
@@ -50,10 +47,7 @@ def test_blank_lines_are_skipped(tmp_path: Path):
 def test_non_object_json_is_dropped(tmp_path: Path):
     log = tmp_path / "state_history.log"
     log.write_text(
-        "[1,2,3]\n"
-        "null\n"
-        "42\n"
-        '{"event": "STEP_BUMP", "data": {"step": "STEP_12"}, "source": "agent"}\n'
+        '[1,2,3]\nnull\n42\n{"event": "STEP_BUMP", "data": {"step": "STEP_12"}, "source": "agent"}\n'
     )
     out = tmp_path / "events.jsonl"
     script = Path(__file__).resolve().parents[1] / "migrate_state_log.py"
@@ -88,9 +82,7 @@ def test_missing_source_exits_zero_with_warning(tmp_path: Path):
 
 def test_event_id_is_valid_ulid(tmp_path: Path):
     log = tmp_path / "state_history.log"
-    log.write_text(
-        '{"event": "STEP_BUMP", "data": {"step": "STEP_12"}, "source": "agent"}\n'
-    )
+    log.write_text('{"event": "STEP_BUMP", "data": {"step": "STEP_12"}, "source": "agent"}\n')
     out = tmp_path / "events.jsonl"
     script = Path(__file__).resolve().parents[1] / "migrate_state_log.py"
     result = _run(script, log, out)
@@ -102,9 +94,7 @@ def test_event_id_is_valid_ulid(tmp_path: Path):
 
 def test_actor_defaults_to_system_and_correlation_falls_back(tmp_path: Path):
     log = tmp_path / "state_history.log"
-    log.write_text(
-        '{"event": "STEP_BUMP", "data": {"step": "STEP_12"}}\n'
-    )
+    log.write_text('{"event": "STEP_BUMP", "data": {"step": "STEP_12"}}\n')
     out = tmp_path / "events.jsonl"
     script = Path(__file__).resolve().parents[1] / "migrate_state_log.py"
     result = _run(script, log, out)

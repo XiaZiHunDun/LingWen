@@ -1,4 +1,5 @@
 """Tests for post-v7.0 product features: share collab v2, diff collab notes."""
+
 from __future__ import annotations
 
 from lingwen_creator.content.ui_profile import resolve_creator_ui_profile

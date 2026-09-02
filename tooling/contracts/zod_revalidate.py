@@ -12,6 +12,7 @@ Usage:
     # 2. compare
     uv run python tooling/contracts/zod_revalidate.py --openapi /tmp/openapi.json
 """
+
 from __future__ import annotations
 
 import argparse
@@ -21,15 +22,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-SHARED_TS_DIR = (
-    REPO_ROOT
-    / "packages"
-    / "lingwen-shared"
-    / "src"
-    / "lingwen_shared"
-    / "contracts"
-    / "ts"
-)
+SHARED_TS_DIR = REPO_ROOT / "packages" / "lingwen-shared" / "src" / "lingwen_shared" / "contracts" / "ts"
 
 
 def _extract_required_fields_from_ts(ts_content: str, interface_name: str) -> set[str]:
@@ -86,7 +79,17 @@ def compare() -> int:
     schema = json.loads(openapi_path.read_text(encoding="utf-8"))
 
     drift: list[str] = []
-    modules = ("world", "workspace", "quality", "creator", "health", "studio", "workflows", "cvg", "decisions")
+    modules = (
+        "world",
+        "workspace",
+        "quality",
+        "creator",
+        "health",
+        "studio",
+        "workflows",
+        "cvg",
+        "decisions",
+    )
     for mod in modules:
         ts_file = SHARED_TS_DIR / f"{mod}.ts"
         if not ts_file.is_file():

@@ -7,6 +7,7 @@
 - AIRouter 走 registry 实例化(新增 provider 即可用)
 - 向后兼容:`from lingwen_llm.providers import XxxProvider` 仍工作
 """
+
 from unittest.mock import patch
 
 import pytest
@@ -73,6 +74,7 @@ class TestRegisterProviderDecorator:
 
     def test_decorator_rejects_non_ai_provider(self):
         with pytest.raises(TypeError) as exc_info:
+
             @register_provider("bad_target")
             class _NotAProvider:
                 pass
@@ -99,6 +101,7 @@ class TestRegisterProviderDecorator:
 
     def test_reregister_overrides(self):
         """重复注册同名 provider 应覆盖(后注册胜出)"""
+
         @register_provider("test_override")
         class _First(AIProvider):
             def generate(self, prompt, **kwargs):
@@ -161,6 +164,7 @@ class TestRouterUsesRegistry:
 
         模拟用户加了一个 'stub' provider(用 stub 模块挡掉真实 API 调用)。
         """
+
         @register_provider("stub_for_router")
         class _StubProvider(AIProvider):
             def generate(self, prompt, **kwargs):
@@ -186,6 +190,7 @@ class TestRouterUsesRegistry:
 
     def test_router_unknown_name_via_register_provider_method(self):
         """未注册的名字可用 router.register_provider() 显式注入(向后兼容旧 API)"""
+
         class _AdHocProvider(AIProvider):
             def generate(self, prompt, **kwargs):
                 return "adhoc"
@@ -212,22 +217,26 @@ class TestBackwardCompat:
     def test_package_reexports_openai(self):
         from lingwen_llm.providers import OpenAIProvider as PkgOpenAI
         from lingwen_llm.providers.openai_provider import OpenAIProvider as ModOpenAI
+
         assert PkgOpenAI is ModOpenAI
 
     def test_package_reexports_anthropic(self):
         from lingwen_llm.providers import AnthropicProvider as PkgAnthropic
         from lingwen_llm.providers.anthropic_provider import AnthropicProvider as ModAnthropic
+
         assert PkgAnthropic is ModAnthropic
 
     def test_package_reexports_minimax(self):
         from lingwen_llm.providers import MiniMaxProvider as PkgMiniMax
         from lingwen_llm.providers.minimax_provider import MiniMaxProvider as ModMiniMax
+
         assert PkgMiniMax is ModMiniMax
 
     def test_submodule_imports_still_work(self):
         """tools/*.py 中用过的子模块 import 路径不应被破坏"""
         from lingwen_llm.providers.base import ProviderConfig
         from lingwen_llm.providers.minimax_provider import MiniMaxProvider
+
         assert MiniMaxProvider is not None
         assert ProviderConfig is not None
 
@@ -237,9 +246,16 @@ class TestAllExports:
 
     def test_package_all_includes_registry_helpers(self):
         import lingwen_llm.providers as pkg
+
         for name in [
-            "AIProvider", "ProviderConfig", "AIProviderError",
-            "OpenAIProvider", "AnthropicProvider", "MiniMaxProvider",
-            "register_provider", "get_provider_class", "list_registered_providers",
+            "AIProvider",
+            "ProviderConfig",
+            "AIProviderError",
+            "OpenAIProvider",
+            "AnthropicProvider",
+            "MiniMaxProvider",
+            "register_provider",
+            "get_provider_class",
+            "list_registered_providers",
         ]:
             assert name in pkg.__all__, f"missing {name!r} in __all__"

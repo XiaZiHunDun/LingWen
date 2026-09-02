@@ -11,6 +11,7 @@ Phase 8.15: per-tier BUDGET extraction helper (mirror _extract_budget_per_window
 - 3 tier 顺序: haiku → sonnet → opus (Enum 顺序, deterministic)
 - 返回 dict[tier_name, {"usd": float, "set_at": str} | None] (3 tier 永远 present)
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -74,6 +75,7 @@ class TestExtractCostByTier:
 
 # === Phase 8.15: Per-Tier Budget (helper for budget_by_tier dashboard field) ===
 
+
 class TestExtractBudgetByTier:
     """Phase 8.15 T5: _extract_budget_by_tier mirror _extract_budget_per_window silent-degrade.
 
@@ -83,6 +85,7 @@ class TestExtractBudgetByTier:
 
     def test_extract_budget_by_tier_no_service_returns_all_none(self) -> None:
         """Phase 8.15: master.budget_service_by_tier = None → 3 tier values 都是 None."""
+
         # Stub controller 无 budget_service_by_tier 属性
         class _StubMaster:
             pass
@@ -194,6 +197,7 @@ class TestExtractBudgetByTier:
 
 
 # === Phase 8.16: since 透传到 3 _extract_cost_* helper + adapter ===
+
 
 class TestExtractCostSincePassthrough:
     """Phase 8.16: 3 _extract_cost_* helper 加 since 透传.

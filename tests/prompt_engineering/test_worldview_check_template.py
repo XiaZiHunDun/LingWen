@@ -2,6 +2,7 @@
 
 Doc 2 §5 SCENARIOS:worldview_check 是 auditor scenario,抽检世界观一致性。
 """
+
 from __future__ import annotations
 
 from lingwen_prompt.templates import (

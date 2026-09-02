@@ -3,6 +3,7 @@
 Phase 8.43 已迁 ESLint 10 + eslint.config.js flat config (0 .eslintrc).
 F24 补: pnpm lint 脚本 + 契约测试防 regression 回 ESLint 8 legacy config.
 """
+
 from __future__ import annotations
 
 import json
@@ -45,9 +46,7 @@ class TestFrontendEslintFlatConfig:
         assert "eslint-plugin-vue" in text
 
     def test_no_legacy_eslintrc_files(self):
-        legacy = list(FRONTEND_DIR.glob(".eslintrc*")) + list(
-            FRONTEND_DIR.glob("**/.eslintrc*")
-        )
+        legacy = list(FRONTEND_DIR.glob(".eslintrc*")) + list(FRONTEND_DIR.glob("**/.eslintrc*"))
         # exclude node_modules if glob ever picks it up
         legacy = [p for p in legacy if "node_modules" not in p.parts]
         assert legacy == []

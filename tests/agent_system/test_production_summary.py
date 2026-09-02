@@ -1,4 +1,5 @@
 """Phase 9.74 F66: production_summary builder tests."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -37,12 +38,15 @@ class TestBuildProductionSummary:
         assert summary["incremental_backfill"]["nodes_written"] == 1
 
     def test_non_chapter_workflow_returns_none(self):
-        assert build_production_summary(
-            workflow_name="other_flow",
-            initial_inputs={},
-            executions={},
-            incremental_backfill=None,
-        ) is None
+        assert (
+            build_production_summary(
+                workflow_name="other_flow",
+                initial_inputs={},
+                executions={},
+                incremental_backfill=None,
+            )
+            is None
+        )
 
     def test_serialized_executions_dict(self):
         summary = build_production_summary(

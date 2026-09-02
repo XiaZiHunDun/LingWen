@@ -18,6 +18,7 @@ File map:
   reading_power.py     - ReadingPowerCommand
   backfill.py          - BackfillCommand (Phase 9.11)
 """
+
 from typing import List, Optional
 
 from .anti_trope import AntiTropeCommand
@@ -63,12 +64,27 @@ COMMANDS = {
 }
 
 __all__ = [
-    "Command", "CheckCommand", "RepairCommand", "VerifyCommand", "StatusCommand",
-    "DoctorCommand", "PolishCommand", "AntiTropeCommand", "LLMAnalyzeCommand",
-    "ReadingPowerCommand", "StoryContractCommand", "BackfillCommand",
-    "RippleAuditCommand", "RippleRollbackCommand", "RippleResetCommand",
-    "CascadeCommand", "RippleScanCommand", "InitProjectCommand",
-    "COMMANDS", "get_command", "list_commands",
+    "Command",
+    "CheckCommand",
+    "RepairCommand",
+    "VerifyCommand",
+    "StatusCommand",
+    "DoctorCommand",
+    "PolishCommand",
+    "AntiTropeCommand",
+    "LLMAnalyzeCommand",
+    "ReadingPowerCommand",
+    "StoryContractCommand",
+    "BackfillCommand",
+    "RippleAuditCommand",
+    "RippleRollbackCommand",
+    "RippleResetCommand",
+    "CascadeCommand",
+    "RippleScanCommand",
+    "InitProjectCommand",
+    "COMMANDS",
+    "get_command",
+    "list_commands",
 ]
 
 
@@ -96,6 +112,5 @@ def list_commands() -> List[dict]:
         List of command info dicts
     """
     return [
-        {"name": cmd.name, "description": cmd.description}
-        for cmd in [cls() for cls in COMMANDS.values()]
+        {"name": cmd.name, "description": cmd.description} for cmd in [cls() for cls in COMMANDS.values()]
     ]

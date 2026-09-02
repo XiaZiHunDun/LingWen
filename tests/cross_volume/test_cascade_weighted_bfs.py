@@ -1,4 +1,5 @@
 """Phase 9.16: cascade weighted BFS tests (priority queue by edge.weight)."""
+
 import pytest
 
 from infra.cross_volume.reference_graph import (
@@ -18,6 +19,7 @@ def weighted_graph():
     from pathlib import Path
 
     from infra.cross_volume.storage import RippleStorage
+
     with tempfile.TemporaryDirectory() as tmp:
         storage = RippleStorage(db_path=Path(tmp) / "weighted.db")
         g = CrossVolumeReferenceGraph(storage)
@@ -36,8 +38,12 @@ class TestWeightedCascadeBFS:
     def test_weighted_bfs_v2_default_uses_heapq(self, weighted_graph):
         """Default weighted=True → bfs_algorithm_version='v2_weighted'."""
         ripple = CrossVolumeRipple(
-            id="rip-w1", trigger_volume=1, trigger_chapter=1,
-            affected_nodes=("n1",), affected_edges=(), proposed_actions=(),
+            id="rip-w1",
+            trigger_volume=1,
+            trigger_chapter=1,
+            affected_nodes=("n1",),
+            affected_edges=(),
+            proposed_actions=(),
         )
         cascaded = weighted_graph.trigger_cascade(ripple)
         assert isinstance(cascaded, CascadedRipple)
@@ -47,8 +53,12 @@ class TestWeightedCascadeBFS:
         """高 weight 边 n1→n3 (0.9) 应优先于 n1→n2 (0.3) 传播, n4 通过 n3 链上.
         cascade_nodes 应含 {n2, n3, n4} (max_depth=3 同 set, 但 version v2_weighted 区分)."""
         ripple = CrossVolumeRipple(
-            id="rip-w1", trigger_volume=1, trigger_chapter=1,
-            affected_nodes=("n1",), affected_edges=(), proposed_actions=(),
+            id="rip-w1",
+            trigger_volume=1,
+            trigger_chapter=1,
+            affected_nodes=("n1",),
+            affected_edges=(),
+            proposed_actions=(),
         )
         cascaded = weighted_graph.trigger_cascade(ripple)
         node_ids = {n.id for n in cascaded.cascade_nodes}
@@ -62,6 +72,7 @@ class TestWeightedCascadeBFS:
         from pathlib import Path
 
         from infra.cross_volume.storage import RippleStorage
+
         with tempfile.TemporaryDirectory() as tmp:
             storage = RippleStorage(db_path=Path(tmp) / "tie.db")
             g = CrossVolumeReferenceGraph(storage)
@@ -73,8 +84,12 @@ class TestWeightedCascadeBFS:
             # tie-break 应按 n_b < n_c (字典序), so n_b 优先 pop
             # 主要验证 cascade 不漂移, 跑 2 次返同 set
             ripple = CrossVolumeRipple(
-                id="rip-tie", trigger_volume=1, trigger_chapter=1,
-                affected_nodes=("n_a",), affected_edges=(), proposed_actions=(),
+                id="rip-tie",
+                trigger_volume=1,
+                trigger_chapter=1,
+                affected_nodes=("n_a",),
+                affected_edges=(),
+                proposed_actions=(),
             )
             c1 = g.trigger_cascade(ripple)
             c2 = g.trigger_cascade(ripple)
@@ -84,8 +99,12 @@ class TestWeightedCascadeBFS:
     def test_weighted_false_falls_back_to_v1_fifo(self, weighted_graph):
         """weighted=False 时 bfs_algorithm_version='v1', 行为跟 Phase 9.15 FIFO 一致."""
         ripple = CrossVolumeRipple(
-            id="rip-v1", trigger_volume=1, trigger_chapter=1,
-            affected_nodes=("n1",), affected_edges=(), proposed_actions=(),
+            id="rip-v1",
+            trigger_volume=1,
+            trigger_chapter=1,
+            affected_nodes=("n1",),
+            affected_edges=(),
+            proposed_actions=(),
         )
         cascaded = weighted_graph.trigger_cascade(ripple, weighted=False)
         assert cascaded.bfs_algorithm_version == "v1"
@@ -95,8 +114,12 @@ class TestWeightedCascadeBFS:
     def test_weighted_bfs_visited_set_prevents_revisit(self, weighted_graph):
         """高 weight 优先但 visited set 仍严防 revisit (n3 在 n1→n3 后 visit, 不会从 n2 反向回 n1)."""
         ripple = CrossVolumeRipple(
-            id="rip-w1", trigger_volume=1, trigger_chapter=1,
-            affected_nodes=("n1",), affected_edges=(), proposed_actions=(),
+            id="rip-w1",
+            trigger_volume=1,
+            trigger_chapter=1,
+            affected_nodes=("n1",),
+            affected_edges=(),
+            proposed_actions=(),
         )
         cascaded = weighted_graph.trigger_cascade(ripple)
         # n1 是起点, 不应在 cascade_nodes
@@ -108,6 +131,7 @@ class TestWeightedCascadeBFS:
         from pathlib import Path
 
         from infra.cross_volume.storage import RippleStorage
+
         with tempfile.TemporaryDirectory() as tmp:
             storage = RippleStorage(db_path=Path(tmp) / "depth.db")
             g = CrossVolumeReferenceGraph(storage)
@@ -115,10 +139,16 @@ class TestWeightedCascadeBFS:
             for i in range(1, 6):
                 g.add_node(ReferenceNode(id=f"n{i}", volume=1, chapter=i, dimension="character"))
             for i in range(1, 5):
-                g.add_edge(ReferenceEdge(id=f"e{i}{i+1}", from_node_id=f"n{i}", to_node_id=f"n{i+1}", weight=0.8))
+                g.add_edge(
+                    ReferenceEdge(id=f"e{i}{i + 1}", from_node_id=f"n{i}", to_node_id=f"n{i + 1}", weight=0.8)
+                )
             ripple = CrossVolumeRipple(
-                id="rip-deep", trigger_volume=1, trigger_chapter=1,
-                affected_nodes=("n1",), affected_edges=(), proposed_actions=(),
+                id="rip-deep",
+                trigger_volume=1,
+                trigger_chapter=1,
+                affected_nodes=("n1",),
+                affected_edges=(),
+                proposed_actions=(),
             )
             cascaded = g.trigger_cascade(ripple)
             # n1→n2 (1) →n3 (2) →n4 (3), n5 4 跳不达
@@ -131,6 +161,7 @@ class TestWeightedCascadeBFS:
         from pathlib import Path
 
         from infra.cross_volume.storage import RippleStorage
+
         with tempfile.TemporaryDirectory() as tmp:
             storage = RippleStorage(db_path=Path(tmp) / "cap.db")
             g = CrossVolumeReferenceGraph(storage)
@@ -141,8 +172,12 @@ class TestWeightedCascadeBFS:
                 g.add_node(ReferenceNode(id=nid, volume=2, chapter=1, dimension="character"))
                 g.add_edge(ReferenceEdge(id=f"e_{i:03d}", from_node_id="trigger", to_node_id=nid, weight=0.5))
             ripple = CrossVolumeRipple(
-                id="rip-cap", trigger_volume=1, trigger_chapter=1,
-                affected_nodes=("trigger",), affected_edges=(), proposed_actions=(),
+                id="rip-cap",
+                trigger_volume=1,
+                trigger_chapter=1,
+                affected_nodes=("trigger",),
+                affected_edges=(),
+                proposed_actions=(),
             )
             cascaded = g.trigger_cascade(ripple)
             # ≤ 100 节点 (cap), 跟 Phase 9.15 一致
@@ -151,8 +186,12 @@ class TestWeightedCascadeBFS:
     def test_weighted_bfs_collects_edges_for_each_hop(self, weighted_graph):
         """weighted BFS 仍 collect 每个 hop 对应的 edge (跟 Phase 9.15 一致)."""
         ripple = CrossVolumeRipple(
-            id="rip-w1", trigger_volume=1, trigger_chapter=1,
-            affected_nodes=("n1",), affected_edges=(), proposed_actions=(),
+            id="rip-w1",
+            trigger_volume=1,
+            trigger_chapter=1,
+            affected_nodes=("n1",),
+            affected_edges=(),
+            proposed_actions=(),
         )
         cascaded = weighted_graph.trigger_cascade(ripple)
         edge_ids = {e.id for e in cascaded.cascade_edges}

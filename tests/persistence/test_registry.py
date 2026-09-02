@@ -1,4 +1,5 @@
 """Tests for infra.persistence.registry — Phase 15.0 T2"""
+
 import sqlite3
 from pathlib import Path
 from threading import Thread

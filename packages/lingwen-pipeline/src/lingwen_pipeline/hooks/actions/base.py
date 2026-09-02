@@ -2,6 +2,7 @@
 """
 动作基类 - 所有动作类型的抽象基类
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -20,6 +21,7 @@ class ActionResult:
         error: 错误信息
         duration_ms: 执行时长（毫秒）
     """
+
     success: bool
     output: Any = None
     error: Optional[str] = None
@@ -40,11 +42,7 @@ class BaseAction(ABC):
     """
 
     @abstractmethod
-    def execute(
-        self,
-        params: Dict[str, Any],
-        context: Dict[str, Any]
-    ) -> ActionResult:
+    def execute(self, params: Dict[str, Any], context: Dict[str, Any]) -> ActionResult:
         """
         执行动作
 

@@ -5,6 +5,7 @@ Also registers /api/ws/workflows WebSocket endpoint.
 
 3680-3817).
 """
+
 from __future__ import annotations
 
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
@@ -86,9 +87,7 @@ def register_workflows(app: FastAPI, ctx: RoutesContext) -> None:
         """恢复 DECISION 暂停的工作流"""
         ctrl = require_controller(ctx)
         try:
-            result = ctrl.resume_workflow(
-                body.decision_id, body.option, resolved_by=body.resolved_by
-            )
+            result = ctrl.resume_workflow(body.decision_id, body.option, resolved_by=body.resolved_by)
         except KeyError as e:
             raise HTTPException(status_code=404, detail=f"decision not found: {e}")
         except ValueError as e:
@@ -119,9 +118,7 @@ def register_workflows(app: FastAPI, ctx: RoutesContext) -> None:
         if ctx.master_controller is None:
             return WorkflowStatusResponse(is_active=False, workflow_name=None)
         since = _parse_time_window(time_window)
-        return WorkflowStatusResponse(
-            **ctx.master_controller.get_active_workflow_status(since=since)
-        )
+        return WorkflowStatusResponse(**ctx.master_controller.get_active_workflow_status(since=since))
 
     @app.websocket("/api/ws/workflows")
     async def ws_workflows(ws: WebSocket) -> None:
@@ -142,11 +139,14 @@ def register_workflows(app: FastAPI, ctx: RoutesContext) -> None:
         try:
             initial_workflow = ctx.master_controller.get_active_workflow_status()
             initial_decisions = ctx.master_controller.list_pending_decisions()
-            await ctx.manager.send_to(ws, {
-                "type": EVENT_CONNECTED,
-                "snapshot": initial_workflow,
-                "pending_decisions": initial_decisions,
-            })
+            await ctx.manager.send_to(
+                ws,
+                {
+                    "type": EVENT_CONNECTED,
+                    "snapshot": initial_workflow,
+                    "pending_decisions": initial_decisions,
+                },
+            )
             while True:
                 try:
                     await ws.receive_text()
@@ -217,10 +217,7 @@ def register_workflows(app: FastAPI, ctx: RoutesContext) -> None:
                 pass
 
         mermaid_str = render_mermaid(graph, executions=executions, include_classdef=True)
-        has_decision = any(
-            graph.get_node(nid).type == NodeType.DECISION
-            for nid in graph.node_ids()
-        )
+        has_decision = any(graph.get_node(nid).type == NodeType.DECISION for nid in graph.node_ids())
         return WorkflowMermaidResponse(
             workflow_name=workflow_name,
             mermaid=mermaid_str,

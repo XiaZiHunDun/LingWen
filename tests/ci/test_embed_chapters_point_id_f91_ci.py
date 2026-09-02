@@ -1,4 +1,5 @@
 """Phase 9.96: embed_chapters numeric point ID contract."""
+
 from __future__ import annotations
 
 from pathlib import Path

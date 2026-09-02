@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Tests for TimelineAgeConsistencyChecker"""
+
 import sys
 from pathlib import Path
 
@@ -31,9 +32,7 @@ class TestTimelineAgeConsistencyChecker:
 
     def test_age_contradiction_p0(self):
         """Test age contradiction - P0"""
-        context = {
-            "character_ages": {"林夜": {1: 7, 24: 22}}
-        }
+        context = {"character_ages": {"林夜": {1: 7, 24: 22}}}
         # 25 > 21 (expected age at ch22), so triggers P0
         content = "林夜25岁那年的某个下午，他做出了决定。"
 
@@ -55,9 +54,7 @@ class TestTimelineAgeConsistencyChecker:
 
     def test_age_contradiction_no_issue_when_appropriate(self):
         """Test no issue when age mention is consistent"""
-        context = {
-            "character_ages": {"林夜": {1: 7, 24: 22}}
-        }
+        context = {"character_ages": {"林夜": {1: 7, 24: 22}}}
         # 10岁 is less than expected 21-22, so no issue
         content = "林夜想起10岁那年的事，心中感慨万千。"
 
@@ -68,9 +65,7 @@ class TestTimelineAgeConsistencyChecker:
 
     def test_no_contradiction(self):
         """Test no contradiction - normal age description"""
-        context = {
-            "character_ages": {"林夜": {1: 7, 24: 22}}
-        }
+        context = {"character_ages": {"林夜": {1: 7, 24: 22}}}
         content = "林夜想起七岁那年的事，心中感慨万千。"
 
         issues = self.checker.check(content, 22, context)

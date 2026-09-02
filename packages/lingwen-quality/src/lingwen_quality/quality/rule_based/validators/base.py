@@ -12,6 +12,7 @@ from typing import Any, Dict, List
 
 class IssueSeverity(IntEnum):
     """问题严重级别"""
+
     P0 = 0  # 致命问题
     P1 = 1  # 严重问题
     P2 = 2  # 一般问题
@@ -20,6 +21,7 @@ class IssueSeverity(IntEnum):
 @dataclass
 class ValidationResult:
     """验证结果"""
+
     passed: bool
     issues: List[str] = field(default_factory=list)
     severity: IssueSeverity = IssueSeverity.P2

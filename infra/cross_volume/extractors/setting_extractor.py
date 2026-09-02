@@ -1,4 +1,5 @@
 """Phase 9.11: SettingExtractor — regex 名词后缀 (学院/山门/大陆/...)."""
+
 import logging
 import re
 from pathlib import Path
@@ -65,9 +66,7 @@ class SettingExtractor:
                     continue
                 # Chinese-only check
                 candidate = text[start:suffix_start]
-                if len(candidate) == plen and re.match(
-                    r"[一-鿿]{" + str(plen) + "}", candidate
-                ):
+                if len(candidate) == plen and re.match(r"[一-鿿]{" + str(plen) + "}", candidate):
                     found = candidate + m.group()
                     break
             if found:

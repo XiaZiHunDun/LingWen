@@ -1,10 +1,12 @@
 """Phase 126 v16.2.4: tests for content/ subdomain (8 modules + __init__ star-imports)."""
+
 from __future__ import annotations
 
 
 def test_content_package_imports() -> None:
     """lingwen_creator.content package is importable."""
     import lingwen_creator.content
+
     assert lingwen_creator.content.__name__ == "lingwen_creator.content"
 
 
@@ -20,6 +22,7 @@ def test_content_star_imports_all_8_submodules() -> None:
         run_creator_agent_plan,
         run_creator_logic_check,
     )
+
     assert callable(run_creator_agent_plan)
     assert callable(enrich_batch_history_job)
     assert callable(creator_overview)
@@ -33,6 +36,7 @@ def test_content_mode_shim_re_exports_shared() -> None:
     """content/mode.py is a shim → lingwen_creator.shared.mode."""
     from lingwen_creator.content.mode import CreatorSettings as ContentCreatorSettings
     from lingwen_creator.shared.mode import CreatorSettings as SharedCreatorSettings
+
     assert ContentCreatorSettings is SharedCreatorSettings
 
 
@@ -43,6 +47,7 @@ def test_content_dashboard_chapter_preview_exists() -> None:
         save_creator_chapter_body,
         save_creator_chapter_outline,
     )
+
     assert callable(creator_chapter_preview)
     assert callable(save_creator_chapter_outline)
     assert callable(save_creator_chapter_body)
@@ -51,6 +56,7 @@ def test_content_dashboard_chapter_preview_exists() -> None:
 def test_content_preferences_uses_shared_mode() -> None:
     """content.preferences imports from lingwen_creator.shared.mode (intra-package)."""
     from lingwen_creator.content.preferences import creator_preferences_payload
+
     assert callable(creator_preferences_payload)
 
 

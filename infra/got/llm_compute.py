@@ -14,6 +14,7 @@ API:
 - 与 ComputeFn 协议 (Callable[[ThoughtNode, dict], ComputeResult]) 完全兼容
 - 直接传 GoTScheduler(compute_fn=llm_compute) 即可使用
 """
+
 from __future__ import annotations
 
 import json
@@ -118,6 +119,7 @@ class LLMComputeFn:
             # 实际生产中可以扩展 TieredRouter 返回实际 tier
             from lingwen_llm.providers.model_tiers import ModelTier
             from lingwen_prompt.scenarios import SCENARIO_TIER_MAP
+
             try:
                 tier = SCENARIO_TIER_MAP[scenario]
             except KeyError:

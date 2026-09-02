@@ -3,6 +3,7 @@
 Dev/CI tool for comparing extraction quality / cost / latency across
 LLM providers. CLI and library entrypoints.
 """
+
 from __future__ import annotations
 
 from infra.llm_benchmarks.metrics import (

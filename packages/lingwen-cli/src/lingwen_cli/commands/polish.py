@@ -2,6 +2,7 @@
 
 Mirrors lines 415-505 of the original infra/cli/commands.py.
 """
+
 from typing import List
 
 from lingwen_cli.options import PolishOptions, UnifiedOptions
@@ -62,9 +63,7 @@ class PolishCommand(Command):
 
                     if options.dry_run:
                         # Dry run mode - just classify
-                        result = polisher.polish_chapter(
-                            ch, "", dry_run=True
-                        )
+                        result = polisher.polish_chapter(ch, "", dry_run=True)
                         if result.get("polished"):
                             print(f"ch{ch:03d}: [干跑] 将润色 ({result.get('type')})")
                             polished += 1

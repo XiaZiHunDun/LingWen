@@ -2,6 +2,7 @@
 
 Models unchanged — only relocated for code organization.
 """
+
 from __future__ import annotations
 
 from typing import Optional
@@ -43,17 +44,21 @@ class CreatorChapterPreviewResponse(BaseModel):
     body_text: Optional[str] = None
     outline_text: Optional[str] = None
 
+
 class CreatorChapterBodySaveRequest(BaseModel):
     body: str = ""
 
+
 class CreatorChapterOutlineSaveRequest(BaseModel):
     outline: str = ""
+
 
 class CreatorTaskModelsPreferences(BaseModel):
     outline: str = "inherit"
     body: str = "inherit"
     review: str = "inherit"
     memory: str = "inherit"
+
 
 class CreatorInterventionRules(BaseModel):
     deviation_alerts: bool = True
@@ -64,9 +69,9 @@ class CreatorInterventionRules(BaseModel):
     memory_offline: bool = True
     empty_write_hint: bool = True
 
+
 class CreatorModelOption(BaseModel):
     id: str
     label: str
     provider: str
     available: bool = True
-

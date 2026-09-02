@@ -40,7 +40,7 @@ class AgentBase:
     default_temperature: float = AGENT_DEFAULTS["temperature"]
     default_max_tokens: int = AGENT_DEFAULTS["max_tokens"]
 
-    def __init__(self, router: Optional['AIRouter'] = None):
+    def __init__(self, router: Optional["AIRouter"] = None):
         """初始化Agent
 
         Args:
@@ -50,7 +50,7 @@ class AgentBase:
         self._fallback_mode = router is None
 
     @property
-    def router(self) -> Optional['AIRouter']:
+    def router(self) -> Optional["AIRouter"]:
         """获取AIRouter实例"""
         return self._router
 
@@ -66,7 +66,7 @@ class AgentBase:
         model: Optional[str] = None,
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
-        **kwargs
+        **kwargs,
     ) -> str:
         """标准LLM调用
 
@@ -93,7 +93,7 @@ class AgentBase:
             model=model or self.default_model,
             temperature=temperature or self.default_temperature,
             max_tokens=max_tokens or self.default_max_tokens,
-            **kwargs
+            **kwargs,
         )
 
     def chat_with_usage(
@@ -126,8 +126,12 @@ class AgentBase:
         if not hasattr(self._router, "generate_with_usage"):
             # 兼容旧 AIRouter (无新方法) → 走 chat() + 估算
             text = self.chat(
-                prompt=prompt, system=system, model=model,
-                temperature=temperature, max_tokens=max_tokens, **kwargs,
+                prompt=prompt,
+                system=system,
+                model=model,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                **kwargs,
             )
             return text, {
                 "input_tokens": len(prompt) // 4,
@@ -135,19 +139,15 @@ class AgentBase:
             }
 
         return self._router.generate_with_usage(
-            prompt=prompt, system=system,
+            prompt=prompt,
+            system=system,
             model=model or self.default_model,
             temperature=temperature or self.default_temperature,
             max_tokens=max_tokens or self.default_max_tokens,
             **kwargs,
         )
 
-    def chat_json(
-        self,
-        prompt: str,
-        system: Optional[str] = None,
-        **kwargs
-    ) -> Dict[str, Any]:
+    def chat_json(self, prompt: str, system: Optional[str] = None, **kwargs) -> Dict[str, Any]:
         """JSON格式响应调用
 
         Args:
@@ -163,7 +163,7 @@ class AgentBase:
         response = self.chat(
             prompt=prompt,
             system=system or "你是一个JSON生成器。只输出有效的JSON，不要有任何其他文字。",
-            **kwargs
+            **kwargs,
         )
 
         # 尝试解析JSON
@@ -172,7 +172,8 @@ class AgentBase:
         except json.JSONDecodeError:
             # 尝试提取JSON块
             import re
-            json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', response, re.DOTALL)
+
+            json_match = re.search(r"\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}", response, re.DOTALL)
             if json_match:
                 return json.loads(json_match.group(0))
             raise ValueError(f"Failed to parse JSON response: {response[:200]}")

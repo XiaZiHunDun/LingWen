@@ -1,4 +1,5 @@
 """Tests for creator v5.6 diff refresh on save, batch running pulse, companion badge tint."""
+
 from __future__ import annotations
 
 from lingwen_creator.content.ui_profile import resolve_creator_ui_profile

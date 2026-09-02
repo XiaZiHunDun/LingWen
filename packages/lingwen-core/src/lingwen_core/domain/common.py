@@ -8,6 +8,7 @@ Phase 18.1 — 从 infra/world_model/data_structures.py 迁移。
 - KeyPoint — 世界关键点
 - Relation — 关键点之间的关系
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

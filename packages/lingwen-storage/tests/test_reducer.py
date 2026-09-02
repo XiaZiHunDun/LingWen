@@ -31,10 +31,13 @@ def test_chapter_drafted_increments_count():
 
 def test_audit_appends_issues():
     e1 = _e("STEP_12", {"chapter_id": "ch001", "draft_path": "/tmp/c.md"})
-    e2 = _e("STEP_15", {
-        "chapter_id": "ch001",
-        "issues": [{"severity": "P1", "category": "ai-trace"}],
-    })
+    e2 = _e(
+        "STEP_15",
+        {
+            "chapter_id": "ch001",
+            "issues": [{"severity": "P1", "category": "ai-trace"}],
+        },
+    )
     state = reduce_events([e1, e2])
     assert state.audit_history["ch001"][0].severity == "P1"
 
@@ -59,9 +62,12 @@ def test_decision_appends_to_pending():
 
 
 def test_audit_missing_chapter_id_is_skipped():
-    e1 = _e("STEP_15", {
-        "issues": [{"severity": "P1", "category": "ai-trace"}],
-    })
+    e1 = _e(
+        "STEP_15",
+        {
+            "issues": [{"severity": "P1", "category": "ai-trace"}],
+        },
+    )
     state = reduce_events([e1])
     assert "" not in state.chapters_audited
     assert "" not in state.audit_history

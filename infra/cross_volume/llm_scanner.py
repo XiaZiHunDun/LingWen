@@ -17,6 +17,7 @@ Design:
 - Cost tracking via cost_tracker.record(scenario="cvg_llm_scan", ...)
 - ReferenceNode.id is auto-generated uuid (do NOT pass node_id from LLM)
 """
+
 import json
 import logging
 import time
@@ -85,8 +86,7 @@ class LLMScanner:
         self.model_id = f"claude-{model_tier.value}"
         # Pre-load 4 prompt templates (read once at init)
         self._prompts: dict[DimensionT, str] = {
-            dim: (PROMPT_DIR / fname).read_text(encoding="utf-8")
-            for dim, fname in PROMPT_FILES.items()
+            dim: (PROMPT_DIR / fname).read_text(encoding="utf-8") for dim, fname in PROMPT_FILES.items()
         }
 
     # --- Public API -----------------------------------------------------
@@ -134,9 +134,7 @@ class LLMScanner:
         # other literal braces in the template (e.g. JSON example `{"nodes": [...]}`)
         # are not format placeholders. We do a 2-replace swap to avoid touching templates.
         prompt = (
-            self._prompts[dim]
-            .replace("{chapter_content}", chapter_content)
-            .replace("{context}", context)
+            self._prompts[dim].replace("{chapter_content}", chapter_content).replace("{context}", context)
         )
         text = self._call_with_retry(prompt)
 
@@ -182,7 +180,7 @@ class LLMScanner:
                     raise LLMRetryExhausted(f"4xx: {e}") from e
                 # Retryable error: backoff and try again (unless last attempt)
                 if attempt < LLM_MAX_RETRIES:
-                    backoff = LLM_RETRY_BACKOFF_BASE * (LLM_RETRY_BACKOFF_FACTOR ** attempt)
+                    backoff = LLM_RETRY_BACKOFF_BASE * (LLM_RETRY_BACKOFF_FACTOR**attempt)
                     time.sleep(backoff)
                     continue
                 # All retries exhausted
@@ -217,12 +215,7 @@ class LLMScanner:
         for n in raw_nodes:
             if not isinstance(n, dict):
                 continue
-            title = (
-                n.get("name")
-                or n.get("keyword")
-                or n.get("event")
-                or ""
-            )
+            title = n.get("name") or n.get("keyword") or n.get("event") or ""
             chapter_n = (
                 n.get("first_appearance_chapter")
                 or n.get("chapter")

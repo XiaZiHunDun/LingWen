@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
 from prompt_assembler import PromptAssembler, TemplateCategory
 from template_recommender import TemplateRecommender, TemplateScore
@@ -63,7 +63,7 @@ templates:
     success_rate: 0.9
     avg_score: 9.0
 """
-        (tmp_path / "00_模板索引.yaml").write_text(index_content, encoding='utf-8')
+        (tmp_path / "00_模板索引.yaml").write_text(index_content, encoding="utf-8")
 
         # 创建温度映射
         temp_content = """
@@ -77,23 +77,20 @@ scene_types:
       recommended: 0.7
       range: [0.6, 0.8]
 """
-        (config_dir / "场景温度映射.yaml").write_text(temp_content, encoding='utf-8')
+        (config_dir / "场景温度映射.yaml").write_text(temp_content, encoding="utf-8")
 
         # 创建模板文件
         outline_dir = tmp_path / "01_大纲生成"
         outline_dir.mkdir(parents=True)
-        (outline_dir / "全文大纲.md").write_text("# 全文大纲", encoding='utf-8')
+        (outline_dir / "全文大纲.md").write_text("# 全文大纲", encoding="utf-8")
 
         continuation_dir = tmp_path / "02_正文续写"
         continuation_dir.mkdir(parents=True)
-        (continuation_dir / "标准续写.md").write_text("# 标准续写", encoding='utf-8')
+        (continuation_dir / "标准续写.md").write_text("# 标准续写", encoding="utf-8")
 
         # 创建 assembler 和 recommender
         assembler = PromptAssembler(str(config_dir))
-        recommender = TemplateRecommender(
-            assembler,
-            index_file=str(tmp_path / "00_模板索引.yaml")
-        )
+        recommender = TemplateRecommender(assembler, index_file=str(tmp_path / "00_模板索引.yaml"))
 
         return recommender
 
@@ -142,6 +139,7 @@ class TestVersionManagerBasic:
         config_dir.mkdir(parents=True)
 
         from version_manager import VersionManager
+
         return VersionManager(str(config_dir))
 
     def test_version_manager_init(self, simple_version_manager):

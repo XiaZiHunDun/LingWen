@@ -24,16 +24,18 @@ logger = logging.getLogger(__name__)
 
 class KeyChapterType(Enum):
     """章节关键类型"""
-    REGULAR = "regular"           # 普通章节
-    CLIMAX = "climax"             # 高潮章节
-    EMOTIONAL = "emotional"       # 情感转折章节
-    FORESHADOW = "foreshadow"     # 伏笔回收章节
-    CREATION = "creation"         # 重要角色首次出场
+
+    REGULAR = "regular"  # 普通章节
+    CLIMAX = "climax"  # 高潮章节
+    EMOTIONAL = "emotional"  # 情感转折章节
+    FORESHADOW = "foreshadow"  # 伏笔回收章节
+    CREATION = "creation"  # 重要角色首次出场
 
 
 @dataclass
 class KeyChapterInfo:
     """关键章节信息"""
+
     chapter_num: int
     chapter_type: KeyChapterType
     confidence: float  # 0.0-1.0
@@ -49,41 +51,69 @@ class KeyChapterClassifier:
 
     # 高潮章节关键词
     CLIMAX_KEYWORDS = [
-        "决战", "最终", "觉醒", "突破", "毁灭",
-        "死亡", "永别", "终章", "天罚", "湮灭",
-        "爆发", "升华", "蜕变", "真相大白"
+        "决战",
+        "最终",
+        "觉醒",
+        "突破",
+        "毁灭",
+        "死亡",
+        "永别",
+        "终章",
+        "天罚",
+        "湮灭",
+        "爆发",
+        "升华",
+        "蜕变",
+        "真相大白",
     ]
 
     # 情感转折关键词
     EMOTIONAL_KEYWORDS = [
-        "牺牲", "离别", "告白", "求婚", "婚礼",
-        "死别", "重逢", "和解", "释怀", "心痛",
-        "泪", "哭", "悲伤", "绝望", "希望"
+        "牺牲",
+        "离别",
+        "告白",
+        "求婚",
+        "婚礼",
+        "死别",
+        "重逢",
+        "和解",
+        "释怀",
+        "心痛",
+        "泪",
+        "哭",
+        "悲伤",
+        "绝望",
+        "希望",
     ]
 
     # 伏笔回收章节（来自伏笔追踪表）
     FORESHADOW_RECOVERY_CHAPTERS = [
-        239, 240, 241,  # 决战前夕
-        261, 262, 263,  # 苏琳苏醒
-        270, 271, 272,  # 小九觉醒
-        291, 292, 293,  # 暗皇登场
-        340, 341, 342,  # 最终决战
+        239,
+        240,
+        241,  # 决战前夕
+        261,
+        262,
+        263,  # 苏琳苏醒
+        270,
+        271,
+        272,  # 小九觉醒
+        291,
+        292,
+        293,  # 暗皇登场
+        340,
+        341,
+        342,  # 最终决战
     ]
 
     # 重要角色首次出场章节
     CHARACTER_CREATION_CHAPTERS = [
-        1,    # 林夜首次出场
-        6,    # 苏琳首次出场
-        16,   # 小九首次出场
-        22,   # 铁蛋首次出场
+        1,  # 林夜首次出场
+        6,  # 苏琳首次出场
+        16,  # 小九首次出场
+        22,  # 铁蛋首次出场
     ]
 
-    def classify(
-        self,
-        chapter_num: int,
-        chapter_title: str = "",
-        content: str = ""
-    ) -> KeyChapterInfo:
+    def classify(self, chapter_num: int, chapter_title: str = "", content: str = "") -> KeyChapterInfo:
         """
         分类章节关键类型
 
@@ -101,7 +131,7 @@ class KeyChapterClassifier:
                 chapter_num=chapter_num,
                 chapter_type=KeyChapterType.CLIMAX,
                 confidence=0.9,
-                reason="章节标题或内容包含高潮关键词"
+                reason="章节标题或内容包含高潮关键词",
             )
 
         # 检查情感转折
@@ -110,7 +140,7 @@ class KeyChapterClassifier:
                 chapter_num=chapter_num,
                 chapter_type=KeyChapterType.EMOTIONAL,
                 confidence=0.85,
-                reason="章节内容包含情感转折关键词"
+                reason="章节内容包含情感转折关键词",
             )
 
         # 检查伏笔回收
@@ -119,7 +149,7 @@ class KeyChapterClassifier:
                 chapter_num=chapter_num,
                 chapter_type=KeyChapterType.FORESHADOW,
                 confidence=0.95,
-                reason="章节在伏笔追踪表的回收节点"
+                reason="章节在伏笔追踪表的回收节点",
             )
 
         # 检查角色首次出场
@@ -128,23 +158,15 @@ class KeyChapterClassifier:
                 chapter_num=chapter_num,
                 chapter_type=KeyChapterType.CREATION,
                 confidence=0.9,
-                reason="重要角色首次出场章节"
+                reason="重要角色首次出场章节",
             )
 
         # 默认普通章节
         return KeyChapterInfo(
-            chapter_num=chapter_num,
-            chapter_type=KeyChapterType.REGULAR,
-            confidence=0.0,
-            reason="普通章节"
+            chapter_num=chapter_num, chapter_type=KeyChapterType.REGULAR, confidence=0.0, reason="普通章节"
         )
 
-    def _is_climax(
-        self,
-        chapter_num: int,
-        chapter_title: str,
-        content: str
-    ) -> bool:
+    def _is_climax(self, chapter_num: int, chapter_title: str, content: str) -> bool:
         """检查是否为高潮章节"""
         combined = f"{chapter_title} {content[:500]}"
         for keyword in self.CLIMAX_KEYWORDS:
@@ -152,12 +174,7 @@ class KeyChapterClassifier:
                 return True
         return False
 
-    def _is_emotional(
-        self,
-        chapter_num: int,
-        chapter_title: str,
-        content: str
-    ) -> bool:
+    def _is_emotional(self, chapter_num: int, chapter_title: str, content: str) -> bool:
         """检查是否为情感转折章节"""
         combined = f"{chapter_title} {content[:500]}"
         for keyword in self.EMOTIONAL_KEYWORDS:
@@ -233,12 +250,7 @@ class ClaudePolisher:
         else:
             self._client = client
 
-    def polish(
-        self,
-        chapter_num: int,
-        content: str,
-        key_type: KeyChapterType
-    ) -> str:
+    def polish(self, chapter_num: int, content: str, key_type: KeyChapterType) -> str:
         """
         对关键章节进行深度润色
 
@@ -254,22 +266,14 @@ class ClaudePolisher:
 
         try:
             polished = self._client.generate(
-                prompt=prompt,
-                system=self.POLISH_SYSTEM_PROMPT,
-                max_tokens=8192,
-                temperature=0.3
+                prompt=prompt, system=self.POLISH_SYSTEM_PROMPT, max_tokens=8192, temperature=0.3
             )
             return polished.strip()
         except Exception as e:
             logger.error(f"Claude polish failed for ch{chapter_num:03d}: {e}")
             raise
 
-    def _build_prompt(
-        self,
-        chapter_num: int,
-        content: str,
-        key_type: KeyChapterType
-    ) -> str:
+    def _build_prompt(self, chapter_num: int, content: str, key_type: KeyChapterType) -> str:
         """构建润色提示词"""
         hint = self.TYPE_HINTS.get(key_type, self.TYPE_HINTS[KeyChapterType.REGULAR])
 
@@ -295,17 +299,13 @@ class KeyChapterPolisher:
         self,
         client: Optional[MiniMaxProvider] = None,
         classifier: Optional[KeyChapterClassifier] = None,
-        polisher: Optional[ClaudePolisher] = None
+        polisher: Optional[ClaudePolisher] = None,
     ):
         self._classifier = classifier or KeyChapterClassifier()
         self._polisher = polisher or ClaudePolisher(client)
 
     def polish_chapter(
-        self,
-        chapter_num: int,
-        content: str,
-        chapter_title: str = "",
-        dry_run: bool = False
+        self, chapter_num: int, content: str, chapter_title: str = "", dry_run: bool = False
     ) -> Dict[str, Any]:
         """
         润色章节
@@ -327,7 +327,7 @@ class KeyChapterPolisher:
                 "chapter_num": chapter_num,
                 "polished": False,
                 "reason": "普通章节，不需要润色",
-                "type": info.chapter_type.value
+                "type": info.chapter_type.value,
             }
 
         if dry_run:
@@ -337,21 +337,19 @@ class KeyChapterPolisher:
                 "reason": info.reason,
                 "type": info.chapter_type.value,
                 "dry_run": True,
-                "message": "干跑模式，实际未润色"
+                "message": "干跑模式，实际未润色",
             }
 
         # 执行润色
         try:
-            polished_content = self._polisher.polish(
-                chapter_num, content, info.chapter_type
-            )
+            polished_content = self._polisher.polish(chapter_num, content, info.chapter_type)
             return {
                 "chapter_num": chapter_num,
                 "polished": True,
                 "reason": info.reason,
                 "type": info.chapter_type.value,
                 "original_length": len(content),
-                "polished_length": len(polished_content)
+                "polished_length": len(polished_content),
             }
         except Exception as e:
             return {
@@ -359,14 +357,10 @@ class KeyChapterPolisher:
                 "polished": False,
                 "reason": info.reason,
                 "type": info.chapter_type.value,
-                "error": str(e)
+                "error": str(e),
             }
 
-    def polish_with_backup(
-        self,
-        chapter_num: int,
-        dry_run: bool = False
-    ) -> Dict[str, Any]:
+    def polish_with_backup(self, chapter_num: int, dry_run: bool = False) -> Dict[str, Any]:
         """
         带备份的润色
 
@@ -376,11 +370,7 @@ class KeyChapterPolisher:
         ch_file = chapters_dir / f"ch{chapter_num:03d}.md"
 
         if not ch_file.exists():
-            return {
-                "chapter_num": chapter_num,
-                "polished": False,
-                "error": f"章节文件不存在: {ch_file}"
-            }
+            return {"chapter_num": chapter_num, "polished": False, "error": f"章节文件不存在: {ch_file}"}
 
         # 读取内容
         content = ch_file.read_text(encoding="utf-8")
@@ -402,10 +392,7 @@ class KeyChapterPolisher:
             ch_file.rename(backup_file)
 
             # 写入润色后内容
-            polished_content = self._polisher.polish(
-                chapter_num, body,
-                KeyChapterType(result["type"])
-            )
+            polished_content = self._polisher.polish(chapter_num, body, KeyChapterType(result["type"]))
             ch_file.write_text(f"# {title}\n\n{polished_content}", encoding="utf-8")
 
             result["backup_file"] = str(backup_file)

@@ -6,6 +6,7 @@ v16.5 #N.4: drop direct ``import sqlite3``; ``init_sqlite`` now
 delegates to ``SqliteStorageAdapter`` (the canonical backend) and
 returns a ``ConnectionPort`` wrapper.
 """
+
 import logging
 import os
 from pathlib import Path
@@ -81,6 +82,7 @@ def _acquire_lock() -> bool:
     """获取flock锁"""
     global _lock_fd
     import fcntl
+
     try:
         _lock_fd = os.open(str(LOCKFILE), os.O_CREAT | os.O_RDWR)
         fcntl.flock(_lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -93,6 +95,7 @@ def _release_lock() -> None:
     """释放flock锁"""
     global _lock_fd
     import fcntl
+
     if _lock_fd is not None:
         try:
             fcntl.flock(_lock_fd, fcntl.LOCK_UN)

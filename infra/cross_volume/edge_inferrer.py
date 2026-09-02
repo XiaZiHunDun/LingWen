@@ -16,6 +16,7 @@ Design:
 - Cost tracking via cost_tracker.record(scenario="cvg_edge_inference", ...)
 - ReferenceEdge.id is auto-generated uuid (do NOT pass edge_id from LLM)
 """
+
 import json
 import logging
 import time
@@ -112,16 +113,11 @@ class EdgeInferrer:
             return []
 
         nodes_dump = json.dumps(
-            [
-                {"id": n.id, "dim": n.dimension, "conf": n.confidence}
-                for n in filtered
-            ],
+            [{"id": n.id, "dim": n.dimension, "conf": n.confidence} for n in filtered],
             sort_keys=True,
             ensure_ascii=False,
         )
-        cache_key = LLMCache.make_key(
-            f"{nodes_dump}|{chapter_content}", PROMPT_FILE, self.model_id
-        )
+        cache_key = LLMCache.make_key(f"{nodes_dump}|{chapter_content}", PROMPT_FILE, self.model_id)
 
         cached = self.cache.get(cache_key)
         if cached is not None:
@@ -131,10 +127,7 @@ class EdgeInferrer:
         # We use .replace() (NOT .format()) because the prompt template contains
         # literal braces (e.g. JSON example `{"edges": [...]}`) which would
         # conflict with str.format placeholders.
-        prompt = (
-            self._prompt.replace("{chapter_content}", chapter_content)
-            .replace("{nodes}", nodes_dump)
-        )
+        prompt = self._prompt.replace("{chapter_content}", chapter_content).replace("{nodes}", nodes_dump)
 
         try:
             text = self._call_with_retry(prompt)
@@ -190,7 +183,7 @@ class EdgeInferrer:
                     raise
                 # Retryable error: backoff and try again (unless last attempt)
                 if attempt < LLM_MAX_RETRIES:
-                    backoff = LLM_RETRY_BACKOFF_BASE * (LLM_RETRY_BACKOFF_FACTOR ** attempt)
+                    backoff = LLM_RETRY_BACKOFF_BASE * (LLM_RETRY_BACKOFF_FACTOR**attempt)
                     time.sleep(backoff)
                     continue
                 # All retries exhausted

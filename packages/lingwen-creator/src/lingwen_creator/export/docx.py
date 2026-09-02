@@ -2,6 +2,7 @@
 
 Migrated from infra/creator_export_docx.py in Phase 126 v16.2.5.
 """
+
 from __future__ import annotations
 
 import html
@@ -27,16 +28,11 @@ def _paragraph_xml(text: str, *, style: str | None = None) -> str:
     style_xml = f'<w:pPr><w:pStyle w:val="{style}"/></w:pPr>' if style else ""
     if not text:
         return f"<w:p>{style_xml}</w:p>"
-    return (
-        f"<w:p>{style_xml}<w:r><w:t xml:space=\"preserve\">{_xml_escape(text)}</w:t></w:r></w:p>"
-    )
+    return f'<w:p>{style_xml}<w:r><w:t xml:space="preserve">{_xml_escape(text)}</w:t></w:r></w:p>'
 
 
 def _heading_xml(text: str) -> str:
-    return (
-        "<w:p><w:pPr><w:pStyle w:val=\"Heading1\"/></w:pPr>"
-        f"<w:r><w:t>{_xml_escape(text)}</w:t></w:r></w:p>"
-    )
+    return f'<w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t>{_xml_escape(text)}</w:t></w:r></w:p>'
 
 
 def _document_body(

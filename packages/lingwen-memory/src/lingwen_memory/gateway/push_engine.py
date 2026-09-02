@@ -6,6 +6,7 @@
 - 相关历史事件
 - 向量检索的相关段落
 """
+
 from typing import Any, Dict, List, Optional
 
 from lingwen_memory.gateway.query_engine import QueryEngine

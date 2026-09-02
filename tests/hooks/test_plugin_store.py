@@ -2,6 +2,7 @@
 """
 Plugin Store Tests
 """
+
 import pytest
 from lingwen_pipeline.hooks.plugin_store import PluginMetadata, PluginStore
 
@@ -22,7 +23,7 @@ def sample_plugin():
         description="A plugin for testing",
         author="Test Author",
         hooks=["test_hook"],
-        actions=["test_action"]
+        actions=["test_action"],
     )
 
 
@@ -38,7 +39,7 @@ def populated_store():
             description="Checks chapter quality",
             author="Author A",
             hooks=["chapter_review"],
-            actions=["run_checker"]
+            actions=["run_checker"],
         ),
         PluginMetadata(
             id="style_formatter",
@@ -47,7 +48,7 @@ def populated_store():
             description="Formats text style",
             author="Author B",
             hooks=["chapter_review"],
-            actions=["format_text"]
+            actions=["format_text"],
         ),
         PluginMetadata(
             id="notifier",
@@ -56,7 +57,7 @@ def populated_store():
             description="Sends notifications",
             author="Author C",
             hooks=["notify_hook"],
-            actions=["notify"]
+            actions=["notify"],
         ),
         PluginMetadata(
             id="archive_tool",
@@ -66,7 +67,7 @@ def populated_store():
             author="Author D",
             hooks=["archive_hook"],
             actions=["archive"],
-            enabled=False
+            enabled=False,
         ),
     ]
     for plugin in plugins:
@@ -93,7 +94,7 @@ class TestPluginRegistration:
             description="Duplicate ID",
             author="Another Author",
             hooks=["another_hook"],
-            actions=[]
+            actions=[],
         )
         result = store.register_plugin(duplicate)
         assert result is False
@@ -240,4 +241,5 @@ class TestPluginCount:
 
 if __name__ == "__main__":
     import unittest
+
     unittest.main()

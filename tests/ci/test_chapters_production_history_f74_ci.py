@@ -1,4 +1,5 @@
 """Phase 9.82 F74: CI contract — ChaptersPage production history."""
+
 from __future__ import annotations
 
 from pathlib import Path

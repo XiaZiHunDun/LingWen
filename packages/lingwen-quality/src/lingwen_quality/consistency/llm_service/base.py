@@ -7,6 +7,7 @@ from .chapter_content import ChapterContent, LLMIssue
 
 logger = logging.getLogger(__name__)
 
+
 class LLMService:
     """LLM服务基类 - 提供批量检测能力"""
 
@@ -19,21 +20,15 @@ class LLMService:
 
     def add_to_batch(self, chapter_num: int, content: str, regions: List[Dict]):
         """添加章节到待处理批次"""
-        self._pending.append(ChapterContent(
-            chapter_num=chapter_num,
-            content=content,
-            uncertain_regions=regions
-        ))
+        self._pending.append(
+            ChapterContent(chapter_num=chapter_num, content=content, uncertain_regions=regions)
+        )
 
     def _should_execute(self) -> bool:
         """判断是否达到批次阈值"""
         return len(self._pending) >= self.batch_size
 
-    def check_batch(
-        self,
-        checker_type: str,
-        prompt_template: str
-    ) -> List[LLMIssue]:
+    def check_batch(self, checker_type: str, prompt_template: str) -> List[LLMIssue]:
         """执行批量检测"""
         if not self._should_execute():
             return []
@@ -69,6 +64,7 @@ class LLMService:
         """调用MiniMax M2.7 API"""
         from lingwen_llm.providers import ProviderConfig
         from lingwen_llm.providers.router import AIRouter
+
         config = {"minimax": ProviderConfig(api_key=self.api_key, model="MiniMax-M2.7")}
         router = AIRouter(config=config, primary_provider="minimax", enable_failover=False)
         return router.generate(prompt=prompt, system=system, temperature=0.1, max_tokens=4096)
@@ -82,27 +78,29 @@ class LLMService:
                 json_end = json_text.rfind("```")
                 json_text = json_text[json_start:json_end].strip()
             elif "```" in json_text:
-                json_start = json_text.find('{')
-                json_end = json_text.rfind('}')
+                json_start = json_text.find("{")
+                json_end = json_text.rfind("}")
                 if json_start >= 0 and json_end > json_start:
-                    json_text = json_text[json_start:json_end+1].strip()
-            elif not json_text.startswith('{'):
-                json_start = json_text.find('{')
-                json_end = json_text.rfind('}')
+                    json_text = json_text[json_start : json_end + 1].strip()
+            elif not json_text.startswith("{"):
+                json_start = json_text.find("{")
+                json_end = json_text.rfind("}")
                 if json_start >= 0 and json_end > json_start:
-                    json_text = json_text[json_start:json_end+1].strip()
+                    json_text = json_text[json_start : json_end + 1].strip()
             data = json.loads(json_text)
             issues = []
             for item in data.get("issues", []):
-                issues.append(LLMIssue(
-                    chapter=item.get("chapter", 0),
-                    type=item.get("type", ""),
-                    description=item.get("description", ""),
-                    location=item.get("location", ""),
-                    evidence=item.get("evidence", ""),
-                    suggestion=item.get("suggestion", ""),
-                    severity=item.get("severity", "P1")
-                ))
+                issues.append(
+                    LLMIssue(
+                        chapter=item.get("chapter", 0),
+                        type=item.get("type", ""),
+                        description=item.get("description", ""),
+                        location=item.get("location", ""),
+                        evidence=item.get("evidence", ""),
+                        suggestion=item.get("suggestion", ""),
+                        severity=item.get("severity", "P1"),
+                    )
+                )
             return issues
         except json.JSONDecodeError as e:
             logger.warning(f"Failed to parse LLM response: {e}")

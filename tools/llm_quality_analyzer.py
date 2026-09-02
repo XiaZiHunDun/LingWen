@@ -30,17 +30,19 @@ logger = logging.getLogger(__name__)
 
 class SeverityDecision(Enum):
     """严重性决策"""
-    P0 = "P0"      # 致命问题，必须修复
-    P1 = "P1"      # 重要问题，建议修复
-    P2 = "P2"      # 轻微问题，可选修复
+
+    P0 = "P0"  # 致命问题，必须修复
+    P1 = "P1"  # 重要问题，建议修复
+    P2 = "P2"  # 轻微问题，可选修复
 
 
 class RepairDecision(Enum):
     """修复决策"""
-    REQUIRED = "required"      # 必须修复
+
+    REQUIRED = "required"  # 必须修复
     RECOMMENDED = "recommended"  # 建议修复
-    OPTIONAL = "optional"      # 可选修复
-    SKIP = "skip"              # 跳过
+    OPTIONAL = "optional"  # 可选修复
+    SKIP = "skip"  # 跳过
 
 
 # RepairDecision 字符串值 → Enum 映射（解析 LLM JSON 响应时使用）
@@ -55,6 +57,7 @@ DEFAULT_SEVERITY_DECISION = SeverityDecision.P2
 @dataclass
 class AnalysisResult:
     """分析结果"""
+
     severity: SeverityDecision
     repair_decision: RepairDecision
     reasoning: str
@@ -65,6 +68,7 @@ class AnalysisResult:
 @dataclass
 class SeverityJudgment:
     """严重性判断"""
+
     issue_type: str
     original_severity: str  # 原始严重性
     refined_severity: SeverityDecision
@@ -117,10 +121,7 @@ class LLMQualityAnalyzer:
         self._config = get_api_config()
 
     async def analyze_issue(
-        self,
-        issue: Issue,
-        chapter_num: int,
-        context: Optional[str] = None
+        self, issue: Issue, chapter_num: int, context: Optional[str] = None
     ) -> AnalysisResult:
         """
         分析单个问题
@@ -136,13 +137,15 @@ class LLMQualityAnalyzer:
         prompt = self._build_issue_prompt(issue, chapter_num, context)
 
         try:
-            response = await self._llm.execute(LLMTask(
-                task_type=TaskType.QUALITY_ANALYSIS,
-                prompt=prompt,
-                system=self.SYSTEM_PROMPT,
-                max_tokens=1000,
-                temperature=0.3,
-            ))
+            response = await self._llm.execute(
+                LLMTask(
+                    task_type=TaskType.QUALITY_ANALYSIS,
+                    prompt=prompt,
+                    system=self.SYSTEM_PROMPT,
+                    max_tokens=1000,
+                    temperature=0.3,
+                )
+            )
             return self._parse_response(response, issue)
         except Exception as e:
             logger.error(f"analyze_issue failed: {e}")
@@ -155,10 +158,7 @@ class LLMQualityAnalyzer:
             )
 
     async def analyze_batch(
-        self,
-        issues: List[Issue],
-        chapter_num: int,
-        context: Optional[str] = None
+        self, issues: List[Issue], chapter_num: int, context: Optional[str] = None
     ) -> List[AnalysisResult]:
         """
         批量分析问题
@@ -193,10 +193,7 @@ class LLMQualityAnalyzer:
         return False
 
     async def filter_issues(
-        self,
-        issues: List[Issue],
-        chapter_num: int,
-        context: Optional[str] = None
+        self, issues: List[Issue], chapter_num: int, context: Optional[str] = None
     ) -> List[Issue]:
         """
         根据分析结果过滤问题
@@ -220,12 +217,7 @@ class LLMQualityAnalyzer:
 
         return filtered
 
-    def _build_issue_prompt(
-        self,
-        issue: Issue,
-        chapter_num: int,
-        context: Optional[str]
-    ) -> str:
+    def _build_issue_prompt(self, issue: Issue, chapter_num: int, context: Optional[str]) -> str:
         """构建问题分析提示词"""
         context_str = f"\n\n上下文（章节前后内容）：\n{context}" if context else ""
 
@@ -244,17 +236,13 @@ class LLMQualityAnalyzer:
 直接输出JSON对象。
 """
 
-    def _parse_response(
-        self,
-        response: str,
-        original_issue: Issue
-    ) -> AnalysisResult:
+    def _parse_response(self, response: str, original_issue: Issue) -> AnalysisResult:
         """解析LLM响应"""
         import json
         import re
 
         try:
-            json_match = re.search(r'\{.*\}', response, re.DOTALL)
+            json_match = re.search(r"\{.*\}", response, re.DOTALL)
             if json_match:
                 data = json.loads(json_match.group())
             else:
@@ -292,7 +280,7 @@ async def _async_main():
     import argparse
     import json
 
-    parser = argparse.ArgumentParser(description='LLM质检决策器')
+    parser = argparse.ArgumentParser(description="LLM质检决策器")
     parser.add_argument("--chapter", type=int, required=True, help="章节号")
     parser.add_argument("--issue-file", type=str, help="问题JSON文件路径")
 
@@ -320,5 +308,5 @@ async def _async_main():
         print("无可分析的问题")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

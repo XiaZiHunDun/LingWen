@@ -17,6 +17,7 @@ Doc 4 (GoT 适配设计 v1.0) §11 Phase 4: 可视化增强
   - 决策点高亮 (DECISION 类型节点) — Phase 4.2 联合
   - mermaid 主题切换 (forest/dark) — 后续样式
 """
+
 from __future__ import annotations
 
 from typing import Any, Mapping
@@ -52,6 +53,7 @@ _CLASSDEF: dict[str, str] = {
 
 # === Helpers ===
 
+
 def _node_status(executions: Mapping[str, NodeExecution], nid: str) -> NodeStatus:
     """节点的当前状态 (无 execution → PENDING)"""
     if nid in executions:
@@ -60,6 +62,7 @@ def _node_status(executions: Mapping[str, NodeExecution], nid: str) -> NodeStatu
 
 
 # === Core renderers ===
+
 
 def render_mermaid(
     graph: ThoughtGraph,
@@ -174,13 +177,12 @@ def render_status_table(
         duration = ex.duration_ms() if ex.finished_at is not None else "-"
         cost = ex.cost_tokens
         err = ex.error or "-"
-        lines.append(
-            f"| {nid} | {node.type.value} | {ex.status.value} | {duration} | {cost} | {err} |"
-        )
+        lines.append(f"| {nid} | {node.type.value} | {ex.status.value} | {duration} | {cost} | {err} |")
     return "\n".join(lines)
 
 
 # === Scheduler 便利包装 (duck-typed) ===
+
 
 def render_mermaid_from_scheduler(scheduler: Any) -> str:
     """从 GoTScheduler 实例直接渲染 (要求 ._graph 属性)"""

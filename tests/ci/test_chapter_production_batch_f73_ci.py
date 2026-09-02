@@ -1,4 +1,5 @@
 """Phase 9.81 F73: CI contract — batch production runner."""
+
 from __future__ import annotations
 
 from pathlib import Path

@@ -1,4 +1,5 @@
 """Phase 9.69 F61: human review loop smoke — Dashboard resolve → resume (0 LLM)."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -25,9 +26,7 @@ class TestHumanReviewSmokeDashboard:
     def test_full_resolve_resume_smoke(self, tmp_path: Path) -> None:
         state_dir = tmp_path / "state"
         db_path = tmp_path / "rp.db"
-        result = run_human_review_smoke(
-            state_dir, db_path, chapter_num=11, resolve_option="approve"
-        )
+        result = run_human_review_smoke(state_dir, db_path, chapter_num=11, resolve_option="approve")
         assert isinstance(result, HumanReviewSmokeResult)
         assert result.run_paused is True
         assert result.pending_before_resume >= 1
@@ -38,9 +37,7 @@ class TestHumanReviewSmokeDashboard:
     def test_smoke_repeatable_on_fresh_state(self, tmp_path: Path) -> None:
         for i in range(2):
             sub = tmp_path / f"run{i}"
-            result = run_human_review_smoke(
-                sub / "state", sub / "rp.db", chapter_num=3 + i
-            )
+            result = run_human_review_smoke(sub / "state", sub / "rp.db", chapter_num=3 + i)
             assert result.decision_resolved is True
             assert result.pending_after_resume == 0
 

@@ -1,4 +1,5 @@
 """Tests for creator v4.3 batch highlight, chapter P0 recheck, pulse summary generate."""
+
 from __future__ import annotations
 
 import pytest

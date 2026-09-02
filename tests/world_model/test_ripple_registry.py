@@ -2,6 +2,7 @@
 
 CRUD + 10-limit + JSON 持久化 (mirror infra/subplot/registry.py)。
 """
+
 from __future__ import annotations
 
 import json
@@ -31,6 +32,7 @@ def _ripple(ripple_id: str = "r1", state: RippleState = RippleState.OPEN) -> Rip
 
 
 # === TestRippleRegistryCRUD ===
+
 
 class TestRippleRegistryCRUD:
     def test_empty_registry(self, tmp_path: Path):
@@ -65,14 +67,18 @@ class TestRippleRegistryCRUD:
         reg = RippleRegistry(base_dir=tmp_path)
         reg.add_ripple(_ripple("r1"))
         updated = Ripple(
-            ripple_id="r1", origin_event="e", origin_ch=1,
-            state=RippleState.PROPAGATING, planned_resolve_ch=10,
+            ripple_id="r1",
+            origin_event="e",
+            origin_ch=1,
+            state=RippleState.PROPAGATING,
+            planned_resolve_ch=10,
         )
         reg.update_ripple(updated)
         assert reg.get_ripple("r1") == updated
 
 
 # === TestRippleRegistryLimit ===
+
 
 class TestRippleRegistryLimit:
     def test_add_under_limit_succeeds(self, tmp_path: Path):
@@ -109,6 +115,7 @@ class TestRippleRegistryLimit:
 
 
 # === TestRippleRegistryPersistence ===
+
 
 class TestRippleRegistryPersistence:
     def test_save_and_load_roundtrip(self, tmp_path: Path):

@@ -11,6 +11,7 @@ Doc 2 §6.3 + Doc 4 §2: 多模型分级路由
 - SCENARIO_TIER_MAP 覆盖 12 SCENARIOS
 - compute_cost() 计算公式
 """
+
 from __future__ import annotations
 
 import pytest
@@ -151,6 +152,7 @@ class TestImportContract:
             ModelTierConfig,
             compute_cost,
         )
+
         assert MODEL_TIERS is not None
         assert ModelTier is not None
         assert ModelTierConfig is not None

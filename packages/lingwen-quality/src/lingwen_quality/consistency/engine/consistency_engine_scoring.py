@@ -40,7 +40,7 @@ class ConsistencyEngineScoringMixin:
         chapter_content: str,
         chapter_num: int,
         context: Dict[str, Any],
-        propagate_errors: bool = False
+        propagate_errors: bool = False,
     ) -> List[Issue]:
         """运行单个检查器（集成白名单机制）
 
@@ -56,20 +56,16 @@ class ConsistencyEngineScoringMixin:
             检查器产出的 Issue 列表
         """
         import logging
+
         logger = logging.getLogger(__name__)
 
         try:
             # 使用 check_with_whitelist 方法集成白名单机制
             return checker.check_with_whitelist(
-                chapter_content=chapter_content,
-                chapter_num=chapter_num,
-                context=context
+                chapter_content=chapter_content, chapter_num=chapter_num, context=context
             )
         except Exception as e:
-            logger.error(
-                f"Checker {checker.get_checker_type()} failed: {e}",
-                exc_info=True
-            )
+            logger.error(f"Checker {checker.get_checker_type()} failed: {e}", exc_info=True)
             if propagate_errors:
                 raise
             return []
@@ -82,31 +78,32 @@ class ConsistencyEngineScoringMixin:
             return [CheckerType.CHARACTER, CheckerType.ABILITY, CheckerType.TIMELINE_AGE]
         elif scope == CheckScope.IMPORTANT:
             return [
-                CheckerType.CHARACTER, CheckerType.ABILITY,
-                CheckerType.TIMELINE, CheckerType.ITEM, CheckerType.OUTLINE,
-                CheckerType.SCENE_PATTERN, CheckerType.TIMELINE_AGE
+                CheckerType.CHARACTER,
+                CheckerType.ABILITY,
+                CheckerType.TIMELINE,
+                CheckerType.ITEM,
+                CheckerType.OUTLINE,
+                CheckerType.SCENE_PATTERN,
+                CheckerType.TIMELINE_AGE,
             ]
         elif scope == CheckScope.STANDARD:
             return [
-                CheckerType.CHARACTER, CheckerType.ITEM,
-                CheckerType.TIMELINE, CheckerType.ABILITY,
-                CheckerType.PERSONALITY, CheckerType.FORESHADOW,
-                CheckerType.SCENE_PATTERN, CheckerType.FORESHADOW_QUALITY
+                CheckerType.CHARACTER,
+                CheckerType.ITEM,
+                CheckerType.TIMELINE,
+                CheckerType.ABILITY,
+                CheckerType.PERSONALITY,
+                CheckerType.FORESHADOW,
+                CheckerType.SCENE_PATTERN,
+                CheckerType.FORESHADOW_QUALITY,
             ]
         return list(CheckerType)
 
     def _calculate_checker_result(
-        self,
-        checker_type: CheckerType,
-        issues: List[Issue],
-        duration_ms: float
+        self, checker_type: CheckerType, issues: List[Issue], duration_ms: float
     ) -> CheckerResult:
         """计算检查器结果"""
-        result = CheckerResult(
-            checker_type=checker_type,
-            issues=issues,
-            check_duration_ms=duration_ms
-        )
+        result = CheckerResult(checker_type=checker_type, issues=issues, check_duration_ms=duration_ms)
 
         # 计算得分
         base_score = 100
@@ -126,9 +123,7 @@ class ConsistencyEngineScoringMixin:
         return result
 
     def _calculate_quality(
-        self,
-        checker_results: List[CheckerResult],
-        context: Dict[str, Any]
+        self, checker_results: List[CheckerResult], context: Dict[str, Any]
     ) -> QualityDimension:
         """计算质量维度评分"""
         quality = QualityDimension()

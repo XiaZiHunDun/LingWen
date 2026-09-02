@@ -1,4 +1,5 @@
 """Phase 12.11: Studio samples zip defaults to seven books."""
+
 from __future__ import annotations
 
 from pathlib import Path

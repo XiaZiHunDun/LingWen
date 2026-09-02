@@ -34,6 +34,7 @@ class QualityFinding:
         location: 位置
         suggestion: 建议
     """
+
     category: str
     severity: str
     description: str
@@ -63,15 +64,15 @@ class QualityReviewer(AgentBase):
 
     # 质量检查维度
     DIMENSIONS = [
-        "plot",       # 情节逻辑
+        "plot",  # 情节逻辑
         "character",  # 角色表现
-        "style",      # 文笔风格
-        "pacing",     # 节奏把控
+        "style",  # 文笔风格
+        "pacing",  # 节奏把控
         "structure",  # 结构完整性
-        "grammar",    # 语法错误
+        "grammar",  # 语法错误
     ]
 
-    def __init__(self, router: Optional['AIRouter'] = None):
+    def __init__(self, router: Optional["AIRouter"] = None):
         """初始化质量审稿 Agent
 
         Args:
@@ -103,7 +104,6 @@ class QualityReviewer(AgentBase):
             logger.info("QualityReviewer: fallback mode, returning empty findings")
             return []
 
-
         all_findings: List[QualityFinding] = []
 
         # 按维度逐一检查，每个维度独立调用 LLM
@@ -123,23 +123,24 @@ class QualityReviewer(AgentBase):
                 data = self._parse_json_response(response)
                 raw_findings = data.get("findings", [])
             except Exception as e:
-                logger.error(
-                    "QualityReviewer: dimension '%s' check failed: %s", dimension, e
-                )
+                logger.error("QualityReviewer: dimension '%s' check failed: %s", dimension, e)
                 continue
 
             for f in raw_findings:
-                all_findings.append(QualityFinding(
-                    category=f.get("category", dimension),
-                    severity=f.get("severity", "minor"),
-                    description=f.get("description", ""),
-                    location=f.get("location", ""),
-                    suggestion=f.get("suggestion", ""),
-                ))
+                all_findings.append(
+                    QualityFinding(
+                        category=f.get("category", dimension),
+                        severity=f.get("severity", "minor"),
+                        description=f.get("description", ""),
+                        location=f.get("location", ""),
+                        suggestion=f.get("suggestion", ""),
+                    )
+                )
 
         logger.info(
             "QualityReviewer: completed, %d findings across %d dimensions",
-            len(all_findings), len(self.DIMENSIONS),
+            len(all_findings),
+            len(self.DIMENSIONS),
         )
 
         return all_findings
@@ -179,16 +180,10 @@ class QualityReviewer(AgentBase):
         )
 
         if story_contract:
-            prompt += (
-                f"=== 故事契约 ===\n"
-                f"{json.dumps(story_contract, ensure_ascii=False, indent=2)}\n\n"
-            )
+            prompt += f"=== 故事契约 ===\n{json.dumps(story_contract, ensure_ascii=False, indent=2)}\n\n"
 
         if world_model:
-            prompt += (
-                f"=== 世界模型 ===\n"
-                f"{json.dumps(world_model, ensure_ascii=False, indent=2)}\n\n"
-            )
+            prompt += f"=== 世界模型 ===\n{json.dumps(world_model, ensure_ascii=False, indent=2)}\n\n"
 
         prompt += (
             f"=== 章节内容 ===\n"
@@ -205,9 +200,7 @@ class QualityReviewer(AgentBase):
         import json
         import re
 
-        json_match = re.search(
-            r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', response, re.DOTALL
-        )
+        json_match = re.search(r"\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}", response, re.DOTALL)
         if json_match:
             return json.loads(json_match.group(0))
         return {}

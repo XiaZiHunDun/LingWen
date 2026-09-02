@@ -4,6 +4,7 @@ In test/CI mode, returns MockLLMService (no API calls).
 In CLI --real mode, returns real LLMService for minimax only;
 anthropic/openai --real raises NotImplementedError (cost-controlled mock).
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -29,8 +30,7 @@ anthropic_mock_canned: dict[str, str] = {
     ),
     _hash_prompt("角色 slug: 林栀\n\n章节文本 (按顺序):\n\n### 第1段\n周姐"): (
         # intentionally missing some fields to model hallucination
-        '{"proposals":[{"kind":"character.update","target_id":5,'
-        '"payload":{"status":"alive"}}]}'
+        '{"proposals":[{"kind":"character.update","target_id":5,"payload":{"status":"alive"}}]}'
     ),
     _hash_prompt("角色 slug: 林栀\n\n章节文本 (按顺序):\n\n### 第1段\n街灯"): (
         '{"proposals":[]}'  # no evidence, returns empty per prompt instructions
@@ -48,9 +48,7 @@ openai_mock_canned: dict[str, str] = {
         '"target_id":5,"payload":{"status":"alive","canon_level":"Primary","confidence":"high"},'
         '"source_context":"周姐对话","confidence":"high"}]}'
     ),
-    _hash_prompt("角色 slug: 林栀\n\n章节文本 (按顺序):\n\n### 第1段\n街灯"): (
-        '{"proposals":[]}'
-    ),
+    _hash_prompt("角色 slug: 林栀\n\n章节文本 (按顺序):\n\n### 第1段\n街灯"): ('{"proposals":[]}'),
 }
 
 minimax_mock_canned: dict[str, str] = {
@@ -64,9 +62,7 @@ minimax_mock_canned: dict[str, str] = {
         '"target_id":5,"payload":{"status":"alive","canon_level":"Primary","confidence":"medium"},'
         '"source_context":"周姐对话","confidence":"medium"}]}'
     ),
-    _hash_prompt("角色 slug: 林栀\n\n章节文本 (按顺序):\n\n### 第1段\n街灯"): (
-        '{"proposals":[]}'
-    ),
+    _hash_prompt("角色 slug: 林栀\n\n章节文本 (按顺序):\n\n### 第1段\n街灯"): ('{"proposals":[]}'),
 }
 
 
@@ -111,24 +107,18 @@ def get_provider_llm(name: str, *, real: bool = False) -> _LLMRunnable:
     if name == "minimax":
         api_key = os.environ.get("MINIMAX_API_KEY")
         if not api_key:
-            raise RuntimeError(
-                "MINIMAX_API_KEY not set; add to .env or export before --real"
-            )
+            raise RuntimeError("MINIMAX_API_KEY not set; add to .env or export before --real")
         # Lazy imports avoid module-load side effects in tests
         from lingwen_llm.providers import get_provider_class
         from lingwen_llm.providers.base import ProviderConfig
 
         provider_class = get_provider_class("minimax")
         if not provider_class:
-            raise RuntimeError(
-                "minimax provider class not registered; check lingwen_llm package"
-            )
+            raise RuntimeError("minimax provider class not registered; check lingwen_llm package")
         config = ProviderConfig(api_key=api_key, timeout=120, max_retries=3)
         return provider_class(config)
 
     if name in {"anthropic", "openai"}:
-        raise NotImplementedError(
-            f"real {name} benchmark not in scope (Phase 120 cost-controlled mock only)"
-        )
+        raise NotImplementedError(f"real {name} benchmark not in scope (Phase 120 cost-controlled mock only)")
 
     raise ValueError(f"unknown provider: {name!r}")

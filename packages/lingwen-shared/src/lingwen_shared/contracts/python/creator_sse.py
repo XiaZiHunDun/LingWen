@@ -20,6 +20,7 @@ Conventions (matching v16.1 lessons):
 - Optional fields use ``Optional[T] = None`` defaults.
 - Tagged union discriminator is ``type`` (Literal per variant).
 """
+
 from __future__ import annotations
 
 from typing import Any, Literal, Optional

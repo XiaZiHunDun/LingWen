@@ -3,6 +3,7 @@
 append_ripple 测 cascade BFS+persist 耗时 → CascadeUpdatePayload.latency_ms;
 cascade_notifier 写入 envelope 并 INFO log.
 """
+
 from __future__ import annotations
 
 import logging

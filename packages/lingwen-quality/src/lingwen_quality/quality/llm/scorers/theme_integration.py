@@ -56,10 +56,7 @@ class ThemeIntegrationScorer(BaseScorer):
         # 限制分数范围
         score = max(0, min(100, score))
 
-        return ScoredResult(
-            score=score,
-            reason="; ".join(reasons) if reasons else "主题整合评分完成"
-        )
+        return ScoredResult(score=score, reason="; ".join(reasons) if reasons else "主题整合评分完成")
 
     def _extract_themes(self, content: str) -> List[str]:
         """从内容中提取主题词（简化实现）"""

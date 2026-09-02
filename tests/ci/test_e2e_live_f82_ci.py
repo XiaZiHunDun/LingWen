@@ -1,4 +1,5 @@
 """Phase 9.90 F82: CI contract — remote e2e-live first-green confirmation."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -28,10 +29,6 @@ class TestE2eLiveF82:
 
     def test_v8_roadmap_f82(self):
         roadmap = (
-            NOVEL_FACTORY
-            / "docs"
-            / "superpowers"
-            / "plans"
-            / "2026-06-11-followup-roadmap-v8-post-9.84.md"
+            NOVEL_FACTORY / "docs" / "superpowers" / "plans" / "2026-06-11-followup-roadmap-v8-post-9.84.md"
         )
         assert "F82" in roadmap.read_text(encoding="utf-8")

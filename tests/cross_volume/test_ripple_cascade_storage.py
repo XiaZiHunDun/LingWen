@@ -1,4 +1,5 @@
 """Phase 9.15: ripple_cascade table + storage method tests."""
+
 import json
 
 import pytest
@@ -17,8 +18,12 @@ def storage(tmp_path):
 def seeded_cascade(storage):
     """Storage with 1 ripple + 1 cascade pre-seeded."""
     ripple = CrossVolumeRipple(
-        id="rip-c1", trigger_volume=1, trigger_chapter=1,
-        affected_nodes=("n1",), affected_edges=(), proposed_actions=(),
+        id="rip-c1",
+        trigger_volume=1,
+        trigger_chapter=1,
+        affected_nodes=("n1",),
+        affected_edges=(),
+        proposed_actions=(),
     )
     storage.append_ripple(ripple)
     cascaded = CascadedRipple(
@@ -57,9 +62,7 @@ class TestRecordCascade:
         assert isinstance(cascade_id, int)
         assert cascade_id >= 1
         with storage._connect() as conn:
-            row = conn.execute(
-                "SELECT * FROM ripple_cascade WHERE id = ?", (cascade_id,)
-            ).fetchone()
+            row = conn.execute("SELECT * FROM ripple_cascade WHERE id = ?", (cascade_id,)).fetchone()
         assert row["trigger_ripple_id"] == "rip-c1"
         assert row["depth_reached"] == 1
 
@@ -69,7 +72,8 @@ class TestRecordCascade:
         with storage._connect() as conn:
             row = conn.execute(
                 "SELECT cascade_nodes_json, cascade_edges_json, cascade_actions_json"
-                " FROM ripple_cascade WHERE id = ?", (cascade_id,)
+                " FROM ripple_cascade WHERE id = ?",
+                (cascade_id,),
             ).fetchone()
         nodes = json.loads(row["cascade_nodes_json"])
         actions = json.loads(row["cascade_actions_json"])
@@ -83,7 +87,9 @@ class TestRecordCascade:
         storage, _, _, _ = seeded_cascade
         cascaded2 = CascadedRipple(
             trigger_ripple_id="rip-c1",
-            cascade_nodes=(), cascade_edges=(), cascade_actions=(),
+            cascade_nodes=(),
+            cascade_edges=(),
+            cascade_actions=(),
             depth_reached=0,
             generated_at="2026-06-10T11:00:00+00:00",  # later timestamp
         )

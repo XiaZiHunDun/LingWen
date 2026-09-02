@@ -1,4 +1,5 @@
 """Phase 9.70 F62: optional MemoryGateway RAG hook for chapter workflows."""
+
 from __future__ import annotations
 
 import logging

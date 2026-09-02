@@ -8,6 +8,7 @@ Architecture:
 - assets: memory asset payload (settings docs + volume summaries + chapters + gateway)
 - query: semantic query with vector gateway + local keyword fallback
 """
+
 from lingwen_creator.memory.annotations import *  # noqa: F403
 from lingwen_creator.memory.assets import *  # noqa: F403
 from lingwen_creator.memory.query import *  # noqa: F403

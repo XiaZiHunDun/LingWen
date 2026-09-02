@@ -1,4 +1,5 @@
 """Phase 9.74 F66: CI contract — production_summary module + runbook."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -13,14 +14,7 @@ class TestProductionSummaryF66:
         assert path.is_file()
 
     def test_frontend_util_exists(self):
-        path = (
-            NOVEL_FACTORY
-            / "dashboard"
-            / "frontend"
-            / "src"
-            / "utils"
-            / "productionSummary.js"
-        )
+        path = NOVEL_FACTORY / "dashboard" / "frontend" / "src" / "utils" / "productionSummary.js"
         assert path.is_file()
         assert "productionSummaryLines" in path.read_text(encoding="utf-8")
 

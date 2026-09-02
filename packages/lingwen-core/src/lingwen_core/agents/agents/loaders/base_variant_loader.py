@@ -18,6 +18,7 @@ Usage:
                 id_mapping={...}
             )
 """
+
 import re
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -87,7 +88,7 @@ class BaseVariantLoader(ABC):
         """
         # 默认实现：去掉前缀，取剩余部分并转为大写
         if self._id_prefix and stem.startswith(self._id_prefix):
-            stem = stem[len(self._id_prefix):]
+            stem = stem[len(self._id_prefix) :]
         return stem.upper()
 
     def _load_yaml(self, path: Path) -> Dict:
@@ -122,7 +123,7 @@ class BaseVariantLoader(ABC):
             if mapped:
                 return mapped.upper()
             # 数字超出范围时尝试直接作为索引
-            return chr(ord('A') + variant_id - 1)
+            return chr(ord("A") + variant_id - 1)
 
         # 字符串处理
         vid = str(variant_id).strip().lower()
@@ -138,7 +139,7 @@ class BaseVariantLoader(ABC):
         # 去除常见前缀
         for prefix in [f"{self._id_prefix}", "_"]:
             if vid.startswith(prefix):
-                vid = vid[len(prefix):]
+                vid = vid[len(prefix) :]
                 if vid.upper() in self._id_mapping.values():
                     return vid.upper()
 
@@ -149,7 +150,7 @@ class BaseVariantLoader(ABC):
                 return mapped.upper()
 
         # 中文支持（如"作家A" -> "A"）
-        if len(vid) == 2 and vid[0] in '作家审核润色':
+        if len(vid) == 2 and vid[0] in "作家审核润色":
             return vid[1].upper()
 
         return vid.upper()
@@ -221,15 +222,12 @@ class SimpleVariantLoader(BaseVariantLoader):
     def _extract_variant_id(self, stem: str) -> str:
         """从文件名提取变体ID"""
         if self._id_prefix and stem.startswith(self._id_prefix):
-            stem = stem[len(self._id_prefix):]
+            stem = stem[len(self._id_prefix) :]
         return stem.upper()
 
 
 # 工厂函数用于创建标准变体加载器
-def create_variant_loader(
-    loader_type: str,
-    base_dir: Optional[Path] = None
-) -> BaseVariantLoader:
+def create_variant_loader(loader_type: str, base_dir: Optional[Path] = None) -> BaseVariantLoader:
     """创建变体加载器
 
     Args:
@@ -249,10 +247,12 @@ def create_variant_loader(
 
     elif loader_type == "auditor":
         from ..auditor.variant_loader import VariantLoader
+
         return VariantLoader()
 
     elif loader_type == "polisher":
         from ..polisher.variant_loader import VariantLoader
+
         return VariantLoader()
 
     else:

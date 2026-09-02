@@ -3,6 +3,7 @@
 Avoids real MasterController / API keys; decisions API reads the same
 infra/.state/decisions.json that e2e_seed writes.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -87,7 +88,13 @@ class E2EStubController:
         if self._last_workflow_status is None:
             raise RuntimeError("no active workflow")
         d = self.resolve_decision(decision_id, option, resolved_by=resolved_by)
-        return {"summary": _FakeSummary(), "graph": None, "executions": {}, "pending_decisions": [], "resolved_decision": d}
+        return {
+            "summary": _FakeSummary(),
+            "graph": None,
+            "executions": {},
+            "pending_decisions": [],
+            "resolved_decision": d,
+        }
 
     def get_active_workflow_status(self, since=None) -> dict:
         if self._last_workflow_status is None:

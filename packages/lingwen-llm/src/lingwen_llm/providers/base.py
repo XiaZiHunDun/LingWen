@@ -14,30 +14,35 @@ from infra.errors import BaseError, RetryableError
 
 class AIProviderError(BaseError):
     """AI Provider错误基类"""
+
     __error_name__ = "AIProviderError"
     __error_tags__ = ["ai", "provider"]
 
 
 class ProviderConfigError(AIProviderError):
     """配置错误"""
+
     __error_name__ = "ProviderConfigError"
     __error_tags__ = ["ai", "config"]
 
 
 class APIError(AIProviderError):
     """API调用错误"""
+
     __error_name__ = "APIError"
     __error_tags__ = ["ai", "api"]
 
 
 class NetworkError(AIProviderError, RetryableError):
     """网络错误"""
+
     __error_name__ = "NetworkError"
     __error_tags__ = ["ai", "network"]
 
 
 class TimeoutError(AIProviderError, RetryableError):
     """超时错误"""
+
     __error_name__ = "TimeoutError"
     __error_tags__ = ["ai", "timeout"]
 
@@ -57,6 +62,7 @@ class ProviderConfig:
         timeout: 超时时间（秒），默认60
         max_retries: 最大重试次数，默认3
     """
+
     api_key: str
     endpoint: Optional[str] = None
     model: str = DEFAULT_MODEL
@@ -116,9 +122,7 @@ class AIProvider(ABC):
         if text:
             yield text
 
-    def generate_with_usage(
-        self, prompt: str, **kwargs
-    ) -> tuple[str, dict[str, int]]:
+    def generate_with_usage(self, prompt: str, **kwargs) -> tuple[str, dict[str, int]]:
         """生成文本 + 返回 usage dict (Phase 8.6).
 
         Default impl: 调 self.generate() + len()//4 估算 (跟 Phase 8.5 一致).
@@ -206,10 +210,7 @@ def register_provider(name: str):
 
     def decorator(cls: Type["AIProvider"]) -> Type["AIProvider"]:
         if not isinstance(cls, type) or not issubclass(cls, AIProvider):
-            raise TypeError(
-                f"@register_provider target must subclass AIProvider, "
-                f"got {cls!r}"
-            )
+            raise TypeError(f"@register_provider target must subclass AIProvider, got {cls!r}")
         _PROVIDER_REGISTRY[normalized] = cls
         return cls
 

@@ -1,4 +1,5 @@
 """Tests for prose snapshot diff (Phase 11.05)."""
+
 from __future__ import annotations
 
 from infra.prose_snapshot import (

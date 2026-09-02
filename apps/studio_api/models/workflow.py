@@ -8,6 +8,7 @@ Budget DTOs (BudgetSetRequest, BudgetTierSetRequest) are NOT here — they
 have been moved to ``apps/studio_api/models/budget.py`` because they're
 orthogonal to the workflow bounded context.
 """
+
 from lingwen_shared.contracts.python.workflows import (
     ResumeWorkflowRequest,
     RunWorkflowRequest,

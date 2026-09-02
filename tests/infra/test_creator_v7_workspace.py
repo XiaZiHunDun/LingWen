@@ -1,4 +1,5 @@
 """Phase C creator workspace ui_profile flags."""
+
 from __future__ import annotations
 
 from lingwen_creator.content.ui_profile import resolve_creator_ui_profile

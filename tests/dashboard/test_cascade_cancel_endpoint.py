@@ -1,4 +1,5 @@
 """Phase 9.21 Task 2: POST cascade cancel endpoint."""
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -21,8 +22,13 @@ def client_with_runs(tmp_path, monkeypatch):
     g.add_edge(ReferenceEdge(id="e12", from_node_id="n1", to_node_id="n2"))
     storage._graph = g
     ripple = CrossVolumeRipple(
-        id="rip-1", trigger_volume=1, trigger_chapter=1,
-        affected_nodes=("n1",), affected_edges=(), proposed_actions=(), status="pending",
+        id="rip-1",
+        trigger_volume=1,
+        trigger_chapter=1,
+        affected_nodes=("n1",),
+        affected_edges=(),
+        proposed_actions=(),
+        status="pending",
     )
     storage.append_ripple(ripple)
     cascaded = storage.preview_cascade("rip-1", max_depth=2)
@@ -51,7 +57,5 @@ class TestCascadeCancelEndpoint:
     def test_post_cancel_endpoint_returns_404_for_missing_run(self, client_with_runs):
         """POST /cancel on unknown run_id → 404."""
         client, _, _ = client_with_runs
-        resp = client.post(
-            "/api/ripples/cascade/rip-1/runs/999/cancel", json={}
-        )
+        resp = client.post("/api/ripples/cascade/rip-1/runs/999/cancel", json={})
         assert resp.status_code == 404

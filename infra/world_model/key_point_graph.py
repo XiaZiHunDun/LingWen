@@ -14,6 +14,7 @@ Phase 1.1 — Doc 1 实施层。
 - 角色属性值冲突(同字段不同值, 需 attrs 语义模型)
 - 关系权重语义矛盾(需关系类型注册表)
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -27,7 +28,9 @@ class ContradictionKind(str, Enum):
     """矛盾类型 — 跟 IssueSeverity 不同,这里只标"有矛盾",严重度由调用方决定"""
 
     LOCATED_IN_DESTROYED = "located_in_destroyed"  # active 节点 located_in destroyed 节点
-    DESTROYED_NODE_HAS_ACTIVE_RELATION = "destroyed_node_has_active_relation"  # destroyed 节点还有 active 关系
+    DESTROYED_NODE_HAS_ACTIVE_RELATION = (
+        "destroyed_node_has_active_relation"  # destroyed 节点还有 active 关系
+    )
 
 
 @dataclass(frozen=True)

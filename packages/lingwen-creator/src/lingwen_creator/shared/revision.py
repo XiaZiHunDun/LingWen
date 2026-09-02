@@ -4,6 +4,7 @@ Migrated from infra/creator_revision.py in Phase 126 v16.2.0.
 New location: packages/lingwen-creator/src/lingwen_creator/shared/revision.py
 Used by settings/docs, volume/plan, volume/templates — see spec §2.1.
 """
+
 from __future__ import annotations
 
 import hashlib

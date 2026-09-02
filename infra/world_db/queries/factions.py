@@ -1,4 +1,5 @@
 """Faction CRUD."""
+
 import json
 
 from lingwen_shared.ports.storage import ConnectionPort
@@ -13,9 +14,12 @@ def create_faction(conn: ConnectionPort, data: dict) -> int:
            (slug, name, description, attributes, created_at, updated_at, revision)
            VALUES (?, ?, ?, ?, ?, ?, 1)""",
         (
-            data["slug"], data["name"], data.get("description"),
+            data["slug"],
+            data["name"],
+            data.get("description"),
             json.dumps(data.get("attributes") or {}, ensure_ascii=False),
-            now, now,
+            now,
+            now,
         ),
     )
     conn.commit()

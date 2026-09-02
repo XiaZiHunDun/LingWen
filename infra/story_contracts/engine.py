@@ -158,9 +158,7 @@ class StoryContractEngine:
             for ap in aggregated
         ]
 
-    def _build_chapter_brief(
-        self, chapter: int, route: RouteResult
-    ) -> Dict[str, Any]:
+    def _build_chapter_brief(self, chapter: int, route: RouteResult) -> Dict[str, Any]:
         """Build chapter_brief dict for chapter-specific contracts.
 
         Args:

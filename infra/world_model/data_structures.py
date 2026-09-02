@@ -22,6 +22,7 @@ ResolutionMode / MAX_OPEN_RIPPLOTS / PlotStatus) 全部 canonical re-export
 from ``lingwen_core.domain.*``。本文件不再持有任何领域实体定义 — 仅保留
 本文件作为 ``infra.world_model.data_structures`` 路径的 back-compat shim。
 """
+
 from __future__ import annotations
 
 # Phase 19+ Sub1: All domain entities canonical alignment.

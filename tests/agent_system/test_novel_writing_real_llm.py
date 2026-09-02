@@ -43,9 +43,7 @@ def _assert_s1_s8_score_dict(scores: dict, label: str) -> None:
         f"{label} keys 不完整: {set(scores.keys())}"
     )
     for s1_s8, score in scores.items():
-        assert isinstance(score, int), (
-            f"{label}[{s1_s8}] 应为 int, 实际 {type(score).__name__}: {score!r}"
-        )
+        assert isinstance(score, int), f"{label}[{s1_s8}] 应为 int, 实际 {type(score).__name__}: {score!r}"
         assert 0 <= score <= 10, f"{label}[{s1_s8}]={score} 超出 0-10 范围"
 
 
@@ -65,10 +63,16 @@ class TestNovelWritingRealLLM:
             workflow_name="novel_writing",
             initial_inputs={
                 "chapter_num": 1,
-                "outline": {"chapters": [{
-                    "num": 1, "title": "第一章 测试", "events": ["e1"],
-                    "word_count_target": 800,  # 短内容加速 HAIKU 处理
-                }]},
+                "outline": {
+                    "chapters": [
+                        {
+                            "num": 1,
+                            "title": "第一章 测试",
+                            "events": ["e1"],
+                            "word_count_target": 800,  # 短内容加速 HAIKU 处理
+                        }
+                    ]
+                },
                 "characters": [],
                 "memory_context": {},
                 "style_guide": {},
@@ -101,11 +105,12 @@ class TestNovelWritingRealLLM:
         )
         assert 0.0 <= merge_output["scores_total_a"] <= 10.0
         assert 0.0 <= merge_output["scores_total_b"] <= 10.0
-        assert abs(
-            merge_output["scores_total_a"]
-            - merge_output["scores_total_b"]
-            - merge_output["scores_delta"]
-        ) < 1e-6, (
+        assert (
+            abs(
+                merge_output["scores_total_a"] - merge_output["scores_total_b"] - merge_output["scores_delta"]
+            )
+            < 1e-6
+        ), (
             f"scores_delta={merge_output['scores_delta']} 不等于 "
             f"total_a - total_b={merge_output['scores_total_a'] - merge_output['scores_total_b']}"
         )
@@ -131,7 +136,9 @@ class TestPolishMergeSynthesisRealLLM:
         content_b = "林夕深吸一口气, 心中暗自立下誓言。纵然前路艰险, 亦不退缩。" * 20
 
         result = master.polish_merge_synthesis(
-            content_a, content_b, labels=("emotional", "motivation"),
+            content_a,
+            content_b,
+            labels=("emotional", "motivation"),
         )
 
         # 跟 TestNovelWritingRealLLM 同样的 5 步断言
@@ -143,9 +150,7 @@ class TestPolishMergeSynthesisRealLLM:
         assert result["winner"] in result["_labels"]
         assert 0.0 <= result["scores_total_a"] <= 10.0
         assert 0.0 <= result["scores_total_b"] <= 10.0
-        assert abs(
-            result["scores_total_a"] - result["scores_total_b"] - result["scores_delta"]
-        ) < 1e-6
+        assert abs(result["scores_total_a"] - result["scores_total_b"] - result["scores_delta"]) < 1e-6
         assert result["_labels"] == ["emotional", "motivation"]
 
 
@@ -171,7 +176,9 @@ class TestNovelWritingRealLLMOpenAI:
         content_b = "林夕深吸一口气, 心中暗自立下誓言。纵然前路艰险, 亦不退缩。" * 20
 
         result = master.polish_merge_synthesis(
-            content_a, content_b, labels=("emotional", "motivation"),
+            content_a,
+            content_b,
+            labels=("emotional", "motivation"),
         )
 
         # 9 步断言 (跟 TestPolishMergeSynthesisRealLLM 一致)
@@ -183,9 +190,7 @@ class TestNovelWritingRealLLMOpenAI:
         assert result["winner"] in result["_labels"]
         assert 0.0 <= result["scores_total_a"] <= 10.0
         assert 0.0 <= result["scores_total_b"] <= 10.0
-        assert abs(
-            result["scores_total_a"] - result["scores_total_b"] - result["scores_delta"]
-        ) < 1e-6
+        assert abs(result["scores_total_a"] - result["scores_total_b"] - result["scores_delta"]) < 1e-6
         assert result["_labels"] == ["emotional", "motivation"]
 
 
@@ -208,7 +213,9 @@ class TestNovelWritingRealLLMMiniMax:
         content_b = "林夕深吸一口气, 心中暗自立下誓言。纵然前路艰险, 亦不退缩。" * 20
 
         result = master.polish_merge_synthesis(
-            content_a, content_b, labels=("emotional", "motivation"),
+            content_a,
+            content_b,
+            labels=("emotional", "motivation"),
         )
 
         # 9 步断言 (跟 TestPolishMergeSynthesisRealLLM 一致)
@@ -220,9 +227,7 @@ class TestNovelWritingRealLLMMiniMax:
         assert result["winner"] in result["_labels"]
         assert 0.0 <= result["scores_total_a"] <= 10.0
         assert 0.0 <= result["scores_total_b"] <= 10.0
-        assert abs(
-            result["scores_total_a"] - result["scores_total_b"] - result["scores_delta"]
-        ) < 1e-6
+        assert abs(result["scores_total_a"] - result["scores_total_b"] - result["scores_delta"]) < 1e-6
         assert result["_labels"] == ["emotional", "motivation"]
 
 
@@ -240,6 +245,7 @@ class TestNovelWritingBudgetRealLLM:
     def test_run_workflow_under_budget_passes(self, tmp_path: Path) -> None:
         """Phase 8.9: real LLM run with generous budget, 验证 success + cost < budget + finally reset."""
         from lingwen_llm.providers.cost_tracker import CostTracker
+
         cost_tracker = CostTracker()
         master = make_master_with_router(
             state_dir=tmp_path,
@@ -250,10 +256,16 @@ class TestNovelWritingBudgetRealLLM:
             workflow_name="novel_writing",
             initial_inputs={
                 "chapter_num": 1,
-                "outline": {"chapters": [{
-                    "num": 1, "title": "第一章 测试", "events": ["e1"],
-                    "word_count_target": 800,  # 短内容加速 HAIKU 处理
-                }]},
+                "outline": {
+                    "chapters": [
+                        {
+                            "num": 1,
+                            "title": "第一章 测试",
+                            "events": ["e1"],
+                            "word_count_target": 800,  # 短内容加速 HAIKU 处理
+                        }
+                    ]
+                },
                 "characters": [],
                 "memory_context": {},
                 "style_guide": {},
@@ -279,6 +291,7 @@ class TestNovelWritingBudgetRealLLM:
     def test_run_workflow_over_budget_raises(self, tmp_path: Path) -> None:
         """Phase 8.9: real LLM run with sub-cent budget, 验证 CostBudgetExceeded + FAILED + finally reset."""
         from lingwen_llm.providers.cost_tracker import CostBudgetExceeded, CostTracker
+
         _ = CostBudgetExceeded  # 文档化: workflow 内部抛此异常, scheduler 捕获后转 FAILED
         cost_tracker = CostTracker()
         master = make_master_with_router(
@@ -290,10 +303,16 @@ class TestNovelWritingBudgetRealLLM:
             workflow_name="novel_writing",
             initial_inputs={
                 "chapter_num": 1,
-                "outline": {"chapters": [{
-                    "num": 1, "title": "第一章 测试", "events": ["e1"],
-                    "word_count_target": 800,
-                }]},
+                "outline": {
+                    "chapters": [
+                        {
+                            "num": 1,
+                            "title": "第一章 测试",
+                            "events": ["e1"],
+                            "word_count_target": 800,
+                        }
+                    ]
+                },
                 "characters": [],
                 "memory_context": {},
                 "style_guide": {},
@@ -336,6 +355,7 @@ class TestNovelWritingBudgetRealLLMOpenAI:
     def test_run_workflow_under_budget_passes(self, tmp_path: Path) -> None:
         """Phase 8.10: OpenAI gpt-4o-mini generous budget, 验证 success + cost < budget + finally reset."""
         from lingwen_llm.providers.cost_tracker import CostTracker
+
         cost_tracker = CostTracker()
         master = make_master_with_router(
             state_dir=tmp_path,
@@ -346,10 +366,16 @@ class TestNovelWritingBudgetRealLLMOpenAI:
             workflow_name="novel_writing",
             initial_inputs={
                 "chapter_num": 1,
-                "outline": {"chapters": [{
-                    "num": 1, "title": "第一章 测试", "events": ["e1"],
-                    "word_count_target": 800,  # 短内容加速 gpt-4o-mini 处理
-                }]},
+                "outline": {
+                    "chapters": [
+                        {
+                            "num": 1,
+                            "title": "第一章 测试",
+                            "events": ["e1"],
+                            "word_count_target": 800,  # 短内容加速 gpt-4o-mini 处理
+                        }
+                    ]
+                },
                 "characters": [],
                 "memory_context": {},
                 "style_guide": {},
@@ -375,6 +401,7 @@ class TestNovelWritingBudgetRealLLMOpenAI:
     def test_run_workflow_over_budget_raises(self, tmp_path: Path) -> None:
         """Phase 8.10: OpenAI gpt-4o-mini sub-cent budget, 验证 CostBudgetExceeded + FAILED + finally reset."""
         from lingwen_llm.providers.cost_tracker import CostBudgetExceeded, CostTracker
+
         _ = CostBudgetExceeded  # 文档化: workflow 内部抛此异常, scheduler 捕获后转 FAILED
         cost_tracker = CostTracker()
         master = make_master_with_router(
@@ -386,10 +413,16 @@ class TestNovelWritingBudgetRealLLMOpenAI:
             workflow_name="novel_writing",
             initial_inputs={
                 "chapter_num": 1,
-                "outline": {"chapters": [{
-                    "num": 1, "title": "第一章 测试", "events": ["e1"],
-                    "word_count_target": 800,
-                }]},
+                "outline": {
+                    "chapters": [
+                        {
+                            "num": 1,
+                            "title": "第一章 测试",
+                            "events": ["e1"],
+                            "word_count_target": 800,
+                        }
+                    ]
+                },
                 "characters": [],
                 "memory_context": {},
                 "style_guide": {},
@@ -432,6 +465,7 @@ class TestNovelWritingBudgetRealLLMMiniMax:
     def test_run_workflow_under_budget_passes(self, tmp_path: Path) -> None:
         """Phase 8.10: MiniMax M2.7 generous budget, 验证 success + cost < budget + finally reset."""
         from lingwen_llm.providers.cost_tracker import CostTracker
+
         cost_tracker = CostTracker()
         master = make_master_with_router(
             state_dir=tmp_path,
@@ -442,10 +476,16 @@ class TestNovelWritingBudgetRealLLMMiniMax:
             workflow_name="novel_writing",
             initial_inputs={
                 "chapter_num": 1,
-                "outline": {"chapters": [{
-                    "num": 1, "title": "第一章 测试", "events": ["e1"],
-                    "word_count_target": 800,  # 短内容加速 M2.7 处理
-                }]},
+                "outline": {
+                    "chapters": [
+                        {
+                            "num": 1,
+                            "title": "第一章 测试",
+                            "events": ["e1"],
+                            "word_count_target": 800,  # 短内容加速 M2.7 处理
+                        }
+                    ]
+                },
                 "characters": [],
                 "memory_context": {},
                 "style_guide": {},
@@ -471,6 +511,7 @@ class TestNovelWritingBudgetRealLLMMiniMax:
     def test_run_workflow_over_budget_raises(self, tmp_path: Path) -> None:
         """Phase 8.10: MiniMax M2.7 sub-cent budget, 验证 CostBudgetExceeded + FAILED + finally reset."""
         from lingwen_llm.providers.cost_tracker import CostBudgetExceeded, CostTracker
+
         _ = CostBudgetExceeded  # 文档化: workflow 内部抛此异常, scheduler 捕获后转 FAILED
         cost_tracker = CostTracker()
         master = make_master_with_router(
@@ -482,10 +523,16 @@ class TestNovelWritingBudgetRealLLMMiniMax:
             workflow_name="novel_writing",
             initial_inputs={
                 "chapter_num": 1,
-                "outline": {"chapters": [{
-                    "num": 1, "title": "第一章 测试", "events": ["e1"],
-                    "word_count_target": 800,
-                }]},
+                "outline": {
+                    "chapters": [
+                        {
+                            "num": 1,
+                            "title": "第一章 测试",
+                            "events": ["e1"],
+                            "word_count_target": 800,
+                        }
+                    ]
+                },
                 "characters": [],
                 "memory_context": {},
                 "style_guide": {},

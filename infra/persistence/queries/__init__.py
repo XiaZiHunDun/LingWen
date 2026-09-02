@@ -35,6 +35,7 @@ class Query:
         namespace: 命名空间
         version: 查询版本
     """
+
     name: str
     sql: str
     params_schema: Optional[Dict[str, type]] = None
@@ -61,8 +62,7 @@ class Query:
                     value = kwargs[key]
                     if not isinstance(value, expected_type):
                         raise ValueError(
-                            f"Parameter '{key}' expects {expected_type.__name__}, "
-                            f"got {type(value).__name__}"
+                            f"Parameter '{key}' expects {expected_type.__name__}, got {type(value).__name__}"
                         )
 
         return {k: v for k, v in kwargs.items() if v is not None}
@@ -131,10 +131,7 @@ class QueryRegistry:
         if namespace not in self._namespaces:
             return []
 
-        return [
-            self._queries[self._make_key(namespace, name)]
-            for name in self._namespaces[namespace]
-        ]
+        return [self._queries[self._make_key(namespace, name)] for name in self._namespaces[namespace]]
 
     def list_namespaces(self) -> List[str]:
         """

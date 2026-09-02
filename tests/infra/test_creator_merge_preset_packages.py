@@ -1,4 +1,5 @@
 """Tests for merge strategy preset packages."""
+
 from __future__ import annotations
 
 import pytest

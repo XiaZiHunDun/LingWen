@@ -8,6 +8,7 @@ apps/dashboard/tests/unit/guards/architecture-guards.spec.ts 的 Python 实现�
 2. apps/dashboard/src/composables/index.js 文件格式正确
 3. arch-guards.spec.ts 本身存在（迁移后的位置）
 """
+
 from __future__ import annotations
 
 import re
@@ -46,7 +47,8 @@ def test_index_js_exports_all_composables():
 
     index_content = index_file.read_text()
     composable_files = [
-        f for f in composables_dir.iterdir()
+        f
+        for f in composables_dir.iterdir()
         if f.is_file()
         and (f.suffix in {".js", ".ts"})
         and f.name != "index.js"
@@ -57,9 +59,7 @@ def test_index_js_exports_all_composables():
     for file in composable_files:
         module_name = file.stem
         # 查找 index.js 中是否导出了该模块
-        export_pattern = re.compile(
-            rf'export\s*\{{[^}}]*\}}\s*from\s*[\'"]\./{re.escape(module_name)}'
-        )
+        export_pattern = re.compile(rf'export\s*\{{[^}}]*\}}\s*from\s*[\'"]\./{re.escape(module_name)}')
         if not export_pattern.search(index_content):
             missing_exports.append(module_name)
 

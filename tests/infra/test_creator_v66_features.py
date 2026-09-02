@@ -1,4 +1,5 @@
 """Tests for creator v6.6 diff pdf export, failure reason, mode switch confirm."""
+
 from __future__ import annotations
 
 from lingwen_creator.content.batch_history import derive_batch_failure_reason, enrich_batch_history_job
@@ -20,7 +21,9 @@ def test_companion_v66_ui_profile() -> None:
 
 def test_derive_batch_failure_reason() -> None:
     assert derive_batch_failure_reason({"status": "completed"}) is None
-    assert derive_batch_failure_reason({"status": "failed", "error": "preflight blocked"}) == "preflight blocked"
+    assert (
+        derive_batch_failure_reason({"status": "failed", "error": "preflight blocked"}) == "preflight blocked"
+    )
     assert derive_batch_failure_reason({"status": "failed", "exit_code": 2}) == "进程退出码 2"
     enriched = enrich_batch_history_job({"status": "failed", "error": "chapter_failed"})
     assert enriched["failure_reason"] == "chapter_failed"

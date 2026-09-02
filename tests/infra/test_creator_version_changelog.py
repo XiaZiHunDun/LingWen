@@ -1,4 +1,5 @@
 """Tests for template version changelog."""
+
 from __future__ import annotations
 
 import pytest
@@ -38,6 +39,7 @@ def test_version_changelog_on_set_label(factory_tmp) -> None:
     set_custom_template_version_label(root, saved["id"], version_label="v1.0.0")
     store_path = root / ".state" / "custom_volume_templates.json"
     import json
+
     store = json.loads(store_path.read_text(encoding="utf-8"))
     for item in store["templates"]:
         if item["id"] == saved["id"]:

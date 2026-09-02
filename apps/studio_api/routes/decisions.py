@@ -2,6 +2,7 @@
 Phase 15.0 T1.4: /api/decisions/* routes.
 
 """
+
 from __future__ import annotations
 
 from fastapi import FastAPI, HTTPException
@@ -38,9 +39,7 @@ def register_decisions(app: FastAPI, ctx: RoutesContext) -> None:
         """解决决策 (PENDING → RESOLVED)"""
         ctrl = require_controller(ctx)
         try:
-            d = ctrl.resolve_decision(
-                decision_id, body.option, resolved_by=body.resolved_by
-            )
+            d = ctrl.resolve_decision(decision_id, body.option, resolved_by=body.resolved_by)
         except KeyError as e:
             raise HTTPException(status_code=404, detail=f"decision not found: {e}")
         except ValueError as e:

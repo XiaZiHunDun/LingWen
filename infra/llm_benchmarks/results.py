@@ -3,6 +3,7 @@
 Writes to infra/llm_benchmarks/results/<run-id>/call-NNN.json.
 Directory creation failure is a fail-fast blocker (per spec §6).
 """
+
 from __future__ import annotations
 
 import json

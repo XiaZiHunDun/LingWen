@@ -2,6 +2,7 @@
 
 Phase 15.0 P3-SPLIT: 从 master_controller.py 拆分的创作相关方法。
 """
+
 from typing import Dict, List, Optional
 
 
@@ -31,7 +32,12 @@ class WritingMixin:
     ) -> Dict:
         """写章节流程（委托给content_writer）"""
         return self._impl_write_chapter(
-            chapter_num, outline, characters, memory_context, style_guide, use_llm,
+            chapter_num,
+            outline,
+            characters,
+            memory_context,
+            style_guide,
+            use_llm,
             record_usage=False,
         )
 
@@ -46,7 +52,12 @@ class WritingMixin:
     ):
         """写章节 variant — 真实 usage."""
         return self._impl_write_chapter(
-            chapter_num, outline, characters, memory_context, style_guide, use_llm,
+            chapter_num,
+            outline,
+            characters,
+            memory_context,
+            style_guide,
+            use_llm,
             record_usage=True,
         )
 
@@ -70,14 +81,13 @@ class WritingMixin:
             style_guide=style_guide,
         )
 
-        suggestions = self.writing_suggestion.generate_suggestions(
-            self.relationship_tracker, chapter_num
-        )
+        suggestions = self.writing_suggestion.generate_suggestions(self.relationship_tracker, chapter_num)
 
         if use_llm:
             if record_usage:
                 result, usage = self.content_writer.generate_chapter_with_usage(
-                    chapter_num, context,
+                    chapter_num,
+                    context,
                 )
                 return {
                     "content": result["content"],
@@ -116,7 +126,12 @@ class WritingMixin:
     ) -> Dict:
         """审核章节（委托给auditor）"""
         return self._impl_audit_chapter(
-            chapter_num, content, characters, timeline, use_llm, record_usage=False,
+            chapter_num,
+            content,
+            characters,
+            timeline,
+            use_llm,
+            record_usage=False,
         )
 
     def audit_chapter_with_usage(
@@ -129,7 +144,12 @@ class WritingMixin:
     ):
         """审核章节 variant — 真实 usage."""
         return self._impl_audit_chapter(
-            chapter_num, content, characters, timeline, use_llm, record_usage=True,
+            chapter_num,
+            content,
+            characters,
+            timeline,
+            use_llm,
+            record_usage=True,
         )
 
     def _impl_audit_chapter(

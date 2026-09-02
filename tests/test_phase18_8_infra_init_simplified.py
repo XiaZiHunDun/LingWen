@@ -5,6 +5,7 @@ Phase 18.8 目标:
 - 只保留核心 compat re-export（config / util / errors）
 - 不再 export 已删除子系统（event_sourcing / di / subplot / story_contracts 等）
 """
+
 from __future__ import annotations
 
 
@@ -14,9 +15,7 @@ def test_infra_init_under_30_lines():
 
     repo = Path(__file__).resolve().parents[1]
     line_count = sum(1 for _ in (repo / "infra" / "__init__.py").open())
-    assert line_count < 30, (
-        f"infra/__init__.py is {line_count} lines — should be < 30 per Phase 18.8"
-    )
+    assert line_count < 30, f"infra/__init__.py is {line_count} lines — should be < 30 per Phase 18.8"
 
 
 def test_infra_init_keeps_config():
@@ -46,9 +45,7 @@ def test_infra_init_no_stale_event_sourcing():
     """Phase 16.7 删除目标：event_sourcing 不再 re-export。"""
     import infra
 
-    assert not hasattr(infra, "EventStore"), (
-        "infra.EventStore should be removed (event_sourcing deleted)"
-    )
+    assert not hasattr(infra, "EventStore"), "infra.EventStore should be removed (event_sourcing deleted)"
 
 
 def test_infra_init_no_stale_di():

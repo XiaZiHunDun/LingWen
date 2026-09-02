@@ -1,4 +1,5 @@
 """ForeshadowChecker 测试"""
+
 from unittest.mock import MagicMock
 
 import pytest
@@ -25,7 +26,7 @@ class TestForeshadowChecker:
             thread_id="fp_001",
             content="神秘宝剑将在第50章出现",
             introduced_chapter=5,
-            expected_resolve_chapter=50
+            expected_resolve_chapter=50,
         )
 
         assert "fp_001" in checker._plot_threads
@@ -38,10 +39,7 @@ class TestForeshadowChecker:
     def test_resolve_foreshadow(self, checker):
         """测试标记伏笔已回收"""
         checker.add_foreshadow(
-            thread_id="fp_001",
-            content="神秘宝剑",
-            introduced_chapter=5,
-            expected_resolve_chapter=50
+            thread_id="fp_001", content="神秘宝剑", introduced_chapter=5, expected_resolve_chapter=50
         )
 
         checker.resolve_foreshadow("fp_001", 50)
@@ -52,16 +50,10 @@ class TestForeshadowChecker:
     def test_get_unresolved_count(self, checker):
         """测试获取未回收伏笔数量"""
         checker.add_foreshadow(
-            thread_id="fp_001",
-            content="伏笔1",
-            introduced_chapter=5,
-            expected_resolve_chapter=50
+            thread_id="fp_001", content="伏笔1", introduced_chapter=5, expected_resolve_chapter=50
         )
         checker.add_foreshadow(
-            thread_id="fp_002",
-            content="伏笔2",
-            introduced_chapter=10,
-            expected_resolve_chapter=60
+            thread_id="fp_002", content="伏笔2", introduced_chapter=10, expected_resolve_chapter=60
         )
 
         # 回收一个
@@ -72,17 +64,12 @@ class TestForeshadowChecker:
         """测试检测逾期未回收的伏笔"""
         # 添加一个伏笔，预期在第20章回收
         checker.add_foreshadow(
-            thread_id="fp_001",
-            content="神秘宝剑",
-            introduced_chapter=5,
-            expected_resolve_chapter=20
+            thread_id="fp_001", content="神秘宝剑", introduced_chapter=5, expected_resolve_chapter=20
         )
 
         # 在第25章检查（逾期5章）
         issues = checker.check(
-            chapter_content="章节内容",
-            chapter_num=25,
-            context={"plot_threads": [], "new_foreshadow": []}
+            chapter_content="章节内容", chapter_num=25, context={"plot_threads": [], "new_foreshadow": []}
         )
 
         # 应该检测到逾期问题
@@ -92,17 +79,12 @@ class TestForeshadowChecker:
     def test_detect_unrecycled_foreshadow(self, checker):
         """测试检测未回收伏笔"""
         checker.add_foreshadow(
-            thread_id="fp_001",
-            content="神秘宝剑",
-            introduced_chapter=5,
-            expected_resolve_chapter=50
+            thread_id="fp_001", content="神秘宝剑", introduced_chapter=5, expected_resolve_chapter=50
         )
 
         # 在第55章检查（已过预期回收章节3章以上）
         checker.check(
-            chapter_content="章节内容",
-            chapter_num=55,
-            context={"plot_threads": [], "new_foreshadow": []}
+            chapter_content="章节内容", chapter_num=55, context={"plot_threads": [], "new_foreshadow": []}
         )
 
         # 简化版检查逻辑
@@ -111,17 +93,12 @@ class TestForeshadowChecker:
     def test_no_issue_for_normal_foreshadow(self, checker):
         """测试正常伏笔无误报"""
         checker.add_foreshadow(
-            thread_id="fp_001",
-            content="神秘宝剑",
-            introduced_chapter=5,
-            expected_resolve_chapter=50
+            thread_id="fp_001", content="神秘宝剑", introduced_chapter=5, expected_resolve_chapter=50
         )
 
         # 在第30章检查（还未到回收期）
         issues = checker.check(
-            chapter_content="章节内容",
-            chapter_num=30,
-            context={"plot_threads": [], "new_foreshadow": []}
+            chapter_content="章节内容", chapter_num=30, context={"plot_threads": [], "new_foreshadow": []}
         )
 
         # 不应有P1/P0级别的问题
@@ -146,24 +123,14 @@ class TestForeshadowChecker:
     def test_check_with_plot_threads_from_context(self, checker):
         """测试从context获取伏笔列表"""
         plot_threads = [
-            PlotThread(
-                id="fp_001",
-                content="神秘宝剑",
-                introduced_chapter=5,
-                expected_resolve_chapter=50
-            ),
-            PlotThread(
-                id="fp_002",
-                content="失散亲人",
-                introduced_chapter=10,
-                expected_resolve_chapter=60
-            )
+            PlotThread(id="fp_001", content="神秘宝剑", introduced_chapter=5, expected_resolve_chapter=50),
+            PlotThread(id="fp_002", content="失散亲人", introduced_chapter=10, expected_resolve_chapter=60),
         ]
 
         checker.check(
             chapter_content="章节内容",
             chapter_num=30,
-            context={"plot_threads": plot_threads, "new_foreshadow": []}
+            context={"plot_threads": plot_threads, "new_foreshadow": []},
         )
 
         # 验证伏笔被正确加载
@@ -177,26 +144,17 @@ class TestForeshadowChecker:
     def test_check_with_empty_content(self, checker):
         """测试空内容检查"""
         issues = checker.check(
-            chapter_content="",
-            chapter_num=1,
-            context={"plot_threads": [], "new_foreshadow": []}
+            chapter_content="", chapter_num=1, context={"plot_threads": [], "new_foreshadow": []}
         )
         assert isinstance(issues, list)
 
     def test_check_with_no_context(self, checker):
         """测试无context检查"""
         checker.add_foreshadow(
-            thread_id="fp_001",
-            content="神秘宝剑",
-            introduced_chapter=5,
-            expected_resolve_chapter=50
+            thread_id="fp_001", content="神秘宝剑", introduced_chapter=5, expected_resolve_chapter=50
         )
 
-        issues = checker.check(
-            chapter_content="章节内容",
-            chapter_num=30,
-            context=None
-        )
+        issues = checker.check(chapter_content="章节内容", chapter_num=30, context=None)
         assert isinstance(issues, list)
 
 
@@ -206,10 +164,7 @@ class TestPlotThread:
     def test_plot_thread_creation(self):
         """测试PlotThread创建"""
         thread = PlotThread(
-            id="fp_001",
-            content="神秘宝剑",
-            introduced_chapter=5,
-            expected_resolve_chapter=50
+            id="fp_001", content="神秘宝剑", introduced_chapter=5, expected_resolve_chapter=50
         )
 
         assert thread.id == "fp_001"
@@ -227,7 +182,7 @@ class TestPlotThread:
             introduced_chapter=5,
             expected_resolve_chapter=50,
             actual_resolve_chapter=48,
-            status="resolved"
+            status="resolved",
         )
 
         assert thread.status == "resolved"

@@ -1,4 +1,5 @@
 """Tests for wizard @mention notifications."""
+
 from __future__ import annotations
 
 import pytest

@@ -26,6 +26,7 @@ from lingwen_llm.providers import MiniMaxProvider, ProviderConfig
 @dataclass
 class LogicIssue:
     """逻辑问题"""
+
     chapter: int
     issue_type: str  # death_contradiction, state_contradiction, etc.
     severity: str  # P0, P1, P2
@@ -47,12 +48,7 @@ class LogicConsistencyAuditor:
         # 初始化AI Provider (使用MiniMax)
         self.provider = None
         if self.api_key:
-            config = ProviderConfig(
-                api_key=self.api_key,
-                model="MiniMax-M2.7",
-                timeout=120,
-                max_retries=3
-            )
+            config = ProviderConfig(api_key=self.api_key, model="MiniMax-M2.7", timeout=120, max_retries=3)
             self.provider = MiniMaxProvider(config)
         self.audit_prompt_template = """你是一个严格但合理的小说审核员。请审核以下小说章节，检查真正的逻辑矛盾问题。
 
@@ -96,7 +92,7 @@ B. 设定合理内容（不需要修复）：
         chapter_files = []
         for f in sorted(self.chapters_dir.glob("ch*.md")):
             # 提取章节号
-            match = re.search(r'ch(\d+)', f.name)
+            match = re.search(r"ch(\d+)", f.name)
             if match:
                 chapter_num = int(match.group(1))
                 chapter_files.append((chapter_num, f))
@@ -107,7 +103,7 @@ B. 设定合理内容（不需要修复）：
         chapter_file = self.chapters_dir / f"ch{chapter_num:03d}.md"
         if not chapter_file.exists():
             return None
-        with open(chapter_file, 'r', encoding='utf-8') as f:
+        with open(chapter_file, "r", encoding="utf-8") as f:
             return f.read()
 
     async def audit_chapter_llm(self, chapter_num: int, semaphore: asyncio.Semaphore) -> List[LogicIssue]:
@@ -124,27 +120,26 @@ B. 设定合理内容（不需要修复）：
 
             try:
                 prompt = self.audit_prompt_template.format(content=content)
-                response = await asyncio.to_thread(
-                    self.provider.generate,
-                    prompt
-                )
+                response = await asyncio.to_thread(self.provider.generate, prompt)
 
                 # 解析JSON响应
                 issues = []
                 try:
                     # 提取JSON数组
-                    json_match = re.search(r'\[.*\]', response, re.DOTALL)
+                    json_match = re.search(r"\[.*\]", response, re.DOTALL)
                     if json_match:
                         data = json.loads(json_match.group())
                         for item in data:
-                            issues.append(LogicIssue(
-                                chapter=chapter_num,
-                                issue_type=item.get('issue_type', 'unknown'),
-                                severity=item.get('severity', 'P2'),
-                                description=item.get('description', ''),
-                                evidence=item.get('evidence', ''),
-                                suggestion=item.get('suggestion', '')
-                            ))
+                            issues.append(
+                                LogicIssue(
+                                    chapter=chapter_num,
+                                    issue_type=item.get("issue_type", "unknown"),
+                                    severity=item.get("severity", "P2"),
+                                    description=item.get("description", ""),
+                                    evidence=item.get("evidence", ""),
+                                    suggestion=item.get("suggestion", ""),
+                                )
+                            )
                 except json.JSONDecodeError:
                     print(f"[PARSE ERROR] ch{chapter_num:03d}: 无法解析LLM响应")
 
@@ -163,10 +158,7 @@ B. 设定合理内容（不需要修复）：
         print(f"并发限制: {self.max_concurrency}")
 
         semaphore = asyncio.Semaphore(self.max_concurrency)
-        tasks = [
-            self.audit_chapter_llm(chapter_num, semaphore)
-            for chapter_num, _ in chapter_files
-        ]
+        tasks = [self.audit_chapter_llm(chapter_num, semaphore) for chapter_num, _ in chapter_files]
 
         results = await asyncio.gather(*tasks)
 
@@ -187,45 +179,45 @@ B. 设定合理内容（不需要修复）：
             by_chapter[issue.chapter].append(issue)
 
         # 按严重程度分组
-        by_severity = {'P0': [], 'P1': [], 'P2': [], 'P3': []}
+        by_severity = {"P0": [], "P1": [], "P2": [], "P3": []}
         for issue in issues:
             by_severity[issue.severity].append(issue)
 
         report = {
-            'audit_date': datetime.now().isoformat(),
-            'total_chapters': len(self.get_chapter_files()),
-            'total_issues': len(issues),
-            'by_severity': {
-                'P0': len(by_severity['P0']),
-                'P1': len(by_severity['P1']),
-                'P2': len(by_severity['P2'])
+            "audit_date": datetime.now().isoformat(),
+            "total_chapters": len(self.get_chapter_files()),
+            "total_issues": len(issues),
+            "by_severity": {
+                "P0": len(by_severity["P0"]),
+                "P1": len(by_severity["P1"]),
+                "P2": len(by_severity["P2"]),
             },
-            'chapters_with_issues': len(by_chapter),
-            'issues': [
+            "chapters_with_issues": len(by_chapter),
+            "issues": [
                 {
-                    'chapter': issue.chapter,
-                    'issue_type': issue.issue_type,
-                    'severity': issue.severity,
-                    'description': issue.description,
-                    'evidence': issue.evidence,
-                    'suggestion': issue.suggestion
+                    "chapter": issue.chapter,
+                    "issue_type": issue.issue_type,
+                    "severity": issue.severity,
+                    "description": issue.description,
+                    "evidence": issue.evidence,
+                    "suggestion": issue.suggestion,
                 }
                 for issue in sorted(issues, key=lambda x: (x.chapter, x.severity))
-            ]
+            ],
         }
         return report
 
     def save_report(self, report: Dict[str, Any]) -> None:
         """保存报告"""
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         report_file = self.output_dir / f"logic_audit_{timestamp}.json"
 
-        with open(report_file, 'w', encoding='utf-8') as f:
+        with open(report_file, "w", encoding="utf-8") as f:
             json.dump(report, f, ensure_ascii=False, indent=2)
 
         # 同时保存一个latest.json方便查阅
         latest_file = self.output_dir / "logic_audit_latest.json"
-        with open(latest_file, 'w', encoding='utf-8') as f:
+        with open(latest_file, "w", encoding="utf-8") as f:
             json.dump(report, f, ensure_ascii=False, indent=2)
 
         print(f"\n报告已保存: {report_file}")
@@ -233,9 +225,9 @@ B. 设定合理内容（不需要修复）：
 
     def print_summary(self, report: Dict[str, Any]) -> None:
         """打印摘要"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("逻辑一致性审核报告")
-        print("="*60)
+        print("=" * 60)
         print(f"审核章节: {report['total_chapters']}")
         print(f"发现问题: {report['total_issues']}")
         print(f"有问题的章节: {report['chapters_with_issues']}")
@@ -245,40 +237,35 @@ B. 设定合理内容（不需要修复）：
         print(f"  P2 (轻微): {report['by_severity'].get('P2', 0)}")
         print(f"  P3 (提示): {report['by_severity'].get('P3', 0)}")
 
-        if report['issues']:
+        if report["issues"]:
             print("\n前10个P0/P1问题:")
             count = 0
-            for issue in report['issues']:
-                if issue['severity'] in ['P0', 'P1'] and count < 10:
+            for issue in report["issues"]:
+                if issue["severity"] in ["P0", "P1"] and count < 10:
                     print(f"\n  ch{issue['chapter']:03d} [{issue['severity']}] {issue['issue_type']}")
                     print(f"    描述: {issue['description'][:80]}...")
                     print(f"    证据: {issue['evidence'][:80]}...")
                     count += 1
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
 
 
 async def main():
     import argparse
 
-    parser = argparse.ArgumentParser(description='LLM逻辑一致性审核')
-    parser.add_argument('--concurrency', '-c', type=int, default=10,
-                        help='最大并发数 (默认10)')
-    parser.add_argument('--api-key', '-k', type=str, default=None,
-                        help='Anthropic API Key (或设置ANTHROPIC_API_KEY环境变量)')
-    parser.add_argument('--dry-run', action='store_true',
-                        help='仅测试前3章，不调用API')
-    parser.add_argument('--chapters', type=str, default=None,
-                        help='审核指定章节，如 "1-10" 或 "5,10,15"')
+    parser = argparse.ArgumentParser(description="LLM逻辑一致性审核")
+    parser.add_argument("--concurrency", "-c", type=int, default=10, help="最大并发数 (默认10)")
+    parser.add_argument(
+        "--api-key", "-k", type=str, default=None, help="Anthropic API Key (或设置ANTHROPIC_API_KEY环境变量)"
+    )
+    parser.add_argument("--dry-run", action="store_true", help="仅测试前3章，不调用API")
+    parser.add_argument("--chapters", type=str, default=None, help='审核指定章节，如 "1-10" 或 "5,10,15"')
     args = parser.parse_args()
 
     # 支持环境变量
-    api_key = args.api_key or os.environ.get('ANTHROPIC_API_KEY')
+    api_key = args.api_key or os.environ.get("ANTHROPIC_API_KEY")
 
-    auditor = LogicConsistencyAuditor(
-        max_concurrency=args.concurrency,
-        api_key=api_key
-    )
+    auditor = LogicConsistencyAuditor(max_concurrency=args.concurrency, api_key=api_key)
 
     print("开始LLM逻辑审核...")
     print(f"时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -292,10 +279,7 @@ async def main():
         print("\n[DRY RUN 模式 - 仅测试前3章]")
         chapter_files = auditor.get_chapter_files()[:3]
         semaphore = asyncio.Semaphore(args.concurrency)
-        tasks = [
-            auditor.audit_chapter_llm(chapter_num, semaphore)
-            for chapter_num, _ in chapter_files
-        ]
+        tasks = [auditor.audit_chapter_llm(chapter_num, semaphore) for chapter_num, _ in chapter_files]
         results = await asyncio.gather(*tasks)
         all_issues = []
         for issues in results:
@@ -309,5 +293,5 @@ async def main():
         auditor.print_summary(report)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(main())

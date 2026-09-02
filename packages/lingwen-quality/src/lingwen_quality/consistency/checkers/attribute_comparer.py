@@ -24,26 +24,28 @@ from typing import Any, Dict, List, Optional, Tuple
 @dataclass
 class AttributeValue:
     """属性值记录"""
-    entity_name: str       # 实体名称（角色/物品）
-    attribute_name: str    # 属性名称
-    value: str             # 属性值（原始字符串）
-    parsed_value: Any      # 解析后的值（用于比对）
-    chapter: int           # 章节号
-    line_num: int          # 行号
-    context: str           # 上下文（前后各50字）
-    confidence: float      # 置信度 0.0-1.0
+
+    entity_name: str  # 实体名称（角色/物品）
+    attribute_name: str  # 属性名称
+    value: str  # 属性值（原始字符串）
+    parsed_value: Any  # 解析后的值（用于比对）
+    chapter: int  # 章节号
+    line_num: int  # 行号
+    context: str  # 上下文（前后各50字）
+    confidence: float  # 置信度 0.0-1.0
 
 
 @dataclass
 class Contradiction:
     """属性矛盾记录"""
+
     entity_name: str
     attribute_name: str
     values: List[AttributeValue]  # 不一致的值列表
-    severity: str                 # P0/P1/P2
-    contradiction_type: str        # age/eye_color/height/etc
-    description: str               # 矛盾描述
-    suggestion: str                # 修复建议
+    severity: str  # P0/P1/P2
+    contradiction_type: str  # age/eye_color/height/etc
+    description: str  # 矛盾描述
+    suggestion: str  # 修复建议
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -282,19 +284,23 @@ class AttributeComparer:
                     next_val = unique_values[i + 1]
 
                     # 对于数值型属性，检查差异是否合理
-                    if isinstance(curr.parsed_value, (int, float)) and isinstance(next_val.parsed_value, (int, float)):
+                    if isinstance(curr.parsed_value, (int, float)) and isinstance(
+                        next_val.parsed_value, (int, float)
+                    ):
                         diff = abs(curr.parsed_value - next_val.parsed_value)
                         # 年龄差异超过10岁，可能是矛盾
                         if attribute_name == "年龄" and diff > 10:
-                            contradictions.append(self._create_contradiction(
-                                entity_name=entity_name,
-                                attribute_name=attribute_name,
-                                values=[curr, next_val],
-                                severity=severity,
-                                description=f"角色{entity_name}的年龄在第{curr.chapter}章描述为{curr.value}，"
-                                           f"但在第{next_val.chapter}章描述为{next_val.value}，"
-                                           f"差异{int(diff)}岁，可能存在矛盾。",
-                            ))
+                            contradictions.append(
+                                self._create_contradiction(
+                                    entity_name=entity_name,
+                                    attribute_name=attribute_name,
+                                    values=[curr, next_val],
+                                    severity=severity,
+                                    description=f"角色{entity_name}的年龄在第{curr.chapter}章描述为{curr.value}，"
+                                    f"但在第{next_val.chapter}章描述为{next_val.value}，"
+                                    f"差异{int(diff)}岁，可能存在矛盾。",
+                                )
+                            )
 
         return contradictions
 
@@ -406,15 +412,9 @@ class AttributeComparer:
                 "方案2：在后续章节中补充角色成长/时间跳跃说明"
             )
         elif attribute_name == "眼睛颜色":
-            return (
-                "建议统一角色外貌设定。\n"
-                "检查所有章节中该角色眼睛颜色的描述，统一为同一颜色"
-            )
+            return "建议统一角色外貌设定。\n检查所有章节中该角色眼睛颜色的描述，统一为同一颜色"
         elif attribute_name == "身高":
-            return (
-                "建议统一角色身材设定。\n"
-                "检查所有章节中该角色身高的描述，如有出入需统一"
-            )
+            return "建议统一角色身材设定。\n检查所有章节中该角色身高的描述，如有出入需统一"
         else:
             return f"建议检查并统一角色{attribute_name}的描述"
 

@@ -37,10 +37,7 @@ def sample_report():
     总之，这个场景为后续情节做了铺垫。
     """
 
-    return engine.check_chapter(
-        chapter_num=25,
-        chapter_content=content
-    )
+    return engine.check_chapter(chapter_num=25, chapter_content=content)
 
 
 @pytest.fixture
@@ -88,18 +85,20 @@ class TestReportGeneratorFormatting:
 
     def test_issue_details_format(self, report_generator):
         report = ConsistencyReport(chapter=25)
-        report.add_issue(Issue(
-            id="test_001",
-            severity=IssueSeverity.P1,
-            checker_type=CheckerType.CHARACTER,
-            issue_type="性格冲突",
-            title="角色性格-行为冲突",
-            description="角色表现与设定不符",
-            location=IssueLocation(chapter=25),
-            evidence="设定为冷静",
-            suggestion="修改为符合性格的行为",
-            character="林夜"
-        ))
+        report.add_issue(
+            Issue(
+                id="test_001",
+                severity=IssueSeverity.P1,
+                checker_type=CheckerType.CHARACTER,
+                issue_type="性格冲突",
+                title="角色性格-行为冲突",
+                description="角色表现与设定不符",
+                location=IssueLocation(chapter=25),
+                evidence="设定为冷静",
+                suggestion="修改为符合性格的行为",
+                character="林夜",
+            )
+        )
 
         result = report_generator.generate(report, format="markdown")
 
@@ -121,11 +120,7 @@ class TestReportGeneratorSave:
     def test_save_report(self, report_generator, sample_report, tmp_path):
         output_path = tmp_path / "report.md"
 
-        report_generator.save_report(
-            sample_report,
-            str(output_path),
-            format="markdown"
-        )
+        report_generator.save_report(sample_report, str(output_path), format="markdown")
 
         assert output_path.exists()
         content = output_path.read_text()

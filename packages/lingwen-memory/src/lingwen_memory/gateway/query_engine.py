@@ -2,6 +2,7 @@
 
 提供混合检索、角色状态查询、关系网络查询和一致性检查功能。
 """
+
 import time
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
@@ -67,6 +68,7 @@ class QueryEngine:
         except Exception as e:
             # 配置加载失败时使用硬编码默认值（记录错误以便排查）
             import sys
+
             print(f"Warning: Failed to load config, using defaults: {e}", file=sys.stderr)
             self.default_top_k = 5
             self.hybrid_alpha = 0.7
@@ -148,7 +150,6 @@ class QueryEngine:
         if not query_vector:
             return []
 
-
         # 执行向量搜索（带性能监控）
         start_time = time.perf_counter()
         search_results = self.qdrant_wrapper.search(
@@ -178,9 +179,7 @@ class QueryEngine:
 
         conditions = []
         for field, value in filters.items():
-            conditions.append(
-                FieldCondition(key=field, match=MatchValue(value=value))
-            )
+            conditions.append(FieldCondition(key=field, match=MatchValue(value=value)))
 
         return Filter(must=conditions) if conditions else None
 
@@ -214,9 +213,7 @@ class QueryEngine:
 
         return state
 
-    def get_relationship_network(
-        self, character: str, depth: int = 1
-    ) -> List[Dict[str, Any]]:
+    def get_relationship_network(self, character: str, depth: int = 1) -> List[Dict[str, Any]]:
         """获取角色关系网络
 
         Args:
@@ -234,7 +231,6 @@ class QueryEngine:
         if not query_vector:
             return []
 
-
         # 在 relationships 集合中搜索
         search_results = self.qdrant_wrapper.search(
             collection_name="relationships",
@@ -250,19 +246,19 @@ class QueryEngine:
             to_char = payload.get("to_character", "")
 
             if from_char == character or to_char == character:
-                relationships.append({
-                    "from_character": from_char,
-                    "to_character": to_char,
-                    "relationship_type": payload.get("relationship_type", "unknown"),
-                    "score": result.get("score", 0.0),
-                    "id": result.get("id"),
-                })
+                relationships.append(
+                    {
+                        "from_character": from_char,
+                        "to_character": to_char,
+                        "relationship_type": payload.get("relationship_type", "unknown"),
+                        "score": result.get("score", 0.0),
+                        "id": result.get("id"),
+                    }
+                )
 
         return relationships
 
-    def check_consistency(
-        self, chapter_content: str, chapter: Optional[int] = None
-    ) -> Dict[str, Any]:
+    def check_consistency(self, chapter_content: str, chapter: Optional[int] = None) -> Dict[str, Any]:
         """一致性检查
 
         检查章节内容与已知角色状态、时间线、伏笔的一致性。
@@ -322,9 +318,7 @@ class QueryEngine:
             "issues": issues,
         }
 
-    def _check_character_consistency(
-        self, chapter_content: str
-    ) -> List[Dict[str, Any]]:
+    def _check_character_consistency(self, chapter_content: str) -> List[Dict[str, Any]]:
         """检查角色状态一致性
 
         Args:
@@ -349,22 +343,22 @@ class QueryEngine:
 
                 # 如果角色已死亡，警告不要在内容中描述其活动
                 if not alive and self._is_describing_activity(chapter_content, char_name):
-                    issues.append({
-                        "type": "character_state_conflict",
-                        "severity": "high",
-                        "character": char_name,
-                        "message": f"角色 '{char_name}' 已经死亡，不应描述其活动",
-                        "current_state": char_state,
-                    })
+                    issues.append(
+                        {
+                            "type": "character_state_conflict",
+                            "severity": "high",
+                            "character": char_name,
+                            "message": f"角色 '{char_name}' 已经死亡，不应描述其活动",
+                            "current_state": char_state,
+                        }
+                    )
 
                 # 检查位置一致性（如果能确定位置的话）
                 # 这需要更复杂的内容解析，暂时简化处理
 
         return issues
 
-    def _check_fact_consistency(
-        self, chapter_content: str
-    ) -> List[Dict[str, Any]]:
+    def _check_fact_consistency(self, chapter_content: str) -> List[Dict[str, Any]]:
         """检查事实一致性
 
         Args:
@@ -394,9 +388,7 @@ class QueryEngine:
 
         return issues
 
-    def _check_plot_thread_consistency(
-        self, chapter_content: str, chapter: int
-    ) -> List[Dict[str, Any]]:
+    def _check_plot_thread_consistency(self, chapter_content: str, chapter: int) -> List[Dict[str, Any]]:
         """检查伏笔一致性
 
         Args:
@@ -420,20 +412,20 @@ class QueryEngine:
             if chapter < planted_chapter:
                 # 伏笔尚未引入，查找是否被提及
                 if self._contains_foreshadow_reference(chapter_content, fp_data):
-                    issues.append({
-                        "type": "foreshadow_reference_before_planting",
-                        "severity": "medium",
-                        "foreshadow_id": fp_id,
-                        "message": f"伏笔 '{fp_data.get('title', fp_id)}' 在引入之前被提及",
-                        "current_chapter": chapter,
-                        "planted_chapter": planted_chapter,
-                    })
+                    issues.append(
+                        {
+                            "type": "foreshadow_reference_before_planting",
+                            "severity": "medium",
+                            "foreshadow_id": fp_id,
+                            "message": f"伏笔 '{fp_data.get('title', fp_id)}' 在引入之前被提及",
+                            "current_chapter": chapter,
+                            "planted_chapter": planted_chapter,
+                        }
+                    )
 
         return issues
 
-    def _check_timeline_consistency(
-        self, chapter_content: str, chapter: int
-    ) -> List[Dict[str, Any]]:
+    def _check_timeline_consistency(self, chapter_content: str, chapter: int) -> List[Dict[str, Any]]:
         """检查时间线一致性
 
         Args:
@@ -479,9 +471,7 @@ class QueryEngine:
 
         return False
 
-    def _contains_foreshadow_reference(
-        self, content: str, foreshadow_data: Dict[str, Any]
-    ) -> bool:
+    def _contains_foreshadow_reference(self, content: str, foreshadow_data: Dict[str, Any]) -> bool:
         """检查内容是否包含伏笔引用
 
         Args:
@@ -507,11 +497,7 @@ class QueryEngine:
         return False
 
     def query_foreshadows(
-        self,
-        query: str,
-        status: Optional[str] = None,
-        chapter_range: Optional[tuple] = None,
-        top_k: int = 5
+        self, query: str, status: Optional[str] = None, chapter_range: Optional[tuple] = None, top_k: int = 5
     ) -> List[Dict[str, Any]]:
         """查询伏笔
 
@@ -582,11 +568,7 @@ class QueryEngine:
                     continue
 
                 similarity = self._cosine_similarity(query_vector, fp_vector)
-                scored_results.append({
-                    "fp_id": fp_id,
-                    "similarity": similarity,
-                    **fp_data
-                })
+                scored_results.append({"fp_id": fp_id, "similarity": similarity, **fp_data})
 
             # 按相似度降序排列
             scored_results.sort(key=lambda x: x.get("similarity", 0), reverse=True)
@@ -600,9 +582,7 @@ class QueryEngine:
             self._profiler.record_query(elapsed)
             return list(all_foreshadows.values())[:top_k]
 
-    def _matches_chapter_range(
-        self, fp_data: Dict[str, Any], min_ch: int, max_ch: int
-    ) -> bool:
+    def _matches_chapter_range(self, fp_data: Dict[str, Any], min_ch: int, max_ch: int) -> bool:
         """检查伏笔是否在章节范围内"""
         planted_chapter = fp_data.get("planted_chapter", 0)
         expected_recycle = fp_data.get("expected_recycle_chapter", 0)

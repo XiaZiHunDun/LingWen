@@ -3,6 +3,7 @@
 ⚠️ Breaking change: 'cascade rip-1' 旧用法变 'cascade run rip-1'.
 测试走 CascadeCommand.execute() 直接调, 0 破既 Phase 9.19+9.20 风格.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -19,9 +20,19 @@ from infra.cross_volume.storage import RippleStorage
 
 
 def make_cascade_options(**overrides) -> CascadeOptions:
-    defaults = dict(range=[], parallel=1, verbose=False, dry_run=False,
-                    output=None, ripple_id="", max_depth=3, persist=False,
-                    action="run", run_id=0, reason="")
+    defaults = dict(
+        range=[],
+        parallel=1,
+        verbose=False,
+        dry_run=False,
+        output=None,
+        ripple_id="",
+        max_depth=3,
+        persist=False,
+        action="run",
+        run_id=0,
+        reason="",
+    )
     defaults.update(overrides)
     return CascadeOptions(**defaults)
 
@@ -35,8 +46,13 @@ def storage_with_run(tmp_path, monkeypatch):
     g.add_edge(ReferenceEdge(id="e12", from_node_id="n1", to_node_id="n2"))
     storage._graph = g
     ripple = CrossVolumeRipple(
-        id="rip-1", trigger_volume=1, trigger_chapter=1,
-        affected_nodes=("n1",), affected_edges=(), proposed_actions=(), status="pending",
+        id="rip-1",
+        trigger_volume=1,
+        trigger_chapter=1,
+        affected_nodes=("n1",),
+        affected_edges=(),
+        proposed_actions=(),
+        status="pending",
     )
     storage.append_ripple(ripple)
     cascaded = storage.preview_cascade("rip-1", max_depth=2)

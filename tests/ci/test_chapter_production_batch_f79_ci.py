@@ -1,4 +1,5 @@
 """Phase 9.87 F79: CI contract — manual batch pilot record + runbook §15."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -32,10 +33,6 @@ class TestChapterProductionBatchF79:
 
     def test_v8_roadmap_f79(self):
         roadmap = (
-            NOVEL_FACTORY
-            / "docs"
-            / "superpowers"
-            / "plans"
-            / "2026-06-11-followup-roadmap-v8-post-9.84.md"
+            NOVEL_FACTORY / "docs" / "superpowers" / "plans" / "2026-06-11-followup-roadmap-v8-post-9.84.md"
         )
         assert "F79" in roadmap.read_text(encoding="utf-8")

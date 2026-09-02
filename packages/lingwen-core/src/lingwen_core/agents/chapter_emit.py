@@ -1,4 +1,5 @@
 """emit_chapter 落盘 — 将 workflow 合并润色后的正文写入 content_repo。"""
+
 from __future__ import annotations
 
 import importlib.util

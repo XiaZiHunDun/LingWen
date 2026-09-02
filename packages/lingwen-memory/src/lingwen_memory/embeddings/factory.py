@@ -1,4 +1,5 @@
 """Embedding provider resolution and factory (F89)."""
+
 from __future__ import annotations
 
 import os
@@ -28,8 +29,7 @@ def resolve_embedding_provider_name(
     if env_override:
         if env_override not in _VALID_PROVIDERS - {"auto"}:
             raise EmbeddingProviderError(
-                f"Invalid LINGWEN_EMBEDDING_PROVIDER={env_override!r} "
-                f"(expected openai|minimax)"
+                f"Invalid LINGWEN_EMBEDDING_PROVIDER={env_override!r} (expected openai|minimax)"
             )
         return env_override
 
@@ -37,9 +37,7 @@ def resolve_embedding_provider_name(
     configured = str(section.get("provider", "auto")).strip().lower()
     if configured != "auto":
         if configured not in _VALID_PROVIDERS - {"auto"}:
-            raise EmbeddingProviderError(
-                f"Invalid embedding.provider={configured!r} in {MEMORY_CONFIG_PATH}"
-            )
+            raise EmbeddingProviderError(f"Invalid embedding.provider={configured!r} in {MEMORY_CONFIG_PATH}")
         return configured
 
     if os.environ.get("OPENAI_API_KEY"):
@@ -67,8 +65,7 @@ def embedding_keys_available(provider_name: str) -> tuple[bool, str]:
         if group:
             return True, "embedding: MINIMAX_API_KEY + MINIMAX_GROUP_ID set (provider=minimax)"
         return True, (
-            "embedding: MINIMAX_API_KEY set (provider=minimax; "
-            "MINIMAX_GROUP_ID recommended for CN endpoint)"
+            "embedding: MINIMAX_API_KEY set (provider=minimax; MINIMAX_GROUP_ID recommended for CN endpoint)"
         )
 
     return False, f"embedding: unknown provider {provider_name!r}"

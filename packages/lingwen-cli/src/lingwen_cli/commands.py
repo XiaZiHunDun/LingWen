@@ -3,6 +3,7 @@
 保留这个文件是为了让 lingwen.py:27 的
 `from lingwen_cli.commands import get_command, list_commands` 不需要修改。
 """
+
 from lingwen_cli.commands import get_command, list_commands  # noqa: F401
 
 __all__ = ["get_command", "list_commands"]

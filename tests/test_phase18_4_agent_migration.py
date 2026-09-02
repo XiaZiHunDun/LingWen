@@ -5,6 +5,7 @@
 - infra/agent_system/ 目录不存在
 - 这些 agent 可从 lingwen_core.agents.agents 导入
 """
+
 from __future__ import annotations
 
 
@@ -23,6 +24,7 @@ def test_character_consistency_agent_migrated():
     from lingwen_core.agents.agents.character_consistency import (  # type: ignore[import-not-found]
         CharacterConsistencyAgent,
     )
+
     assert CharacterConsistencyAgent is not None
 
 
@@ -30,6 +32,7 @@ def test_outline_reviewer_migrated():
     from lingwen_core.agents.agents.outline_reviewer import (  # type: ignore[import-not-found]
         OutlineReviewer,
     )
+
     assert OutlineReviewer is not None
 
 
@@ -37,6 +40,7 @@ def test_quality_reviewer_migrated():
     from lingwen_core.agents.agents.quality_reviewer import (  # type: ignore[import-not-found]
         QualityReviewer,
     )
+
     assert QualityReviewer is not None
 
 
@@ -44,6 +48,7 @@ def test_squad_migrated():
     from lingwen_core.agents.agents.squad import (  # type: ignore[import-not-found]
         AgentSquad,
     )
+
     assert AgentSquad is not None
 
 
@@ -52,6 +57,7 @@ def test_reviewer_migrated():
     from lingwen_core.agents.agents.reviewer import (  # type: ignore[import-not-found]
         ReviewerSession,
     )
+
     assert ReviewerSession is not None
 
 

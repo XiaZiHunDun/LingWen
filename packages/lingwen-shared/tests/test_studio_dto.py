@@ -3,6 +3,7 @@
 Promoted from manual TS DTOs (packages/dashboard-contracts/src/shared/studio.ts).
 23 Pydantic models.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -40,11 +41,23 @@ def test_studio_dtos_importable() -> None:
 def test_studio_summary_defaults() -> None:
     """StudioSummaryResponse default values."""
     from lingwen_shared.contracts.python.studio import StudioSummaryResponse
+
     obj = StudioSummaryResponse(
-        slug="x", name="X", role="studio", root="/x", location="/x",
-        max_chapter=10, genre="scifi", chapter_count=5, latest_chapter=5,
-        outline_count=5, golden_chapters=[1, 2], has_golden_set=True,
-        pilot_records_dir="/x", pilot_record_count=0, pillars_ok=True,
+        slug="x",
+        name="X",
+        role="studio",
+        root="/x",
+        location="/x",
+        max_chapter=10,
+        genre="scifi",
+        chapter_count=5,
+        latest_chapter=5,
+        outline_count=5,
+        golden_chapters=[1, 2],
+        has_golden_set=True,
+        pilot_records_dir="/x",
+        pilot_record_count=0,
+        pillars_ok=True,
         pillars_path="/x",
     )
     assert obj.creation_mode == "studio"
@@ -54,8 +67,11 @@ def test_studio_summary_defaults() -> None:
 def test_studio_prose_diff_response_default_totals() -> None:
     """StudioProseDiffResponse default total_delta=None, chapters=[]."""
     from lingwen_shared.contracts.python.studio import StudioProseDiffResponse
+
     obj = StudioProseDiffResponse(
-        slug="x", available=False, snapshot_path="/x",
+        slug="x",
+        available=False,
+        snapshot_path="/x",
     )
     assert obj.total_delta is None
     assert obj.chapters == []
@@ -66,6 +82,7 @@ def test_studio_batch_run_request_ge_constraints() -> None:
     """StudioBatchRunRequest start_chapter/end_chapter ge=1; budget_usd ge=0,le=100."""
     from lingwen_shared.contracts.python.studio import StudioBatchRunRequest
     from pydantic import ValidationError
+
     with pytest.raises(ValidationError):
         StudioBatchRunRequest(start_chapter=0, end_chapter=5)
     with pytest.raises(ValidationError):
@@ -77,6 +94,7 @@ def test_studio_batch_run_request_ge_constraints() -> None:
 def test_studio_prose_judge_response_defaults() -> None:
     """StudioProseJudgeResponse default lists=[]."""
     from lingwen_shared.contracts.python.studio import StudioProseJudgeResponse
+
     obj = StudioProseJudgeResponse(slug="x", available=False)
     assert obj.chapters == []
     assert obj.golden_chapters == []

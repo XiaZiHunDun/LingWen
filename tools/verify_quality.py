@@ -49,12 +49,12 @@ class QualityVerifier:
             "chapters_checked": len(chapter_nums),
             "worldview": {
                 "total_issues": len(worldview_issues),
-                "issues": [{"ch": i.chapter, "desc": i.description} for i in worldview_issues]
+                "issues": [{"ch": i.chapter, "desc": i.description} for i in worldview_issues],
             },
             "ai_trace": {
                 "total_issues": len(ai_trace_issues),
-                "issues": [{"ch": i.chapter, "desc": i.description} for i in ai_trace_issues]
-            }
+                "issues": [{"ch": i.chapter, "desc": i.description} for i in ai_trace_issues],
+            },
         }
 
     def verify_sample(self, sample_size: int = 30, seed: int = 42) -> Dict[str, Any]:
@@ -93,16 +93,16 @@ class QualityVerifier:
         ]
 
         # 显示前10个问题
-        if result['worldview']['issues']:
+        if result["worldview"]["issues"]:
             lines.append("")
             lines.append("【世界观问题示例】")
-            for i in result['worldview']['issues'][:10]:
+            for i in result["worldview"]["issues"][:10]:
                 lines.append(f"  ch{i['ch']:03d}: {i['desc']}")
 
-        if result['ai_trace']['issues']:
+        if result["ai_trace"]["issues"]:
             lines.append("")
             lines.append("【AI痕迹问题示例】")
-            for i in result['ai_trace']['issues'][:10]:
+            for i in result["ai_trace"]["issues"][:10]:
                 lines.append(f"  ch{i['ch']:03d}: {i['desc']}")
 
         return "\n".join(lines)
@@ -110,17 +110,13 @@ class QualityVerifier:
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description='质量验证工具')
-    parser.add_argument('--chapters', type=str, default='1-30',
-                        help='章节范围，如 "1-30" 或 "1,5,10"')
-    parser.add_argument('--sample', action='store_true',
-                        help='随机抽样模式')
-    parser.add_argument('--sample-size', type=int, default=30,
-                        help='抽样数量')
-    parser.add_argument('--output', type=str, default=None,
-                        help='输出JSON文件路径')
-    parser.add_argument('--limit', type=int, default=None,
-                        help='限制处理章节数量')
+
+    parser = argparse.ArgumentParser(description="质量验证工具")
+    parser.add_argument("--chapters", type=str, default="1-30", help='章节范围，如 "1-30" 或 "1,5,10"')
+    parser.add_argument("--sample", action="store_true", help="随机抽样模式")
+    parser.add_argument("--sample-size", type=int, default=30, help="抽样数量")
+    parser.add_argument("--output", type=str, default=None, help="输出JSON文件路径")
+    parser.add_argument("--limit", type=int, default=None, help="限制处理章节数量")
 
     args = parser.parse_args()
 
@@ -131,15 +127,15 @@ def main():
         print(verifier.generate_report(result))
     else:
         chapters = []
-        for part in args.chapters.split(','):
-            if '-' in part:
-                start, end = map(int, part.split('-'))
+        for part in args.chapters.split(","):
+            if "-" in part:
+                start, end = map(int, part.split("-"))
                 chapters.extend(range(start, end + 1))
             else:
                 chapters.append(int(part))
 
         if args.limit:
-            chapters = chapters[:args.limit]
+            chapters = chapters[: args.limit]
 
         verifier = QualityVerifier()
         result = verifier.verify_chapters(chapters)
@@ -149,10 +145,10 @@ def main():
         if args.output:
             output_path = Path(args.output)
             output_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(result, f, ensure_ascii=False, indent=2)
             print(f"\n结果已保存: {output_path}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -30,6 +30,7 @@ class BattleVisualizationChecker(BaseChecker):
 
     抽象占比过高会降低战斗场景的可读性和视觉冲击力
     """
+
     _checker_type = CheckerType.BATTLE_VISUALIZATION
 
     # R2-012: 词汇表已迁出至 vocabulary.py — 共享给其他 checker
@@ -45,10 +46,7 @@ class BattleVisualizationChecker(BaseChecker):
         super().__init__(self._checker_type)
 
     def check(
-        self,
-        chapter_content: str,
-        chapter_num: int,
-        context: Optional[Dict[str, Any]] = None
+        self, chapter_content: str, chapter_num: int, context: Optional[Dict[str, Any]] = None
     ) -> List[Issue]:
         """
         检查战斗描写具象化程度
@@ -80,9 +78,7 @@ class BattleVisualizationChecker(BaseChecker):
 
         for para in battle_paragraphs:
             abstract_count += self._count_unique_matches(self.ABSTRACT_CULTIVATION, para)
-            concrete_count += self._count_unique_matches(
-                self.CONCRETE_VISUAL + self.CONCRETE_ACTION, para
-            )
+            concrete_count += self._count_unique_matches(self.CONCRETE_VISUAL + self.CONCRETE_ACTION, para)
 
         total = abstract_count + concrete_count
         if total == 0:
@@ -97,8 +93,8 @@ class BattleVisualizationChecker(BaseChecker):
                 severity=IssueSeverity.P2,
                 checker_type=CheckerType.BATTLE_VISUALIZATION,
                 issue_type="excessive_abstract_battle",
-                title=f"战斗描写抽象化过高：{abstract_ratio*100:.0f}%",
-                description=f"第{chapter_num}章战斗描写中抽象概念占{abstract_ratio*100:.0f}%，超过阈值60%。",
+                title=f"战斗描写抽象化过高：{abstract_ratio * 100:.0f}%",
+                description=f"第{chapter_num}章战斗描写中抽象概念占{abstract_ratio * 100:.0f}%，超过阈值60%。",
                 location=IssueLocation(chapter=chapter_num),
                 evidence=f"抽象:{abstract_count}处，具象:{concrete_count}处",
                 suggestion="增加具象描写，用具体视觉和动作替代抽象概念。如「能量波动」改为「火星四溅」，「星辰能量」改为「剑身发出炽白光」。",
@@ -148,7 +144,7 @@ class BattleVisualizationChecker(BaseChecker):
         Returns:
             战斗段落列表
         """
-        paragraphs = content.split('\n\n')
+        paragraphs = content.split("\n\n")
         battle_paragraphs = []
 
         for para in paragraphs:
@@ -170,9 +166,7 @@ class BattleVisualizationChecker(BaseChecker):
             抽象占比
         """
         abstract_count = self._count_unique_matches(self.ABSTRACT_CULTIVATION, content)
-        concrete_count = self._count_unique_matches(
-            self.CONCRETE_VISUAL + self.CONCRETE_ACTION, content
-        )
+        concrete_count = self._count_unique_matches(self.CONCRETE_VISUAL + self.CONCRETE_ACTION, content)
 
         total = abstract_count + concrete_count
         if total == 0:

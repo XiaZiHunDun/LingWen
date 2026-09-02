@@ -65,7 +65,8 @@ def detect_stage(path: Path) -> int | None:
     """从路径推断阶段号"""
     path_str = str(path)
     import re
-    match = re.search(r'阶段(\d+)', path_str)
+
+    match = re.search(r"阶段(\d+)", path_str)
     if match:
         return int(match.group(1))
     return None
@@ -83,18 +84,20 @@ def migrate_04_body(data: dict, path: Path) -> dict:
     # 转换章节数据
     items = []
     for ch in data.get("chapters", []):
-        items.append({
-            "id": ch.get("chapter", ch.get("id", "")),
-            "title": ch.get("title", ""),
-            "filename": ch.get("filename", ""),
-            "status": "finalized",  # 假设已有章节都是finalized
-            "version": "v1.0",
-            "author": ch.get("author", ""),
-            "word_count": ch.get("word_count", 0),
-            "char_count": ch.get("char_count", 0),
-            "lines": ch.get("lines", 0),
-            "last_updated": ch.get("last_updated", ""),
-        })
+        items.append(
+            {
+                "id": ch.get("chapter", ch.get("id", "")),
+                "title": ch.get("title", ""),
+                "filename": ch.get("filename", ""),
+                "status": "finalized",  # 假设已有章节都是finalized
+                "version": "v1.0",
+                "author": ch.get("author", ""),
+                "word_count": ch.get("word_count", 0),
+                "char_count": ch.get("char_count", 0),
+                "lines": ch.get("lines", 0),
+                "last_updated": ch.get("last_updated", ""),
+            }
+        )
 
     summary = {
         "total_items": data.get("total_chapters", len(items)),
@@ -102,7 +105,7 @@ def migrate_04_body(data: dict, path: Path) -> dict:
             "draft": 0,
             "reviewing": 0,
             "finalized": len(items),
-        }
+        },
     }
 
     return {
@@ -126,49 +129,61 @@ def migrate_03_outline(data: dict, path: Path) -> dict:
     if "entries" in data and isinstance(data["entries"], list):
         items = []
         for entry in data.get("entries", []):
-            items.append({
-                "id": entry.get("id", ""),
-                "title": entry.get("title", ""),
-                "filename": entry.get("filename", "阶段大纲.md"),
-                "status": "finalized",
-                "version": "v1.0",
-                "chapter_range": entry.get("chapter_range", ""),
-                "total_chapters": entry.get("total_chapters", 0),
-                "last_updated": entry.get("last_updated", ""),
-            })
+            items.append(
+                {
+                    "id": entry.get("id", ""),
+                    "title": entry.get("title", ""),
+                    "filename": entry.get("filename", "阶段大纲.md"),
+                    "status": "finalized",
+                    "version": "v1.0",
+                    "chapter_range": entry.get("chapter_range", ""),
+                    "total_chapters": entry.get("total_chapters", 0),
+                    "last_updated": entry.get("last_updated", ""),
+                }
+            )
     elif "files" in data:
         # 旧版格式
         stage_num = detect_stage(path)
         volume_num = detect_volume(path)
-        chapter_range = f"ch{(stage_num - 1) * 10 + 1:03d}-{min(stage_num * 10, 360):03d}" if stage_num else ""
+        chapter_range = (
+            f"ch{(stage_num - 1) * 10 + 1:03d}-{min(stage_num * 10, 360):03d}" if stage_num else ""
+        )
 
-        items = [{
-            "id": f"卷{volume_num}_阶段{stage_num}" if volume_num and stage_num else "unknown",
-            "title": f"阶段{stage_num}",
-            "filename": data["files"][0].get("filename", "阶段大纲.md") if data.get("files") else "阶段大纲.md",
-            "status": "finalized",
-            "version": "v1.0",
-            "chapter_range": chapter_range,
-            "total_chapters": 10,  # 假设每阶段10章
-            "author": "",
-            "last_updated": data["files"][0].get("last_updated", "") if data.get("files") else "",
-            "outline_ref": {
-                "volume": volume_num,
-                "stage": stage_num,
-            } if stage_num else {},
-        }]
+        items = [
+            {
+                "id": f"卷{volume_num}_阶段{stage_num}" if volume_num and stage_num else "unknown",
+                "title": f"阶段{stage_num}",
+                "filename": data["files"][0].get("filename", "阶段大纲.md")
+                if data.get("files")
+                else "阶段大纲.md",
+                "status": "finalized",
+                "version": "v1.0",
+                "chapter_range": chapter_range,
+                "total_chapters": 10,  # 假设每阶段10章
+                "author": "",
+                "last_updated": data["files"][0].get("last_updated", "") if data.get("files") else "",
+                "outline_ref": {
+                    "volume": volume_num,
+                    "stage": stage_num,
+                }
+                if stage_num
+                else {},
+            }
+        ]
     elif "stage_id" in data:
         # v2格式
-        items = [{
-            "id": data.get("stage_id", ""),
-            "title": data.get("stage_name", ""),
-            "filename": "阶段大纲.md",
-            "status": "finalized",
-            "version": data.get("version", "v1.0"),
-            "chapter_range": data.get("chapter_range", ""),
-            "total_chapters": data.get("total_chapters", 0),
-            "last_updated": data.get("created_at", ""),
-        }]
+        items = [
+            {
+                "id": data.get("stage_id", ""),
+                "title": data.get("stage_name", ""),
+                "filename": "阶段大纲.md",
+                "status": "finalized",
+                "version": data.get("version", "v1.0"),
+                "chapter_range": data.get("chapter_range", ""),
+                "total_chapters": data.get("total_chapters", 0),
+                "last_updated": data.get("created_at", ""),
+            }
+        ]
     else:
         items = []
 
@@ -178,7 +193,7 @@ def migrate_03_outline(data: dict, path: Path) -> dict:
             "draft": 0,
             "reviewing": 0,
             "finalized": len(items),
-        }
+        },
     }
 
     return {
@@ -205,32 +220,40 @@ def migrate_02_volume(data: dict, path: Path) -> dict:
     if "entries" in data and isinstance(data["entries"], list):
         items = []
         for entry in data.get("entries", []):
-            items.append({
-                "id": entry.get("id", f"卷{meta['volume']}大纲"),
-                "title": entry.get("title", f"卷{meta['volume']}大纲"),
-                "filename": entry.get("filename", f"卷{meta['volume']}大纲.md"),
+            items.append(
+                {
+                    "id": entry.get("id", f"卷{meta['volume']}大纲"),
+                    "title": entry.get("title", f"卷{meta['volume']}大纲"),
+                    "filename": entry.get("filename", f"卷{meta['volume']}大纲.md"),
+                    "status": "finalized",
+                    "version": "v1.0",
+                    "last_updated": entry.get("last_updated", ""),
+                }
+            )
+    elif "files" in data:
+        items = [
+            {
+                "id": f"卷{meta['volume']}大纲",
+                "title": f"卷{meta['volume']}大纲",
+                "filename": data["files"][0].get("filename", f"卷{meta['volume']}大纲.md")
+                if data.get("files")
+                else f"卷{meta['volume']}大纲.md",
                 "status": "finalized",
                 "version": "v1.0",
-                "last_updated": entry.get("last_updated", ""),
-            })
-    elif "files" in data:
-        items = [{
-            "id": f"卷{meta['volume']}大纲",
-            "title": f"卷{meta['volume']}大纲",
-            "filename": data["files"][0].get("filename", f"卷{meta['volume']}大纲.md") if data.get("files") else f"卷{meta['volume']}大纲.md",
-            "status": "finalized",
-            "version": "v1.0",
-            "last_updated": data["files"][0].get("last_updated", "") if data.get("files") else "",
-        }]
+                "last_updated": data["files"][0].get("last_updated", "") if data.get("files") else "",
+            }
+        ]
     else:
-        items = [{
-            "id": f"卷{meta['volume']}大纲",
-            "title": f"卷{meta['volume']}大纲",
-            "filename": f"卷{meta['volume']}大纲.md",
-            "status": "finalized",
-            "version": "v1.0",
-            "last_updated": meta["updated_at"],
-        }]
+        items = [
+            {
+                "id": f"卷{meta['volume']}大纲",
+                "title": f"卷{meta['volume']}大纲",
+                "filename": f"卷{meta['volume']}大纲.md",
+                "status": "finalized",
+                "version": "v1.0",
+                "last_updated": meta["updated_at"],
+            }
+        ]
 
     summary = {
         "total_items": len(items),
@@ -238,7 +261,7 @@ def migrate_02_volume(data: dict, path: Path) -> dict:
             "draft": 0,
             "reviewing": 0,
             "finalized": len(items),
-        }
+        },
     }
 
     return {
@@ -261,27 +284,31 @@ def migrate_01_full(data: dict, path: Path) -> dict:
     if "entries" in data and isinstance(data["entries"], list):
         items = []
         for entry in data.get("entries", []):
-            items.append({
-                "id": entry.get("id", "全文大纲"),
-                "title": entry.get("title", "全文大纲"),
-                "filename": entry.get("filename", "全文大纲.md"),
+            items.append(
+                {
+                    "id": entry.get("id", "全文大纲"),
+                    "title": entry.get("title", "全文大纲"),
+                    "filename": entry.get("filename", "全文大纲.md"),
+                    "status": "finalized",
+                    "version": "v1.0",
+                    "total_volumes": entry.get("total_volumes", 3),
+                    "total_chapters": entry.get("total_chapters", 360),
+                    "last_updated": entry.get("last_updated", ""),
+                }
+            )
+    else:
+        items = [
+            {
+                "id": "全文大纲",
+                "title": "星陨纪元全文大纲",
+                "filename": "全文大纲.md",
                 "status": "finalized",
                 "version": "v1.0",
-                "total_volumes": entry.get("total_volumes", 3),
-                "total_chapters": entry.get("total_chapters", 360),
-                "last_updated": entry.get("last_updated", ""),
-            })
-    else:
-        items = [{
-            "id": "全文大纲",
-            "title": "星陨纪元全文大纲",
-            "filename": "全文大纲.md",
-            "status": "finalized",
-            "version": "v1.0",
-            "total_volumes": 3,
-            "total_chapters": 360,
-            "last_updated": meta["updated_at"],
-        }]
+                "total_volumes": 3,
+                "total_chapters": 360,
+                "last_updated": meta["updated_at"],
+            }
+        ]
 
     summary = {
         "total_items": len(items),
@@ -289,7 +316,7 @@ def migrate_01_full(data: dict, path: Path) -> dict:
             "draft": 0,
             "reviewing": 0,
             "finalized": len(items),
-        }
+        },
     }
 
     return {
@@ -307,7 +334,7 @@ def migrate_index_file(path: Path, dry_run: bool = False) -> tuple[bool, str]:
         (success, message)
     """
     try:
-        with open(path, 'r', encoding='utf-8') as f:
+        with open(path, "r", encoding="utf-8") as f:
             old_data = json.load(f)
 
         # 检测层级
@@ -336,14 +363,17 @@ def migrate_index_file(path: Path, dry_run: bool = False) -> tuple[bool, str]:
             return (False, "迁移后缺少 items")
 
         if dry_run:
-            return (True, f"[干跑] {path}\n旧: {json.dumps(old_data, ensure_ascii=False)[:200]}...\n新: {json.dumps(new_data, ensure_ascii=False, indent=2)[:200]}...")
+            return (
+                True,
+                f"[干跑] {path}\n旧: {json.dumps(old_data, ensure_ascii=False)[:200]}...\n新: {json.dumps(new_data, ensure_ascii=False, indent=2)[:200]}...",
+            )
 
         # 备份原文件
         backup_path = Path(str(path) + ".bak")
         shutil.copy2(path, backup_path)
 
         # 写入新文件
-        with open(path, 'w', encoding='utf-8') as f:
+        with open(path, "w", encoding="utf-8") as f:
             json.dump(new_data, f, ensure_ascii=False, indent=2)
 
         return (True, f"已迁移: {path} → 备份: {backup_path}")
@@ -363,31 +393,31 @@ def validate_index(path: Path) -> tuple[bool, list[str]]:
     errors = []
 
     try:
-        with open(path, 'r', encoding='utf-8') as f:
+        with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
         # 1. 检查 $schema
-        if data.get('$schema') != SCHEMA_VERSION:
+        if data.get("$schema") != SCHEMA_VERSION:
             errors.append(f"缺少或无效的 $schema，期望: {SCHEMA_VERSION}")
 
         # 2. 检查 meta.layer
-        if 'meta' not in data:
+        if "meta" not in data:
             errors.append("缺少 meta 字段")
-        elif 'layer' not in data.get('meta', {}):
+        elif "layer" not in data.get("meta", {}):
             errors.append("缺少 meta.layer 字段")
 
         # 3. 检查 items
-        if 'items' not in data:
+        if "items" not in data:
             errors.append("缺少 items 字段")
-        elif not isinstance(data['items'], list):
+        elif not isinstance(data["items"], list):
             errors.append("items 必须是数组")
 
         # 4. 检查 summary
-        if 'summary' in data:
-            summary = data['summary']
-            if 'total_items' not in summary:
+        if "summary" in data:
+            summary = data["summary"]
+            if "total_items" not in summary:
                 errors.append("缺少 summary.total_items")
-            if 'status_counts' not in summary:
+            if "status_counts" not in summary:
                 errors.append("缺少 summary.status_counts")
 
     except Exception as e:

@@ -37,11 +37,13 @@ logger = logging.getLogger(__name__)
 
 class EventStoreError(Exception):
     """事件存储错误基类"""
+
     pass
 
 
 class SequenceConflictError(EventStoreError):
     """序列号冲突错误"""
+
     def __init__(self, aggregate_id: str, expected_seq: int, actual_seq: int):
         super().__init__(
             f"Sequence mismatch for aggregate {aggregate_id}: expected {expected_seq}, got {actual_seq}"
@@ -53,20 +55,18 @@ class SequenceConflictError(EventStoreError):
 
 class ReplayDivergedError(EventStoreError):
     """重放数据分歧错误"""
+
     def __init__(self, aggregate_id: str, seq: int):
-        super().__init__(
-            f"Replay diverged at aggregate {aggregate_id} sequence {seq}"
-        )
+        super().__init__(f"Replay diverged at aggregate {aggregate_id} sequence {seq}")
         self.aggregate_id = aggregate_id
         self.seq = seq
 
 
 class EventExistsError(EventStoreError):
     """事件已存在错误"""
+
     def __init__(self, event_id: str, aggregate_id: str, seq: int):
-        super().__init__(
-            f"Event {event_id} already exists at aggregate {aggregate_id} sequence {seq}"
-        )
+        super().__init__(f"Event {event_id} already exists at aggregate {aggregate_id} sequence {seq}")
         self.event_id = event_id
         self.aggregate_id = aggregate_id
         self.seq = seq
@@ -74,6 +74,7 @@ class EventExistsError(EventStoreError):
 
 class OwnerMismatchError(EventStoreError):
     """拥有者不匹配错误"""
+
     def __init__(self, aggregate_id: str, expected_owner: str, actual_owner: str):
         super().__init__(
             f"Owner mismatch for aggregate {aggregate_id}: expected {expected_owner}, got {actual_owner}"
@@ -173,19 +174,25 @@ class EventStore:
     def _get_latest_seq(self, aggregate_id: str) -> int:
         """获取聚合的最新序列号"""
         cursor = self._conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT seq FROM event_sequences WHERE aggregate_id = ?
-        """, (aggregate_id,))
+        """,
+            (aggregate_id,),
+        )
         row = cursor.fetchone()
         return row["seq"] if row else -1
 
     def _update_sequence(self, aggregate_id: str, seq: int, owner_id: str = None) -> None:
         """更新聚合序列号"""
         cursor = self._conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT OR REPLACE INTO event_sequences (aggregate_id, seq, owner_id)
             VALUES (?, ?, ?)
-        """, (aggregate_id, seq, owner_id))
+        """,
+            (aggregate_id, seq, owner_id),
+        )
 
     def save_event(self, event: DomainEvent, owner_id: str = None) -> DomainEvent:
         """保存事件（事务性）
@@ -209,16 +216,22 @@ class EventStore:
             latest_seq = self._get_latest_seq(event.aggregate_id)
             new_seq = latest_seq + 1
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT event_id FROM events WHERE event_id = ?
-            """, (event.event_id,))
+            """,
+                (event.event_id,),
+            )
             if cursor.fetchone():
                 cursor.execute("ROLLBACK")
                 raise EventExistsError(event.event_id, event.aggregate_id, new_seq)
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT seq FROM events WHERE aggregate_id = ? AND seq = ?
-            """, (event.aggregate_id, new_seq))
+            """,
+                (event.aggregate_id, new_seq),
+            )
             if cursor.fetchone():
                 cursor.execute("ROLLBACK")
                 raise SequenceConflictError(event.aggregate_id, new_seq, new_seq)
@@ -226,28 +239,34 @@ class EventStore:
             event.seq = new_seq
             event.owner_id = owner_id
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO events (
                     event_id, event_type, aggregate_id, aggregate_type,
                     payload, metadata, timestamp, version, seq, owner_id
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                event.event_id,
-                event.event_type.value,
-                event.aggregate_id,
-                event.aggregate_type,
-                EventSerializer.serialize(event),
-                EventSerializer.serialize(event),
-                event.timestamp.isoformat(),
-                event.version,
-                event.seq,
-                event.owner_id,
-            ))
+            """,
+                (
+                    event.event_id,
+                    event.event_type.value,
+                    event.aggregate_id,
+                    event.aggregate_type,
+                    EventSerializer.serialize(event),
+                    EventSerializer.serialize(event),
+                    event.timestamp.isoformat(),
+                    event.version,
+                    event.seq,
+                    event.owner_id,
+                ),
+            )
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO event_sequences (aggregate_id, seq, owner_id)
                 VALUES (?, ?, ?)
-            """, (event.aggregate_id, new_seq, owner_id))
+            """,
+                (event.aggregate_id, new_seq, owner_id),
+            )
 
             cursor.execute("COMMIT")
             logger.debug(f"Saved event: {event.event_type.value} seq={new_seq} for {event.aggregate_id}")
@@ -275,9 +294,12 @@ class EventStore:
                 aggregate_seqs[event.aggregate_id] += 1
                 seq = aggregate_seqs[event.aggregate_id]
 
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT event_id FROM events WHERE event_id = ?
-                """, (event.event_id,))
+                """,
+                    (event.event_id,),
+                )
                 if cursor.fetchone():
                     cursor.execute("ROLLBACK")
                     raise EventExistsError(event.event_id, event.aggregate_id, seq)
@@ -285,23 +307,26 @@ class EventStore:
                 event.seq = seq
                 event.owner_id = owner_id
 
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO events (
                         event_id, event_type, aggregate_id, aggregate_type,
                         payload, metadata, timestamp, version, seq, owner_id
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    event.event_id,
-                    event.event_type.value,
-                    event.aggregate_id,
-                    event.aggregate_type,
-                    EventSerializer.serialize(event),
-                    EventSerializer.serialize(event),
-                    event.timestamp.isoformat(),
-                    event.version,
-                    event.seq,
-                    event.owner_id,
-                ))
+                """,
+                    (
+                        event.event_id,
+                        event.event_type.value,
+                        event.aggregate_id,
+                        event.aggregate_type,
+                        EventSerializer.serialize(event),
+                        EventSerializer.serialize(event),
+                        event.timestamp.isoformat(),
+                        event.version,
+                        event.seq,
+                        event.owner_id,
+                    ),
+                )
 
                 saved_events.append(event)
 
@@ -320,9 +345,12 @@ class EventStore:
     def get_event_stream(self, aggregate_id: str) -> EventStream:
         """获取聚合的事件流"""
         cursor = self._conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT * FROM events WHERE aggregate_id = ? ORDER BY seq ASC
-        """, (aggregate_id,))
+        """,
+            (aggregate_id,),
+        )
 
         stream = EventStream(aggregate_id=aggregate_id)
         for row in cursor.fetchall():
@@ -336,18 +364,24 @@ class EventStore:
     def get_events_since(self, timestamp: datetime) -> List[DomainEvent]:
         """获取指定时间之后的事件"""
         cursor = self._conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT * FROM events WHERE timestamp >= ? ORDER BY timestamp ASC
-        """, (timestamp.isoformat(),))
+        """,
+            (timestamp.isoformat(),),
+        )
 
         return [EventSerializer.deserialize(row["payload"]) for row in cursor.fetchall()]
 
     def get_events_by_type(self, event_type: EventType) -> List[DomainEvent]:
         """获取指定类型的事件"""
         cursor = self._conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT * FROM events WHERE event_type = ? ORDER BY timestamp ASC
-        """, (event_type.value,))
+        """,
+            (event_type.value,),
+        )
 
         return [EventSerializer.deserialize(row["payload"]) for row in cursor.fetchall()]
 
@@ -355,19 +389,22 @@ class EventStore:
         """保存快照"""
         cursor = self._conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT OR REPLACE INTO snapshots (
                 snapshot_id, aggregate_id, aggregate_type, state, version, seq, timestamp
             ) VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (
-            snapshot.snapshot_id,
-            snapshot.aggregate_id,
-            snapshot.aggregate_type,
-            EventSerializer.serialize_snapshot(snapshot),
-            snapshot.version,
-            snapshot.seq,
-            snapshot.timestamp.isoformat(),
-        ))
+        """,
+            (
+                snapshot.snapshot_id,
+                snapshot.aggregate_id,
+                snapshot.aggregate_type,
+                EventSerializer.serialize_snapshot(snapshot),
+                snapshot.version,
+                snapshot.seq,
+                snapshot.timestamp.isoformat(),
+            ),
+        )
 
         self._conn.commit()
         logger.debug(f"Saved snapshot for {snapshot.aggregate_id} at seq {snapshot.seq}")
@@ -375,9 +412,12 @@ class EventStore:
     def get_latest_snapshot(self, aggregate_id: str) -> Optional[Snapshot]:
         """获取最新快照"""
         cursor = self._conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT * FROM snapshots WHERE aggregate_id = ? ORDER BY seq DESC LIMIT 1
-        """, (aggregate_id,))
+        """,
+            (aggregate_id,),
+        )
 
         row = cursor.fetchone()
         if row:
@@ -457,13 +497,14 @@ class EventStore:
             for event in events:
                 if event.aggregate_id != aggregate_id:
                     cursor.execute("ROLLBACK")
-                    raise ReplayDivergedError(
-                        aggregate_id, 0
-                    )
+                    raise ReplayDivergedError(aggregate_id, 0)
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT seq, owner_id FROM event_sequences WHERE aggregate_id = ?
-            """, (aggregate_id,))
+            """,
+                (aggregate_id,),
+            )
             row = cursor.fetchone()
             latest_seq = row["seq"] if row else -1
             current_owner = row["owner_id"] if row else None
@@ -476,47 +517,53 @@ class EventStore:
 
             for event in sorted_events:
                 if event.seq <= latest_seq:
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         SELECT * FROM events WHERE aggregate_id = ? AND seq = ?
-                    """, (aggregate_id, event.seq))
+                    """,
+                        (aggregate_id, event.seq),
+                    )
                     stored = cursor.fetchone()
 
                     if stored:
                         stored_event = EventSerializer.deserialize(stored["payload"])
-                        if (stored_event.event_id != event.event_id or
-                            stored_event.event_type != event.event_type or
-                            stored_event.payload != event.payload):
+                        if (
+                            stored_event.event_id != event.event_id
+                            or stored_event.event_type != event.event_type
+                            or stored_event.payload != event.payload
+                        ):
                             cursor.execute("ROLLBACK")
                             raise ReplayDivergedError(aggregate_id, event.seq)
                     continue
 
                 if event.seq != latest_seq + 1:
                     cursor.execute("ROLLBACK")
-                    raise SequenceConflictError(
-                        aggregate_id, latest_seq + 1, event.seq
-                    )
+                    raise SequenceConflictError(aggregate_id, latest_seq + 1, event.seq)
 
                 if current_owner and current_owner != event.owner_id:
                     cursor.execute("ROLLBACK")
                     raise OwnerMismatchError(aggregate_id, current_owner, event.owner_id)
 
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO events (
                         event_id, event_type, aggregate_id, aggregate_type,
                         payload, metadata, timestamp, version, seq, owner_id
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    event.event_id,
-                    event.event_type.value,
-                    event.aggregate_id,
-                    event.aggregate_type,
-                    EventSerializer.serialize(event),
-                    EventSerializer.serialize(event),
-                    event.timestamp.isoformat(),
-                    event.version,
-                    event.seq,
-                    event.owner_id,
-                ))
+                """,
+                    (
+                        event.event_id,
+                        event.event_type.value,
+                        event.aggregate_id,
+                        event.aggregate_type,
+                        EventSerializer.serialize(event),
+                        EventSerializer.serialize(event),
+                        event.timestamp.isoformat(),
+                        event.version,
+                        event.seq,
+                        event.owner_id,
+                    ),
+                )
 
                 latest_seq = event.seq
 
@@ -537,9 +584,12 @@ class EventStore:
         """声明聚合拥有者"""
         cursor = self._conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT owner_id FROM event_sequences WHERE aggregate_id = ?
-        """, (aggregate_id,))
+        """,
+            (aggregate_id,),
+        )
         row = cursor.fetchone()
 
         if row and row["owner_id"]:
@@ -552,9 +602,12 @@ class EventStore:
     def get_aggregate_owner(self, aggregate_id: str) -> Optional[str]:
         """获取聚合拥有者"""
         cursor = self._conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT owner_id FROM event_sequences WHERE aggregate_id = ?
-        """, (aggregate_id,))
+        """,
+            (aggregate_id,),
+        )
         row = cursor.fetchone()
         return row["owner_id"] if row else None
 
@@ -564,15 +617,24 @@ class EventStore:
 
         try:
             cursor.execute("BEGIN TRANSACTION")
-            cursor.execute("""
+            cursor.execute(
+                """
                 DELETE FROM events WHERE aggregate_id = ?
-            """, (aggregate_id,))
-            cursor.execute("""
+            """,
+                (aggregate_id,),
+            )
+            cursor.execute(
+                """
                 DELETE FROM event_sequences WHERE aggregate_id = ?
-            """, (aggregate_id,))
-            cursor.execute("""
+            """,
+                (aggregate_id,),
+            )
+            cursor.execute(
+                """
                 DELETE FROM snapshots WHERE aggregate_id = ?
-            """, (aggregate_id,))
+            """,
+                (aggregate_id,),
+            )
             cursor.execute("COMMIT")
             logger.debug(f"Removed aggregate {aggregate_id}")
         except _SqliteError as e:
@@ -585,9 +647,12 @@ class EventStore:
         cursor = self._conn.cursor()
 
         if aggregate_type:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT DISTINCT aggregate_id FROM events WHERE aggregate_type = ?
-            """, (aggregate_type,))
+            """,
+                (aggregate_type,),
+            )
         else:
             cursor.execute("""
                 SELECT DISTINCT aggregate_id FROM events

@@ -5,6 +5,7 @@
 2. timeout 参数生效
 3. Path 对象也能用
 """
+
 from __future__ import annotations
 
 import sqlite3

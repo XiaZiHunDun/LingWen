@@ -1,4 +1,5 @@
 """Character CRUD with optimistic concurrency."""
+
 import json
 
 from lingwen_shared.ports.storage import ConnectionPort
@@ -27,10 +28,17 @@ def create_character(conn: ConnectionPort, data: dict) -> int:
             attributes, aliases, notes, created_at, updated_at, revision)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)""",
         (
-            data["slug"], data["name"], data["canon_level"],
-            data.get("status"), data.get("first_chapter"),
-            data.get("last_seen_chapter"), attrs, aliases,
-            data.get("notes"), now, now,
+            data["slug"],
+            data["name"],
+            data["canon_level"],
+            data.get("status"),
+            data.get("first_chapter"),
+            data.get("last_seen_chapter"),
+            attrs,
+            aliases,
+            data.get("notes"),
+            now,
+            now,
         ),
     )
     conn.commit()
@@ -62,9 +70,7 @@ def list_characters(conn: ConnectionPort, canon_level: str | None = None) -> lis
     return [row_to_dict(r, ("attributes", "aliases")) for r in rows if r is not None]
 
 
-def update_character(
-    conn: ConnectionPort, char_id: int, patch: dict, expected_revision: int
-) -> None:
+def update_character(conn: ConnectionPort, char_id: int, patch: dict, expected_revision: int) -> None:
     cur = conn.execute(
         """UPDATE character SET
            name = COALESCE(?, name),
@@ -79,19 +85,19 @@ def update_character(
            revision = revision + 1
            WHERE id = ? AND revision = ?""",
         (
-            patch.get("name"), patch.get("canon_level"),
-            patch.get("status"), patch.get("first_chapter"),
+            patch.get("name"),
+            patch.get("canon_level"),
+            patch.get("status"),
+            patch.get("first_chapter"),
             patch.get("last_seen_chapter"),
-            json.dumps(patch["attributes"], ensure_ascii=False)
-                if "attributes" in patch else None,
-            json.dumps(patch["aliases"], ensure_ascii=False)
-                if "aliases" in patch else None,
+            json.dumps(patch["attributes"], ensure_ascii=False) if "attributes" in patch else None,
+            json.dumps(patch["aliases"], ensure_ascii=False) if "aliases" in patch else None,
             patch.get("notes"),
-            now_iso(), char_id, expected_revision,
+            now_iso(),
+            char_id,
+            expected_revision,
         ),
     )
     if cur.rowcount == 0:
-        raise CharacterRevisionConflict(
-            f"character {char_id} revision != {expected_revision}"
-        )
+        raise CharacterRevisionConflict(f"character {char_id} revision != {expected_revision}")
     conn.commit()

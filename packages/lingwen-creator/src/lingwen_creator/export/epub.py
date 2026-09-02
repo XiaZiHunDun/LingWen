@@ -2,6 +2,7 @@
 
 Migrated from infra/creator_export_epub.py in Phase 126 v16.2.5.
 """
+
 from __future__ import annotations
 
 import html
@@ -79,12 +80,12 @@ def build_creator_epub_bytes(
         chapter_files: list[tuple[str, str]] = []
 
         cover_xhtml = f"""<?xml version="1.0" encoding="UTF-8"?>
-<html xmlns="http://www.w3.org/1999/xhtml"><head><title>{_escape(meta['title'])}</title>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>{_escape(meta["title"])}</title>
 <link rel="stylesheet" type="text/css" href="style.css"/></head>
 <body class="cover">
-  <h1>{_escape(meta['title'])}</h1>
-  <p class="cover-author">{_escape(meta['author'])}</p>
-  <p class="cover-desc">{_escape(meta['description'][:200])}</p>
+  <h1>{_escape(meta["title"])}</h1>
+  <p class="cover-author">{_escape(meta["author"])}</p>
+  <p class="cover-desc">{_escape(meta["description"][:200])}</p>
 </body></html>"""
         chapter_files.append(("OEBPS/cover.xhtml", cover_xhtml))
 
@@ -100,7 +101,7 @@ def build_creator_epub_bytes(
                     f"""<?xml version="1.0" encoding="UTF-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml"><head><title>创作支柱</title>
 <link rel="stylesheet" type="text/css" href="style.css"/></head>
-<body><h1>创作支柱</h1>{_paragraphs_to_xhtml(settings.get('pillars_text', ''))}</body></html>""",
+<body><h1>创作支柱</h1>{_paragraphs_to_xhtml(settings.get("pillars_text", ""))}</body></html>""",
                 ),
             )
 
@@ -116,7 +117,7 @@ def build_creator_epub_bytes(
                     f"""<?xml version="1.0" encoding="UTF-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml"><head><title>全局大纲</title>
 <link rel="stylesheet" type="text/css" href="style.css"/></head>
-<body><h1>全局大纲</h1>{_paragraphs_to_xhtml(settings.get('global_outline_text', ''))}</body></html>""",
+<body><h1>全局大纲</h1>{_paragraphs_to_xhtml(settings.get("global_outline_text", ""))}</body></html>""",
                 ),
             )
 
@@ -132,9 +133,9 @@ def build_creator_epub_bytes(
                 (
                     f"OEBPS/{href}",
                     f"""<?xml version="1.0" encoding="UTF-8"?>
-<html xmlns="http://www.w3.org/1999/xhtml"><head><title>{_escape(ch['title'])}</title>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>{_escape(ch["title"])}</title>
 <link rel="stylesheet" type="text/css" href="style.css"/></head>
-<body><h1>{_escape(ch['title'])}</h1>{_paragraphs_to_xhtml(ch['body'])}</body></html>""",
+<body><h1>{_escape(ch["title"])}</h1>{_paragraphs_to_xhtml(ch["body"])}</body></html>""",
                 ),
             )
 
@@ -152,7 +153,7 @@ h1{font-size:1.4em;}
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
 <head><title>目录</title></head>
 <body>
-  <nav epub:type="toc" id="toc"><h1>目录</h1><ol>{''.join(nav_links)}</ol></nav>
+  <nav epub:type="toc" id="toc"><h1>目录</h1><ol>{"".join(nav_links)}</ol></nav>
 </body></html>""",
         )
 
@@ -165,18 +166,18 @@ h1{font-size:1.4em;}
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="book-id">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
     <dc:identifier id="book-id">{uid}</dc:identifier>
-    <dc:title>{_escape(meta['title'])}</dc:title>
-    <dc:creator>{_escape(meta['author'])}</dc:creator>
-    <dc:description>{_escape(meta['description'])}</dc:description>
-    <dc:language>{meta['language']}</dc:language>
+    <dc:title>{_escape(meta["title"])}</dc:title>
+    <dc:creator>{_escape(meta["author"])}</dc:creator>
+    <dc:description>{_escape(meta["description"])}</dc:description>
+    <dc:language>{meta["language"]}</dc:language>
     <meta property="dcterms:modified">{modified}</meta>
     <meta name="cover" content="cover"/>
   </metadata>
   <manifest>
-    {''.join(manifest_items)}
+    {"".join(manifest_items)}
   </manifest>
   <spine>
-    {''.join(spine_items)}
+    {"".join(spine_items)}
   </spine>
 </package>""",
         )

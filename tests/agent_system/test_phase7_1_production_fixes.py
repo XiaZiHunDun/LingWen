@@ -4,6 +4,7 @@
 - Fix #3: _handler_chapter_review 返回值必须含 content 字段 (供下游 polish 用)
 - 韧性:    audit_chapter 抛错不应让 workflow 崩溃 (master.audit_chapter 已有 try/except)
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -33,12 +34,14 @@ def test_master_audit_chapter_calls_auditor_audit_chapter(monkeypatch, tmp_path)
     called = []
 
     def fake_audit_chapter(chapter_num, content, characters, context, reviewer_id=None):
-        called.append({
-            "chapter_num": chapter_num,
-            "content": content,
-            "reviewer_id": reviewer_id,
-            "context": context,
-        })
+        called.append(
+            {
+                "chapter_num": chapter_num,
+                "content": content,
+                "reviewer_id": reviewer_id,
+                "context": context,
+            }
+        )
         return {"issues": [], "scores": {"S1": 8, "S2": 8}}
 
     monkeypatch.setattr(master.auditor, "audit_chapter", fake_audit_chapter)

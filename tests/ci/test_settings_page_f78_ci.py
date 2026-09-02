@@ -1,4 +1,5 @@
 """Phase 9.86 F78: CI contract — Settings budget write UI."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -35,11 +36,7 @@ class TestSettingsPageF78:
 
     def test_v8_roadmap_marks_f78(self):
         roadmap = (
-            NOVEL_FACTORY
-            / "docs"
-            / "superpowers"
-            / "plans"
-            / "2026-06-11-followup-roadmap-v8-post-9.84.md"
+            NOVEL_FACTORY / "docs" / "superpowers" / "plans" / "2026-06-11-followup-roadmap-v8-post-9.84.md"
         )
         assert roadmap.is_file()
         text = roadmap.read_text(encoding="utf-8")

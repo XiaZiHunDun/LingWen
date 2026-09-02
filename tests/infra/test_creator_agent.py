@@ -1,4 +1,5 @@
 """Tests for creator writing agent plan API."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -122,9 +123,7 @@ class TestCreatorAgent:
         assert events[-1]["plan"]["candidates"]
 
     @pytest.mark.asyncio
-    async def test_stream_llm_tokens_when_provider_streams(
-        self, project_root: Path, monkeypatch
-    ) -> None:
+    async def test_stream_llm_tokens_when_provider_streams(self, project_root: Path, monkeypatch) -> None:
         payload = (
             '{"advice_only": false, "candidates": ['
             '{"id": "steady", "label": "稳健", "text": "流式正文"}, '

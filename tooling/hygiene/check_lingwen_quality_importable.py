@@ -17,6 +17,7 @@ Symbols verified (canonical source: docs/superpowers/specs/2026-09-01-phase-126-
 - SceneTransitionChecker, DialogueAuthenticityChecker
 - CreativeWhitelist
 """
+
 import importlib
 import sys
 
@@ -81,9 +82,7 @@ def main() -> int:
                 found = True
                 break
         if not found:
-            failures.append(
-                f"Symbol {symbol_name!r}: not found in any of {candidate_modules}"
-            )
+            failures.append(f"Symbol {symbol_name!r}: not found in any of {candidate_modules}")
 
     if failures:
         print("lingwen_quality importability check FAILED:", file=sys.stderr)

@@ -17,6 +17,7 @@ from version_manager import TemplateVersion, VersionDiff, VersionManager
 
 # ==================== Fixtures ====================
 
+
 @pytest.fixture
 def temp_config_dir(tmp_path):
     """创建临时配置目录结构：
@@ -34,7 +35,7 @@ def temp_config_dir(tmp_path):
 
     # 创建测试模板文件
     template_file = prompts_dir / "01_大纲生成" / "全文大纲_CARE.md"
-    template_file.write_text("# 全文大纲 v1.0\n模板内容", encoding='utf-8')
+    template_file.write_text("# 全文大纲 v1.0\n模板内容", encoding="utf-8")
 
     # 创建模板索引
     index_content = """
@@ -52,7 +53,7 @@ templates:
     care_elements:
       result_metrics: [S1, S2, S6, S7]
 """
-    (prompts_dir / "00_模板索引.yaml").write_text(index_content, encoding='utf-8')
+    (prompts_dir / "00_模板索引.yaml").write_text(index_content, encoding="utf-8")
 
     return prompts_dir
 
@@ -64,6 +65,7 @@ def version_manager(temp_config_dir):
 
 
 # ==================== 测试版本管理器初始化 ====================
+
 
 class TestVersionManagerInit:
     def test_creates_versions_directory(self, version_manager, temp_config_dir):
@@ -77,9 +79,7 @@ class TestVersionManagerInit:
 
         # Create first version - this triggers _save_history which creates the history file
         version_manager.create_version(
-            template_id="outline_full_novel",
-            changelog="初始版本",
-            template_dir=template_file
+            template_id="outline_full_novel", changelog="初始版本", template_dir=template_file
         )
 
         assert version_manager.history_file.exists()
@@ -87,15 +87,14 @@ class TestVersionManagerInit:
 
 # ==================== 测试版本创建 ====================
 
+
 class TestVersionCreation:
     def test_create_first_version(self, version_manager, temp_config_dir):
         """测试创建第一个版本"""
         template_file = temp_config_dir / "01_大纲生成" / "全文大纲_CARE.md"
 
         version = version_manager.create_version(
-            template_id="outline_full_novel",
-            changelog="初始版本",
-            template_dir=template_file
+            template_id="outline_full_novel", changelog="初始版本", template_dir=template_file
         )
 
         assert version is not None
@@ -111,20 +110,16 @@ class TestVersionCreation:
 
         # 创建第一个版本
         v1 = version_manager.create_version(
-            template_id="outline_full_novel",
-            changelog="初始版本",
-            template_dir=template_file
+            template_id="outline_full_novel", changelog="初始版本", template_dir=template_file
         )
         assert v1.version == "v1.0.0"
 
         # 修改文件
-        template_file.write_text("# 全文大纲 v1.1\n新模板内容", encoding='utf-8')
+        template_file.write_text("# 全文大纲 v1.1\n新模板内容", encoding="utf-8")
 
         # 创建第二个版本
         v2 = version_manager.create_version(
-            template_id="outline_full_novel",
-            changelog="添加新功能",
-            template_dir=template_file
+            template_id="outline_full_novel", changelog="添加新功能", template_dir=template_file
         )
         assert v2.version == "v1.0.1"
 
@@ -133,9 +128,7 @@ class TestVersionCreation:
         template_file = temp_config_dir / "01_大纲生成" / "全文大纲_CARE.md"
 
         version_manager.create_version(
-            template_id="outline_full_novel",
-            changelog="初始版本",
-            template_dir=template_file
+            template_id="outline_full_novel", changelog="初始版本", template_dir=template_file
         )
 
         backup_dir = version_manager.versions_dir / "outline_full_novel"
@@ -146,6 +139,7 @@ class TestVersionCreation:
 
 
 # ==================== 测试版本历史 ====================
+
 
 class TestVersionHistory:
     def test_get_history_empty(self, version_manager):
@@ -158,9 +152,7 @@ class TestVersionHistory:
         template_file = temp_config_dir / "01_大纲生成" / "全文大纲_CARE.md"
 
         version_manager.create_version(
-            template_id="outline_full_novel",
-            changelog="初始版本",
-            template_dir=template_file
+            template_id="outline_full_novel", changelog="初始版本", template_dir=template_file
         )
 
         history = version_manager.get_history("outline_full_novel")
@@ -171,15 +163,14 @@ class TestVersionHistory:
     def test_get_history_sorted_by_date(self, version_manager, temp_config_dir):
         """测试历史按日期排序"""
         import time
+
         template_file = temp_config_dir / "01_大纲生成" / "全文大纲_CARE.md"
 
         # 创建多个版本，每个间隔确保不同的时间戳
         for i in range(3):
-            template_file.write_text(f"# 版本 {i+1}\n内容", encoding='utf-8')
+            template_file.write_text(f"# 版本 {i + 1}\n内容", encoding="utf-8")
             version_manager.create_version(
-                template_id="outline_full_novel",
-                changelog=f"版本 {i+1}",
-                template_dir=template_file
+                template_id="outline_full_novel", changelog=f"版本 {i + 1}", template_dir=template_file
             )
             time.sleep(0.1)  # 确保不同的时间戳
 
@@ -196,11 +187,9 @@ class TestVersionHistory:
 
         # 创建多个版本
         for i in range(5):
-            template_file.write_text(f"# 版本 {i+1}\n内容", encoding='utf-8')
+            template_file.write_text(f"# 版本 {i + 1}\n内容", encoding="utf-8")
             version_manager.create_version(
-                template_id="outline_full_novel",
-                changelog=f"版本 {i+1}",
-                template_dir=template_file
+                template_id="outline_full_novel", changelog=f"版本 {i + 1}", template_dir=template_file
             )
 
         history = version_manager.get_history("outline_full_novel", limit=3)
@@ -213,11 +202,9 @@ class TestVersionHistory:
 
         # 创建多个版本
         for i in range(3):
-            template_file.write_text(f"# 版本 {i+1}\n内容", encoding='utf-8')
+            template_file.write_text(f"# 版本 {i + 1}\n内容", encoding="utf-8")
             version_manager.create_version(
-                template_id="outline_full_novel",
-                changelog=f"版本 {i+1}",
-                template_dir=template_file
+                template_id="outline_full_novel", changelog=f"版本 {i + 1}", template_dir=template_file
             )
 
         latest = version_manager.get_latest_version("outline_full_novel")
@@ -228,31 +215,24 @@ class TestVersionHistory:
 
 # ==================== 测试版本比较 ====================
 
+
 class TestVersionComparison:
     def test_compare_versions(self, version_manager, temp_config_dir):
         """测试版本比较"""
         template_file = temp_config_dir / "01_大纲生成" / "全文大纲_CARE.md"
 
         # 创建两个版本
-        template_file.write_text("# v1.0\n内容1", encoding='utf-8')
+        template_file.write_text("# v1.0\n内容1", encoding="utf-8")
         version_manager.create_version(
-            template_id="outline_full_novel",
-            changelog="版本1",
-            template_dir=template_file
+            template_id="outline_full_novel", changelog="版本1", template_dir=template_file
         )
 
-        template_file.write_text("# v1.1\n内容2", encoding='utf-8')
+        template_file.write_text("# v1.1\n内容2", encoding="utf-8")
         version_manager.create_version(
-            template_id="outline_full_novel",
-            changelog="版本2",
-            template_dir=template_file
+            template_id="outline_full_novel", changelog="版本2", template_dir=template_file
         )
 
-        diff = version_manager.compare_versions(
-            "outline_full_novel",
-            "v1.0.0",
-            "v1.0.1"
-        )
+        diff = version_manager.compare_versions("outline_full_novel", "v1.0.0", "v1.0.1")
 
         assert isinstance(diff, VersionDiff)
         assert diff.version_from == "v1.0.0"
@@ -262,31 +242,28 @@ class TestVersionComparison:
 
 # ==================== 测试版本回滚 ====================
 
+
 class TestVersionRollback:
     def test_rollback(self, version_manager, temp_config_dir):
         """测试版本回滚"""
         template_file = temp_config_dir / "01_大纲生成" / "全文大纲_CARE.md"
 
         # 创建两个版本
-        template_file.write_text("# v1.0\n原始内容", encoding='utf-8')
+        template_file.write_text("# v1.0\n原始内容", encoding="utf-8")
         version_manager.create_version(
-            template_id="outline_full_novel",
-            changelog="原始版本",
-            template_dir=template_file
+            template_id="outline_full_novel", changelog="原始版本", template_dir=template_file
         )
 
-        template_file.write_text("# v1.1\n修改内容", encoding='utf-8')
+        template_file.write_text("# v1.1\n修改内容", encoding="utf-8")
         version_manager.create_version(
-            template_id="outline_full_novel",
-            changelog="修改版本",
-            template_dir=template_file
+            template_id="outline_full_novel", changelog="修改版本", template_dir=template_file
         )
 
         # 回滚到v1.0
         success = version_manager.rollback("outline_full_novel", "v1.0.0")
 
         assert success is True
-        content = template_file.read_text(encoding='utf-8')
+        content = template_file.read_text(encoding="utf-8")
         assert "原始内容" in content
 
     def test_rollback_nonexistent_version(self, version_manager):
@@ -297,25 +274,20 @@ class TestVersionRollback:
 
 # ==================== 测试版本导出 ====================
 
+
 class TestVersionExport:
     def test_export_version(self, version_manager, temp_config_dir):
         """测试导出版本"""
         template_file = temp_config_dir / "01_大纲生成" / "全文大纲_CARE.md"
 
         version_manager.create_version(
-            template_id="outline_full_novel",
-            changelog="初始版本",
-            template_dir=template_file
+            template_id="outline_full_novel", changelog="初始版本", template_dir=template_file
         )
 
         export_dir = temp_config_dir / "export"
         export_dir.mkdir()
 
-        output = version_manager.export_version(
-            "outline_full_novel",
-            "v1.0.0",
-            export_dir
-        )
+        output = version_manager.export_version("outline_full_novel", "v1.0.0", export_dir)
 
         assert output is not None
         assert output.exists()
@@ -323,15 +295,14 @@ class TestVersionExport:
 
 # ==================== 测试所有模板历史 ====================
 
+
 class TestAllTemplatesHistory:
     def test_get_all_templates_with_history(self, version_manager, temp_config_dir):
         """测试获取所有模板历史"""
         template_file = temp_config_dir / "01_大纲生成" / "全文大纲_CARE.md"
 
         version_manager.create_version(
-            template_id="outline_full_novel",
-            changelog="初始版本",
-            template_dir=template_file
+            template_id="outline_full_novel", changelog="初始版本", template_dir=template_file
         )
 
         all_histories = version_manager.get_all_templates_with_history()
@@ -342,6 +313,7 @@ class TestAllTemplatesHistory:
 
 # ==================== 测试清理旧版本 ====================
 
+
 class TestCleanupOldVersions:
     def test_cleanup_keeps_recent_versions(self, version_manager, temp_config_dir):
         """测试清理保留最近版本"""
@@ -349,11 +321,9 @@ class TestCleanupOldVersions:
 
         # 创建5个版本
         for i in range(5):
-            template_file.write_text(f"# 版本 {i+1}\n内容", encoding='utf-8')
+            template_file.write_text(f"# 版本 {i + 1}\n内容", encoding="utf-8")
             version_manager.create_version(
-                template_id="outline_full_novel",
-                changelog=f"版本 {i+1}",
-                template_dir=template_file
+                template_id="outline_full_novel", changelog=f"版本 {i + 1}", template_dir=template_file
             )
 
         deleted = version_manager.cleanup_old_versions("outline_full_novel", keep_count=3)
@@ -369,11 +339,9 @@ class TestCleanupOldVersions:
 
         # 创建2个版本
         for i in range(2):
-            template_file.write_text(f"# 版本 {i+1}\n内容", encoding='utf-8')
+            template_file.write_text(f"# 版本 {i + 1}\n内容", encoding="utf-8")
             version_manager.create_version(
-                template_id="outline_full_novel",
-                changelog=f"版本 {i+1}",
-                template_dir=template_file
+                template_id="outline_full_novel", changelog=f"版本 {i + 1}", template_dir=template_file
             )
 
         deleted = version_manager.cleanup_old_versions("outline_full_novel", keep_count=5)

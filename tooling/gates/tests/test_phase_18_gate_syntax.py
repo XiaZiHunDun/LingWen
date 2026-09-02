@@ -1,4 +1,5 @@
 """Phase 18 Gate 脚本守卫 — syntax + executable 验证。"""
+
 import subprocess
 from pathlib import Path
 

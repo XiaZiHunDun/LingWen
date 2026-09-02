@@ -3,6 +3,7 @@
 Migrated from infra/creator_volume_summary.py in Phase 126 v16.2.1.
 New location: packages/lingwen-creator/src/lingwen_creator/volume/summary.py
 """
+
 from __future__ import annotations
 
 import re
@@ -115,11 +116,7 @@ def write_volume_summary(
         end_chapter=end_chapter,
     )
     markdown = format_volume_summary_markdown(title=book_title, summary=summary)
-    out = (
-        project_root
-        / "docs"
-        / f"volume-summary-ch{start_chapter:03d}-{end_chapter:03d}.md"
-    )
+    out = project_root / "docs" / f"volume-summary-ch{start_chapter:03d}-{end_chapter:03d}.md"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(markdown, encoding="utf-8")
     return out

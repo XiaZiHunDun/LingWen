@@ -1,4 +1,5 @@
 """Tests for infra.creator_merge_preferences."""
+
 from __future__ import annotations
 
 import pytest

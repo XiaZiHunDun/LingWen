@@ -12,6 +12,7 @@ Phase 18.2 — 业务逻辑的事件驱动实现。
 - review_chapter: ReviewChapterUseCase + ReviewChapterCommand
 - merge_ripples: MergeRipplesUseCase (ripple 状态机管理)
 """
+
 from __future__ import annotations
 
 from lingwen_core.use_cases.merge_ripples import MergeRipplesUseCase

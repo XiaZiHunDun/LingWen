@@ -1,4 +1,5 @@
 """Phase 9.34 F19 + Phase 9.43 F32: externalized LLM scanner thresholds + calibration feedback."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -131,10 +132,7 @@ def sweep_thresholds(
     min_threshold: int = 1,
     max_threshold: int = 5,
 ) -> list[ThresholdMetrics]:
-    return [
-        compute_threshold_metrics(nodes, gold_keys, t)
-        for t in range(min_threshold, max_threshold + 1)
-    ]
+    return [compute_threshold_metrics(nodes, gold_keys, t) for t in range(min_threshold, max_threshold + 1)]
 
 
 def recommend_threshold(metrics: list[ThresholdMetrics]) -> ThresholdMetrics:
@@ -205,9 +203,7 @@ def build_calibration_feedback(
         global_metrics=tuple(global_metrics),
         global_recommended=global_recommended,
         global_delta=threshold_delta(current.node_write_threshold, global_recommended),
-        dimension_reports=tuple(
-            build_dimension_reports(nodes, gold_keys, current)
-        ),
+        dimension_reports=tuple(build_dimension_reports(nodes, gold_keys, current)),
         current=current,
     )
 
@@ -236,14 +232,10 @@ def format_calibration_yaml_example(feedback: CalibrationFeedback) -> str:
     delta = feedback.global_delta
     delta_note = "unchanged" if delta == 0 else f"delta {delta:+d} (F1={rec.f1:.3f})"
     weak_dims = [
-        r.dimension
-        for r in feedback.dimension_reports
-        if r.recommended.recall < 0.999 and r.delta > 0
+        r.dimension for r in feedback.dimension_reports if r.recommended.recall < 0.999 and r.delta > 0
     ]
     weak_note = (
-        f"review dims: {', '.join(weak_dims)}"
-        if weak_dims
-        else "all dims OK at recommended threshold"
+        f"review dims: {', '.join(weak_dims)}" if weak_dims else "all dims OK at recommended threshold"
     )
     return "\n".join(
         [

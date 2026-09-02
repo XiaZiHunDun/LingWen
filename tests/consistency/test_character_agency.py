@@ -104,9 +104,7 @@ class TestCharacterAgencyChecker:
         # 比率 < 0.2 应为 P1
         if issues:
             # P1 是最严重的
-            assert issues[0].severity.name == "P1" or any(
-                i.severity.name == "P1" for i in issues
-            )
+            assert issues[0].severity.name == "P1" or any(i.severity.name == "P1" for i in issues)
 
     def test_check_without_target_characters_uses_default(self):
         """无 target_characters 时使用默认方式"""

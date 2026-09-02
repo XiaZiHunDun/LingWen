@@ -3,6 +3,7 @@
 Tests: record_cascade_run (returns int>0) / get_cascade_runs (latest first +
 status filter) / get_cascade_run_by_id (None for missing).
 """
+
 import pytest
 
 from infra.cross_volume.reference_graph import (
@@ -23,8 +24,13 @@ def storage_with_ripple(tmp_path):
     g.add_edge(ReferenceEdge(id="e12", from_node_id="n1", to_node_id="n2"))
     storage._graph = g
     ripple = CrossVolumeRipple(
-        id="rip-1", trigger_volume=1, trigger_chapter=1,
-        affected_nodes=("n1",), affected_edges=(), proposed_actions=(), status="pending",
+        id="rip-1",
+        trigger_volume=1,
+        trigger_chapter=1,
+        affected_nodes=("n1",),
+        affected_edges=(),
+        proposed_actions=(),
+        status="pending",
     )
     storage.append_ripple(ripple)
     yield storage

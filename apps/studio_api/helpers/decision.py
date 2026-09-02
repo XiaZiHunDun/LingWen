@@ -2,6 +2,7 @@
 Phase 15.0 T1.3: decision response helper.
 
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -28,5 +29,3 @@ def _decision_to_response(d: Any) -> DecisionResponse:
         resolved_by=d.get("resolved_by"),
         reason=d.get("reason"),
     )
-
-

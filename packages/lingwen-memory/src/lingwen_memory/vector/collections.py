@@ -3,6 +3,7 @@
 管理 Qdrant 集合的创建、查询和配置。
 从 collections_schema.yaml 加载集合配置。
 """
+
 from typing import Optional
 
 from lingwen_memory.vector.qdrant_client import QdrantClientWrapper

@@ -1,4 +1,5 @@
 """AI Service Providers 测试"""
+
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -26,10 +27,7 @@ class TestProviderConfig:
     def test_config_creation_with_endpoint(self):
         """测试带端点的配置创建"""
         config = ProviderConfig(
-            api_key="test-key",
-            endpoint="https://api.openai.com/v1",
-            model="gpt-4",
-            timeout=120
+            api_key="test-key", endpoint="https://api.openai.com/v1", model="gpt-4", timeout=120
         )
         assert config.endpoint == "https://api.openai.com/v1"
         assert config.timeout == 120
@@ -54,12 +52,7 @@ class TestOpenAIProvider:
     @pytest.fixture
     def config(self):
         """创建测试配置"""
-        return ProviderConfig(
-            api_key="test-key",
-            model="gpt-4",
-            timeout=30,
-            max_retries=3
-        )
+        return ProviderConfig(api_key="test-key", model="gpt-4", timeout=30, max_retries=3)
 
     def test_provider_initialization(self, config):
         """测试Provider初始化"""
@@ -126,11 +119,12 @@ class TestOpenAIProvider:
     def test_generate_retry_on_timeout(self, config):
         """测试超时重试"""
         import openai
+
         with patch("openai.OpenAI") as mock_client:
             mock_client.return_value.chat.completions.create.side_effect = [
                 openai.APITimeoutError("Timeout"),
                 openai.APITimeoutError("Timeout"),
-                MagicMock(choices=[MagicMock(message=MagicMock(content="成功"))])
+                MagicMock(choices=[MagicMock(message=MagicMock(content="成功"))]),
             ]
 
             provider = OpenAIProvider(config)
@@ -145,12 +139,7 @@ class TestAnthropicProvider:
     @pytest.fixture
     def config(self):
         """创建测试配置"""
-        return ProviderConfig(
-            api_key="test-key",
-            model="claude-sonnet-4-20250514",
-            timeout=30,
-            max_retries=3
-        )
+        return ProviderConfig(api_key="test-key", model="claude-sonnet-4-20250514", timeout=30, max_retries=3)
 
     def test_provider_initialization(self, config):
         """测试Provider初始化"""

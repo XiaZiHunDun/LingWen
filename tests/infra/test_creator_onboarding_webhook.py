@@ -1,4 +1,5 @@
 """Tests for creator onboarding mention webhooks."""
+
 from __future__ import annotations
 
 from unittest.mock import patch

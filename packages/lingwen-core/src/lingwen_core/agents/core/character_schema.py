@@ -18,12 +18,12 @@ class CharacterSchema:
 
     def to_yaml(self, character: Dict, file_path: str):
         """导出为YAML"""
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             yaml.dump(character, f, allow_unicode=True, default_flow_style=False)
 
     def from_yaml(self, file_path: str) -> Dict:
         """从YAML加载"""
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             return yaml.safe_load(f)
 
     def to_character_card(self, character: Dict) -> str:
@@ -34,16 +34,18 @@ class CharacterSchema:
             f"**首次出场**: 第{character['first_appearance']}章",
             "",
             "## 性格",
-            ", ".join(character.get('personality', [])),
+            ", ".join(character.get("personality", [])),
             "",
             "## 背景",
-            character.get('background', 'N/A'),
+            character.get("background", "N/A"),
             "",
             "## 能力",
-            ", ".join(character.get('abilities', [])) or 'N/A',
+            ", ".join(character.get("abilities", [])) or "N/A",
             "",
             "## 关系",
         ]
-        for rel in character.get('relationships', []):
-            lines.append(f"- **{rel['target']}**: {rel['type']} (信任:{rel.get('trust', 0)}, 冲突:{rel.get('conflict', 0)})")
+        for rel in character.get("relationships", []):
+            lines.append(
+                f"- **{rel['target']}**: {rel['type']} (信任:{rel.get('trust', 0)}, 冲突:{rel.get('conflict', 0)})"
+            )
         return "\n".join(lines)

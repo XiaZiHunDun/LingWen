@@ -1,4 +1,5 @@
 """Phase 12.09: Studio production DoD doc + verify script."""
+
 from __future__ import annotations
 
 from pathlib import Path

@@ -1,4 +1,5 @@
 """Pydantic v2 DTOs for the workspace bounded context (write chapter)."""
+
 from __future__ import annotations
 
 from typing import Any, Literal, Mapping

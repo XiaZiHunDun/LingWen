@@ -2,6 +2,7 @@
 
 确保 tooling/gates/phase_17.sh 存在、可执行、bash 语法正确。
 """
+
 import subprocess
 from pathlib import Path
 
@@ -24,6 +25,4 @@ def test_phase_17_gate_passes_syntax_check() -> None:
         capture_output=True,
         text=True,
     )
-    assert result.returncode == 0, (
-        f"phase_17.sh has syntax error: {result.stderr}"
-    )
+    assert result.returncode == 0, f"phase_17.sh has syntax error: {result.stderr}"

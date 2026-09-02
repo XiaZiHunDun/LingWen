@@ -1,4 +1,5 @@
 """Tests for merge preset conflict fix suggestions and apply."""
+
 from __future__ import annotations
 
 import pytest

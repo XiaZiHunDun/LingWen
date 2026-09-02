@@ -10,6 +10,7 @@ Phase 1.3.g — RED tests for YAML template loader (load_template, render).
 - render_template(template, context): 用 {key} 占位符填充 → RenderedPrompt
 - RenderedPrompt: system_prompt, user_prompt 填充好,validate output_schema
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -58,8 +59,7 @@ class TestLoadTemplate:
 
         yaml_path = tmp_path / "x_v1.yaml"
         yaml_path.write_text(
-            "scenario: x\nversion: 1\nagent_role: r\n"
-            "system_prompt: s\nuser_prompt: u\n",
+            "scenario: x\nversion: 1\nagent_role: r\nsystem_prompt: s\nuser_prompt: u\n",
             encoding="utf-8",
         )
         tpl = load_template("x", base_dir=tmp_path)
@@ -108,8 +108,11 @@ class TestTemplateDataclass:
         from lingwen_prompt.templates import Template
 
         tpl = Template(
-            scenario="x", version=1, agent_role="y",
-            system_prompt="s", user_prompt="u",
+            scenario="x",
+            version=1,
+            agent_role="y",
+            system_prompt="s",
+            user_prompt="u",
         )
         with pytest.raises(Exception):  # FrozenInstanceError
             tpl.scenario = "z"  # type: ignore[misc]
@@ -174,8 +177,9 @@ class TestRenderTemplate:
         from lingwen_prompt.templates import RenderedPrompt, render_template
 
         tpl = self._template()
-        rendered = render_template(tpl, {"chapter_num": 1, "protagonist": "x",
-                                         "min_words": 1, "max_words": 2})
+        rendered = render_template(
+            tpl, {"chapter_num": 1, "protagonist": "x", "min_words": 1, "max_words": 2}
+        )
         assert isinstance(rendered, RenderedPrompt)
         assert isinstance(rendered.system_prompt, str)
         assert isinstance(rendered.user_prompt, str)

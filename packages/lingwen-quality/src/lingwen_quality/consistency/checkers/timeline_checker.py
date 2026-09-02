@@ -21,6 +21,7 @@ from .base_checker import BaseChecker
 @dataclass
 class TimelinePoint:
     """时间点"""
+
     chapter: int
     time_expr: str  # 原始时间表达
     parsed_time: str  # 解析后时间
@@ -30,8 +31,8 @@ class TimelinePoint:
 
 class TimelineChecker(BaseChecker):
     """时间线合理性检查器"""
-    _checker_type = CheckerType.TIMELINE
 
+    _checker_type = CheckerType.TIMELINE
 
     def __init__(self, rules: Optional[Dict[str, Any]] = None):
         super().__init__(self._checker_type)
@@ -39,10 +40,7 @@ class TimelineChecker(BaseChecker):
         self._timeline: List[TimelinePoint] = []
 
     def check(
-        self,
-        chapter_content: str,
-        chapter_num: int,
-        context: Optional[Dict[str, Any]] = None
+        self, chapter_content: str, chapter_num: int, context: Optional[Dict[str, Any]] = None
     ) -> List[Issue]:
         """
         检查时间线合理性
@@ -66,9 +64,7 @@ class TimelineChecker(BaseChecker):
             parsed = self._parse_time_expr(time_expr, chapter_num)
 
             # 检查与前文矛盾
-            issues.extend(self._check_time_conflicts(
-                parsed, chapter_num, context.get("timeline", [])
-            ))
+            issues.extend(self._check_time_conflicts(parsed, chapter_num, context.get("timeline", [])))
 
             # 记录时间点
             self._timeline.append(parsed)
@@ -139,9 +135,26 @@ class TimelineChecker(BaseChecker):
         is_distorted_time = False  # 是否是扭曲时间（修真/游戏/梦境场景）
 
         # 检查是否是扭曲时间表达
-        distorted_patterns = ["百年", "千年", "数百年", "数千年", "弹指间", "瞬息", "一晃", "匆匆",
-                           "光阴似箭", "日月如梭", "斗转星移", "星移斗转", "闭关", "沉睡", "长眠",
-                           "游戏中", "意识空间", "梦境"]
+        distorted_patterns = [
+            "百年",
+            "千年",
+            "数百年",
+            "数千年",
+            "弹指间",
+            "瞬息",
+            "一晃",
+            "匆匆",
+            "光阴似箭",
+            "日月如梭",
+            "斗转星移",
+            "星移斗转",
+            "闭关",
+            "沉睡",
+            "长眠",
+            "游戏中",
+            "意识空间",
+            "梦境",
+        ]
         if any(p in expr for p in distorted_patterns):
             is_distorted_time = True
             # 这些时间表达跨度太大，不做增量计算
@@ -165,14 +178,11 @@ class TimelineChecker(BaseChecker):
             time_expr=expr,
             parsed_time=expr,
             relative_day=relative_day,
-            is_distorted_time=is_distorted_time
+            is_distorted_time=is_distorted_time,
         )
 
     def _check_time_conflicts(
-        self,
-        current_point: TimelinePoint,
-        chapter_num: int,
-        existing_timeline: List[TimelinePoint]
+        self, current_point: TimelinePoint, chapter_num: int, existing_timeline: List[TimelinePoint]
     ) -> List[Issue]:
         """检查时间冲突"""
         issues = []
@@ -184,21 +194,24 @@ class TimelineChecker(BaseChecker):
         for point in existing_timeline:
             # 检查同一章节内的时间矛盾
             if point.chapter == chapter_num:
-                if (point.relative_day > 0 and current_point.relative_day == 0) or \
-                   (point.relative_day == 0 and current_point.relative_day > 0):
+                if (point.relative_day > 0 and current_point.relative_day == 0) or (
+                    point.relative_day == 0 and current_point.relative_day > 0
+                ):
                     if "次日" in current_point.time_expr and "天" in point.time_expr:
-                        issues.append(Issue(
-                            id=f"timeline_{chapter_num}_时间矛盾",
-                            severity=IssueSeverity.P1,
-                            checker_type=CheckerType.TIMELINE,
-                            issue_type="时间表达冲突",
-                            title="时间线矛盾",
-                            description=f"前文说\"{point.time_expr}\"，这里却说\"{current_point.time_expr}\"",
-                            location=IssueLocation(chapter=chapter_num),
-                            evidence=f"前文：{point.time_expr}",
-                            suggestion="统一时间表达",
-                            character=None
-                        ))
+                        issues.append(
+                            Issue(
+                                id=f"timeline_{chapter_num}_时间矛盾",
+                                severity=IssueSeverity.P1,
+                                checker_type=CheckerType.TIMELINE,
+                                issue_type="时间表达冲突",
+                                title="时间线矛盾",
+                                description=f'前文说"{point.time_expr}"，这里却说"{current_point.time_expr}"',
+                                location=IssueLocation(chapter=chapter_num),
+                                evidence=f"前文：{point.time_expr}",
+                                suggestion="统一时间表达",
+                                character=None,
+                            )
+                        )
 
         return issues
 
@@ -213,18 +226,20 @@ class TimelineChecker(BaseChecker):
             if event_count > 50:  # 超过50句，暗示时间可能不够
                 # 进一步检查是否有明显的时间跳跃表达
                 if not any(kw in content for kw in ["转天", "第二天", "次日"]):
-                    issues.append(Issue(
-                        id=f"timeline_{chapter_num}_时间流逝",
-                        severity=IssueSeverity.P2,
-                        checker_type=CheckerType.TIMELINE,
-                        issue_type="时间流逝矛盾",
-                        title="事件密度过高",
-                        description="章节内事件密度较高，可能存在时间流逝不合理的问题",
-                        location=IssueLocation(chapter=chapter_num),
-                        evidence=f"章节句数：{event_count}",
-                        suggestion="检查事件时间安排是否合理",
-                        character=None
-                    ))
+                    issues.append(
+                        Issue(
+                            id=f"timeline_{chapter_num}_时间流逝",
+                            severity=IssueSeverity.P2,
+                            checker_type=CheckerType.TIMELINE,
+                            issue_type="时间流逝矛盾",
+                            title="事件密度过高",
+                            description="章节内事件密度较高，可能存在时间流逝不合理的问题",
+                            location=IssueLocation(chapter=chapter_num),
+                            evidence=f"章节句数：{event_count}",
+                            suggestion="检查事件时间安排是否合理",
+                            character=None,
+                        )
+                    )
 
         return issues
 

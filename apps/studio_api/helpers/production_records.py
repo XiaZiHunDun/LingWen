@@ -6,6 +6,7 @@ capturing closure state.
 
 Lifted verbatim from dashboard/app.py lines 218-230.
 """
+
 from __future__ import annotations
 
 import os

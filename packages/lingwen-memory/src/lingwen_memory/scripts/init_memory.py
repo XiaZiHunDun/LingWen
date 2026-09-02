@@ -10,6 +10,7 @@ Usage:
     python -m memory_system.scripts.init_memory --dry-run   # 仅预览
     python -m memory_system.scripts.init_memory --reset     # 重置状态文件
 """
+
 import argparse
 import sys
 from pathlib import Path
@@ -85,8 +86,10 @@ def initialize_state_files(config: dict, reset: bool = False) -> dict:
             file_path.parent.mkdir(parents=True, exist_ok=True)
 
             # 初始化空状态
-            initial_data = {} if key == "state_file" else (
-                {"threads": []} if key == "plot_threads_file" else {"events": []}
+            initial_data = (
+                {}
+                if key == "state_file"
+                else ({"threads": []} if key == "plot_threads_file" else {"events": []})
             )
             state_manager.save(key, initial_data)
 
@@ -124,7 +127,9 @@ def initialize_collections(dry_run: bool = False) -> dict:
         print(f"Would create {len(to_create)} collections:")
         for name in to_create:
             info = manager.get_collection_info(name)
-            print(f"  - {name}: {info['description']} (vector_size={info['vector_size']}, distance={info['distance']})")
+            print(
+                f"  - {name}: {info['description']} (vector_size={info['vector_size']}, distance={info['distance']})"
+            )
         return results
 
     # 创建不存在的集合
@@ -172,22 +177,10 @@ def main():
         description="初始化记忆系统",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument(
-        "--dry-run", action="store_true",
-        help="仅预览，不执行实际操作"
-    )
-    parser.add_argument(
-        "--reset", action="store_true",
-        help="重置状态文件（慎用，会清空现有状态）"
-    )
-    parser.add_argument(
-        "--skip-collections", action="store_true",
-        help="跳过集合创建"
-    )
-    parser.add_argument(
-        "--skip-state", action="store_true",
-        help="跳过状态文件初始化"
-    )
+    parser.add_argument("--dry-run", action="store_true", help="仅预览，不执行实际操作")
+    parser.add_argument("--reset", action="store_true", help="重置状态文件（慎用，会清空现有状态）")
+    parser.add_argument("--skip-collections", action="store_true", help="跳过集合创建")
+    parser.add_argument("--skip-state", action="store_true", help="跳过状态文件初始化")
 
     args = parser.parse_args()
 
@@ -210,16 +203,17 @@ def main():
     print("\n[2/4] 检查 Qdrant 连接...")
     qdrant_config = config["qdrant"]
     conn_result = check_qdrant_connection(
-        qdrant_config["host"],
-        qdrant_config["port"],
-        qdrant_config["grpc_port"]
+        qdrant_config["host"], qdrant_config["port"], qdrant_config["grpc_port"]
     )
 
     if conn_result["connected"]:
         print(f"  Qdrant: {conn_result['host']}:{conn_result['port']} (gRPC: {conn_result['grpc_port']})")
         print("  Connection: OK")
     else:
-        print(f"  WARNING: Cannot connect to Qdrant at {conn_result['host']}:{conn_result['port']}", file=sys.stderr)
+        print(
+            f"  WARNING: Cannot connect to Qdrant at {conn_result['host']}:{conn_result['port']}",
+            file=sys.stderr,
+        )
         print(f"  Error: {conn_result['error']}", file=sys.stderr)
         print("  Please ensure Qdrant is running.", file=sys.stderr)
         if not args.dry_run:

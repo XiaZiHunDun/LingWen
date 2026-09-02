@@ -1,4 +1,5 @@
 """Phase 9.45 F34: cascade_runs retention / purge helpers."""
+
 from __future__ import annotations
 
 import re
@@ -22,9 +23,7 @@ def parse_older_than(spec: str) -> timedelta:
     text = spec.strip()
     match = _OLDER_THAN_RE.match(text)
     if not match:
-        raise ValueError(
-            f"invalid --older-than {spec!r} (expected e.g. 90d, 12h, 30m)"
-        )
+        raise ValueError(f"invalid --older-than {spec!r} (expected e.g. 90d, 12h, 30m)")
     amount = int(match.group(1))
     if amount < 1:
         raise ValueError(f"--older-than must be >= 1, got {amount}")

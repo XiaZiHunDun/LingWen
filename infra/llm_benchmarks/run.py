@@ -1,4 +1,5 @@
 """Orchestrate benchmark runs and CLI entrypoint."""
+
 from __future__ import annotations
 
 import argparse
@@ -28,9 +29,7 @@ logger = logging.getLogger(__name__)
 
 
 def _build_user_prompt(character_slug: str, chapter_texts: list[str]) -> str:
-    chapters = "\n\n".join(
-        f"### 第{i+1}段\n{t}" for i, t in enumerate(chapter_texts)
-    )
+    chapters = "\n\n".join(f"### 第{i + 1}段\n{t}" for i, t in enumerate(chapter_texts))
     return f"角色 slug: {character_slug}\n\n章节文本 (按顺序):\n\n{chapters}\n\n请输出 JSON。"
 
 
@@ -83,10 +82,11 @@ def _call_provider(
             parsed_proposals.append(p.model_dump())
             # canon_level is Optional in CharacterUpdatePayload; only mark
             # non-compliant if a value IS provided AND not in the enum.
-            if (
-                validated.payload.canon_level is not None
-                and validated.payload.canon_level not in {"Draft", "Secondary", "Primary"}
-            ):
+            if validated.payload.canon_level is not None and validated.payload.canon_level not in {
+                "Draft",
+                "Secondary",
+                "Primary",
+            }:
                 canon_level_ok = False
     except Exception as exc:
         logger.warning("%s parse failure: %s", provider, exc)
@@ -194,11 +194,7 @@ def _cli() -> None:
 
     logging.basicConfig(level=logging.INFO)
 
-    providers = (
-        ["minimax", "anthropic", "openai"]
-        if args.provider == "all"
-        else [args.provider]
-    )
+    providers = ["minimax", "anthropic", "openai"] if args.provider == "all" else [args.provider]
     chapter_ids = [int(x) for x in args.chapters.split(",")]
 
     all_metrics: list[ProviderMetrics] = []

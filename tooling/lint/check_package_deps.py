@@ -10,6 +10,7 @@
     python tooling/lint/check_package_deps.py --check
     python tooling/lint/check_package_deps.py --check --target <file>
 """
+
 from __future__ import annotations
 
 import argparse
@@ -25,9 +26,14 @@ PACKAGES = REPO / "packages"
 FORBIDDEN = {
     "packages/lingwen": ["apps.studio_api", "apps.dashboard"],
     "apps/dashboard": [
-        "packages.lingwen_core", "packages.lingwen_llm", "packages.lingwen_memory",
-        "packages.lingwen_prompt", "packages.lingwen_pipeline", "packages.lingwen_quality",
-        "packages.lingwen_cli", "apps.studio_api",
+        "packages.lingwen_core",
+        "packages.lingwen_llm",
+        "packages.lingwen_memory",
+        "packages.lingwen_prompt",
+        "packages.lingwen_pipeline",
+        "packages.lingwen_quality",
+        "packages.lingwen_cli",
+        "apps.studio_api",
     ],
 }
 
@@ -81,11 +87,14 @@ def check_file(path):
         if isinstance(node, ast.ImportFrom) and node.module:
             target = _resolve_import(node.module, zone)
             if target and any(target.startswith(f) for f in forbidden):
-                out.append(Violation(
-                    file=path, line=node.lineno,
-                    rule=f"{zone} -> forbidden {target}",
-                    detail=f"from {node.module} import ...",
-                ))
+                out.append(
+                    Violation(
+                        file=path,
+                        line=node.lineno,
+                        rule=f"{zone} -> forbidden {target}",
+                        detail=f"from {node.module} import ...",
+                    )
+                )
     return out
 
 
@@ -101,8 +110,9 @@ def main():
         targets = []
         for root in (APPS, PACKAGES):
             if root.exists():
-                targets.extend(p for p in root.rglob("*.py")
-                               if "node_modules" not in p.parts and ".git" not in p.parts)
+                targets.extend(
+                    p for p in root.rglob("*.py") if "node_modules" not in p.parts and ".git" not in p.parts
+                )
 
     violations = []
     for t in targets:

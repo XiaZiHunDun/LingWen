@@ -2,6 +2,7 @@
 
 Checkpoint layer: snapshot + restore state for crash recovery / rollback.
 """
+
 import time
 
 
@@ -28,7 +29,7 @@ class TestCreateCheckpoint:
         checkpoints = list_checkpoints()
 
         assert len(checkpoints) >= 1
-        assert checkpoints[0]['note'] == "My checkpoint"
+        assert checkpoints[0]["note"] == "My checkpoint"
 
     def test_create_checkpoint_includes_state(self, init_db):
         """Test checkpoint snapshot includes workflow state"""
@@ -38,7 +39,7 @@ class TestCreateCheckpoint:
         create_checkpoint("State test")
 
         checkpoints = list_checkpoints()
-        assert checkpoints[0]['step'] == "STEP_20"
+        assert checkpoints[0]["step"] == "STEP_20"
 
     def test_create_checkpoint_multiple_checkpoints(self, init_db):
         """Test creating multiple checkpoints with unique IDs"""
@@ -74,7 +75,7 @@ class TestListCheckpoints:
         cp2 = create_checkpoint("Newer checkpoint - second")
 
         checkpoints = list_checkpoints()
-        assert checkpoints[0]['note'] == "Newer checkpoint - second"
+        assert checkpoints[0]["note"] == "Newer checkpoint - second"
 
         delete_checkpoint(cp1)
         delete_checkpoint(cp2)
@@ -145,7 +146,7 @@ class TestRestoreCheckpoint:
         restore_checkpoint(cp_id)
 
         tasks = list_tasks()
-        task_ids = [t['task_id'] for t in tasks]
+        task_ids = [t["task_id"] for t in tasks]
         assert "new_task" not in task_ids
 
 
@@ -169,5 +170,5 @@ class TestDeleteCheckpoint:
         delete_checkpoint(cp_id)
 
         checkpoints = list_checkpoints()
-        cp_ids = [c['checkpoint_id'] for c in checkpoints]
+        cp_ids = [c["checkpoint_id"] for c in checkpoints]
         assert cp_id not in cp_ids

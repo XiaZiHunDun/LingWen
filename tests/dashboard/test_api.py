@@ -75,9 +75,15 @@ class TestOverviewEndpoint:
             db = ReadingPowerDB(db_path)
 
             # Insert test chapter summaries
-            db.update_chapter_summary("1", hook_count=3, hook_strength_avg=0.8, coolpoint_count=2, coolpoint_density=0.5)
-            db.update_chapter_summary("2", hook_count=5, hook_strength_avg=0.6, coolpoint_count=3, coolpoint_density=0.7)
-            db.update_chapter_summary("3", hook_count=2, hook_strength_avg=0.9, coolpoint_count=1, coolpoint_density=0.4)
+            db.update_chapter_summary(
+                "1", hook_count=3, hook_strength_avg=0.8, coolpoint_count=2, coolpoint_density=0.5
+            )
+            db.update_chapter_summary(
+                "2", hook_count=5, hook_strength_avg=0.6, coolpoint_count=3, coolpoint_density=0.7
+            )
+            db.update_chapter_summary(
+                "3", hook_count=2, hook_strength_avg=0.9, coolpoint_count=1, coolpoint_density=0.4
+            )
 
             app = create_app(db_path=db_path)
             client = TestClient(app)
@@ -133,9 +139,15 @@ class TestChaptersEndpoint:
             db = ReadingPowerDB(db_path)
 
             # Insert test chapter summaries
-            db.update_chapter_summary("1", hook_count=3, hook_strength_avg=0.8, coolpoint_count=2, coolpoint_density=0.5)
-            db.update_chapter_summary("2", hook_count=5, hook_strength_avg=0.6, coolpoint_count=3, coolpoint_density=0.7)
-            db.update_chapter_summary("3", hook_count=2, hook_strength_avg=0.9, coolpoint_count=1, coolpoint_density=0.4)
+            db.update_chapter_summary(
+                "1", hook_count=3, hook_strength_avg=0.8, coolpoint_count=2, coolpoint_density=0.5
+            )
+            db.update_chapter_summary(
+                "2", hook_count=5, hook_strength_avg=0.6, coolpoint_count=3, coolpoint_density=0.7
+            )
+            db.update_chapter_summary(
+                "3", hook_count=2, hook_strength_avg=0.9, coolpoint_count=1, coolpoint_density=0.4
+            )
 
             app = create_app(db_path=db_path)
             client = TestClient(app)
@@ -164,9 +176,15 @@ class TestChaptersEndpoint:
             db = ReadingPowerDB(db_path)
 
             # Insert test chapter summaries
-            db.update_chapter_summary("1", hook_count=3, hook_strength_avg=0.8, coolpoint_count=2, coolpoint_density=0.5)
-            db.update_chapter_summary("2", hook_count=5, hook_strength_avg=0.6, coolpoint_count=3, coolpoint_density=0.7)
-            db.update_chapter_summary("3", hook_count=2, hook_strength_avg=0.9, coolpoint_count=1, coolpoint_density=0.4)
+            db.update_chapter_summary(
+                "1", hook_count=3, hook_strength_avg=0.8, coolpoint_count=2, coolpoint_density=0.5
+            )
+            db.update_chapter_summary(
+                "2", hook_count=5, hook_strength_avg=0.6, coolpoint_count=3, coolpoint_density=0.7
+            )
+            db.update_chapter_summary(
+                "3", hook_count=2, hook_strength_avg=0.9, coolpoint_count=1, coolpoint_density=0.4
+            )
 
             app = create_app(db_path=db_path)
             client = TestClient(app)
@@ -190,7 +208,9 @@ class TestChaptersEndpoint:
             db = ReadingPowerDB(db_path)
 
             # Insert only chapter 1
-            db.update_chapter_summary("1", hook_count=3, hook_strength_avg=0.8, coolpoint_count=2, coolpoint_density=0.5)
+            db.update_chapter_summary(
+                "1", hook_count=3, hook_strength_avg=0.8, coolpoint_count=2, coolpoint_density=0.5
+            )
 
             app = create_app(db_path=db_path)
             client = TestClient(app)

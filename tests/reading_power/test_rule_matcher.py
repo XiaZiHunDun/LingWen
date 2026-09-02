@@ -16,7 +16,8 @@ def mock_db():
 def rule_matcher(mock_db, tmp_path):
     """Create RuleMatcher with temporary rule files."""
     hooks_file = tmp_path / "reading_power_hooks.yaml"
-    hooks_file.write_text("""
+    hooks_file.write_text(
+        """
 hook_patterns:
   危机钩:
     description: Test hook
@@ -27,10 +28,13 @@ hook_patterns:
     position_weight:
       结尾: 1.5
       开篇: 1.2
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
 
     coolpoints_file = tmp_path / "reading_power_coolpoints.yaml"
-    coolpoints_file.write_text("""
+    coolpoints_file.write_text(
+        """
 coolpoint_patterns:
   装逼打脸:
     description: Test coolpoint
@@ -38,7 +42,9 @@ coolpoint_patterns:
       - 打脸
       - 反杀
     emotion_intensity: 0.9
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
 
     matcher = RuleMatcher(mock_db)
     matcher.HOOKS_RULES_PATH = hooks_file

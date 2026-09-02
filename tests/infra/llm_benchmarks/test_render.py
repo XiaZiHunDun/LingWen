@@ -1,4 +1,5 @@
 """Tests for infra.llm_benchmarks.render."""
+
 from __future__ import annotations
 
 from infra.llm_benchmarks.metrics import ProviderMetrics

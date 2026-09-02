@@ -7,6 +7,7 @@ Uses:
   - lingwen_creator.volume.plan (load_volume_plan for context)
   - lingwen_creator.volume.pulse (creator_volume_pulse for metrics)
 """
+
 from __future__ import annotations
 
 import re
@@ -131,9 +132,7 @@ def creator_overview(project: StudioProject) -> dict[str, Any]:
         "quality_profile": config.quality_profile,
         "max_chapter": config.max_chapter,
         "chapters_written": written,
-        "coverage_pct": round(written / config.max_chapter * 100, 1)
-        if config.max_chapter
-        else 0.0,
+        "coverage_pct": round(written / config.max_chapter * 100, 1) if config.max_chapter else 0.0,
         "chapters": chapter_rows,
         "volume_summaries": volume_summaries,
         "pillars_excerpt": _excerpt(pillars_text),

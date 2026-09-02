@@ -5,6 +5,7 @@ Verifies the v16.3 enforcement upgrade:
   - file-existence gate surfaces a synthetic creator shim
   - import-linter layer_dependencies contract is configured
 """
+
 from __future__ import annotations
 
 import importlib
@@ -81,6 +82,7 @@ def test_script_runs_clean(monkeypatch):
 def test_importlinter_config_present():
     """pyproject.toml [tool.importlinter] is configured with layer_dependencies."""
     import tomllib
+
     with (REPO_ROOT / "pyproject.toml").open("rb") as f:
         cfg = tomllib.load(f)
     assert "importlinter" in cfg.get("tool", {}), "tool.importlinter section missing"
@@ -94,4 +96,4 @@ def test_importlinter_config_present():
     layer_contract = next(c for c in contracts if c["name"] == "layer_dependencies")
     layers = layer_contract["layers"]
     assert layers[0] == "apps.studio_api"  # top
-    assert layers[-1] == "infra"            # bottom leaf
+    assert layers[-1] == "infra"  # bottom leaf

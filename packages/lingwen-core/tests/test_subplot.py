@@ -1,4 +1,5 @@
 """Phase 19+ Sub1 — Plot entity guard tests."""
+
 from __future__ import annotations
 
 from dataclasses import FrozenInstanceError, is_dataclass
@@ -8,6 +9,7 @@ import pytest
 
 def test_plot_importable():
     from lingwen_core.domain.subplot import Plot
+
     assert Plot is not None
 
 

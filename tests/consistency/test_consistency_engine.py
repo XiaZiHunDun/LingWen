@@ -40,10 +40,7 @@ class TestConsistencyEngineCheck:
         engine = ConsistencyEngine()
         content = "林夜站在山崖上，望着远方的云海。"
 
-        report = engine.check_chapter(
-            chapter_num=25,
-            chapter_content=content
-        )
+        report = engine.check_chapter(chapter_num=25, chapter_content=content)
 
         assert report is not None
         assert report.chapter == 25
@@ -59,32 +56,20 @@ class TestConsistencyEngineCheck:
         总之，从这个场景可以看出，这个房间发生过什么。
         """
 
-        report = engine.check_chapter(
-            chapter_num=25,
-            chapter_content=content
-        )
+        report = engine.check_chapter(chapter_num=25, chapter_content=content)
 
         assert report is not None
         # AI痕迹检查应该能发现问题
-        ai_issues = [i for i in report.issues
-                     if i.checker_type.value == "ai_gloss_checker"]
+        ai_issues = [i for i in report.issues if i.checker_type.value == "ai_gloss_checker"]
         assert len(ai_issues) > 0
 
     def test_check_chapter_with_context(self):
         engine = ConsistencyEngine()
         content = "林夜使用了瞬移能力出现在敌人身后。"
 
-        context = {
-            "character_abilities": {
-                "林夜": ["不会武"]
-            }
-        }
+        context = {"character_abilities": {"林夜": ["不会武"]}}
 
-        report = engine.check_chapter(
-            chapter_num=25,
-            chapter_content=content,
-            context=context
-        )
+        report = engine.check_chapter(chapter_num=25, chapter_content=content, context=context)
 
         assert report is not None
 
@@ -92,20 +77,10 @@ class TestConsistencyEngineCheck:
         engine = ConsistencyEngine(scope=CheckScope.CRITICAL)
         content = "林夜很愤怒地冲向敌人。"
 
-        context = {
-            "character_profiles": {
-                "林夜": {
-                    "core_personality": ["冷静"],
-                    "speech_style": "简洁"
-                }
-            }
-        }
+        context = {"character_profiles": {"林夜": {"core_personality": ["冷静"], "speech_style": "简洁"}}}
 
         report = engine.check_chapter(
-            chapter_num=25,
-            chapter_content=content,
-            scope=CheckScope.CRITICAL,
-            context=context
+            chapter_num=25, chapter_content=content, scope=CheckScope.CRITICAL, context=context
         )
 
         assert report is not None

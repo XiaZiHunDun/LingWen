@@ -8,6 +8,7 @@ Mirror TestCostByScenarioExtraction.test_workflow_status_response_includes_cost_
 Phase 8.16 增: time_window=7d|30d|all query param, 透传 since 到
 MasterControllerAdapter.get_active_workflow_status (Task 3 路径).
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -25,9 +26,7 @@ from apps.studio_api.protocols import MasterControllerAdapter
 class TestWorkflowStatusResponseCostByTier:
     """Phase 8.13: GET /api/workflows/active 暴露 cost_by_tier 字段."""
 
-    def test_status_response_includes_cost_by_tier_when_workflow_active(
-        self, tmp_path: Path
-    ) -> None:
+    def test_status_response_includes_cost_by_tier_when_workflow_active(self, tmp_path: Path) -> None:
         """Active workflow → cost_by_tier 透传 (非空 dict, ModelTier.value 序列化)."""
         master = mc_mod.MasterController.__new__(mc_mod.MasterController)
         cost_tracker = CostTracker()
@@ -70,7 +69,11 @@ class TestWorkflowStatusResponseCostByTier:
         body = response.json()
         # 字段存在 + ModelTier.value 序列化 (HAIKU → "haiku")
         assert "cost_by_tier" in body
-        assert body["cost_by_tier"] == {"sonnet": pytest.approx(0.00105), "haiku": pytest.approx(0.0007), "opus": pytest.approx(0.002625)}
+        assert body["cost_by_tier"] == {
+            "sonnet": pytest.approx(0.00105),
+            "haiku": pytest.approx(0.0007),
+            "opus": pytest.approx(0.002625),
+        }
         # 验证 3 tier 都非 0
         assert all(v > 0 for v in body["cost_by_tier"].values())
 
@@ -94,27 +97,37 @@ class TestWorkflowStatusTimeWindow:
         master.cost_tracker = cost_tracker
 
         class _StubGraph:
-            def node_ids(self): return []
-            def has_execution(self, nid): return False
-            def get_execution(self, nid): return None
-            def get_node(self, nid): return None
+            def node_ids(self):
+                return []
+
+            def has_execution(self, nid):
+                return False
+
+            def get_execution(self, nid):
+                return None
+
+            def get_node(self, nid):
+                return None
+
         class _StubSummary:
             steps = 0
+
         class _StubScheduler:
             _summary = _StubSummary()
+
         master._last_scheduler = _StubScheduler()
         master._last_graph = _StubGraph()
         master._last_workflow_name = "novel_writing"
 
         adapter = MasterControllerAdapter(master)
         from apps.studio_api.app import create_app
+
         app = create_app(db_path=tmp_path / "rp.db", master_controller=adapter)
         from fastapi.testclient import TestClient
+
         return TestClient(app)
 
-    def test_time_window_7d_returns_full_cost_when_records_recent(
-        self, tmp_path: Path
-    ) -> None:
+    def test_time_window_7d_returns_full_cost_when_records_recent(self, tmp_path: Path) -> None:
         """time_window=7d + 全部 records 新近 → 返全量 cost (走 since 透传, 不破坏 7d 内数据)."""
         client = self._make_master_with_cost_tracker(tmp_path)
         response = client.get("/api/workflows/active?time_window=7d")
@@ -149,9 +162,7 @@ class TestWorkflowStatusTimeWindow:
         body = response.json()
         assert body["total_cost_usd"] > 0
 
-    def test_time_window_invalid_silently_falls_back_to_all(
-        self, tmp_path: Path
-    ) -> None:
+    def test_time_window_invalid_silently_falls_back_to_all(self, tmp_path: Path) -> None:
         """time_window=invalid → _parse_time_window silent fallback to None → 走旧 path.
         不抛 422, 0 破旧 caller 用错 URL 行为 (跟 Phase 8.13 silent degrade)."""
         client = self._make_master_with_cost_tracker(tmp_path)
@@ -180,14 +191,24 @@ class TestWorkflowStatusResponseCostByDay:
         master.cost_tracker = cost_tracker
 
         class _StubGraph:
-            def node_ids(self): return []
-            def has_execution(self, nid): return False
-            def get_execution(self, nid): return None
-            def get_node(self, nid): return None
+            def node_ids(self):
+                return []
+
+            def has_execution(self, nid):
+                return False
+
+            def get_execution(self, nid):
+                return None
+
+            def get_node(self, nid):
+                return None
+
         class _StubSummary:
             steps = 0
+
         class _StubScheduler:
             _summary = _StubSummary()
+
         master._last_scheduler = _StubScheduler()
         master._last_graph = _StubGraph()
         master._last_workflow_name = "novel_writing"
@@ -264,14 +285,24 @@ class TestWorkflowStatusResponseCostByDayPerTier:
         master.cost_tracker = cost_tracker
 
         class _StubGraph:
-            def node_ids(self): return []
-            def has_execution(self, nid): return False
-            def get_execution(self, nid): return None
-            def get_node(self, nid): return None
+            def node_ids(self):
+                return []
+
+            def has_execution(self, nid):
+                return False
+
+            def get_execution(self, nid):
+                return None
+
+            def get_node(self, nid):
+                return None
+
         class _StubSummary:
             steps = 0
+
         class _StubScheduler:
             _summary = _StubSummary()
+
         master._last_scheduler = _StubScheduler()
         master._last_graph = _StubGraph()
         master._last_workflow_name = "novel_writing"

@@ -1,4 +1,5 @@
 """Phase 9.83 F75: harvest decision context includes chapter_num."""
+
 from __future__ import annotations
 
 from pathlib import Path

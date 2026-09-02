@@ -1,4 +1,5 @@
 """Dashboard creator overview endpoint."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -522,7 +523,8 @@ class TestCreatorEndpoints:
             json={
                 "name": "版本测试",
                 "max_chapter": 12,
-                "volumes": plan["volumes"] or [
+                "volumes": plan["volumes"]
+                or [
                     {
                         "label": "一",
                         "start_chapter": 1,
@@ -573,7 +575,8 @@ class TestCreatorEndpoints:
                 "name": "semver-bad",
                 "max_chapter": 12,
                 "version_label": "latest",
-                "volumes": plan["volumes"] or [
+                "volumes": plan["volumes"]
+                or [
                     {
                         "label": "一",
                         "start_chapter": 1,
@@ -619,7 +622,8 @@ class TestCreatorEndpoints:
                 "name": "changelog-api",
                 "max_chapter": 12,
                 "version_label": "v1.0.0",
-                "volumes": plan["volumes"] or [
+                "volumes": plan["volumes"]
+                or [
                     {
                         "label": "一",
                         "start_chapter": 1,
@@ -687,7 +691,8 @@ class TestCreatorEndpoints:
                 "name": "diff-changelog",
                 "max_chapter": 12,
                 "version_label": "v1.0.0",
-                "volumes": plan["volumes"] or [
+                "volumes": plan["volumes"]
+                or [
                     {
                         "label": "一",
                         "start_chapter": 1,
@@ -982,9 +987,7 @@ class TestCreatorEndpoints:
         assert applied.json()["package_id"] == "fix_me"
         remaining = client.get("/api/creator/settings-docs/merge-preferences/preset-packages/conflicts")
         assert remaining.status_code == 200
-        fix_me_conflicts = [
-            row for row in remaining.json()["conflicts"] if row.get("package_id") == "fix_me"
-        ]
+        fix_me_conflicts = [row for row in remaining.json()["conflicts"] if row.get("package_id") == "fix_me"]
         assert fix_me_conflicts == []
 
     def test_merge_preset_apply_all_fixes(self, client: TestClient) -> None:
@@ -1068,7 +1071,16 @@ class TestCreatorEndpoints:
         assert topo.status_code == 200
         diff = client.post(
             "/api/creator/settings-docs/merge-preferences/preset-packages/import/preview-diff",
-            json={"packages": [{"id": "new_pkg", "name": "新包", "pillars_merge_source": "editor", "global_outline_merge_source": "editor"}]},
+            json={
+                "packages": [
+                    {
+                        "id": "new_pkg",
+                        "name": "新包",
+                        "pillars_merge_source": "editor",
+                        "global_outline_merge_source": "editor",
+                    }
+                ]
+            },
         )
         assert diff.status_code == 200
         assert "new_pkg" in diff.json()["added"]

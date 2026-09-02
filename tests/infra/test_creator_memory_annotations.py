@@ -1,4 +1,5 @@
 """Tests for creator_memory_annotations."""
+
 from __future__ import annotations
 
 from pathlib import Path

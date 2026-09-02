@@ -11,11 +11,13 @@ from tooling.hygiene.check_repo_state import find_hygiene_violations
 @pytest.fixture
 def stub_ls_files(monkeypatch):
     """Stub git_ls_files to return an arbitrary file list."""
+
     def _stub(files):
         monkeypatch.setattr(
             "tooling.hygiene.check_repo_state.git_ls_files",
             lambda *args, **kwargs: files,
         )
+
     return _stub
 
 
@@ -35,12 +37,14 @@ def test_state_subdir_detected(stub_ls_files):
 
 def test_substring_not_matched(stub_ls_files):
     """Substring-only matches must NOT be flagged (path-component rule)."""
-    stub_ls_files([
-        "docs/state_machine/manager.py",
-        "docs/pycache_intro.md",
-        "tools/mypy_cache_helper.py",
-        "src/lingwen_novel_factory.egg-info.md",
-    ])
+    stub_ls_files(
+        [
+            "docs/state_machine/manager.py",
+            "docs/pycache_intro.md",
+            "tools/mypy_cache_helper.py",
+            "src/lingwen_novel_factory.egg-info.md",
+        ]
+    )
     violations = find_hygiene_violations()
     assert violations == []
 

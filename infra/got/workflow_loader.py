@@ -23,6 +23,7 @@ YAML 格式:
 - 远程 URL / git 仓库加载
 - 工作流继承 / 模板化
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -34,6 +35,7 @@ from infra.got.data_structures import NodeType, ThoughtNode
 from infra.got.graph import ThoughtGraph
 
 # === Exceptions ===
+
 
 class WorkflowError(Exception):
     """Workflow loader 基类异常"""
@@ -64,6 +66,7 @@ class WorkflowValidationError(WorkflowError):
 
 
 # === Public API ===
+
 
 def load_workflow(
     name: str,
@@ -101,9 +104,7 @@ def load_workflow(
         raise WorkflowParseError(str(file_path), str(exc)) from exc
 
     if not isinstance(data, dict):
-        raise WorkflowValidationError(
-            f"workflow root must be a mapping, got {type(data).__name__}"
-        )
+        raise WorkflowValidationError(f"workflow root must be a mapping, got {type(data).__name__}")
 
     # 验证根字段
     if "nodes" not in data:
@@ -115,9 +116,7 @@ def load_workflow(
     graph = ThoughtGraph()
     for node_def in data["nodes"]:
         if not isinstance(node_def, dict):
-            raise WorkflowValidationError(
-                f"node entry must be a mapping, got {type(node_def).__name__}"
-            )
+            raise WorkflowValidationError(f"node entry must be a mapping, got {type(node_def).__name__}")
         node = _parse_node(node_def, file_path)
         graph.add_node(node)  # DuplicateNodeError 由 graph 抛
 
@@ -125,6 +124,7 @@ def load_workflow(
 
 
 # === Internals ===
+
 
 def _resolve_path(name: str, base_dir: Path) -> Path:
     """解析 workflow 文件路径
@@ -145,28 +145,21 @@ def _parse_node(node_def: dict[str, Any], file_path: Path) -> ThoughtNode:
     """
     # 1. 必填: id
     if "id" not in node_def:
-        raise WorkflowValidationError(
-            f"node missing required field 'id' in {node_def!r}"
-        )
+        raise WorkflowValidationError(f"node missing required field 'id' in {node_def!r}")
     node_id = node_def["id"]
     if not isinstance(node_id, str) or not node_id.strip():
-        raise WorkflowValidationError(
-            f"node id must be non-empty string, got {node_id!r}"
-        )
+        raise WorkflowValidationError(f"node id must be non-empty string, got {node_id!r}")
 
     # 2. 必填: type
     if "type" not in node_def:
-        raise WorkflowValidationError(
-            f"node {node_id!r} missing required field 'type'"
-        )
+        raise WorkflowValidationError(f"node {node_id!r} missing required field 'type'")
     type_str = node_def["type"]
     try:
         node_type = NodeType(type_str)
     except ValueError:
         valid = [t.value for t in NodeType]
         raise WorkflowValidationError(
-            f"node {node_id!r} has invalid type {type_str!r}; "
-            f"valid values: {valid}"
+            f"node {node_id!r} has invalid type {type_str!r}; valid values: {valid}"
         ) from None
 
     # 3. 可选字段
@@ -185,13 +178,10 @@ def _parse_node(node_def: dict[str, Any], file_path: Path) -> ThoughtNode:
     # 4. 类型检查
     if not isinstance(depends_on, (list, tuple)):
         raise WorkflowValidationError(
-            f"node {node_id!r}: depends_on must be a list, "
-            f"got {type(depends_on).__name__}"
+            f"node {node_id!r}: depends_on must be a list, got {type(depends_on).__name__}"
         )
     if not all(isinstance(d, str) for d in depends_on):
-        raise WorkflowValidationError(
-            f"node {node_id!r}: depends_on must contain only strings"
-        )
+        raise WorkflowValidationError(f"node {node_id!r}: depends_on must contain only strings")
 
     return ThoughtNode(
         node_id=node_id,

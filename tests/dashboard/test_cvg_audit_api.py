@@ -1,4 +1,5 @@
 """Phase 9.14: 2 new REST endpoints (audit/rollback) + 2 schemas + 2 既有 endpoint Optional body."""
+
 import tempfile
 from pathlib import Path
 
@@ -16,8 +17,12 @@ def storage_with_ripple(tmp_path):
     db_path = tmp_path / "api_audit.db"
     storage = RippleStorage(db_path=db_path)
     ripple = CrossVolumeRipple(
-        id="rip-api-1", trigger_volume=1, trigger_chapter=1,
-        affected_nodes=(), affected_edges=(), proposed_actions=(),
+        id="rip-api-1",
+        trigger_volume=1,
+        trigger_chapter=1,
+        affected_nodes=(),
+        affected_edges=(),
+        proposed_actions=(),
         status="applied",
     )
     storage.append_ripple(ripple)
@@ -30,6 +35,7 @@ def client(storage_with_ripple, monkeypatch):
     app = create_app()
     # Override _default_storage dependency
     from apps.studio_api import app as app_module
+
     monkeypatch.setattr(app_module, "_default_storage", lambda: storage)
     return TestClient(app), "rip-api-1"
 

@@ -3,6 +3,7 @@
 问题追踪工具
 提供 CLI 接口管理问题追踪系统
 """
+
 import argparse
 import json
 import os
@@ -19,7 +20,7 @@ TEMPLATE_FILE = ISSUES_DIR / "_template.md"
 def load_index() -> Dict:
     """加载问题索引"""
     if INDEX_FILE.exists():
-        with open(INDEX_FILE, 'r', encoding='utf-8') as f:
+        with open(INDEX_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     return {
         "version": "1.0",
@@ -27,7 +28,7 @@ def load_index() -> Dict:
         "total_issues": 0,
         "by_severity": {"P0": 0, "P1": 0, "P2": 0},
         "by_status": {"open": 0, "in_progress": 0, "resolved": 0, "verified": 0},
-        "issues": []
+        "issues": [],
     }
 
 
@@ -35,12 +36,13 @@ def save_index(index: Dict):
     """保存问题索引"""
     index["last_updated"] = datetime.now().strftime("%Y-%m-%d")
     ISSUES_DIR.mkdir(parents=True, exist_ok=True)
-    with open(INDEX_FILE, 'w', encoding='utf-8') as f:
+    with open(INDEX_FILE, "w", encoding="utf-8") as f:
         json.dump(index, f, ensure_ascii=False, indent=2)
 
 
-def create_issue(chapter_id: str, severity: str, issue_type: str,
-                 description: str, discovered_by: str = "system") -> str:
+def create_issue(
+    chapter_id: str, severity: str, issue_type: str, description: str, discovered_by: str = "system"
+) -> str:
     """创建新问题"""
     ISSUES_DIR.mkdir(parents=True, exist_ok=True)
     issue_file = ISSUES_DIR / f"{chapter_id}.md"
@@ -50,7 +52,7 @@ def create_issue(chapter_id: str, severity: str, issue_type: str,
 
     if is_new:
         # 创建新问题文件
-        with open(TEMPLATE_FILE, 'r', encoding='utf-8') as f:
+        with open(TEMPLATE_FILE, "r", encoding="utf-8") as f:
             template = f.read()
 
         content = template.replace("{chapter_id}", chapter_id)
@@ -62,23 +64,20 @@ def create_issue(chapter_id: str, severity: str, issue_type: str,
         content = content.replace("{详细描述问题}", description)
         content = content.replace("{chXXX, chYYY}", chapter_id)
 
-        with open(issue_file, 'w', encoding='utf-8') as f:
+        with open(issue_file, "w", encoding="utf-8") as f:
             f.write(content)
 
         # 更新索引
         index = load_index()
         index["total_issues"] += 1
         index["by_severity"][severity] = index["by_severity"].get(severity, 0) + 1
-        index["issues"].append({
-            "chapter_id": chapter_id,
-            "issue_file": str(issue_file),
-            "severity": severity,
-            "status": "open"
-        })
+        index["issues"].append(
+            {"chapter_id": chapter_id, "issue_file": str(issue_file), "severity": severity, "status": "open"}
+        )
         save_index(index)
     else:
         # 追加到现有文件
-        with open(issue_file, 'a', encoding='utf-8') as f:
+        with open(issue_file, "a", encoding="utf-8") as f:
             f.write(f"\n## 新问题 - {datetime.now().strftime('%Y-%m-%d %H:%M')}\n")
             f.write(f"\n**严重程度**: {severity}\n")
             f.write(f"**问题类型**: {issue_type}\n")
@@ -138,14 +137,17 @@ def main():
 
     # list 子命令
     list_parser = subparsers.add_parser("list", help="列出问题")
-    list_parser.add_argument("--status", choices=["open", "in_progress", "resolved", "verified"], help="按状态筛选")
+    list_parser.add_argument(
+        "--status", choices=["open", "in_progress", "resolved", "verified"], help="按状态筛选"
+    )
     list_parser.add_argument("--severity", choices=["P0", "P1", "P2"], help="按严重程度筛选")
 
     # update 子命令
     update_parser = subparsers.add_parser("update", help="更新问题状态")
     update_parser.add_argument("--chapter", required=True, help="章节ID")
-    update_parser.add_argument("--status", required=True,
-                              choices=["open", "in_progress", "resolved", "verified"], help="新状态")
+    update_parser.add_argument(
+        "--status", required=True, choices=["open", "in_progress", "resolved", "verified"], help="新状态"
+    )
 
     args = parser.parse_args()
 

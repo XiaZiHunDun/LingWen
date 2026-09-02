@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """快速质量检查 - 简化版"""
+
 import asyncio
 import json
 import os
@@ -38,13 +39,13 @@ class QuickChecker:
     def get_chapters(self):
         chapters = []
         for f in sorted(self.chapters_dir.glob("ch*.md")):
-            match = re.search(r'ch(\d+)', f.name)
+            match = re.search(r"ch(\d+)", f.name)
             if match:
                 chapters.append(int(match.group(1)))
         return chapters
 
     def read(self, num):
-        with open(self.chapters_dir / f"ch{num:03d}.md", 'r') as f:
+        with open(self.chapters_dir / f"ch{num:03d}.md", "r") as f:
             return f.read()
 
     async def check_one(self, num):
@@ -71,19 +72,21 @@ class QuickChecker:
         try:
             response = await asyncio.to_thread(self.provider.generate, prompt)
             # 解析JSON
-            json_match = re.search(r'\[.*\]', response, re.DOTALL)
+            json_match = re.search(r"\[.*\]", response, re.DOTALL)
             if json_match:
                 data = json.loads(json_match.group())
                 for item in data:
-                    self.results.append(CheckResult(
-                        chapter=num,
-                        dimension="logic",
-                        severity=item.get('severity', 'P2'),
-                        issue_type=item.get('issue_type', ''),
-                        description=item.get('description', ''),
-                        evidence=item.get('evidence', ''),
-                        suggestion=item.get('suggestion', '')
-                    ))
+                    self.results.append(
+                        CheckResult(
+                            chapter=num,
+                            dimension="logic",
+                            severity=item.get("severity", "P2"),
+                            issue_type=item.get("issue_type", ""),
+                            description=item.get("description", ""),
+                            evidence=item.get("evidence", ""),
+                            suggestion=item.get("suggestion", ""),
+                        )
+                    )
             print(f"[OK] ch{num:03d} - 发现 {len([r for r in self.results if r.chapter == num])} 个问题")
         except Exception as e:
             print(f"[ERROR] ch{num:03d}: {e}")
@@ -99,7 +102,7 @@ class QuickChecker:
             await self.check_one(num)
             calls += 1
             if (i + 1) % 20 == 0:
-                print(f"进度: {i+1}/{len(chapters)}, API调用: {calls}")
+                print(f"进度: {i + 1}/{len(chapters)}, API调用: {calls}")
             await asyncio.sleep(1)  # 避免rate limit
 
         self.save()
@@ -111,26 +114,33 @@ class QuickChecker:
                 by_chapter[r.chapter] = []
             by_chapter[r.chapter].append(r)
 
-        by_severity = {'P0': 0, 'P1': 0, 'P2': 0, 'P3': 0}
+        by_severity = {"P0": 0, "P1": 0, "P2": 0, "P3": 0}
         for r in self.results:
             if r.severity in by_severity:
                 by_severity[r.severity] += 1
 
         report = {
-            'audit_date': datetime.now().isoformat(),
-            'total_issues': len(self.results),
-            'by_severity': by_severity,
-            'chapters_with_issues': len(by_chapter),
-            'issues': [
-                {'chapter': r.chapter, 'dimension': r.dimension, 'issue_type': r.issue_type,
-                 'severity': r.severity, 'description': r.description, 'evidence': r.evidence, 'suggestion': r.suggestion}
+            "audit_date": datetime.now().isoformat(),
+            "total_issues": len(self.results),
+            "by_severity": by_severity,
+            "chapters_with_issues": len(by_chapter),
+            "issues": [
+                {
+                    "chapter": r.chapter,
+                    "dimension": r.dimension,
+                    "issue_type": r.issue_type,
+                    "severity": r.severity,
+                    "description": r.description,
+                    "evidence": r.evidence,
+                    "suggestion": r.suggestion,
+                }
                 for r in sorted(self.results, key=lambda x: (x.chapter, x.severity))
-            ]
+            ],
         }
 
-        datetime.now().strftime('%Y%m%d_%H%M%S')
+        datetime.now().strftime("%Y%m%d_%H%M%S")
         latest = self.output_dir / "comprehensive_quality_report_latest.json"
-        with open(latest, 'w') as f:
+        with open(latest, "w") as f:
             json.dump(report, f, ensure_ascii=False, indent=2)
 
         print(f"\n完成！发现问题: {len(self.results)}")
@@ -141,6 +151,7 @@ class QuickChecker:
 async def main():
     checker = QuickChecker()
     await checker.run(target_calls=2500)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -7,6 +7,7 @@ Stub 设计: _RecordingRouter 实现 generate_with_usage → 调 provider,
 跟 TieredRouter 走相同路径 (AgentBase.chat_with_usage hasattr 路由),
 让测试断言 真实 usage (vs base.py default impl 走 len()//4 估算)。
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, Union
@@ -103,9 +104,7 @@ class TestContentWriterUsage:
             "characters": [],
             "style_guide": {"tone": "简洁有力"},
         }
-        result, usage = writer.generate_chapter_with_usage(
-            chapter_num=1, context=context
-        )
+        result, usage = writer.generate_chapter_with_usage(chapter_num=1, context=context)
         assert isinstance(result, dict)
         assert "content" in result
         assert result["content"] == "chapter content here"
@@ -162,18 +161,14 @@ class TestAuditorUsage:
     def test_audit_chapter_with_usage_uses_real_usage(self) -> None:
         router, prov = _make_router_with_usage_recorder('{"issues": []}')
         auditor = AuditorTools(router)
-        auditor.audit_chapter_with_usage(
-            chapter_num=1, content="t", characters=[], context={}
-        )
+        auditor.audit_chapter_with_usage(chapter_num=1, content="t", characters=[], context={})
         assert len(prov.usage_calls) == 1
         assert len(prov.calls) == 0
 
     def test_audit_chapter_unchanged_returns_dict(self) -> None:
         router, _prov = _make_router_with_usage_recorder('{"issues": []}')
         auditor = AuditorTools(router)
-        result = auditor.audit_chapter(
-            chapter_num=1, content="t", characters=[], context={}
-        )
+        result = auditor.audit_chapter(chapter_num=1, content="t", characters=[], context={})
         assert isinstance(result, dict)
 
 
@@ -191,9 +186,7 @@ class TestPolisherUsage:
         """2 LLM 都走 generate_with_usage, usage 累加."""
         router, prov = _make_router_with_usage_recorder("optimized text")
         polisher = PolisherTools(router)
-        result, usage = polisher.polish_chapter_with_usage(
-            chapter_num=1, content="original text"
-        )
+        result, usage = polisher.polish_chapter_with_usage(chapter_num=1, content="original text")
         assert isinstance(result, dict)
         assert "content" in result
         # 2 LLM calls (dialogue + pacing) each with 100/50 → 200/100
@@ -204,9 +197,7 @@ class TestPolisherUsage:
     def test_polish_chapter_with_usage_returns_tuple(self) -> None:
         router, _prov = _make_router_with_usage_recorder("x")
         polisher = PolisherTools(router)
-        result, usage = polisher.polish_chapter_with_usage(
-            chapter_num=1, content="t"
-        )
+        result, usage = polisher.polish_chapter_with_usage(chapter_num=1, content="t")
         assert isinstance(result, dict)
         assert isinstance(usage, dict)
         assert set(usage.keys()) == {"input_tokens", "output_tokens"}

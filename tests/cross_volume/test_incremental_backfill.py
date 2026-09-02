@@ -1,4 +1,5 @@
 """Phase 9.63 F54: incremental backfill workflow hook tests."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -89,16 +90,12 @@ class TestIncrementalBackfillHelpers:
 
     def test_should_run_when_emit_chapter_completed(self):
         executions = {EMIT_CHAPTER_NODE: _completed_emit_execution()}
-        assert should_run_incremental_backfill(
-            "novel_writing", _summary_ok(), executions
-        )
+        assert should_run_incremental_backfill("novel_writing", _summary_ok(), executions)
 
     def test_should_not_run_when_workflow_failed(self):
         executions = {EMIT_CHAPTER_NODE: _completed_emit_execution()}
         summary = ExecutionSummary(completed=6, failed=1, paused=False)
-        assert not should_run_incremental_backfill(
-            "novel_writing", summary, executions
-        )
+        assert not should_run_incremental_backfill("novel_writing", summary, executions)
 
     def test_incremental_backfill_enabled_env(self, monkeypatch):
         monkeypatch.delenv("LINGWEN_INCREMENTAL_BACKFILL", raising=False)
@@ -169,17 +166,13 @@ class TestIncrementalBackfillHelpers:
 
 
 class TestIncrementalBackfillRunChapters:
-    def test_run_chapters_writes_single_chapter(
-        self, rules_yaml, corpus, tmp_path
-    ):
+    def test_run_chapters_writes_single_chapter(self, rules_yaml, corpus, tmp_path):
         from infra.cross_volume.reference_graph import CrossVolumeReferenceGraph
         from infra.cross_volume.storage import RippleStorage
 
         storage = RippleStorage(db_path=tmp_path / "ripple.db")
         graph = CrossVolumeReferenceGraph(storage=storage)
-        backfiller = Backfiller(
-            rules_path=rules_yaml, corpus_root=corpus, graph=graph
-        )
+        backfiller = Backfiller(rules_path=rules_yaml, corpus_root=corpus, graph=graph)
         stats = run_incremental_backfill(5, backfiller=backfiller)
         assert stats is not None
         assert stats.dry_run is False
@@ -227,9 +220,7 @@ class TestIncrementalBackfillWorkflowHook:
         )
         mock_run.assert_not_called()
 
-    def test_master_controller_run_workflow_triggers_hook(
-        self, monkeypatch, tmp_path
-    ):
+    def test_master_controller_run_workflow_triggers_hook(self, monkeypatch, tmp_path):
         mock_hook = MagicMock(return_value={"nodes_written": 2})
         monkeypatch.setattr(
             MasterController,

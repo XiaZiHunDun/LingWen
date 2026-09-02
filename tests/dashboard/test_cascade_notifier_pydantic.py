@@ -9,6 +9,7 @@ ValidationError 提前 (negative count / typo bfs_version / empty ripple_id).
 互补 9.16 既有 tests/dashboard/test_cascade_notifier.py: 4 tests 验证 async
 broadcast 行为, 本文件 4 tests 验证 typed schema validation, 0 重叠.
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
@@ -56,13 +57,15 @@ class TestCascadeUpdatePayloadSchema:
         mock_ws = MagicMock()
         cascade_notifier.set_ws_manager(mock_ws)
 
-        cascade_notifier.notify_cascade_update({
-            "ripple_id": "r1",
-            "cascade_node_count": -1,
-            "cascade_edge_count": 2,
-            "depth_reached": 2,
-            "bfs_algorithm_version": "v2_weighted",
-        })
+        cascade_notifier.notify_cascade_update(
+            {
+                "ripple_id": "r1",
+                "cascade_node_count": -1,
+                "cascade_edge_count": 2,
+                "depth_reached": 2,
+                "bfs_algorithm_version": "v2_weighted",
+            }
+        )
         # ValidationError caught in notifier, no broadcast
         mock_ws.assert_not_called()
 
@@ -71,13 +74,15 @@ class TestCascadeUpdatePayloadSchema:
         mock_ws = MagicMock()
         cascade_notifier.set_ws_manager(mock_ws)
 
-        cascade_notifier.notify_cascade_update({
-            "ripple_id": "r1",
-            "cascade_node_count": 0,
-            "cascade_edge_count": 0,
-            "depth_reached": 0,
-            "bfs_algorithm_version": "v3",
-        })
+        cascade_notifier.notify_cascade_update(
+            {
+                "ripple_id": "r1",
+                "cascade_node_count": 0,
+                "cascade_edge_count": 0,
+                "depth_reached": 0,
+                "bfs_algorithm_version": "v3",
+            }
+        )
         mock_ws.assert_not_called()
 
     def test_payload_rejects_empty_ripple_id(self):

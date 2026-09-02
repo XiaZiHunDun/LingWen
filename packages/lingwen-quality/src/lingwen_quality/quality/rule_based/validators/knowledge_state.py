@@ -39,9 +39,7 @@ class KnowledgeStateValidator(BaseValidator):
             used_skills = self._extract_skill_usages(content, name)
             for skill in used_skills:
                 if skill not in acquired_skills:
-                    issues.append(
-                        f"角色{name}使用了尚未获得的技能：{skill}"
-                    )
+                    issues.append(f"角色{name}使用了尚未获得的技能：{skill}")
 
             # 检查角色是否知道了不应该知道的信息
             for fact in known_facts:
@@ -51,15 +49,11 @@ class KnowledgeStateValidator(BaseValidator):
                         continue
                     # 如果角色不应该知道这个事实，但内容中出现了
                     if fact.get("content", "") in content:
-                        issues.append(
-                            f"角色{name}知道了受限信息：{fact.get('description', '')[:50]}"
-                        )
+                        issues.append(f"角色{name}知道了受限信息：{fact.get('description', '')[:50]}")
 
         passed = len(issues) == 0
         return ValidationResult(
-            passed=passed,
-            issues=issues,
-            severity=IssueSeverity.P0 if issues else IssueSeverity.P2
+            passed=passed, issues=issues, severity=IssueSeverity.P0 if issues else IssueSeverity.P2
         )
 
     def _extract_skill_usages(self, content: str, character_name: str) -> Set[str]:

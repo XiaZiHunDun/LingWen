@@ -58,7 +58,7 @@ class ConsistencyEngine(
         self,
         config_dir: Optional[str] = None,
         scope: CheckScope = CheckScope.ALL,
-        memory_gateway: Optional[Any] = None
+        memory_gateway: Optional[Any] = None,
     ):
         """
         初始化一致性引擎
@@ -85,7 +85,7 @@ class ConsistencyEngine(
         chapter_num: int,
         chapter_content: str,
         scope: Optional[CheckScope] = None,
-        context: Optional[Dict[str, Any]] = None
+        context: Optional[Dict[str, Any]] = None,
     ) -> ConsistencyReport:
         """
         检查章节一致性
@@ -111,9 +111,7 @@ class ConsistencyEngine(
 
         # 如果有记忆网关，先从记忆系统获取上下文
         if self.memory_gateway is not None:
-            context = self._enrich_context_from_memory(
-                chapter_num, chapter_content, context
-            )
+            context = self._enrich_context_from_memory(chapter_num, chapter_content, context)
 
         # 注入场景标签和角色年龄上下文
         context = self._inject_scene_and_age_context(chapter_num, chapter_content, context)
@@ -124,8 +122,8 @@ class ConsistencyEngine(
             metadata={
                 "content_length": len(chapter_content),
                 "checker_count": len(self.checkers),
-                "memory_enriched": self.memory_gateway is not None
-            }
+                "memory_enriched": self.memory_gateway is not None,
+            },
         )
 
         # 确定要运行的检查器
@@ -138,15 +136,11 @@ class ConsistencyEngine(
                 continue
 
             start_time = time.time()
-            issues = self._run_checker(
-                checker, chapter_content, chapter_num, context
-            )
+            issues = self._run_checker(checker, chapter_content, chapter_num, context)
             duration = (time.time() - start_time) * 1000  # 毫秒
 
             # 计算检查器得分
-            checker_result = self._calculate_checker_result(
-                checker_type, issues, duration
-            )
+            checker_result = self._calculate_checker_result(checker_type, issues, duration)
             report.checker_results.append(checker_result)
             report.issues.extend(issues)
 
@@ -171,11 +165,7 @@ class ConsistencyEngine(
 
         return report
 
-    def realtime_check(
-        self,
-        content: str,
-        character: Optional[str] = None
-    ) -> List[Issue]:
+    def realtime_check(self, content: str, character: Optional[str] = None) -> List[Issue]:
         """
         实时检查（轻量级）
 
@@ -205,10 +195,7 @@ class ConsistencyEngine(
         """获取指定检查器"""
         return self.checkers.get(checker_type)
 
-    def get_character_state_from_memory(
-        self,
-        character: str
-    ) -> Optional[Dict[str, Any]]:
+    def get_character_state_from_memory(self, character: str) -> Optional[Dict[str, Any]]:
         """
         从记忆系统获取角色状态
 
@@ -223,11 +210,7 @@ class ConsistencyEngine(
 
         return self.memory_gateway.get_character_state(character)
 
-    def query_similar_plots(
-        self,
-        query: str,
-        top_k: int = 5
-    ) -> List[Dict[str, Any]]:
+    def query_similar_plots(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
         """
         查询相似情节
 

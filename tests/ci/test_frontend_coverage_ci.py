@@ -1,4 +1,5 @@
 """Phase 9.53 F42: Vitest coverage pipeline contract tests (thresholds 80%)."""
+
 from __future__ import annotations
 
 import json
@@ -55,7 +56,9 @@ class TestFrontendCoverageCI:
 
 class TestFrontendCoveragePages:
     def test_coverage_pages_manual_only(self):
-        data = yaml.safe_load((WORKFLOWS_DIR / "dashboard-frontend-coverage-pages.yml").read_text(encoding="utf-8"))
+        data = yaml.safe_load(
+            (WORKFLOWS_DIR / "dashboard-frontend-coverage-pages.yml").read_text(encoding="utf-8")
+        )
         triggers = data.get("on") or data.get(True) or {}
         assert "workflow_dispatch" in triggers
         assert "push" not in triggers

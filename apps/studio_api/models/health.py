@@ -8,6 +8,7 @@ this module exists only for backward-compatible import paths.
 Verified field-by-field equivalence with the previous backend
 implementation (10 fields, types match, default values preserved).
 """
+
 from lingwen_shared.contracts.python.health import (
     ChapterData,
     ChaptersResponse,

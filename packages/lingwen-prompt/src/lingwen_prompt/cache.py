@@ -129,9 +129,7 @@ class ContextCache:
             缓存的内容字符串
         """
         if key not in self._builders:
-            raise CacheMissError(
-                f"No builder registered for key: {key}. Call register() first."
-            )
+            raise CacheMissError(f"No builder registered for key: {key}. Call register() first.")
 
         # 尝试从缓存获取
         entry = self._entries.get(key)
@@ -155,7 +153,9 @@ class ContextCache:
             self._stats.misses += 1
             logger.debug(
                 "Cache content changed for key=%r (old_hash=%s, new_hash=%s)",
-                key, old_hash[:8], new_hash[:8],
+                key,
+                old_hash[:8],
+                new_hash[:8],
             )
             return new_content
 
@@ -191,16 +191,12 @@ class ContextCache:
         """
         if tier not in self.TIERS:
             raise ValueError(f"Invalid tier: {tier}")
-        keys_to_remove = [
-            k for k, t in self._tier_map.items() if t == tier
-        ]
+        keys_to_remove = [k for k, t in self._tier_map.items() if t == tier]
         for key in keys_to_remove:
             if key in self._entries:
                 del self._entries[key]
         self._stats.entries = len(self._entries)
-        logger.info(
-            "Invalidated tier=%r, removed %d entries", tier, len(keys_to_remove)
-        )
+        logger.info("Invalidated tier=%r, removed %d entries", tier, len(keys_to_remove))
         return len(keys_to_remove)
 
     def has(self, key: str) -> bool:
@@ -221,9 +217,7 @@ class ContextCache:
     @staticmethod
     def _compute_hash(content: str) -> str:
         """计算内容哈希 (SHA-256 前 16 字符)"""
-        return hashlib.sha256(
-            content.encode("utf-8", errors="replace")
-        ).hexdigest()[:16]
+        return hashlib.sha256(content.encode("utf-8", errors="replace")).hexdigest()[:16]
 
 
 def build_cache_key(*parts: str) -> str:

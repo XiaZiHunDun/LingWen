@@ -1,4 +1,5 @@
 """Tests for template approval audit export and webhook events."""
+
 from __future__ import annotations
 
 from unittest.mock import patch

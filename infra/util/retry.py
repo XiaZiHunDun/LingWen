@@ -26,7 +26,7 @@ from infra.errors import (
     is_instance,
 )
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class RetryConfig:
@@ -86,7 +86,7 @@ class RetryConfig:
         elif self.backoff == "fixed":
             delay = self.base_delay
         else:
-            delay = self.base_delay * (self.factor ** attempt)
+            delay = self.base_delay * (self.factor**attempt)
 
         delay = min(delay, self.max_delay)
 
@@ -288,7 +288,7 @@ def backoff_delay(
     Returns:
         延迟时间
     """
-    delay = base_delay * (factor ** attempt)
+    delay = base_delay * (factor**attempt)
     delay = min(delay, max_delay)
 
     if jitter:

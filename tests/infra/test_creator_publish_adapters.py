@@ -1,4 +1,5 @@
 """Tests for creator_publish_adapters."""
+
 from __future__ import annotations
 
 from pathlib import Path

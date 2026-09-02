@@ -2,6 +2,7 @@
 
 Mirrors lines 724-782 of the original infra/cli/commands.py.
 """
+
 from pathlib import Path
 
 from lingwen_cli.options import StoryContractOptions, UnifiedOptions

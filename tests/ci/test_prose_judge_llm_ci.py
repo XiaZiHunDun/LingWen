@@ -1,4 +1,5 @@
 """Phase 12.05: LLM prose judge workflow contract."""
+
 from __future__ import annotations
 
 from pathlib import Path

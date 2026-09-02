@@ -2,6 +2,7 @@
 Phase 15.0 T1.3: time window parsing helper.
 
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
@@ -23,5 +24,3 @@ def _parse_time_window(window: str) -> Optional[datetime]:
     if window in _TIME_WINDOW_DAYS:
         return datetime.now(timezone.utc) - timedelta(days=_TIME_WINDOW_DAYS[window])
     return None
-
-

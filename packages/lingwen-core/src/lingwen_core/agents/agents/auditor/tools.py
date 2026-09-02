@@ -6,6 +6,7 @@ from ..base import AgentBase
 # 尝试导入variant_loader（与Session 2模式一致）
 try:
     from .variant_loader import get_variant_loader
+
     VARIANT_LOADER_AVAILABLE = True
 except ImportError:
     VARIANT_LOADER_AVAILABLE = False
@@ -47,7 +48,7 @@ class AuditorTools(AgentBase):
         content: str,
         characters: List[Dict],
         context: Dict,
-        reviewer_id: Optional[str] = None
+        reviewer_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """使用LLM进行章节审核（支持变体配置, Phase 8.6.1: 委托 _impl(record_usage=False))
 
@@ -101,9 +102,7 @@ class AuditorTools(AgentBase):
         # 确定使用哪个审核员
         effective_reviewer = reviewer_id or self._current_reviewer_id or "J"
 
-        prompt = self._build_audit_prompt(
-            chapter_num, content, characters, context, effective_reviewer
-        )
+        prompt = self._build_audit_prompt(chapter_num, content, characters, context, effective_reviewer)
         system = self._get_audit_system_prompt(effective_reviewer)
 
         # 调用LLM (record_usage 决定走 chat() 估算 还是 chat_with_usage() 真实)
@@ -141,19 +140,21 @@ class AuditorTools(AgentBase):
             opposite_words = {
                 "冷静": ["暴怒", "疯狂", "失控"],
                 "热血": ["冷漠", "退缩"],
-                "狡猾": ["单纯", "正直"]
+                "狡猾": ["单纯", "正直"],
             }
             for trait in personality:
                 if trait in opposite_words:
                     for opp in opposite_words[trait]:
                         if opp in content and name in content:
-                            issues.append({
-                                "type": "character_consistency",
-                                "severity": "P1",
-                                "character": name,
-                                "issue": f"性格为'{trait}'的角色出现'{opp}'行为",
-                                "suggestion": f"请检查{name}的行为是否与'{trait}'性格一致"
-                            })
+                            issues.append(
+                                {
+                                    "type": "character_consistency",
+                                    "severity": "P1",
+                                    "character": name,
+                                    "issue": f"性格为'{trait}'的角色出现'{opp}'行为",
+                                    "suggestion": f"请检查{name}的行为是否与'{trait}'性格一致",
+                                }
+                            )
         return issues
 
     def check_timeline(self, content: str, timeline: List[Dict]) -> List[Dict]:
@@ -170,17 +171,19 @@ class AuditorTools(AgentBase):
             ("然后", "机械过渡"),
             ("最后", "过度格式化"),
             ("总之", "过度总结"),
-            ("可以看出", "过度总结")
+            ("可以看出", "过度总结"),
         ]
         for pattern, issue_type in ai_patterns:
             if pattern in content:
-                issues.append({
-                    "type": "ai_gloss",
-                    "severity": "P3",
-                    "pattern": pattern,
-                    "issue": issue_type,
-                    "suggestion": "建议使用更自然的表达方式"
-                })
+                issues.append(
+                    {
+                        "type": "ai_gloss",
+                        "severity": "P3",
+                        "pattern": pattern,
+                        "issue": issue_type,
+                        "suggestion": "建议使用更自然的表达方式",
+                    }
+                )
         return issues
 
     def generate_audit_report(self, chapter_num: int, issues: List[Dict], scores: Dict[str, int]) -> Dict:
@@ -190,7 +193,7 @@ class AuditorTools(AgentBase):
             "timestamp": "2026-05-19",
             "scores": scores,
             "issues": issues,
-            "summary": self._summarize_issues(issues)
+            "summary": self._summarize_issues(issues),
         }
 
     def _summarize_issues(self, issues: List[Dict]) -> str:
@@ -202,12 +205,7 @@ class AuditorTools(AgentBase):
         return "; ".join([f"{k}: {v}个" for k, v in by_severity.items()])
 
     def _build_audit_prompt(
-        self,
-        chapter_num: int,
-        content: str,
-        characters: List[Dict],
-        context: Dict,
-        reviewer_id: str = "J"
+        self, chapter_num: int, content: str, characters: List[Dict], context: Dict, reviewer_id: str = "J"
     ) -> str:
         """构建审核提示（支持变体配置）
 
@@ -221,10 +219,11 @@ class AuditorTools(AgentBase):
         Returns:
             审核提示字符串
         """
-        char_str = "\n".join([
-            f"- {c.get('name')}: {', '.join(c.get('personality', []))}"
-            for c in characters
-        ]) if characters else "未提供角色设定"
+        char_str = (
+            "\n".join([f"- {c.get('name')}: {', '.join(c.get('personality', []))}" for c in characters])
+            if characters
+            else "未提供角色设定"
+        )
 
         # 基础审核维度说明
         dimensions = [
@@ -235,7 +234,7 @@ class AuditorTools(AgentBase):
             "S5: 节奏控制",
             "S6: 可读性",
             "S7: 主角魅力",
-            "S8: 人物弧光"
+            "S8: 人物弧光",
         ]
 
         # 如果启用了变体加载器，添加配置增强
@@ -254,7 +253,9 @@ class AuditorTools(AgentBase):
                     variant_enhancement += "重点检查：\n"
                     for e in enhancements:
                         variant_enhancement += f"  • {e}\n"
-                    variant_enhancement += f"\n审核风格：{style.get('strictness', 'moderate')}/{style.get('focus', 'macro')}"
+                    variant_enhancement += (
+                        f"\n审核风格：{style.get('strictness', 'moderate')}/{style.get('focus', 'macro')}"
+                    )
 
         return f"""请审核以下章节内容（ch{chapter_num:03d}）：
 
@@ -325,7 +326,7 @@ class AuditorTools(AgentBase):
         """
         prompt = f"""请为以下章节提供改进建议。
 
-重点领域：{', '.join(focus_areas)}
+重点领域：{", ".join(focus_areas)}
 
 章节内容：
 {content[:2000]}...

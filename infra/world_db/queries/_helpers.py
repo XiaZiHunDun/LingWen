@@ -5,6 +5,7 @@ Centralizes:
 - SQLite row → dict conversion with per-table JSON column decoding
 - Base class for optimistic-concurrency revision conflicts
 """
+
 from __future__ import annotations
 
 import json

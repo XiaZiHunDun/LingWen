@@ -1,4 +1,5 @@
 """Tests for project-scoped character resolution."""
+
 from __future__ import annotations
 
 from infra.paths import ProjectPaths

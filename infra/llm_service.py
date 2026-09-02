@@ -137,9 +137,7 @@ class LLMService:
             return None
         api_key = os.environ.get(env_var, "")
         if not api_key or not api_key.strip():
-            logger.warning(
-                f"{provider_name} 的 API key 环境变量 {env_var} 为空或仅含空白"
-            )
+            logger.warning(f"{provider_name} 的 API key 环境变量 {env_var} 为空或仅含空白")
             return None
         return api_key
 
@@ -237,7 +235,7 @@ class LLMService:
             return json.loads(text.strip())
         except json.JSONDecodeError as e:
             # 尝试用正则提取
-            json_match = re.search(r'\{.*\}|\[.*\]', response, re.DOTALL)
+            json_match = re.search(r"\{.*\}|\[.*\]", response, re.DOTALL)
             if json_match:
                 try:
                     return json.loads(json_match.group())

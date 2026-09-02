@@ -32,9 +32,11 @@ WORKFLOW_STATE = BASE_DIR / "workflow_state.json"
 
 # ========== 数据结构 ==========
 
+
 @dataclass
 class ProjectData:
     """项目数据容器"""
+
     project_name: str = ""
     novel_title: str = ""
     genre: str = ""
@@ -92,8 +94,7 @@ class ProjectData:
 
             # 核心主角人设
             data.main_characters = {
-                char.get("姓名", ""): char.get("特征", "")
-                for char in yaml_data.get("核心主角人设", [])
+                char.get("姓名", ""): char.get("特征", "") for char in yaml_data.get("核心主角人设", [])
             }
 
         # 加载深度层
@@ -102,13 +103,13 @@ class ProjectData:
 
             # 提取世界观
             if "境界划分：" in md_content:
-                match = re.search(r'境界划分：(.+)', md_content)
+                match = re.search(r"境界划分：(.+)", md_content)
                 if match:
                     data.power_system = match.group(1).strip()
 
             # 提取势力
             if "核心势力" in md_content:
-                match = re.search(r'核心势力[：:]\s*(.+?)(?:\n##|\Z)', md_content, re.DOTALL)
+                match = re.search(r"核心势力[：:]\s*(.+?)(?:\n##|\Z)", md_content, re.DOTALL)
                 if match:
                     data.factions = [f.strip() for f in match.group(1).split("\n") if f.strip()]
 
@@ -139,6 +140,7 @@ class ProjectData:
 
 
 # ========== 模板处理器 ==========
+
 
 class PromptTemplate:
     """提示词模板处理器"""
@@ -236,7 +238,7 @@ class PromptTemplate:
     def _fill_defaults(self, text: str, data: ProjectData) -> str:
         """填充未处理的占位符为默认值"""
         # 找出所有未处理的占位符
-        placeholders = re.findall(r'\{([^}]+)\}', text)
+        placeholders = re.findall(r"\{([^}]+)\}", text)
         defaults = {
             "chapter_objective": "推进情节发展",
             "outline_node": f"ch{data.current_chapter:03d}相关节点",
@@ -263,7 +265,9 @@ class PromptTemplate:
             "suspense_requirements": "有钩子",
             "opening_hook_requirements": "用一个画面抓住读者",
             "ending_hook_requirements": "留下悬念吸引继续阅读",
-            "character_profiles": "\n".join([f"- {name}: {desc}" for name, desc in data.main_characters.items()]),
+            "character_profiles": "\n".join(
+                [f"- {name}: {desc}" for name, desc in data.main_characters.items()]
+            ),
             "reference_chapters": "ch001, ch002",
             "additional_instructions": "无",
         }
@@ -277,6 +281,7 @@ class PromptTemplate:
 
 
 # ========== 命令处理器 ==========
+
 
 def cmd_list_templates():
     """列出所有可用模板"""
@@ -316,7 +321,7 @@ def cmd_chapter_writer(args):
     data = ProjectData.from_yaml(
         yaml_path=INSPIRATION_DIR / "星陨纪元" / "基础层.yaml",
         deep_path=INSPIRATION_DIR / "星陨纪元" / "深度层.md",
-        chapter_num=chapter_num
+        chapter_num=chapter_num,
     )
 
     # 加载模板
@@ -346,7 +351,7 @@ def cmd_quality_check(args):
     data = ProjectData.from_yaml(
         yaml_path=INSPIRATION_DIR / "星陨纪元" / "基础层.yaml",
         deep_path=INSPIRATION_DIR / "星陨纪元" / "深度层.md",
-        chapter_num=chapter_num
+        chapter_num=chapter_num,
     )
 
     template_path = PROMPTS_DIR / "reviewer" / "quality-check-prompt.md"
@@ -369,6 +374,7 @@ def cmd_quality_check(args):
 
 # ========== 主入口 ==========
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="灵文提示词自动生成器",
@@ -378,7 +384,7 @@ def main():
   python3 prompt_generator.py list-templates
   python3 prompt_generator.py chapter-writer --chapter 25
   python3 prompt_generator.py quality-check --chapter 25
-        """
+        """,
     )
 
     subparsers = parser.add_subparsers(dest="command", help="子命令")

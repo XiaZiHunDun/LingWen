@@ -9,6 +9,7 @@ Usage:
     python -m memory_system.scripts.query_context "李逍遥" --scope character
     python -m memory_system.scripts.query_context --interactive
 """
+
 import argparse
 import sys
 from typing import Any, Optional
@@ -71,10 +72,7 @@ def format_result(result: dict, index: int) -> str:
     Returns:
         格式化的字符串
     """
-    lines = [
-        f"\n{'=' * 60}",
-        f"[结果 {index + 1}]"
-    ]
+    lines = [f"\n{'=' * 60}", f"[结果 {index + 1}]"]
 
     # 基本信息
     if "chapter" in result:
@@ -114,7 +112,7 @@ def format_results(results: list[dict], query: str, scope: str) -> str:
     """
     lines = [
         "=" * 60,
-        f"查询: \"{query}\"",
+        f'查询: "{query}"',
         f"作用域: {scope}",
         f"结果数量: {len(results)}",
         "=" * 60,
@@ -191,32 +189,16 @@ def main():
         description="查询记忆系统中的上下文信息",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument(
-        "query",
-        nargs="?",
-        default=None,
-        help="查询字符串"
-    )
+    parser.add_argument("query", nargs="?", default=None, help="查询字符串")
     parser.add_argument(
         "--scope",
         "-s",
         choices=["character", "chapter", "relationship", "all"],
         default="all",
-        help="查询作用域 (默认: all)"
+        help="查询作用域 (默认: all)",
     )
-    parser.add_argument(
-        "--top-k",
-        "-k",
-        type=int,
-        default=None,
-        help="返回结果数量限制"
-    )
-    parser.add_argument(
-        "--interactive",
-        "-i",
-        action="store_true",
-        help="进入交互模式"
-    )
+    parser.add_argument("--top-k", "-k", type=int, default=None, help="返回结果数量限制")
+    parser.add_argument("--interactive", "-i", action="store_true", help="进入交互模式")
 
     args = parser.parse_args()
 

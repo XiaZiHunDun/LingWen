@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Tests for ForeshadowChecker"""
+
 from pathlib import Path
 
 import pytest
@@ -8,26 +9,26 @@ import pytest
 def test_core_foreshadow_checker_init():
     """Test checker initialization"""
     from lingwen_quality.consistency.checkers.foreshadow_checker import ForeshadowChecker
+
     checker = ForeshadowChecker()
     assert checker.chapters_dir.exists()
+
 
 def test_foreshadow_issue_dataclass():
     """Test ForeshadowIssue dataclass"""
     from lingwen_quality.consistency.checkers.foreshadow_checker import ForeshadowIssue
+
     issue = ForeshadowIssue(
-        chapter='ch001',
-        foreshadow_text='万剑宗',
-        level='core',
-        severity='HIGH',
-        description='Test issue'
+        chapter="ch001", foreshadow_text="万剑宗", level="core", severity="HIGH", description="Test issue"
     )
-    assert issue.chapter == 'ch001'
-    assert issue.level == 'core'
+    assert issue.chapter == "ch001"
+    assert issue.level == "core"
 
 
 # -----------------------------------------------------------------------------
 # R2-009: _get_chapter_content 缓存 — 防止 N 个伏笔 × M 章节 = N×M 次磁盘读
 # -----------------------------------------------------------------------------
+
 
 class TestChapterContentCache:
     """R2-009: 章节内容缓存,避免 _is_recycled 在 expect_range 循环内重复 read_text"""
@@ -35,6 +36,7 @@ class TestChapterContentCache:
     def _make_checker(self, tmp_path):
         """创建一个指向 tmp_path/chapters 的 checker"""
         from lingwen_quality.consistency.checkers.foreshadow_checker import ForeshadowChecker
+
         chapters_dir = tmp_path / "chapters"
         chapters_dir.mkdir()
         return ForeshadowChecker(chapters_dir=str(chapters_dir))
@@ -42,6 +44,7 @@ class TestChapterContentCache:
     def test_cache_initially_empty(self, tmp_path):
         """新 checker 缓存应为空 dict"""
         from lingwen_quality.consistency.checkers.foreshadow_checker import ForeshadowChecker
+
         checker = ForeshadowChecker(chapters_dir=str(tmp_path))
         assert checker._chapter_content_cache == {}
 
@@ -50,6 +53,7 @@ class TestChapterContentCache:
         ch_file = tmp_path / "ch001.md"
         ch_file.write_text("初始内容 万剑宗", encoding="utf-8")
         from lingwen_quality.consistency.checkers.foreshadow_checker import ForeshadowChecker
+
         checker = ForeshadowChecker(chapters_dir=str(tmp_path))
 
         # 第一次:写入缓存
@@ -64,6 +68,7 @@ class TestChapterContentCache:
     def test_get_chapter_content_caches_missing_as_none(self, tmp_path):
         """文件不存在 → 缓存 None,不会反复 stat"""
         from lingwen_quality.consistency.checkers.foreshadow_checker import ForeshadowChecker
+
         checker = ForeshadowChecker(chapters_dir=str(tmp_path))
 
         # 文件不存在
@@ -77,6 +82,7 @@ class TestChapterContentCache:
         ch_file = tmp_path / "ch001.md"
         ch_file.write_text("test", encoding="utf-8")
         from lingwen_quality.consistency.checkers.foreshadow_checker import ForeshadowChecker
+
         checker = ForeshadowChecker(chapters_dir=str(tmp_path))
 
         checker._get_chapter_content(1)
@@ -93,14 +99,13 @@ class TestChapterContentCache:
 
         # 准备: ch027-ch029 三个章节,每个含一个关键词
         for i in [27, 28, 29]:
-            (tmp_path / f"ch{i:03d}.md").write_text(
-                f"这是第{i}章 包含 token{i}", encoding="utf-8"
-            )
+            (tmp_path / f"ch{i:03d}.md").write_text(f"这是第{i}章 包含 token{i}", encoding="utf-8")
 
         checker = ForeshadowChecker(chapters_dir=str(tmp_path))
 
         # Monkey-patch Path.read_text:每章只应被读一次
         from pathlib import Path
+
         original_read = Path.read_text
         read_count = {}
 
@@ -131,9 +136,7 @@ class TestChapterContentCache:
 
         # 准备 5 个目标章节
         for i in [27, 28, 29, 30, 31]:
-            (tmp_path / f"ch{i:03d}.md").write_text(
-                f"ch{i} content 目标词{i}", encoding="utf-8"
-            )
+            (tmp_path / f"ch{i:03d}.md").write_text(f"ch{i} content 目标词{i}", encoding="utf-8")
 
         # ch001 有 5 个伏笔,都期望在 ch027-ch031 回收
         ch001_content = (
@@ -150,6 +153,7 @@ class TestChapterContentCache:
 
         # 计数 read_text
         from pathlib import Path
+
         original_read = Path.read_text
         read_count = {}
 

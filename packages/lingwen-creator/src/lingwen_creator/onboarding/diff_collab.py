@@ -1,4 +1,5 @@
 """Per-volume collaboration notes linked to volume-plan diff share (v2)."""
+
 from __future__ import annotations
 
 import json

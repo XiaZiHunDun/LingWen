@@ -1,4 +1,5 @@
 """Persist creator onboarding wizard step completion per project."""
+
 from __future__ import annotations
 
 import json
@@ -41,11 +42,7 @@ def extract_step_mentions(text: str) -> list[str]:
 
 
 def build_step_mentions(notes: dict[str, str]) -> dict[str, list[str]]:
-    return {
-        sid: mentions
-        for sid, note in notes.items()
-        if (mentions := extract_step_mentions(note))
-    }
+    return {sid: mentions for sid, note in notes.items() if (mentions := extract_step_mentions(note))}
 
 
 def _normalize_step_mentions(raw: Any, notes: dict[str, str]) -> dict[str, list[str]]:
@@ -108,9 +105,13 @@ def save_onboarding_progress(
 ) -> dict[str, Any]:
     path = _progress_path(project_root)
     path.parent.mkdir(parents=True, exist_ok=True)
-    existing = load_onboarding_progress(project_root) if path.is_file() else {
-        "step_notes": {},
-    }
+    existing = (
+        load_onboarding_progress(project_root)
+        if path.is_file()
+        else {
+            "step_notes": {},
+        }
+    )
     unique_ids: list[str] = []
     seen: set[str] = set()
     for step_id in completed_step_ids:

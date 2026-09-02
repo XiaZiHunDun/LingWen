@@ -2,6 +2,7 @@
 
 Mirrors lines 789-923 of the original infra/cli/commands.py.
 """
+
 from lingwen_cli.options import UnifiedOptions
 
 from .base import Command
@@ -69,6 +70,7 @@ class DoctorCommand(Command):
         """Check environment setup"""
         print("  检查 Python 版本...")
         import sys
+
         print(f"    Python: {sys.version}")
 
         print("  检查依赖...")
@@ -92,11 +94,10 @@ class DoctorCommand(Command):
             print(f"    ✓ 数据库存在: {db_path}")
             try:
                 from lingwen_storage.sqlite_storage_adapter import SqliteStorageAdapter
+
                 storage = SqliteStorageAdapter(db_path)
                 tables = storage.with_connection(
-                    lambda conn: conn.execute(
-                        "SELECT name FROM sqlite_master WHERE type='table'"
-                    ).fetchall()
+                    lambda conn: conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
                 )
                 print(f"    ✓ 表数量: {len(tables)}")
                 return True

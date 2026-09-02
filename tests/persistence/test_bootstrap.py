@@ -7,6 +7,7 @@
 4. lazy import 不在 import bootstrap 时副作用
 5. register_all 返回 results dict
 """
+
 from __future__ import annotations
 
 import pytest

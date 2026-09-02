@@ -79,10 +79,10 @@ def test_llm_causal_reasoning_checker_context():
     context = {
         "character_profiles": {
             "林夜": {"gender": "male", "description": "主角"},
-            "剑尘子": {"gender": "male", "description": "反派"}
+            "剑尘子": {"gender": "male", "description": "反派"},
         },
         "world_rules": "修真世界，修炼境界分为炼气、筑基、金丹、元婴、化神",
-        "previous_summary": "林夜与剑尘子决战，这是他们的最终对决。"
+        "previous_summary": "林夜与剑尘子决战，这是他们的最终对决。",
     }
 
     issues = checker.check(content, chapter_num=1, context=context)
@@ -163,7 +163,6 @@ def test_llm_issue_severity_is_p1():
     )
     assert issue.severity.value == "P1"
 
-
     """测试：不应该产生误报的情况"""
     checker = LLMCausalReasoningChecker()
 
@@ -182,5 +181,5 @@ def test_llm_issue_severity_is_p1():
     assert isinstance(issues, list)
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

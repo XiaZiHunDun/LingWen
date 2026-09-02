@@ -4,6 +4,7 @@
 are visible to all test classes in this directory (TestBackfiller,
 TestBackfillIntegration, TestBackfillE2E, etc.).
 """
+
 from pathlib import Path
 
 import pytest
@@ -47,7 +48,5 @@ def corpus(tmp_path: Path) -> Path:
     )
     # ch002: character (跨章聚合 ch001)
     (corpus_root / "ch002.md").write_text("李青云与林凡激战.", encoding="utf-8")
-    (corpus_root / "ch002_大纲.md").write_text(
-        "# 章节二\n## 凌霄宗大战林凡\n", encoding="utf-8"
-    )
+    (corpus_root / "ch002_大纲.md").write_text("# 章节二\n## 凌霄宗大战林凡\n", encoding="utf-8")
     return corpus_root

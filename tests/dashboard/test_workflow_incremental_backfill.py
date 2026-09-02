@@ -1,4 +1,5 @@
 """Phase 9.68 F60: incremental_backfill field in workflow API responses."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -108,9 +109,7 @@ class TestWorkflowResultSerialization:
             nodes_written=0,
             nodes_skipped=0,
         )
-        payload = _workflow_result_to_dict(
-            {"summary": None, "executions": {}, "incremental_backfill": stats}
-        )
+        payload = _workflow_result_to_dict({"summary": None, "executions": {}, "incremental_backfill": stats})
         assert payload["incremental_backfill"]["dry_run"] is True
         assert payload["incremental_backfill"]["nodes_written"] == 0
 

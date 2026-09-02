@@ -14,6 +14,7 @@ Rules per zone:
   - docs/superpowers/plans/**
       * historical planning docs are exempt entirely
 """
+
 from __future__ import annotations
 
 import re
@@ -94,10 +95,7 @@ def main() -> int:
         print("Brand consistency violations:")
         for rel, rule, snippet in sorted(bad):
             print(f"  {rel}: [{rule}] contains {snippet!r}")
-        print(
-            f"\n  提示: 产品=墨灵 Studio, 框架=灵文/灵文引擎。"
-            f"源在 {BRAND_SOURCE_PATH}。"
-        )
+        print(f"\n  提示: 产品=墨灵 Studio, 框架=灵文/灵文引擎。源在 {BRAND_SOURCE_PATH}。")
         return 1
     print("OK: 品牌字符串一致（产品=墨灵 Studio, 框架=灵文）")
     return 0

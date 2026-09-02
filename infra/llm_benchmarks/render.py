@@ -1,4 +1,5 @@
 """Render benchmark metrics into a markdown report."""
+
 from __future__ import annotations
 
 from infra.llm_benchmarks.metrics import ProviderMetrics, quality_composite
@@ -21,12 +22,7 @@ def _format_row(m: ProviderMetrics) -> str:
 
 def _format_confidence_row(m: ProviderMetrics) -> str:
     d = m.confidence_distribution
-    return (
-        f"| {m.provider} "
-        f"| {d.get('high', 0)} "
-        f"| {d.get('medium', 0)} "
-        f"| {d.get('low', 0)} |"
-    )
+    return f"| {m.provider} | {d.get('high', 0)} | {d.get('medium', 0)} | {d.get('low', 0)} |"
 
 
 def render_report(
@@ -74,9 +70,7 @@ def render_report(
         lines.append("Providers above threshold (cost-ordered):")
         for i, m in enumerate(above_sorted, 1):
             composite = quality_composite(m)
-            lines.append(
-                f"{i}. {m.provider} (composite={composite:.2f}, cost=${m.cost_per_call_usd:.4f})"
-            )
+            lines.append(f"{i}. {m.provider} (composite={composite:.2f}, cost=${m.cost_per_call_usd:.4f})")
     if below:
         below_sorted = sorted(below, key=lambda m: quality_composite(m), reverse=True)
         lines.append("")

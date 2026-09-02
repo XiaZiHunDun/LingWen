@@ -9,6 +9,7 @@ Phase 1.4.a — RED tests for ThoughtNode + NodeExecution + 2 enums.
 - NodeExecution: 可变 — 运行时状态
 - inputs/outputs/depends_on 是 tuple[str, ...] (节点 ID)
 """
+
 from __future__ import annotations
 
 import dataclasses
@@ -23,8 +24,14 @@ class TestNodeType:
 
         assert len(NodeType) == 8
         assert {t.value for t in NodeType} == {
-            "input", "analysis", "synthesis", "generation",
-            "evaluation", "decision", "aggregation", "output",
+            "input",
+            "analysis",
+            "synthesis",
+            "generation",
+            "evaluation",
+            "decision",
+            "aggregation",
+            "output",
         }
 
     def test_node_type_is_str_enum(self):
@@ -41,8 +48,14 @@ class TestNodeStatus:
 
         assert len(NodeStatus) == 8
         assert {s.value for s in NodeStatus} == {
-            "pending", "ready", "running", "waiting",
-            "completed", "failed", "skipped", "stale",
+            "pending",
+            "ready",
+            "running",
+            "waiting",
+            "completed",
+            "failed",
+            "skipped",
+            "stale",
         }
 
     def test_terminal_statuses(self):

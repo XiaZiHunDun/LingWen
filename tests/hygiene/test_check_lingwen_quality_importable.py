@@ -3,6 +3,7 @@
 Phase 126 v16.5 #N.16 Task 1 — closes v15.7.1 debt claim "lingwen_quality module missing"
 by ensuring the CI guard runs and correctly fails when symbols disappear.
 """
+
 import subprocess
 import sys
 from pathlib import Path
@@ -10,10 +11,7 @@ from pathlib import Path
 import pytest
 
 SCRIPT_PATH = (
-    Path(__file__).resolve().parents[2]
-    / "tooling"
-    / "hygiene"
-    / "check_lingwen_quality_importable.py"
+    Path(__file__).resolve().parents[2] / "tooling" / "hygiene" / "check_lingwen_quality_importable.py"
 )
 
 
@@ -32,12 +30,9 @@ def test_check_script_returns_zero_when_all_symbols_importable():
         cwd=str(SCRIPT_PATH.parent.parent.parent),
     )
     assert result.returncode == 0, (
-        f"Script failed unexpectedly: stderr={result.stderr!r}, "
-        f"stdout={result.stdout!r}"
+        f"Script failed unexpectedly: stderr={result.stderr!r}, stdout={result.stdout!r}"
     )
-    assert "PASSED" in result.stdout, (
-        f"Expected PASSED in stdout, got: {result.stdout!r}"
-    )
+    assert "PASSED" in result.stdout, f"Expected PASSED in stdout, got: {result.stdout!r}"
 
 
 def test_check_script_fails_when_symbol_missing():
@@ -69,9 +64,6 @@ exec(open(r"{SCRIPT_PATH}").read())
         timeout=30,
     )
     assert result.returncode != 0, (
-        f"Script should have failed: stdout={result.stdout!r}, "
-        f"stderr={result.stderr!r}"
+        f"Script should have failed: stdout={result.stdout!r}, stderr={result.stderr!r}"
     )
-    assert "FAILED" in result.stderr, (
-        f"Expected FAILED in stderr, got: {result.stderr!r}"
-    )
+    assert "FAILED" in result.stderr, f"Expected FAILED in stderr, got: {result.stderr!r}"

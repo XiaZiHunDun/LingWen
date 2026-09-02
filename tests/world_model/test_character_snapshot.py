@@ -292,9 +292,7 @@ class TestModuleLevelFunctions:
             CharacterState(id="c1", name="张三", chapter=1, attributes={"mood": "平静"}),
             CharacterState(id="c1", name="张三", chapter=3, attributes={"mood": "愤怒"}),
         ]
-        changes = get_character_changes(
-            "c1", character_states=states, chapter_range=range(1, 5)
-        )
+        changes = get_character_changes("c1", character_states=states, chapter_range=range(1, 5))
         assert len(changes) == 1
 
     def test_get_character_changes_missing_params(self):

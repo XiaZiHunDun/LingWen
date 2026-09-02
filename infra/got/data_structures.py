@@ -15,6 +15,7 @@ Phase 1.4 — Doc 4 (GoT 适配设计 v1.0) 实施层。
 - 跨包引用用 Optional type (output_schema 运行时校验)
 - NodeExecution 必填 node_id (验证)
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -26,27 +27,27 @@ from typing import Any, Optional
 class NodeType(str, Enum):
     """8 种节点类型"""
 
-    INPUT = "input"              # 数据输入 (读 WorldSnapshot)
-    ANALYSIS = "analysis"        # 纯分析 (无需 LLM)
-    SYNTHESIS = "synthesis"      # 综合多源
-    GENERATION = "generation"    # LLM 生成
-    EVALUATION = "evaluation"    # 评分
-    DECISION = "decision"        # 决策分叉
+    INPUT = "input"  # 数据输入 (读 WorldSnapshot)
+    ANALYSIS = "analysis"  # 纯分析 (无需 LLM)
+    SYNTHESIS = "synthesis"  # 综合多源
+    GENERATION = "generation"  # LLM 生成
+    EVALUATION = "evaluation"  # 评分
+    DECISION = "decision"  # 决策分叉
     AGGREGATION = "aggregation"  # 合并多 review
-    OUTPUT = "output"            # 终产物 (写文件)
+    OUTPUT = "output"  # 终产物 (写文件)
 
 
 class NodeStatus(str, Enum):
     """8 种节点状态 (Phase 5: 新增 WAITING)"""
 
-    PENDING = "pending"      # 等待依赖
-    READY = "ready"          # 依赖全 COMPLETED,可运行
-    RUNNING = "running"      # 正在运行
-    WAITING = "waiting"      # Phase 5: 等待人工决策 (DECISION 节点,非 terminal)
+    PENDING = "pending"  # 等待依赖
+    READY = "ready"  # 依赖全 COMPLETED,可运行
+    RUNNING = "running"  # 正在运行
+    WAITING = "waiting"  # Phase 5: 等待人工决策 (DECISION 节点,非 terminal)
     COMPLETED = "completed"  # 成功完成 (terminal)
-    FAILED = "failed"        # 失败 (terminal)
-    SKIPPED = "skipped"      # 跳过 (terminal)
-    STALE = "stale"          # 下游需重生成
+    FAILED = "failed"  # 失败 (terminal)
+    SKIPPED = "skipped"  # 跳过 (terminal)
+    STALE = "stale"  # 下游需重生成
 
 
 @dataclass(frozen=True)
@@ -129,9 +130,7 @@ class NodeExecution:
 
     def __post_init__(self) -> None:
         if not self.node_id or not self.node_id.strip():
-            raise ValueError(
-                f"NodeExecution.node_id must be non-empty, got {self.node_id!r}"
-            )
+            raise ValueError(f"NodeExecution.node_id must be non-empty, got {self.node_id!r}")
 
     def duration_ms(self) -> int:
         """耗时(毫秒) — 未完成返回 0"""

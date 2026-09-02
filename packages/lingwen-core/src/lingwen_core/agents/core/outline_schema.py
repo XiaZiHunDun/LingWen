@@ -20,12 +20,12 @@ class OutlineSchema:
 
     def to_yaml(self, outline: Dict, file_path: str):
         """导出为YAML"""
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             yaml.dump(outline, f, allow_unicode=True, default_flow_style=False)
 
     def from_yaml(self, file_path: str) -> Dict:
         """从YAML加载"""
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             return yaml.safe_load(f)
 
     def get_chapter_outline(self, outline: Dict, chapter_num: int) -> Optional[Dict]:

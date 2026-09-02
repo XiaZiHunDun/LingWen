@@ -13,6 +13,7 @@ Doc 4 §10 Phase 6: 把 MasterController 决策/工作流 API 暴露到 dashboar
 - 错误处理 (404/400/409/422)
 - 与现有 test_api.py 兼容性
 """
+
 from __future__ import annotations
 
 import json
@@ -38,9 +39,11 @@ from apps.studio_api.protocols import MasterControllerAdapter
 
 # === Stub MasterController ===
 
+
 @dataclass
 class _FakeSummary:
     """模拟 ExecutionSummary — 字段对齐 infra.got.scheduler.ExecutionSummary"""
+
     completed: int = 0
     failed: int = 0
     total_cost_tokens: int = 0
@@ -56,6 +59,7 @@ class _StubMasterController:
 
     避免测试拖入 ai_service/orchestrator 等重型依赖。
     """
+
     def __init__(self, state_dir: str) -> None:
         self._queue = HumanDecisionQueue(state_dir=state_dir)
         self._last_workflow_status: Optional[dict] = None
@@ -92,13 +96,18 @@ class _StubMasterController:
     def run_workflow(self, workflow_name: str, **kwargs) -> dict:
         self._run_calls.append({"workflow_name": workflow_name, **kwargs})
         summary = _FakeSummary(
-            completed=1, steps=1, node_count=3, paused=True, paused_nodes=("judge",),
+            completed=1,
+            steps=1,
+            node_count=3,
+            paused=True,
+            paused_nodes=("judge",),
         )
         # stub 模拟:run 扫描 DECISION 节点 → 创建 HumanDecision 入队
         from lingwen_core.agents.decision_queue import (
             DecisionKind,
             create_decision,
         )
+
         decision = create_decision(
             decision_kind=DecisionKind.OUTLINE_JUDGMENT,
             node_id="judge",
@@ -137,13 +146,15 @@ class _StubMasterController:
     ) -> dict:
         # stub 模拟:resume 前先检查有活跃工作流
         if self._last_workflow_status is None:
-            raise RuntimeError(
-                "no active workflow; call run_workflow() first before resume_workflow()"
-            )
+            raise RuntimeError("no active workflow; call run_workflow() first before resume_workflow()")
         d = self.resolve_decision(decision_id, option, resolved_by=resolved_by)
         # 模拟:resume 后无暂停
         summary = _FakeSummary(
-            completed=3, steps=3, node_count=3, paused=False, paused_nodes=(),
+            completed=3,
+            steps=3,
+            node_count=3,
+            paused=False,
+            paused_nodes=(),
         )
         self._last_workflow_status = {
             "is_active": True,
@@ -173,6 +184,7 @@ class _StubMasterController:
 
 
 # === Fixtures ===
+
 
 @pytest.fixture
 def tmp_state_dir(tmp_path) -> Path:
@@ -214,6 +226,7 @@ def _make_decision(
 
 # === TestHealthStillWorks (regression) ===
 
+
 class TestHealthStillWorks:
     """新 master_controller kwarg 不破坏现有端点"""
 
@@ -237,6 +250,7 @@ class TestHealthStillWorks:
 
 
 # === TestDecisionsPendingEndpoint ===
+
 
 class TestDecisionsPendingEndpoint:
     """GET /api/decisions/pending"""
@@ -285,6 +299,7 @@ class TestDecisionsPendingEndpoint:
 
 # === TestDecisionsAllEndpoint ===
 
+
 class TestDecisionsAllEndpoint:
     """GET /api/decisions/all (含 RESOLVED)"""
 
@@ -300,6 +315,7 @@ class TestDecisionsAllEndpoint:
 
 
 # === TestResolveDecisionEndpoint ===
+
 
 class TestResolveDecisionEndpoint:
     """POST /api/decisions/{id}/resolve"""
@@ -353,6 +369,7 @@ class TestResolveDecisionEndpoint:
 
 # === TestDeferDecisionEndpoint ===
 
+
 class TestDeferDecisionEndpoint:
     """POST /api/decisions/{id}/defer"""
 
@@ -386,6 +403,7 @@ class TestDeferDecisionEndpoint:
 
 # === TestCancelDecisionEndpoint ===
 
+
 class TestCancelDecisionEndpoint:
     """POST /api/decisions/{id}/cancel"""
 
@@ -408,6 +426,7 @@ class TestCancelDecisionEndpoint:
 
 
 # === TestWorkflowsListEndpoint ===
+
 
 class TestWorkflowsListEndpoint:
     """GET /api/workflows/list"""
@@ -434,6 +453,7 @@ class TestWorkflowsListEndpoint:
 
 
 # === TestRunWorkflowEndpoint ===
+
 
 class TestRunWorkflowEndpoint:
     """POST /api/workflows/run"""
@@ -466,6 +486,7 @@ class TestRunWorkflowEndpoint:
 
 
 # === TestResumeWorkflowEndpoint ===
+
 
 class TestResumeWorkflowEndpoint:
     """POST /api/workflows/resume"""
@@ -520,6 +541,7 @@ class TestResumeWorkflowEndpoint:
 
 # === TestActiveWorkflowStatusEndpoint ===
 
+
 class TestActiveWorkflowStatusEndpoint:
     """GET /api/workflows/active"""
 
@@ -541,6 +563,7 @@ class TestActiveWorkflowStatusEndpoint:
 
 
 # === TestWorkflowMermaidEndpoint (Phase 6.3) ===
+
 
 class TestWorkflowMermaidEndpoint:
     """GET /api/workflows/{name}/mermaid — 返回 mermaid 字符串
@@ -585,6 +608,7 @@ class TestWorkflowMermaidEndpoint:
 
 # === TestScoreDataExtraction (Phase 7.6 NEW) ===
 
+
 def _make_fake_master_with_polish_merge_scores(
     *,
     scores_a: dict[str, int] | None = None,
@@ -618,8 +642,7 @@ def _make_fake_master_with_polish_merge_scores(
         "scores_total_a": sum(scores_a.values()) / 8.0 if scores_a else 0.0,
         "scores_total_b": sum(scores_b.values()) / 8.0 if scores_b else 0.0,
         "scores_delta": (
-            (sum(scores_a.values()) - sum(scores_b.values())) / 8.0
-            if scores_a and scores_b else 0.0
+            (sum(scores_a.values()) - sum(scores_b.values())) / 8.0 if scores_a and scores_b else 0.0
         ),
         "fallback": fallback,
         "_labels": list(labels),  # Phase 7.6: 透传 labels
@@ -645,10 +668,13 @@ def _make_fake_master_with_polish_merge_scores(
     class _FakeGraph:
         def node_ids(self):
             return ["polish_merge"]
+
         def has_execution(self, nid):
             return nid == "polish_merge"
+
         def get_execution(self, nid):
             return exec_obj
+
         def get_node(self, nid):
             return graph_node
 
@@ -734,6 +760,7 @@ class TestScoreDataExtraction:
 
 # === TestCostByScenarioExtraction (Phase 8.7 NEW) ===
 
+
 class TestCostByScenarioExtraction:
     """Phase 8.7: _extract_cost_by_scenario helper + WorkflowStatusResponse.cost_by_scenario
 
@@ -783,14 +810,24 @@ class TestCostByScenarioExtraction:
 
         # 注入 _last_* 缓存 (get_active_workflow_status 需要)
         class _StubGraph:
-            def node_ids(self): return []
-            def has_execution(self, nid): return False
-            def get_execution(self, nid): return None
-            def get_node(self, nid): return None
+            def node_ids(self):
+                return []
+
+            def has_execution(self, nid):
+                return False
+
+            def get_execution(self, nid):
+                return None
+
+            def get_node(self, nid):
+                return None
+
         class _StubSummary:
             steps = 0
+
         class _StubScheduler:
             _summary = _StubSummary()
+
         master._last_scheduler = _StubScheduler()
         master._last_graph = _StubGraph()
         master._last_workflow_name = "novel_writing"
@@ -823,17 +860,32 @@ class TestCostByScenarioExtraction:
             def __init__(self):
                 self.cost_tracker = cost_tracker
 
-            def list_pending_decisions(self): return []
-            def get_decision_queue(self): return None
-            def resolve_decision(self, *a, **kw): raise NotImplementedError
-            def defer_decision(self, *a, **kw): raise NotImplementedError
-            def cancel_decision(self, *a, **kw): raise NotImplementedError
-            def get_active_workflow_status(self): return {"is_active": False, "pending_decisions": []}
+            def list_pending_decisions(self):
+                return []
+
+            def get_decision_queue(self):
+                return None
+
+            def resolve_decision(self, *a, **kw):
+                raise NotImplementedError
+
+            def defer_decision(self, *a, **kw):
+                raise NotImplementedError
+
+            def cancel_decision(self, *a, **kw):
+                raise NotImplementedError
+
+            def get_active_workflow_status(self):
+                return {"is_active": False, "pending_decisions": []}
 
             def run_workflow(self, workflow_name, **kwargs):
                 return {
                     "summary": _FakeSummary(
-                        completed=1, steps=1, node_count=1, paused=False, paused_nodes=(),
+                        completed=1,
+                        steps=1,
+                        node_count=1,
+                        paused=False,
+                        paused_nodes=(),
                     ),
                     "graph": None,
                     "executions": {},
@@ -841,7 +893,8 @@ class TestCostByScenarioExtraction:
                     "workflow_name": workflow_name,
                 }
 
-            def resume_workflow(self, *a, **kw): raise NotImplementedError
+            def resume_workflow(self, *a, **kw):
+                raise NotImplementedError
 
         app = create_app(db_path=tmp_path / "rp.db", master_controller=_CostStub())
         client = TestClient(app)
@@ -881,16 +934,24 @@ class TestCostByScenarioExtraction:
 
         # 注入 _last_* 缓存 (get_active_workflow_status 需要)
         class _StubGraph:
-            def node_ids(self): return []
-            def has_execution(self, nid): return False
-            def get_execution(self, nid): return None
-            def get_node(self, nid): return None
+            def node_ids(self):
+                return []
+
+            def has_execution(self, nid):
+                return False
+
+            def get_execution(self, nid):
+                return None
+
+            def get_node(self, nid):
+                return None
 
         class _StubSummary:
             steps = 0
 
         class _StubScheduler:
             _summary = _StubSummary()
+
         master._last_scheduler = _StubScheduler()
         master._last_graph = _StubGraph()
         master._last_workflow_name = "novel_writing"
@@ -907,6 +968,7 @@ class TestCostByScenarioExtraction:
 
 
 # === TestTotalCostUsdField (Phase 8.5 NEW) ===
+
 
 class TestTotalCostUsdField:
     """Phase 8.5: WorkflowStatusResponse.total_cost_usd 反映 cost_tracker.total_cost()
@@ -925,16 +987,24 @@ class TestTotalCostUsdField:
         master.cost_tracker.record("chapter_writing", ModelTier.SONNET, 1000, 500)
 
         class _StubGraph:
-            def node_ids(self): return []
-            def has_execution(self, nid): return False
-            def get_execution(self, nid): return None
-            def get_node(self, nid): return None
+            def node_ids(self):
+                return []
+
+            def has_execution(self, nid):
+                return False
+
+            def get_execution(self, nid):
+                return None
+
+            def get_node(self, nid):
+                return None
 
         class _StubSummary:
             steps = 0
 
         class _StubScheduler:
             _summary = _StubSummary()
+
         master._last_scheduler = _StubScheduler()
         master._last_graph = _StubGraph()
         master._last_workflow_name = "novel_writing"
@@ -951,6 +1021,7 @@ class TestTotalCostUsdField:
 
 
 # === TestBudgetStatusExtraction (Phase 8.8 T5 NEW) ===
+
 
 class TestBudgetStatusExtraction:
     """Phase 8.8 T5: _extract_budget_status adapter 跟 Phase 8.7 _extract_cost_by_scenario 对称.
@@ -1031,14 +1102,24 @@ class TestBudgetStatusExtraction:
         master._current_budget_usd = 1.0  # under budget
 
         class _StubGraph:
-            def node_ids(self): return []
-            def has_execution(self, nid): return False
-            def get_execution(self, nid): return None
-            def get_node(self, nid): return None
+            def node_ids(self):
+                return []
+
+            def has_execution(self, nid):
+                return False
+
+            def get_execution(self, nid):
+                return None
+
+            def get_node(self, nid):
+                return None
+
         class _StubSummary:
             steps = 0
+
         class _StubScheduler:
             _summary = _StubSummary()
+
         master._last_scheduler = _StubScheduler()
         master._last_graph = _StubGraph()
         master._last_workflow_name = "novel_writing"
@@ -1063,4 +1144,3 @@ class TestBudgetStatusExtraction:
         assert response2.status_code == 200
         data2 = response2.json()
         assert data2["cost_budget_status"] == {}
-

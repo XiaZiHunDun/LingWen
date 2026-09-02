@@ -13,6 +13,7 @@ lingwen_pipeline.state.state_manager.StateManager 同名冲突(虽 import 路径
 R2-020: save() 改用 fcntl.flock + temp-file + atomic rename,防止
 多进程并发写时文件被截断到一半(JSON 解析报错)。
 """
+
 import fcntl
 import json
 import os
@@ -58,8 +59,7 @@ class MemoryStateManager:
         """
         if key not in self.STATE_FILE_KEYS:
             raise ValueError(
-                f"Unknown state file key: {key}. "
-                f"Valid keys: {list(self.STATE_FILE_KEYS.keys())}"
+                f"Unknown state file key: {key}. Valid keys: {list(self.STATE_FILE_KEYS.keys())}"
             )
 
         file_path = self.storage_config.get(key)

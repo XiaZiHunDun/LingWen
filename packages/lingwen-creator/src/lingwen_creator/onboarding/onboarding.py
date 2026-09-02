@@ -1,4 +1,5 @@
 """Unified onboarding wizard payload for creator dashboard."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -176,11 +177,7 @@ def _step_mentions_for_steps(
     step_mentions: dict[str, list[str]],
 ) -> dict[str, list[str]]:
     valid = {step["id"] for step in steps}
-    return {
-        sid: handles
-        for sid, handles in step_mentions.items()
-        if sid in valid and handles
-    }
+    return {sid: handles for sid, handles in step_mentions.items() if sid in valid and handles}
 
 
 def _progress_response(
@@ -290,9 +287,7 @@ def apply_wizard_share_done(
     step_ids = [step["id"] for step in steps]
     valid = set(step_ids)
     desired = list(
-        dict.fromkeys(
-            sid for sid in (payload["completed_step_ids"] + done_step_ids) if sid in valid
-        ),
+        dict.fromkeys(sid for sid in (payload["completed_step_ids"] + done_step_ids) if sid in valid),
     )
     progress = load_onboarding_progress(project.root)
     merged_notes = progress.get("step_notes", {})

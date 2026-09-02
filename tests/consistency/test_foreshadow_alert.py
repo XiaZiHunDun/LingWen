@@ -27,7 +27,7 @@ class TestForeshadowRegistration:
             thread_id="thread_001",
             content="神秘宝剑将改变战局",
             introduced_chapter=10,
-            expected_resolve_chapter=50
+            expected_resolve_chapter=50,
         )
 
         thread = checker._plot_threads["thread_001"]
@@ -44,19 +44,19 @@ class TestForeshadowRegistration:
             thread_id="fp_mystery_sword",
             content="神秘宝剑",
             introduced_chapter=5,
-            expected_resolve_chapter=50
+            expected_resolve_chapter=50,
         )
         checker.add_foreshadow(
             thread_id="fp_lost_brother",
             content="失散的兄弟",
             introduced_chapter=15,
-            expected_resolve_chapter=80
+            expected_resolve_chapter=80,
         )
         checker.add_foreshadow(
             thread_id="fp_ancient_prophecy",
             content="古老预言",
             introduced_chapter=1,
-            expected_resolve_chapter=100
+            expected_resolve_chapter=100,
         )
 
         assert len(checker._plot_threads) == 3
@@ -71,14 +71,14 @@ class TestForeshadowRegistration:
                 id="thread_via_context",
                 content="通过context传入的伏笔",
                 introduced_chapter=20,
-                expected_resolve_chapter=60
+                expected_resolve_chapter=60,
             )
         ]
 
         checker.check(
             chapter_content="章节内容",
             chapter_num=25,
-            context={"plot_threads": plot_threads, "new_foreshadow": []}
+            context={"plot_threads": plot_threads, "new_foreshadow": []},
         )
 
         assert "thread_via_context" in checker._plot_threads
@@ -100,14 +100,12 @@ class TestOverdueDetection:
             thread_id="fp_overdue",
             content="重要线索应在本章揭示",
             introduced_chapter=10,
-            expected_resolve_chapter=30
+            expected_resolve_chapter=30,
         )
 
         # 在第40章检查（逾期10章，delay = 40 - 30 = 10 >= 3）
         issues = checker.check(
-            chapter_content="章节内容",
-            chapter_num=40,
-            context={"plot_threads": [], "new_foreshadow": []}
+            chapter_content="章节内容", chapter_num=40, context={"plot_threads": [], "new_foreshadow": []}
         )
 
         # 应该有延迟回收的P2问题
@@ -122,23 +120,15 @@ class TestOverdueDetection:
     def test_overdue_detection_multiple_threads(self, checker):
         """测试多个伏笔的逾期检测"""
         checker.add_foreshadow(
-            thread_id="fp_1",
-            content="伏笔1",
-            introduced_chapter=5,
-            expected_resolve_chapter=20
+            thread_id="fp_1", content="伏笔1", introduced_chapter=5, expected_resolve_chapter=20
         )
         checker.add_foreshadow(
-            thread_id="fp_2",
-            content="伏笔2",
-            introduced_chapter=10,
-            expected_resolve_chapter=35
+            thread_id="fp_2", content="伏笔2", introduced_chapter=10, expected_resolve_chapter=35
         )
 
         # 第50章检查：fp_1逾期30章，fp_2逾期15章
         issues = checker.check(
-            chapter_content="内容",
-            chapter_num=50,
-            context={"plot_threads": [], "new_foreshadow": []}
+            chapter_content="内容", chapter_num=50, context={"plot_threads": [], "new_foreshadow": []}
         )
 
         delay_issues = [i for i in issues if i.issue_type == "伏笔未及时回收"]
@@ -147,17 +137,12 @@ class TestOverdueDetection:
     def test_no_overdue_when_exactly_at_expected_chapter(self, checker):
         """测试恰好在预期章节时不产生逾期预警（delay < 3）"""
         checker.add_foreshadow(
-            thread_id="fp_exact",
-            content="恰好到期",
-            introduced_chapter=10,
-            expected_resolve_chapter=30
+            thread_id="fp_exact", content="恰好到期", introduced_chapter=10, expected_resolve_chapter=30
         )
 
         # 在第32章检查（delay = 2 < 3，不触发）
         issues = checker.check(
-            chapter_content="章节内容",
-            chapter_num=32,
-            context={"plot_threads": [], "new_foreshadow": []}
+            chapter_content="章节内容", chapter_num=32, context={"plot_threads": [], "new_foreshadow": []}
         )
 
         delay_issues = [i for i in issues if i.issue_type == "伏笔未及时回收"]
@@ -166,26 +151,19 @@ class TestOverdueDetection:
     def test_overdue_threshold_is_three_chapters(self, checker):
         """测试逾期阈值为3章"""
         checker.add_foreshadow(
-            thread_id="fp_threshold",
-            content="阈值测试",
-            introduced_chapter=1,
-            expected_resolve_chapter=10
+            thread_id="fp_threshold", content="阈值测试", introduced_chapter=1, expected_resolve_chapter=10
         )
 
         # delay = 2 (12 - 10 = 2 < 3)，不触发
         issues_32 = checker.check(
-            chapter_content="内容",
-            chapter_num=12,
-            context={"plot_threads": [], "new_foreshadow": []}
+            chapter_content="内容", chapter_num=12, context={"plot_threads": [], "new_foreshadow": []}
         )
         delay_32 = [i for i in issues_32 if i.issue_type == "伏笔未及时回收"]
         assert len(delay_32) == 0, f"delay=2 should not trigger, but got {len(delay_32)} issues"
 
         # delay = 3 (13 - 10 = 3 >= 3)，触发
         issues_33 = checker.check(
-            chapter_content="内容",
-            chapter_num=13,
-            context={"plot_threads": [], "new_foreshadow": []}
+            chapter_content="内容", chapter_num=13, context={"plot_threads": [], "new_foreshadow": []}
         )
         delay_33 = [i for i in issues_33 if i.issue_type == "伏笔未及时回收"]
         assert len(delay_33) >= 1
@@ -204,14 +182,12 @@ class TestApproachingDeadline:
             thread_id="fp_approaching",
             content="即将到期的伏笔",
             introduced_chapter=5,
-            expected_resolve_chapter=30
+            expected_resolve_chapter=30,
         )
 
         # 在第28章检查（还有2章到期）
         issues = checker.check(
-            chapter_content="章节内容",
-            chapter_num=28,
-            context={"plot_threads": [], "new_foreshadow": []}
+            chapter_content="章节内容", chapter_num=28, context={"plot_threads": [], "new_foreshadow": []}
         )
 
         # 当 delay >= 1 且 < 3 时，应该是 P3 提示级别
@@ -222,9 +198,7 @@ class TestApproachingDeadline:
 
         # 第31章检查（delay=1，P3提示）
         checker.check(
-            chapter_content="章节内容",
-            chapter_num=31,
-            context={"plot_threads": [], "new_foreshadow": []}
+            chapter_content="章节内容", chapter_num=31, context={"plot_threads": [], "new_foreshadow": []}
         )
         # delay = 1 < 3，当前实现不生成问题
         # 这是预期行为，测试临近预警功能是否存在或按预期工作
@@ -235,14 +209,12 @@ class TestApproachingDeadline:
             thread_id="fp_one_before",
             content="即将揭示的秘密",
             introduced_chapter=10,
-            expected_resolve_chapter=50
+            expected_resolve_chapter=50,
         )
 
         # 第49章（还有1章到期）
         issues = checker.check(
-            chapter_content="章节内容",
-            chapter_num=49,
-            context={"plot_threads": [], "new_foreshadow": []}
+            chapter_content="章节内容", chapter_num=49, context={"plot_threads": [], "new_foreshadow": []}
         )
 
         # 当前实现 delay = -1，不触发预警
@@ -263,7 +235,7 @@ class TestNoAlertWhenResolved:
             thread_id="fp_resolved",
             content="已经回收的伏笔",
             introduced_chapter=10,
-            expected_resolve_chapter=30
+            expected_resolve_chapter=30,
         )
 
         # 先回收
@@ -274,31 +246,23 @@ class TestNoAlertWhenResolved:
 
         # 在第50章检查（本来应该逾期）
         issues = checker.check(
-            chapter_content="章节内容",
-            chapter_num=50,
-            context={"plot_threads": [], "new_foreshadow": []}
+            chapter_content="章节内容", chapter_num=50, context={"plot_threads": [], "new_foreshadow": []}
         )
 
         # 不应有针对 fp_resolved 的延迟回收问题
-        delay_issues = [
-            i for i in issues
-            if i.issue_type == "伏笔未及时回收" and "fp_resolved" in i.id
-        ]
+        delay_issues = [i for i in issues if i.issue_type == "伏笔未及时回收" and "fp_resolved" in i.id]
         assert len(delay_issues) == 0
 
     def test_no_alert_for_another_resolved_thread(self, checker):
         """测试多个伏笔中已回收的那个不产生预警"""
         checker.add_foreshadow(
-            thread_id="fp_unresolved",
-            content="未回收伏笔",
-            introduced_chapter=5,
-            expected_resolve_chapter=20
+            thread_id="fp_unresolved", content="未回收伏笔", introduced_chapter=5, expected_resolve_chapter=20
         )
         checker.add_foreshadow(
             thread_id="fp_to_resolve",
             content="将要回收的伏笔",
             introduced_chapter=10,
-            expected_resolve_chapter=30
+            expected_resolve_chapter=30,
         )
 
         # 回收其中一个
@@ -306,22 +270,16 @@ class TestNoAlertWhenResolved:
 
         # 在第50章检查
         issues = checker.check(
-            chapter_content="章节内容",
-            chapter_num=50,
-            context={"plot_threads": [], "new_foreshadow": []}
+            chapter_content="章节内容", chapter_num=50, context={"plot_threads": [], "new_foreshadow": []}
         )
 
         # fp_to_resolve 不应产生预警
-        resolved_issues = [
-            i for i in issues
-            if i.issue_type == "伏笔未及时回收" and "fp_to_resolve" in i.id
-        ]
+        resolved_issues = [i for i in issues if i.issue_type == "伏笔未及时回收" and "fp_to_resolve" in i.id]
         assert len(resolved_issues) == 0
 
         # fp_unresolved 应该产生预警
         unresolved_issues = [
-            i for i in issues
-            if i.issue_type == "伏笔未及时回收" and "fp_unresolved" in i.id
+            i for i in issues if i.issue_type == "伏笔未及时回收" and "fp_unresolved" in i.id
         ]
         assert len(unresolved_issues) >= 1
 
@@ -339,14 +297,12 @@ class TestAlertMessageReadability:
             thread_id="fp_readable_001",
             content="神秘宝盒的秘密",
             introduced_chapter=15,
-            expected_resolve_chapter=40
+            expected_resolve_chapter=40,
         )
 
         # 逾期检查
         issues = checker.check(
-            chapter_content="章节内容",
-            chapter_num=50,
-            context={"plot_threads": [], "new_foreshadow": []}
+            chapter_content="章节内容", chapter_num=50, context={"plot_threads": [], "new_foreshadow": []}
         )
 
         # 找到相关预警
@@ -367,13 +323,11 @@ class TestAlertMessageReadability:
             thread_id="msg_format_test",
             content="测试伏笔内容",
             introduced_chapter=5,
-            expected_resolve_chapter=25
+            expected_resolve_chapter=25,
         )
 
         issues = checker.check(
-            chapter_content="章节内容",
-            chapter_num=35,
-            context={"plot_threads": [], "new_foreshadow": []}
+            chapter_content="章节内容", chapter_num=35, context={"plot_threads": [], "new_foreshadow": []}
         )
 
         delay_issues = [i for i in issues if i.issue_type == "伏笔未及时回收"]
@@ -394,13 +348,11 @@ class TestAlertMessageReadability:
             thread_id="evidence_test",
             content="关键证据测试",
             introduced_chapter=10,
-            expected_resolve_chapter=30
+            expected_resolve_chapter=30,
         )
 
         issues = checker.check(
-            chapter_content="章节内容",
-            chapter_num=45,
-            context={"plot_threads": [], "new_foreshadow": []}
+            chapter_content="章节内容", chapter_num=45, context={"plot_threads": [], "new_foreshadow": []}
         )
 
         delay_issues = [i for i in issues if i.issue_type == "伏笔未及时回收"]
@@ -417,13 +369,11 @@ class TestAlertMessageReadability:
             thread_id="suggestion_test",
             content="需要有建议的伏笔",
             introduced_chapter=1,
-            expected_resolve_chapter=20
+            expected_resolve_chapter=20,
         )
 
         issues = checker.check(
-            chapter_content="章节内容",
-            chapter_num=30,
-            context={"plot_threads": [], "new_foreshadow": []}
+            chapter_content="章节内容", chapter_num=30, context={"plot_threads": [], "new_foreshadow": []}
         )
 
         delay_issues = [i for i in issues if i.issue_type == "伏笔未及时回收"]

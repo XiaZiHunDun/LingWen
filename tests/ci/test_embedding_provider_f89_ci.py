@@ -1,4 +1,5 @@
 """Phase 9.95 F89: CI contract — pluggable embedding providers."""
+
 from __future__ import annotations
 
 from pathlib import Path

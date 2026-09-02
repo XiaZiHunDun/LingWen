@@ -9,6 +9,7 @@ This shim preserves back-compat for existing consumers in:
   - lingwen_cli (parsers/init_project + commands/init_project)
 New code should import from `lingwen_shared.mode` directly.
 """
+
 from __future__ import annotations
 
 from lingwen_shared.mode import (  # noqa: F401

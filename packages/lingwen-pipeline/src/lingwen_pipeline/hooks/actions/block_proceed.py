@@ -4,6 +4,7 @@
 
 当verify_result为null时阻止工作流继续，确保审核完成后必须经过修改主持流程。
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict
@@ -29,11 +30,7 @@ class BlockProceedAction(BaseAction):
     def action_type(self) -> str:
         return "block_proceed"
 
-    def execute(
-        self,
-        params: Dict[str, Any],
-        context: Dict[str, Any]
-    ) -> ActionResult:
+    def execute(self, params: Dict[str, Any], context: Dict[str, Any]) -> ActionResult:
         """
         执行阻止操作
 
@@ -55,14 +52,12 @@ class BlockProceedAction(BaseAction):
 
         if not should_block:
             logger.info("BLOCK_PROCEED: condition not met, allowing proceed")
-            return ActionResult(
-                success=True,
-                output={"blocked": False, "reason": "条件不满足"}
-            )
+            return ActionResult(success=True, output={"blocked": False, "reason": "条件不满足"})
 
         # 记录阻止原因到状态
         try:
             from infra.tools.workflow.lib import set_state
+
             set_state("blocked_reason", reason)
             set_state("blocked_at", context.get("event_name", "unknown"))
             set_state("blocked_at_hook", context.get("hook_name", "unknown"))
@@ -72,16 +67,9 @@ class BlockProceedAction(BaseAction):
         error_msg = f"工作流被阻止: {reason}"
         logger.error(error_msg)
 
-        return ActionResult(
-            success=False,
-            error=error_msg
-        )
+        return ActionResult(success=False, error=error_msg)
 
-    def _should_block(
-        self,
-        context: Dict[str, Any],
-        block_on_null: bool
-    ) -> bool:
+    def _should_block(self, context: Dict[str, Any], block_on_null: bool) -> bool:
         """
         判断是否应该阻止
 

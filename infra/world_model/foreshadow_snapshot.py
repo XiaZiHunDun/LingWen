@@ -45,9 +45,9 @@ class ForeshadowSnapshotError(SnapshotError):
 class ForeshadowStatus(str, Enum):
     """伏笔状态"""
 
-    PLANTED = "planted"       # 已埋下，尚未回收
-    RESOLVED = "resolved"     # 已回收
-    ABANDONED = "abandoned"   # 已放弃（剧情需要，不再回收）
+    PLANTED = "planted"  # 已埋下，尚未回收
+    RESOLVED = "resolved"  # 已回收
+    ABANDONED = "abandoned"  # 已放弃（剧情需要，不再回收）
 
 
 # ── 数据模型 ──
@@ -180,7 +180,8 @@ class ForeshadowSnapshot:
 
         logger.info(
             "伏笔快照已创建: 章节范围 %d-%d, 总计 %d 个伏笔 (%d 未解决/%d 已解决/%d 已放弃)",
-            self.min_chapter, self.max_chapter,
+            self.min_chapter,
+            self.max_chapter,
             len(self._all_foreshadows),
             len(self._unresolved),
             len(self._resolved),
@@ -224,10 +225,7 @@ class ForeshadowSnapshot:
         if current_chapter is None:
             return self._unresolved
 
-        return tuple(
-            f for f in self._unresolved
-            if f.planted_chapter <= current_chapter
-        )
+        return tuple(f for f in self._unresolved if f.planted_chapter <= current_chapter)
 
     def get_resolved(self, current_chapter: int | None = None) -> tuple[ForeshadowState, ...]:
         """获取已回收的伏笔
@@ -243,7 +241,8 @@ class ForeshadowSnapshot:
             return self._resolved
 
         return tuple(
-            f for f in self._resolved
+            f
+            for f in self._resolved
             if f.resolved_chapter is not None and f.resolved_chapter <= current_chapter
         )
 
@@ -271,10 +270,7 @@ class ForeshadowSnapshot:
         Returns:
             该章节埋下的所有伏笔
         """
-        return tuple(
-            f for f in self._all_foreshadows
-            if f.planted_chapter == chapter
-        )
+        return tuple(f for f in self._all_foreshadows if f.planted_chapter == chapter)
 
     def get_resolved_in_chapter(self, chapter: int) -> tuple[ForeshadowState, ...]:
         """获取指定章节回收的伏笔
@@ -285,10 +281,7 @@ class ForeshadowSnapshot:
         Returns:
             该章节回收的所有伏笔
         """
-        return tuple(
-            f for f in self._resolved
-            if f.resolved_chapter == chapter
-        )
+        return tuple(f for f in self._resolved if f.resolved_chapter == chapter)
 
     # ── 统计 ──
 

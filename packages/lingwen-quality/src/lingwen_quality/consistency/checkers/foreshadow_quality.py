@@ -32,8 +32,8 @@ class ForeshadowQualityChecker(BaseChecker):
     - "而此刻"
     - "讽刺的是"
     """
-    _checker_type = CheckerType.FORESHADOW_QUALITY
 
+    _checker_type = CheckerType.FORESHADOW_QUALITY
 
     # 机械悬念标记词
     MECHANICAL_SUSPENSE = [
@@ -59,10 +59,7 @@ class ForeshadowQualityChecker(BaseChecker):
         super().__init__(self._checker_type)
 
     def check(
-        self,
-        chapter_content: str,
-        chapter_num: int,
-        context: Optional[Dict[str, Any]] = None
+        self, chapter_content: str, chapter_num: int, context: Optional[Dict[str, Any]] = None
     ) -> List[Issue]:
         """
         检查伏笔质量
@@ -156,7 +153,7 @@ class ForeshadowQualityChecker(BaseChecker):
         issues = []
 
         # 检测连续2段以上使用机械悬念
-        paragraphs = content.split('\n\n')
+        paragraphs = content.split("\n\n")
         consecutive_count = 0
         consecutive_start = -1
 
@@ -204,10 +201,12 @@ class ForeshadowQualityChecker(BaseChecker):
                 start = max(0, match.start() - 15)
                 end = min(len(content), match.end() + 15)
                 context = content[start:end]
-                mentions.append({
-                    "pattern": pattern,
-                    "context": context,
-                    "position": match.start(),
-                })
+                mentions.append(
+                    {
+                        "pattern": pattern,
+                        "context": context,
+                        "position": match.start(),
+                    }
+                )
 
         return mentions

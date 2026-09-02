@@ -1,4 +1,5 @@
 """Tests for infra.coverage_gate (Phase 11.11)."""
+
 from __future__ import annotations
 
 from pathlib import Path

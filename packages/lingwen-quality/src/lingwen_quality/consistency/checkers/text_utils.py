@@ -1,6 +1,7 @@
 """
 R2-011: 共享文本工具 — 消除 content.split('。') 在 5+ 处的重复
 """
+
 from __future__ import annotations
 
 from typing import List
@@ -16,4 +17,4 @@ def split_chinese_sentences(content: str) -> List[str]:
     - if len(sentences) < 3  → 空串计数不影响判断
     - sum/for 循环 → 空串对统计无贡献
     """
-    return content.split('。')
+    return content.split("。")

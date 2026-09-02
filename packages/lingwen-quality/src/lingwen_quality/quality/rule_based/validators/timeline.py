@@ -38,9 +38,7 @@ class TimelineValidator(BaseValidator):
 
         passed = len(issues) == 0
         return ValidationResult(
-            passed=passed,
-            issues=issues,
-            severity=IssueSeverity.P0 if issues else IssueSeverity.P2
+            passed=passed, issues=issues, severity=IssueSeverity.P0 if issues else IssueSeverity.P2
         )
 
     def _extract_time_expressions(self, content: str) -> List[Dict[str, Any]]:
@@ -62,11 +60,7 @@ class TimelineValidator(BaseValidator):
         for time_type, pattern in time_patterns.items():
             matches = re.findall(pattern, content)
             for match in matches:
-                expressions.append({
-                    "type": time_type,
-                    "text": match,
-                    "order": len(expressions)
-                })
+                expressions.append({"type": time_type, "text": match, "order": len(expressions)})
 
         return expressions
 
@@ -100,11 +94,7 @@ class TimelineValidator(BaseValidator):
 
         return True
 
-    def _check_time_consistency(
-        self,
-        expressions: List[Dict[str, Any]],
-        chapter_time: str
-    ) -> bool:
+    def _check_time_consistency(self, expressions: List[Dict[str, Any]], chapter_time: str) -> bool:
         """检查与章节设定的时间是否一致"""
         if not chapter_time or not expressions:
             return True

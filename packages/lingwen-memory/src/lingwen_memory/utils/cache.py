@@ -17,6 +17,7 @@ from typing import Any, Callable, Dict, Optional
 @dataclass
 class CacheStats:
     """缓存统计信息"""
+
     hits: int = 0
     misses: int = 0
     evictions: int = 0
@@ -63,6 +64,7 @@ class CacheStats:
 @dataclass
 class CacheEntry:
     """缓存条目"""
+
     value: Any
     created_at: float = field(default_factory=time.time)
     last_accessed: float = field(default_factory=time.time)
@@ -102,12 +104,7 @@ class LRUCache:
         stats = cache.get_stats()
     """
 
-    def __init__(
-        self,
-        max_size: int = 1000,
-        ttl: Optional[float] = None,
-        track_stats: bool = True
-    ):
+    def __init__(self, max_size: int = 1000, ttl: Optional[float] = None, track_stats: bool = True):
         """初始化 LRU 缓存
 
         Args:
@@ -291,11 +288,7 @@ class CacheManager:
         self._lock = threading.RLock()
 
     def get_cache(
-        self,
-        name: str,
-        max_size: int = 1000,
-        ttl: Optional[float] = None,
-        track_stats: bool = True
+        self, name: str, max_size: int = 1000, ttl: Optional[float] = None, track_stats: bool = True
     ) -> LRUCache:
         """获取或创建命名缓存
 
@@ -315,11 +308,7 @@ class CacheManager:
             # 使用管理器默认值如果未指定
             effective_ttl = ttl if ttl is not None else self._default_ttl
 
-            cache = LRUCache(
-                max_size=max_size,
-                ttl=effective_ttl,
-                track_stats=track_stats
-            )
+            cache = LRUCache(max_size=max_size, ttl=effective_ttl, track_stats=track_stats)
             self._caches[name] = cache
             return cache
 

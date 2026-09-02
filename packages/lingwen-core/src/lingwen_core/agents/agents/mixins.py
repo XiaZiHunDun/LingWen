@@ -36,10 +36,7 @@ class ConsistencyCheckingMixin:
     """
 
     def build_consistency_check_prompt(
-        self,
-        content: str,
-        check_type: str,
-        context: Optional[Dict[str, Any]] = None
+        self, content: str, check_type: str, context: Optional[Dict[str, Any]] = None
     ) -> str:
         """构建一致性检查Prompt
 
@@ -92,10 +89,7 @@ class ConsistencyCheckingMixin:
         return prompt
 
     def check_consistency(
-        self,
-        content: str,
-        check_type: str,
-        context: Optional[Dict[str, Any]] = None
+        self, content: str, check_type: str, context: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """执行一致性检查
 
@@ -112,12 +106,7 @@ class ConsistencyCheckingMixin:
         try:
             return self.chat_json(prompt)
         except Exception as e:
-            return {
-                "has_issues": False,
-                "issues": [],
-                "error": str(e),
-                "summary": f"检查失败: {e}"
-            }
+            return {"has_issues": False, "issues": [], "error": str(e), "summary": f"检查失败: {e}"}
 
 
 class WritingMixin:
@@ -127,10 +116,7 @@ class WritingMixin:
     """
 
     def build_writing_prompt(
-        self,
-        chapter_info: Dict[str, Any],
-        characters: List[Dict[str, Any]],
-        style_guide: Dict[str, Any]
+        self, chapter_info: Dict[str, Any], characters: List[Dict[str, Any]], style_guide: Dict[str, Any]
     ) -> str:
         """构建写作Prompt
 
@@ -142,12 +128,12 @@ class WritingMixin:
         Returns:
             格式化后的写作Prompt
         """
-        prompt = f"""请撰写{chapter_info.get('title', '第X章')}，字数目标：{chapter_info.get('word_count_target', 2500)}字。
+        prompt = f"""请撰写{chapter_info.get("title", "第X章")}，字数目标：{chapter_info.get("word_count_target", 2500)}字。
 
 ## 章节大纲
-核心事件：{', '.join(chapter_info.get('events', []))}
+核心事件：{", ".join(chapter_info.get("events", []))}
 """
-        if chapter_info.get('foreshadow'):
+        if chapter_info.get("foreshadow"):
             prompt += f"\n本章需埋设伏笔：{', '.join(chapter_info['foreshadow'])}"
 
         prompt += "\n\n## 角色设定\n"
@@ -157,18 +143,13 @@ class WritingMixin:
         prompt += f"""
 
 ## 文风要求
-基调：{style_guide.get('tone', '简洁有力')}
-对话比例：{style_guide.get('dialogue_ratio', '30%')}
+基调：{style_guide.get("tone", "简洁有力")}
+对话比例：{style_guide.get("dialogue_ratio", "30%")}
 """
 
         return prompt
 
-    def generate_continuation(
-        self,
-        content: str,
-        direction: str,
-        target_length: int = 500
-    ) -> str:
+    def generate_continuation(self, content: str, direction: str, target_length: int = 500) -> str:
         """续写内容
 
         Args:
@@ -210,11 +191,7 @@ class PolishingMixin:
         "ai_gloss": "请移除以下文本中的AI写作痕迹（如过度格式化、机械过渡等）：",
     }
 
-    def polish(
-        self,
-        content: str,
-        polish_type: str = "dialogue"
-    ) -> str:
+    def polish(self, content: str, polish_type: str = "dialogue") -> str:
         """润色文本
 
         Args:
@@ -241,11 +218,7 @@ class AnalysisMixin:
     提供基于LLM的内容分析能力。
     """
 
-    def _build_analysis_prompt(
-        self,
-        content: str,
-        dimensions: List[str]
-    ) -> str:
+    def _build_analysis_prompt(self, content: str, dimensions: List[str]) -> str:
         """构建章节分析Prompt
 
         Args:
@@ -298,11 +271,7 @@ class AnalysisMixin:
 }}
 """
 
-    def analyze_chapter(
-        self,
-        content: str,
-        dimensions: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
+    def analyze_chapter(self, content: str, dimensions: Optional[List[str]] = None) -> Dict[str, Any]:
         """分析章节质量
 
         Args:

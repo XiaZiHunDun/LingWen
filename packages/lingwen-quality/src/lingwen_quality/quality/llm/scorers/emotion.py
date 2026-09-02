@@ -25,9 +25,24 @@ class EmotionScorer(BaseScorer):
 
         # 检查情感词
         emotion_words = [
-            "悲伤", "愤怒", "喜悦", "恐惧", "惊讶", "心疼",
-            "感动", "激动", "难过", "开心", "快乐", "痛苦",
-            "绝望", "希望", "担忧", "焦虑", "无奈", "心酸"
+            "悲伤",
+            "愤怒",
+            "喜悦",
+            "恐惧",
+            "惊讶",
+            "心疼",
+            "感动",
+            "激动",
+            "难过",
+            "开心",
+            "快乐",
+            "痛苦",
+            "绝望",
+            "希望",
+            "担忧",
+            "焦虑",
+            "无奈",
+            "心酸",
         ]
         emotion_count = sum(1 for word in emotion_words if word in content)
 
@@ -60,7 +75,4 @@ class EmotionScorer(BaseScorer):
         # 限制分数范围
         score = max(0, min(100, score))
 
-        return ScoredResult(
-            score=score,
-            reason="; ".join(reasons) if reasons else "情感评分完成"
-        )
+        return ScoredResult(score=score, reason="; ".join(reasons) if reasons else "情感评分完成")

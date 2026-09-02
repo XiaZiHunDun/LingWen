@@ -7,13 +7,14 @@ Locks down:
 - load_default_config() raises if no API keys set
 - MasterControllerConfig is immutable (frozen dataclass)
 """
+
 import os
 import sys
 from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
 from lingwen_core.agents.agent_config import (
     DEFAULT_STATE_DIR,
@@ -24,9 +25,7 @@ from lingwen_core.agents.agent_config import (
 
 def test_default_state_dir_is_absolute():
     """DEFAULT_STATE_DIR 必须是绝对路径（cwd-无关）"""
-    assert os.path.isabs(DEFAULT_STATE_DIR), (
-        f"DEFAULT_STATE_DIR 应该是绝对路径，实际是: {DEFAULT_STATE_DIR}"
-    )
+    assert os.path.isabs(DEFAULT_STATE_DIR), f"DEFAULT_STATE_DIR 应该是绝对路径，实际是: {DEFAULT_STATE_DIR}"
 
 
 def test_default_state_dir_under_project_root():
@@ -54,6 +53,7 @@ def test_default_state_file_is_sibling_of_relationship_tracker():
     from lingwen_core.agents.social_engine.relationship_tracker import (
         DEFAULT_STATE_FILE as RT_FILE,
     )
+
     # R2-012: 默认后端 .db
     assert Path(RT_FILE).name == "relationship_network.db"
     assert Path(RT_FILE).parent.name == "social_engine"
@@ -149,6 +149,7 @@ def test_master_controller_config_is_frozen():
     """MasterControllerConfig 不可变（frozen dataclass）"""
     # 只用一个 provider 来构造，避免依赖 env
     from lingwen_llm.providers import ProviderConfig
+
     config = MasterControllerConfig(
         state_dir="/tmp",
         primary_provider="minimax",
@@ -170,4 +171,3 @@ def test_load_project_env_from_file(tmp_path, monkeypatch):
     load_project_env(env_file)
 
     assert os.environ.get("MINIMAX_API_KEY") == "from-dotenv"
-

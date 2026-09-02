@@ -14,11 +14,12 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, Optional, Type, TypeVar
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class EventType(Enum):
     """事件类型枚举"""
+
     # 创作相关
     CHAPTER_CREATED = "chapter_created"
     CHAPTER_UPDATED = "chapter_updated"
@@ -56,6 +57,7 @@ def versioned_type(event_type: str, version: int) -> str:
 @dataclass
 class DomainEvent:
     """领域事件基类"""
+
     event_id: str
     event_type: EventType
     aggregate_id: str
@@ -102,6 +104,7 @@ class DomainEvent:
 @dataclass
 class Snapshot:
     """状态快照"""
+
     snapshot_id: str
     aggregate_id: str
     aggregate_type: str
@@ -136,6 +139,7 @@ class Snapshot:
 @dataclass
 class EventStream:
     """事件流"""
+
     aggregate_id: str
     events: list[DomainEvent] = field(default_factory=list)
 

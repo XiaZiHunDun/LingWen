@@ -12,6 +12,7 @@ CLI:
     --start-chapter 361 --max-chapters 3 --budget-usd 0.15 \\
     --save-summary infra/.state/pilot_records/batch-361-363.json
 """
+
 from __future__ import annotations
 
 import json

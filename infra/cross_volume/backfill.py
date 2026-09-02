@@ -5,6 +5,7 @@
 Phase 9.12 additive: 提供 _load_chapters 公共 helper (Task 9 e2e test patch 边界),
 返 List[ChapterContent] dataclass, 给 LLM path scanner.scan_chapter 喂 chapter_content.
 """
+
 import dataclasses
 import logging
 import re
@@ -35,8 +36,10 @@ class ChapterContent:
     id: int chapter num (跟 Backfiller._parse_chapter_num 1:1)
     content: str 整章正文 (.md or _大纲.md 都行)
     """
+
     id: int
     content: str
+
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +59,7 @@ def _escape_unknown_backslashes(text: str) -> str:
     a leading backslash so the resulting string still contains a single
     backslash after YAML unescaping.
     """
+
     def _replace(match: "re.Match[str]") -> str:
         ch = match.group(1)
         if ch in _KNOWN_YAML_ESCAPES:
@@ -180,9 +184,7 @@ class Backfiller:
             return BackfillStats.from_nodes(all_nodes, dry_run=True, elapsed_s=elapsed)
 
         # --execute: skip existing node ids (idempotent re-run), then atomic_batch
-        all_node_list = [
-            n for dim_nodes in all_nodes.values() for n in dim_nodes.values()
-        ]
+        all_node_list = [n for dim_nodes in all_nodes.values() for n in dim_nodes.values()]
         storage = self._graph._storage
         existing = storage.load_all_nodes()
         pre_node_count = len(existing)
@@ -229,9 +231,7 @@ class Backfiller:
         if dry_run:
             return BackfillStats.from_nodes(all_nodes, dry_run=True, elapsed_s=elapsed)
 
-        all_node_list = [
-            n for dim_nodes in all_nodes.values() for n in dim_nodes.values()
-        ]
+        all_node_list = [n for dim_nodes in all_nodes.values() for n in dim_nodes.values()]
         storage = self._graph._storage
         existing = storage.load_all_nodes()
         pre_node_count = len(existing)
@@ -303,9 +303,7 @@ class Backfiller:
         # 跨章聚合: 同 id → 合并 payload.chapter_appearances
         if new_node.id in bucket:
             existing = bucket[new_node.id]
-            merged_chapters = sorted(
-                set(existing.payload.get("chapter_appearances", []) + [chapter_num])
-            )
+            merged_chapters = sorted(set(existing.payload.get("chapter_appearances", []) + [chapter_num]))
             bucket[new_node.id] = dataclasses.replace(
                 existing,
                 payload={**existing.payload, "chapter_appearances": merged_chapters},
@@ -326,6 +324,7 @@ class Backfiller:
 def _default_storage():
     """Phase 9.11: 默认 storage 走 infra/.state/ripple.db (跟 Phase 9.10 pattern)."""
     from infra.cross_volume.storage import RippleStorage
+
     return RippleStorage(db_path=Path("infra/.state/ripple.db"))
 
 

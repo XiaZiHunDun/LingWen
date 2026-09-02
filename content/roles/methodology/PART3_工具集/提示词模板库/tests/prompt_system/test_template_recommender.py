@@ -36,6 +36,7 @@ class TestGetPopularTemplates:
     @pytest.fixture
     def template_metadata(self):
         """创建模板元数据对象"""
+
         def _create_template(template_id: str, name: str, category: str = "continuation"):
             return TemplateMetadata(
                 id=template_id,
@@ -48,6 +49,7 @@ class TestGetPopularTemplates:
                 temperature=TemperatureConfig(recommended=0.7, min_value=0.6, max_value=0.8),
                 care_elements={"result_metrics": ["S1", "S2", "S3"]},
             )
+
         return _create_template
 
     # ==================== 测试1: 按综合评分排序 ====================
@@ -67,14 +69,15 @@ class TestGetPopularTemplates:
 
         mock_assembler.get_template.side_effect = lambda name: {
             "outline_full_novel_v1": template_metadata("outline_full_novel_v1", "全文大纲", "outline"),
-            "continuation_standard_v1": template_metadata("continuation_standard_v1", "标准续写", "continuation"),
-            "continuation_high_stakes_v1": template_metadata("continuation_high_stakes_v1", "高潮场景", "continuation"),
+            "continuation_standard_v1": template_metadata(
+                "continuation_standard_v1", "标准续写", "continuation"
+            ),
+            "continuation_high_stakes_v1": template_metadata(
+                "continuation_high_stakes_v1", "高潮场景", "continuation"
+            ),
         }.get(name)
 
-        recommender = TemplateRecommender(
-            assembler=mock_assembler,
-            index_file=str(mock_index_file)
-        )
+        recommender = TemplateRecommender(assembler=mock_assembler, index_file=str(mock_index_file))
 
         # 手动设置统计数据
         recommender.template_stats = {
@@ -108,9 +111,7 @@ class TestGetPopularTemplates:
 
     # ==================== 测试2: 验证limit参数 ====================
 
-    def test_respects_limit_parameter(
-        self, mock_assembler, mock_index_file, template_metadata
-    ):
+    def test_respects_limit_parameter(self, mock_assembler, mock_index_file, template_metadata):
         """验证limit参数"""
 
         mock_assembler.get_template.side_effect = lambda name: {
@@ -119,10 +120,7 @@ class TestGetPopularTemplates:
             "template_c": template_metadata("template_c", "模板C"),
         }.get(name)
 
-        recommender = TemplateRecommender(
-            assembler=mock_assembler,
-            index_file=str(mock_index_file)
-        )
+        recommender = TemplateRecommender(assembler=mock_assembler, index_file=str(mock_index_file))
 
         recommender.template_stats = {
             "template_a": {"use_count": 10, "success_rate": 0.9, "avg_score": 9.0},
@@ -137,9 +135,7 @@ class TestGetPopularTemplates:
 
     # ==================== 测试3: 过滤use_count=0的模板 ====================
 
-    def test_excludes_unused_templates(
-        self, mock_assembler, mock_index_file, template_metadata
-    ):
+    def test_excludes_unused_templates(self, mock_assembler, mock_index_file, template_metadata):
         """过滤use_count=0的模板"""
 
         mock_assembler.get_template.side_effect = lambda name: {
@@ -147,10 +143,7 @@ class TestGetPopularTemplates:
             "unused_template": template_metadata("unused_template", "未使用模板"),
         }.get(name)
 
-        recommender = TemplateRecommender(
-            assembler=mock_assembler,
-            index_file=str(mock_index_file)
-        )
+        recommender = TemplateRecommender(assembler=mock_assembler, index_file=str(mock_index_file))
 
         recommender.template_stats = {
             "active_template": {"use_count": 10, "success_rate": 0.9, "avg_score": 9.0},
@@ -167,10 +160,7 @@ class TestGetPopularTemplates:
     def test_empty_list_when_no_stats(self, mock_assembler, mock_index_file):
         """无统计信息时返回空列表"""
 
-        recommender = TemplateRecommender(
-            assembler=mock_assembler,
-            index_file=str(mock_index_file)
-        )
+        recommender = TemplateRecommender(assembler=mock_assembler, index_file=str(mock_index_file))
 
         # 确保没有任何统计数据
         recommender.template_stats = {}
@@ -182,9 +172,7 @@ class TestGetPopularTemplates:
 
     # ==================== 测试5: 回归测试现有recommend方法 ====================
 
-    def test_recommend_returns_scored_templates(
-        self, mock_assembler, mock_index_file, template_metadata
-    ):
+    def test_recommend_returns_scored_templates(self, mock_assembler, mock_index_file, template_metadata):
         """回归测试现有recommend方法"""
 
         mock_assembler.list_templates.return_value = ["全文大纲", "标准续写"]
@@ -193,10 +181,7 @@ class TestGetPopularTemplates:
             "标准续写": template_metadata("continuation_standard_v1", "标准续写", "continuation"),
         }.get(name)
 
-        recommender = TemplateRecommender(
-            assembler=mock_assembler,
-            index_file=str(mock_index_file)
-        )
+        recommender = TemplateRecommender(assembler=mock_assembler, index_file=str(mock_index_file))
 
         recommender.template_stats = {
             "outline_full_novel_v1": {"use_count": 5, "success_rate": 0.8, "avg_score": 8.5},
@@ -223,6 +208,7 @@ class TestGetPopularTemplatesEdgeCases:
     @pytest.fixture
     def template_metadata(self):
         """创建模板元数据对象"""
+
         def _create_template(template_id: str, name: str, category: str = "continuation"):
             return TemplateMetadata(
                 id=template_id,
@@ -235,19 +221,15 @@ class TestGetPopularTemplatesEdgeCases:
                 temperature=TemperatureConfig(recommended=0.7, min_value=0.6, max_value=0.8),
                 care_elements={"result_metrics": ["S1", "S2", "S3"]},
             )
+
         return _create_template
 
-    def test_with_missing_template_in_assembler(
-        self, mock_assembler, mock_index_file, template_metadata
-    ):
+    def test_with_missing_template_in_assembler(self, mock_assembler, mock_index_file, template_metadata):
         """当assembler.get_template返回None时的处理"""
 
         mock_assembler.get_template.return_value = None
 
-        recommender = TemplateRecommender(
-            assembler=mock_assembler,
-            index_file=str(mock_index_file)
-        )
+        recommender = TemplateRecommender(assembler=mock_assembler, index_file=str(mock_index_file))
 
         recommender.template_stats = {
             "ghost_template": {"use_count": 5, "success_rate": 0.8, "avg_score": 8.5},
@@ -258,19 +240,14 @@ class TestGetPopularTemplatesEdgeCases:
         # 应该忽略返回None的模板
         assert results == []
 
-    def test_verify_popularity_score_formula(
-        self, mock_assembler, mock_index_file, template_metadata
-    ):
+    def test_verify_popularity_score_formula(self, mock_assembler, mock_index_file, template_metadata):
         """验证综合评分公式: score = use_count * success_rate * (avg_score / 10)"""
 
         mock_assembler.get_template.side_effect = lambda name: {
             "formula_template": template_metadata("formula_template", "公式验证模板"),
         }.get(name)
 
-        recommender = TemplateRecommender(
-            assembler=mock_assembler,
-            index_file=str(mock_index_file)
-        )
+        recommender = TemplateRecommender(assembler=mock_assembler, index_file=str(mock_index_file))
 
         # 设置特定值来验证公式
         # use_count=10, success_rate=0.8, avg_score=8.5

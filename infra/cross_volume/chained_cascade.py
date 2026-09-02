@@ -1,4 +1,5 @@
 """Phase 9.64 F55: chained cascade — spawn child ripples at depth ≥ 2."""
+
 from __future__ import annotations
 
 import logging

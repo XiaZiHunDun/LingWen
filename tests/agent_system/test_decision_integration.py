@@ -7,6 +7,7 @@ Doc 4 §10 + Phase 4: 决策面板整合
 - 新增 MasterController.list_pending_decisions() API
 - 老 API (advance_step/dispatch_task/...advance_step) 不受影响
 """
+
 from __future__ import annotations
 
 import types
@@ -25,6 +26,7 @@ from infra.got.data_structures import NodeType, ThoughtNode
 
 # === Reuse stub helpers from test_master_controller_workflow ===
 
+
 def _make_controller_with_stubs(monkeypatch) -> tuple[Any, Any]:
     """构造 MasterController 但 stub 掉 init 中的重操作,只保留 run_workflow 链路"""
     from lingwen_core.agents import master_controller as mc_mod
@@ -36,6 +38,7 @@ def _make_controller_with_stubs(monkeypatch) -> tuple[Any, Any]:
     monkeypatch.setattr(mc_mod, "build_social_engine", lambda state_dir: None)
 
     import lingwen_pipeline.state.state_manager as sm_mod
+
     monkeypatch.setattr(sm_mod, "StateManager", lambda *a, **kw: None)
 
     controller = mc_mod.MasterController.__new__(mc_mod.MasterController)
@@ -55,7 +58,13 @@ def _make_controller_with_stubs(monkeypatch) -> tuple[Any, Any]:
         {
             "check_character_consistency": staticmethod(lambda content, characters: []),
             "detect_ai_gloss": staticmethod(lambda content: []),
-            "generate_audit_report": staticmethod(lambda chapter_num, issues, scores: {"chapter": chapter_num, "issues": issues, "scores": scores}),
+            "generate_audit_report": staticmethod(
+                lambda chapter_num, issues, scores: {
+                    "chapter": chapter_num,
+                    "issues": issues,
+                    "scores": scores,
+                }
+            ),
             # Phase 8.6.2: handler 调 audit_chapter_with_usage (调 self.auditor.audit_chapter_with_usage)
             "audit_chapter_with_usage": stub.audit_chapter_with_usage,
         },
@@ -66,8 +75,14 @@ def _make_controller_with_stubs(monkeypatch) -> tuple[Any, Any]:
         {
             "remove_ai_gloss": stub.polish_chapter,
             "polish_chapter_with_usage": stub.polish_chapter_with_usage,
-            "optimize_dialogue_llm_with_usage": lambda content: (content + " (dialogue)", {"input_tokens": 100, "output_tokens": 50}),
-            "adjust_pacing_llm_with_usage": lambda content: (content + " (pacing)", {"input_tokens": 100, "output_tokens": 50}),
+            "optimize_dialogue_llm_with_usage": lambda content: (
+                content + " (dialogue)",
+                {"input_tokens": 100, "output_tokens": 50},
+            ),
+            "adjust_pacing_llm_with_usage": lambda content: (
+                content + " (pacing)",
+                {"input_tokens": 100, "output_tokens": 50},
+            ),
         },
     )()
     controller.outline_master = type(
@@ -77,7 +92,9 @@ def _make_controller_with_stubs(monkeypatch) -> tuple[Any, Any]:
     )()
     controller.character_designer = type("cd", (), {})()
     controller.context_builder = type("cb", (), {"build_writing_context": staticmethod(lambda **kw: {})})()
-    controller.writing_suggestion = type("ws", (), {"generate_suggestions": staticmethod(lambda *a, **kw: [])})()
+    controller.writing_suggestion = type(
+        "ws", (), {"generate_suggestions": staticmethod(lambda *a, **kw: [])}
+    )()
     controller.relationship_tracker = type("rt", (), {"get_network": staticmethod(lambda: {})})()
     controller.event_calculator = None
     controller.conflict_alert = None
@@ -90,36 +107,53 @@ def _make_controller_with_stubs(monkeypatch) -> tuple[Any, Any]:
     controller._decision_queue = None
 
     controller.write_chapter = types.MethodType(
-        lambda self, chapter_num, outline, characters, memory_context, style_guide, use_llm: stub.write_chapter(
-            chapter_num, outline, characters, memory_context, style_guide, use_llm,
+        lambda self, chapter_num, outline, characters, memory_context, style_guide, use_llm: (
+            stub.write_chapter(
+                chapter_num,
+                outline,
+                characters,
+                memory_context,
+                style_guide,
+                use_llm,
+            )
         ),
         controller,
     )
     controller.audit_chapter = types.MethodType(
         lambda self, chapter_num, content, characters, timeline, use_llm: stub.audit_chapter(
-            chapter_num, content, characters, timeline, use_llm,
+            chapter_num,
+            content,
+            characters,
+            timeline,
+            use_llm,
         ),
         controller,
     )
     controller.polish_chapter = types.MethodType(
-        lambda self, content: stub.polish_chapter(content), controller,
+        lambda self, content: stub.polish_chapter(content),
+        controller,
     )
     # Phase 7.4: stub 新增的 2 个 variant entry methods
     controller.polish_emotional_pacing = types.MethodType(
-        lambda self, content: stub.polish_chapter(content), controller,
+        lambda self, content: stub.polish_chapter(content),
+        controller,
     )
     controller.polish_ai_trace_removal = types.MethodType(
-        lambda self, content: stub.polish_chapter(content), controller,
+        lambda self, content: stub.polish_chapter(content),
+        controller,
     )
     # Phase 7.5: stub polish_merge_synthesis
     controller.polish_merge_synthesis = types.MethodType(
         lambda self, content_a, content_b, *, labels=("A", "B"): stub.polish_merge_synthesis(
-            content_a, content_b, labels=labels,
+            content_a,
+            content_b,
+            labels=labels,
         ),
         controller,
     )
     controller.generate_outline = types.MethodType(
-        lambda self, settings, requirements: stub.generate_outline(settings, requirements), controller,
+        lambda self, settings, requirements: stub.generate_outline(settings, requirements),
+        controller,
     )
     return controller, stub
 
@@ -140,7 +174,9 @@ class _StubMaster:
         return content + " [polished]"
 
     # Phase 8.6.2: 5 *_with_usage methods (handler 调 variant 拿真实 usage)
-    def write_chapter_with_usage(self, chapter_num, outline, characters, memory_context, style_guide, use_llm):
+    def write_chapter_with_usage(
+        self, chapter_num, outline, characters, memory_context, style_guide, use_llm
+    ):
         self.calls.append(("write_chapter_with_usage", {"chapter_num": chapter_num}))
         return (
             {"content": f"ch{chapter_num} text", "word_count": 100, "chapter_num": chapter_num},
@@ -159,7 +195,9 @@ class _StubMaster:
         """Accept both master signature (timeline=) and auditor signature (context=)"""
         chapter_num = kwargs.get("chapter_num", args[0] if args else 0)
         content = kwargs.get("content", args[1] if len(args) > 1 else "")
-        self.calls.append(("audit_chapter_with_usage", {"chapter_num": chapter_num, "content_len": len(content)}))
+        self.calls.append(
+            ("audit_chapter_with_usage", {"chapter_num": chapter_num, "content_len": len(content)})
+        )
         return (
             {"chapter": chapter_num, "issues": [], "scores": {"S1": 80}},
             {"input_tokens": 80, "output_tokens": 40},
@@ -179,12 +217,39 @@ class _StubMaster:
         if not content_a or not content_b:
             winner = labels[0] if content_a else labels[1]
             content = content_a or content_b
-            return {"content": content, "winner": winner, "scores_a": {}, "scores_b": {}, "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0, "fallback": "empty_content"}
+            return {
+                "content": content,
+                "winner": winner,
+                "scores_a": {},
+                "scores_b": {},
+                "scores_total_a": 0.0,
+                "scores_total_b": 0.0,
+                "scores_delta": 0.0,
+                "fallback": "empty_content",
+            }
         if content_a == content_b:
-            return {"content": content_a, "winner": labels[0], "scores_a": {}, "scores_b": {}, "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0, "fallback": "identical"}
+            return {
+                "content": content_a,
+                "winner": labels[0],
+                "scores_a": {},
+                "scores_b": {},
+                "scores_total_a": 0.0,
+                "scores_total_b": 0.0,
+                "scores_delta": 0.0,
+                "fallback": "identical",
+            }
         winner_label = labels[0] if len(content_a) >= len(content_b) else labels[1]
         content = content_a if winner_label == labels[0] else content_b
-        return {"content": content, "winner": winner_label, "scores_a": {}, "scores_b": {}, "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0, "fallback": "llm_fail"}
+        return {
+            "content": content,
+            "winner": winner_label,
+            "scores_a": {},
+            "scores_b": {},
+            "scores_total_a": 0.0,
+            "scores_total_b": 0.0,
+            "scores_delta": 0.0,
+            "fallback": "llm_fail",
+        }
 
     # Phase 8.7: stub polish_merge_synthesis_with_usage — 跟 5 *_with_usage methods 同模式
     # 返 (max(len) fallback dict, hardcoded 100/50). _handler_polish_merge 改调此方法.
@@ -196,8 +261,11 @@ class _StubMaster:
             {
                 "content": chosen,
                 "winner": winner,
-                "scores_a": {}, "scores_b": {},
-                "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0,
+                "scores_a": {},
+                "scores_b": {},
+                "scores_total_a": 0.0,
+                "scores_total_b": 0.0,
+                "scores_delta": 0.0,
                 "fallback": "stub_max_len",
             },
             {"input_tokens": 100, "output_tokens": 50},
@@ -208,6 +276,7 @@ class _StubMaster:
 
 
 # === TestRunWorkflowDecisionDiscovery ===
+
 
 class TestRunWorkflowDecisionDiscovery:
     """run_workflow 扫描图中的 DECISION 节点 → 创建 HumanDecision"""
@@ -269,6 +338,7 @@ class TestRunWorkflowDecisionDiscovery:
     def test_decision_kind_inferred_from_node_id(self, monkeypatch):
         """DECISION 节点 → DecisionKind 根据 node_id 推断"""
         from lingwen_pipeline.master_controller import _infer_decision_kind
+
         assert _infer_decision_kind("outline_judgment") == DecisionKind.OUTLINE_JUDGMENT
         assert _infer_decision_kind("volume_judgment") == DecisionKind.VOLUME_JUDGMENT
         assert _infer_decision_kind("publish_judgment") == DecisionKind.PUBLISH_JUDGMENT
@@ -280,6 +350,7 @@ class TestRunWorkflowDecisionDiscovery:
 
 
 # === TestResolveDecisionAPI ===
+
 
 class TestResolveDecisionAPI:
     """MasterController.resolve_decision + list_pending_decisions API"""
@@ -322,14 +393,22 @@ class TestResolveDecisionAPI:
     def test_list_pending_decisions_returns_list(self, monkeypatch, tmp_path):
         controller, _ = _make_controller_with_stubs(monkeypatch)
         q = HumanDecisionQueue(state_dir=str(tmp_path))
-        q.add(create_decision(
-            decision_kind=DecisionKind.OUTLINE_JUDGMENT,
-            node_id="o1", prompt="p1", options=("a", "b"),
-        ))
-        q.add(create_decision(
-            decision_kind=DecisionKind.STYLE_PICK,
-            node_id="s1", prompt="p2", options=("x", "y"),
-        ))
+        q.add(
+            create_decision(
+                decision_kind=DecisionKind.OUTLINE_JUDGMENT,
+                node_id="o1",
+                prompt="p1",
+                options=("a", "b"),
+            )
+        )
+        q.add(
+            create_decision(
+                decision_kind=DecisionKind.STYLE_PICK,
+                node_id="s1",
+                prompt="p2",
+                options=("x", "y"),
+            )
+        )
         controller._decision_queue = q
 
         pending = controller.list_pending_decisions()
@@ -346,6 +425,7 @@ class TestResolveDecisionAPI:
 
 # === TestDecisionQueueAutoInit ===
 
+
 class TestDecisionQueueAutoInit:
     """MasterController 默认初始化 decision queue (state_dir/decisions.json)"""
 
@@ -361,7 +441,8 @@ class TestDecisionQueueAutoInit:
 
         # 构造 workflow 包含 DECISION 节点
         wf_path = tmp_path / "decision_test.yaml"
-        wf_path.write_text("""\
+        wf_path.write_text(
+            """\
 workflow: decision_test
 version: 1
 nodes:
@@ -380,7 +461,9 @@ nodes:
     name: Emit
     description: emit
     depends_on: [outline_judgment]
-""", encoding="utf-8")
+""",
+            encoding="utf-8",
+        )
 
         result = controller.run_workflow(
             workflow_name="decision_test",

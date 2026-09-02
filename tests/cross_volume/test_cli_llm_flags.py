@@ -10,6 +10,7 @@
 7. help_output_mentions_new_flags              # --help 提 4 新 flag
 8. backward_compat_no_new_flags_still_works     # Phase 9.11 default 0 break
 """
+
 from pathlib import Path
 from unittest.mock import patch
 
@@ -87,9 +88,11 @@ class TestCLINewFlags:
         """--use-llm --apply → LLM path, scanner + storage instantiated."""
         # Per spec: 真实 LLM scan-and-write 是 Task 9 的活; Task 7 仅验证
         # LLM 路径被触发, components 实例化成功.
-        with patch("infra.cross_volume.llm_scanner.LLMScanner") as mock_scanner, \
-             patch("infra.cross_volume.llm_cache.LLMCache"), \
-             patch("lingwen_llm.providers.cost_tracker.CostTracker"):
+        with (
+            patch("infra.cross_volume.llm_scanner.LLMScanner") as mock_scanner,
+            patch("infra.cross_volume.llm_cache.LLMCache"),
+            patch("lingwen_llm.providers.cost_tracker.CostTracker"),
+        ):
             options = make_options(use_llm=True, apply=True, vol=1, dry_run=False)
             cmd = BackfillCommand()
             result = cmd.execute(options)
@@ -106,13 +109,14 @@ class TestCLINewFlags:
         这跟 Task 7 时代 (dry-run 0 实例化 scanner) 的 stub 行为不同, 是 Task 9
         写真实 scan 后的 additive 行为.
         """
-        with patch("infra.cross_volume.llm_scanner.LLMScanner") as mock_scanner, \
-             patch("infra.cross_volume.llm_cache.LLMCache"), \
-             patch("lingwen_llm.providers.cost_tracker.CostTracker"), \
-             patch("lingwen_llm.providers.tiered_router.TieredRouter"), \
-             patch("infra.cross_volume.backfill._load_chapters",
-                   return_value=[], create=True), \
-             patch("infra.cross_volume.storage.RippleStorage") as mock_storage:
+        with (
+            patch("infra.cross_volume.llm_scanner.LLMScanner") as mock_scanner,
+            patch("infra.cross_volume.llm_cache.LLMCache"),
+            patch("lingwen_llm.providers.cost_tracker.CostTracker"),
+            patch("lingwen_llm.providers.tiered_router.TieredRouter"),
+            patch("infra.cross_volume.backfill._load_chapters", return_value=[], create=True),
+            patch("infra.cross_volume.storage.RippleStorage") as mock_storage,
+        ):
             options = make_options(use_llm=True, apply=False, vol=1)
             cmd = BackfillCommand()
             result = cmd.execute(options)
@@ -128,13 +132,13 @@ class TestCLINewFlags:
     def test_cache_path_passed_to_llm_cache(self, tmp_path):
         """--cache-path is passed through to LLMCache constructor."""
         cache_path = tmp_path / "custom_cache.json"
-        with patch("infra.cross_volume.llm_cache.LLMCache") as mock_cache, \
-             patch("infra.cross_volume.llm_scanner.LLMScanner"), \
-             patch("lingwen_llm.providers.cost_tracker.CostTracker"), \
-             patch("infra.cross_volume.storage.RippleStorage"):
-            options = make_options(
-                use_llm=True, apply=True, vol=1, cache_path=cache_path
-            )
+        with (
+            patch("infra.cross_volume.llm_cache.LLMCache") as mock_cache,
+            patch("infra.cross_volume.llm_scanner.LLMScanner"),
+            patch("lingwen_llm.providers.cost_tracker.CostTracker"),
+            patch("infra.cross_volume.storage.RippleStorage"),
+        ):
+            options = make_options(use_llm=True, apply=True, vol=1, cache_path=cache_path)
             cmd = BackfillCommand()
             result = cmd.execute(options)
             assert result == 0
@@ -161,8 +165,10 @@ class TestCLINewFlags:
 
     def test_backward_compat_no_new_flags_still_works(self):
         """Phase 9.11 default (no new flags) → rule path, Backfiller called, 0 break."""
-        with patch("infra.cross_volume.backfill.Backfiller") as mock_backfiller, \
-             patch("infra.cross_volume.storage.RippleStorage"):
+        with (
+            patch("infra.cross_volume.backfill.Backfiller") as mock_backfiller,
+            patch("infra.cross_volume.storage.RippleStorage"),
+        ):
             # 模拟 Phase 9.11 default: --dry-run (no --execute)
             options = make_options(vol=1, dry_run=True)
             cmd = BackfillCommand()

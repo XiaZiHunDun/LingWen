@@ -14,8 +14,8 @@ from .base_checker import BaseChecker
 
 class KnowledgeTracker(BaseChecker):
     """信息知晓追踪检测器 - 检测角色知道某事却无反应"""
-    _checker_type = CheckerType.KNOWLEDGE_TRACKING
 
+    _checker_type = CheckerType.KNOWLEDGE_TRACKING
 
     # 透露秘密的动作模式
     REVEAL_PATTERNS = [
@@ -50,27 +50,48 @@ class KnowledgeTracker(BaseChecker):
 
     # 不知道/茫然的反应模式
     IGNORANCE_PATTERNS = [
-        "不知道", "茫然", "疑惑", "困惑", "什么秘密", "什么意思",
-        "听不懂", "不明白", "没听懂", "不清楚", "什么", "啥",
-        "茫然地看着", "一脸疑惑", "很困惑", "不明白他的意思"
+        "不知道",
+        "茫然",
+        "疑惑",
+        "困惑",
+        "什么秘密",
+        "什么意思",
+        "听不懂",
+        "不明白",
+        "没听懂",
+        "不清楚",
+        "什么",
+        "啥",
+        "茫然地看着",
+        "一脸疑惑",
+        "很困惑",
+        "不明白他的意思",
     ]
 
     # 正确回应的模式
     ACKNOWLEDGMENT_PATTERNS = [
-        "点了点头", "神色凝重", "明白了", "知道了", "原来如此",
-        "我明白了", "我知道了", "会保守秘密", "替你保密",
-        "会守口如瓶", "明白了他的意思", "心中了然",
-        "郑重点头", "眼神凝重", "若有所思地点头"
+        "点了点头",
+        "神色凝重",
+        "明白了",
+        "知道了",
+        "原来如此",
+        "我明白了",
+        "我知道了",
+        "会保守秘密",
+        "替你保密",
+        "会守口如瓶",
+        "明白了他的意思",
+        "心中了然",
+        "郑重点头",
+        "眼神凝重",
+        "若有所思地点头",
     ]
 
     def __init__(self):
         super().__init__(self._checker_type)
 
     def check(
-        self,
-        chapter_content: str,
-        chapter_num: int,
-        context: Optional[Dict[str, Any]] = None
+        self, chapter_content: str, chapter_num: int, context: Optional[Dict[str, Any]] = None
     ) -> List[Issue]:
         issues = []
 
@@ -86,9 +107,9 @@ class KnowledgeTracker(BaseChecker):
             if self._shows_ignorance(after_text):
                 # 只有当茫然出现在承认之前时，才算问题
                 if not self._has_prior_acknowledgment(after_text):
-                    issues.append(self._create_issue(
-                        listener, secret, chapter_num, secret_info["match_text"]
-                    ))
+                    issues.append(
+                        self._create_issue(listener, secret, chapter_num, secret_info["match_text"])
+                    )
 
         return issues
 
@@ -144,18 +165,20 @@ class KnowledgeTracker(BaseChecker):
                 search_start = listener_end
                 for secret_pattern in secret_patterns:
                     # 限制搜索范围在listener之后200字符内
-                    search_region = text[search_start:search_start+200]
+                    search_region = text[search_start : search_start + 200]
                     secret_match = re.search(secret_pattern, search_region)
                     if secret_match:
                         secret_text = secret_match.group()
                         secret_end = search_start + secret_match.end()
 
-                        results.append({
-                            "listener": listener,
-                            "secret": secret_text[:50],  # 截断过长的描述
-                            "after_text": text[secret_end:secret_end+100],  # 缩小窗口避免误判
-                            "match_text": f"{listener_match.group()}{secret_text}"
-                        })
+                        results.append(
+                            {
+                                "listener": listener,
+                                "secret": secret_text[:50],  # 截断过长的描述
+                                "after_text": text[secret_end : secret_end + 100],  # 缩小窗口避免误判
+                                "match_text": f"{listener_match.group()}{secret_text}",
+                            }
+                        )
                         break  # 找到一个秘密揭示就继续下一个listener
 
         # 也尝试直接匹配"告诉了X秘密"类型的模式
@@ -173,28 +196,32 @@ class KnowledgeTracker(BaseChecker):
                     listener = groups[-1] if len(groups) > 1 else groups[0]
                     secret = groups[0] if len(groups) > 1 else "某个秘密"
                     end_pos = m.end()
-                    results.append({
-                        "listener": listener.strip(),
-                        "secret": secret.strip()[:50],
-                        "after_text": text[end_pos:end_pos+100],  # 缩小窗口避免误判
-                        "match_text": m.group()
-                    })
+                    results.append(
+                        {
+                            "listener": listener.strip(),
+                            "secret": secret.strip()[:50],
+                            "after_text": text[end_pos : end_pos + 100],  # 缩小窗口避免误判
+                            "match_text": m.group(),
+                        }
+                    )
 
         # 模式3：告诉X "我的真实身份是..." 或类似模式（带中文引号）
         tell_pattern = r"告诉(\w+)[：:\"]"
         for m in re.finditer(tell_pattern, text):
             listener = m.group(1)
             end_pos = m.end()
-            quote_region = text[end_pos:end_pos+200]
+            quote_region = text[end_pos : end_pos + 200]
             # 支持中文引号「」""'' 和英文引号
             quote_match = re.search(r"[\"\"\"'']?(我的真实身份是|其实我是|我是)(.+?)[\"\"\"'']", quote_region)
             if quote_match:
-                results.append({
-                    "listener": listener,
-                    "secret": quote_match.group()[:50],
-                    "after_text": text[end_pos:end_pos+100],
-                    "match_text": m.group() + quote_match.group()
-                })
+                results.append(
+                    {
+                        "listener": listener,
+                        "secret": quote_match.group()[:50],
+                        "after_text": text[end_pos : end_pos + 100],
+                        "match_text": m.group() + quote_match.group(),
+                    }
+                )
 
         return results
 
@@ -212,13 +239,7 @@ class KnowledgeTracker(BaseChecker):
                 return True
         return False
 
-    def _create_issue(
-        self,
-        listener: str,
-        secret: str,
-        chapter_num: int,
-        match_text: str
-    ) -> Issue:
+    def _create_issue(self, listener: str, secret: str, chapter_num: int, match_text: str) -> Issue:
         return Issue(
             id=f"KT_{chapter_num:03d}_{listener[:10]}",
             severity=IssueSeverity.P1,
@@ -228,5 +249,5 @@ class KnowledgeTracker(BaseChecker):
             description=f"角色'{listener}'听到了关于'{secret}'的秘密，但没有表现出理解的迹象",
             location=IssueLocation(chapter=chapter_num),
             evidence=f"listener: {listener}, match: {match_text}",
-            suggestion="需要加入角色回应（点头、明白了、原来如此等）"
+            suggestion="需要加入角色回应（点头、明白了、原来如此等）",
         )

@@ -17,7 +17,6 @@ Usage:
     opinion_with_ref = build_opinion_with_ref(existing_opinion, "ch001.md")
 """
 
-
 import re
 from datetime import datetime
 from pathlib import Path
@@ -28,6 +27,7 @@ from pydantic import BaseModel, Field, field_validator
 # ============================================================================
 # 数据模型
 # ============================================================================
+
 
 class ParagraphRef(BaseModel):
     """
@@ -40,13 +40,10 @@ class ParagraphRef(BaseModel):
         end_line: 结束行号
         content_preview: 段落内容预览（最多200字符）
     """
+
     start_line: int = Field(..., ge=1, description="起始行号（从1开始）")
     end_line: int = Field(..., ge=1, description="结束行号")
-    content_preview: str = Field(
-        default="",
-        max_length=200,
-        description="段落内容预览（最多200字符）"
-    )
+    content_preview: str = Field(default="", max_length=200, description="段落内容预览（最多200字符）")
 
     @field_validator("end_line")
     @classmethod
@@ -59,6 +56,7 @@ class ParagraphRef(BaseModel):
 
 class OpinionType(str):
     """意见类型别名"""
+
     # 常见类型
     LOGIC_ISSUE = "逻辑问题"
     CHARACTER_ISSUE = "人物问题"
@@ -75,6 +73,7 @@ class OpinionType(str):
 
 class OpinionSeverity(str):
     """意见严重程度"""
+
     P0 = "P0"  # 致命：逻辑硬伤，影响阅读
     P1 = "P1"  # 严重：一致性冲突，需要修改
     P2 = "P2"  # 中等：轻微不一致，建议修改
@@ -88,6 +87,7 @@ class OpinionBase(BaseModel):
     定义意见仓库中意见记录的基础字段。
     兼容现有意见仓库格式。
     """
+
     opinion_id: Optional[str] = Field(default=None, description="意见唯一标识")
     chapter: str = Field(..., description="章节号，如 ch001")
     type: str = Field(default="其他", description="意见类型")
@@ -96,13 +96,11 @@ class OpinionBase(BaseModel):
     created_at: str = Field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d"))
 
     # 段落引用（新增字段）
-    paragraph_ref: Optional[ParagraphRef] = Field(
-        default=None,
-        description="段落引用信息"
-    )
+    paragraph_ref: Optional[ParagraphRef] = Field(default=None, description="段落引用信息")
 
     class Config:
         """Pydantic配置"""
+
         extra = "allow"  # 允许额外字段，保证向后兼容
 
 
@@ -110,11 +108,9 @@ class OpinionBase(BaseModel):
 # 核心函数
 # ============================================================================
 
+
 def extract_paragraph_ref(
-    chapter_path: str | Path,
-    start_line: int,
-    end_line: int,
-    max_preview_chars: int = 200
+    chapter_path: str | Path, start_line: int, end_line: int, max_preview_chars: int = 200
 ) -> ParagraphRef:
     """
     从章节文件中提取指定行号范围的段落引用
@@ -173,18 +169,14 @@ def extract_paragraph_ref(
     if len(content) > max_preview_chars:
         content = content[:max_preview_chars] + "..."
 
-    return ParagraphRef(
-        start_line=start_line,
-        end_line=end_line,
-        content_preview=content
-    )
+    return ParagraphRef(start_line=start_line, end_line=end_line, content_preview=content)
 
 
 def build_opinion_with_ref(
     opinion: Dict[str, Any],
     chapter_path: str | Path,
     line_field: str = "line",
-    end_line_field: str = "end_line"
+    end_line_field: str = "end_line",
 ) -> Dict[str, Any]:
     """
     为现有意见字典添加段落引用信息
@@ -255,8 +247,7 @@ def build_opinion_with_ref(
 
 
 def extract_opinions_with_refs(
-    opinions: List[Dict[str, Any]],
-    content_root: str | Path
+    opinions: List[Dict[str, Any]], content_root: str | Path
 ) -> List[Dict[str, Any]]:
     """
     批量为意见列表添加段落引用
@@ -294,6 +285,7 @@ def extract_opinions_with_refs(
 # 工具函数
 # ============================================================================
 
+
 def parse_line_reference(text: str) -> tuple[int, int] | None:
     """
     从文本中解析行号引用
@@ -328,9 +320,7 @@ def parse_line_reference(text: str) -> tuple[int, int] | None:
 
 
 def find_line_for_text(
-    chapter_path: str | Path,
-    search_text: str,
-    context_chars: int = 50
+    chapter_path: str | Path, search_text: str, context_chars: int = 50
 ) -> tuple[int, str] | None:
     """
     在章节中查找指定文本，并返回其所在行号
@@ -372,7 +362,6 @@ def find_line_for_text(
 # ============================================================================
 
 if __name__ == "__main__":
-
     # 测试用例
     print("=" * 60)
     print("段落引用提取模块 - 测试")

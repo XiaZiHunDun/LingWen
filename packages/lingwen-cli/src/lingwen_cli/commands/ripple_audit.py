@@ -8,6 +8,7 @@ Usage:
     lingwen.py ripple-audit rip-applied-1
     lingwen.py ripple-audit rip-applied-1 --limit 10
 """
+
 import re
 import sys
 from pathlib import Path
@@ -27,6 +28,7 @@ def _get_storage():
     or CWD fallback with WARNING (1-version deprecation).
     """
     from infra.cross_volume.storage import RippleStorage
+
     return RippleStorage(db_path=resolve_project_db_path())
 
 
@@ -62,13 +64,8 @@ class RippleAuditCommand(Command):
 
         storage = _get_storage()
         mode = "execute" if options.execute else "dry-run"
-        result = purge_audit_entries_older_than(
-            storage, delta, execute=options.execute
-        )
-        print(
-            f"[PURGE] mode={mode} older_than={options.older_than}"
-            f" cutoff={result.cutoff_iso}"
-        )
+        result = purge_audit_entries_older_than(storage, delta, execute=options.execute)
+        print(f"[PURGE] mode={mode} older_than={options.older_than} cutoff={result.cutoff_iso}")
         print(f"  matched={result.matched} deleted={result.deleted}")
         if not options.execute and result.matched:
             print("  (re-run with --execute to delete)")

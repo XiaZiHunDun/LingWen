@@ -87,10 +87,7 @@ class BaseChecker(ABC):
 
     @abstractmethod
     def check(
-        self,
-        chapter_content: str,
-        chapter_num: int,
-        context: Optional[Dict[str, Any]] = None
+        self, chapter_content: str, chapter_num: int, context: Optional[Dict[str, Any]] = None
     ) -> List[Issue]:
         """
         执行检查
@@ -138,10 +135,7 @@ class BaseChecker(ABC):
             return False, ""
 
     def check_with_whitelist(
-        self,
-        chapter_content: str,
-        chapter_num: int,
-        context: Optional[Dict[str, Any]] = None
+        self, chapter_content: str, chapter_num: int, context: Optional[Dict[str, Any]] = None
     ) -> List[Issue]:
         """
         带白名单检查的检测方法

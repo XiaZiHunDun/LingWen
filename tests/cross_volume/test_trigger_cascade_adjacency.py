@@ -10,6 +10,7 @@
 3. `trigger_cascade` 优先用 `_adjacency_by_node`, 不走旧 `_index_by_node_edges` 线性扫
 4. `_register_edge_in_indexes(edge)` helper 原子写双索引
 """
+
 from __future__ import annotations
 
 import pytest

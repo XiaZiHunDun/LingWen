@@ -2,6 +2,7 @@
 
 原 llm_quality_deep_check.py 第 439-814 行 LLMRepairer 类。
 """
+
 from typing import List, Optional
 
 from lingwen_llm.port_adapter import LLMServiceAdapter
@@ -32,7 +33,7 @@ class LLMRepairer:
 - 类型: {issue.issue_type}
 - 问题: {issue.description}
 - 位置: {issue.location}
-- 修复建议: {issue.suggestion if hasattr(issue, 'suggestion') else '请根据角色设定进行修复'}
+- 修复建议: {issue.suggestion if hasattr(issue, "suggestion") else "请根据角色设定进行修复"}
 
 请直接输出修复后的完整章节内容（保持原文风格，只修改问题部分）。"""
 
@@ -40,7 +41,7 @@ class LLMRepairer:
             task_type=TaskType.REPAIR,
             prompt=prompt,
             max_tokens=3000,
-            system="你是一个专业的小说内容修复专家，能够保持原文风格进行修改。"
+            system="你是一个专业的小说内容修复专家，能够保持原文风格进行修改。",
         )
         response = await self.llm.execute(task)
         return response if response else chapter_content
@@ -59,7 +60,7 @@ class LLMRepairer:
 - 类型: {issue.issue_type}
 - 问题: {issue.description}
 - 位置: {issue.location}
-- 矛盾证据: {issue.evidence if hasattr(issue, 'evidence') else '请自行分析'}
+- 矛盾证据: {issue.evidence if hasattr(issue, "evidence") else "请自行分析"}
 
 请直接输出修复后的完整章节内容（保持原文风格，只修改逻辑矛盾部分）。"""
 
@@ -67,7 +68,7 @@ class LLMRepairer:
             task_type=TaskType.REPAIR,
             prompt=prompt,
             max_tokens=3000,
-            system="你是一个专业的小说逻辑修复专家，能够发现并修复时间线和因果矛盾。"
+            system="你是一个专业的小说逻辑修复专家，能够发现并修复时间线和因果矛盾。",
         )
         response = await self.llm.execute(task)
         return response if response else chapter_content
@@ -85,8 +86,8 @@ class LLMRepairer:
 - 章节: {issue.chapter}
 - 类型: {issue.issue_type}
 - 问题: {issue.description}
-- 伏笔原文: {issue.foreshadow_text if hasattr(issue, 'foreshadow_text') else '未知'}
-- 状态: {issue.status if hasattr(issue, 'status') else 'unknown'}
+- 伏笔原文: {issue.foreshadow_text if hasattr(issue, "foreshadow_text") else "未知"}
+- 状态: {issue.status if hasattr(issue, "status") else "unknown"}
 
 请直接输出修复后的完整章节内容（增强伏笔铺设或完善伏笔回收）。"""
 
@@ -94,7 +95,7 @@ class LLMRepairer:
             task_type=TaskType.REPAIR,
             prompt=prompt,
             max_tokens=3000,
-            system="你是一个专业的小说伏笔修复专家，能够完善伏笔的铺设与回收。"
+            system="你是一个专业的小说伏笔修复专家，能够完善伏笔的铺设与回收。",
         )
         response = await self.llm.execute(task)
         return response if response else chapter_content
@@ -113,7 +114,7 @@ class LLMRepairer:
 - 类型: {issue.issue_type}
 - 问题: {issue.description}
 - 位置: {issue.location}
-- 修复建议: {issue.suggestion if hasattr(issue, 'suggestion') else '请优化情感节奏，增强爽点密度或情感共鸣'}
+- 修复建议: {issue.suggestion if hasattr(issue, "suggestion") else "请优化情感节奏，增强爽点密度或情感共鸣"}
 
 请直接输出修复后的完整章节内容，保持原文风格，优化以下方面:
 1. 增加爽点密度（打脸、装逼、逆转等）
@@ -126,12 +127,14 @@ class LLMRepairer:
             task_type=TaskType.REPAIR,
             prompt=prompt,
             max_tokens=3000,
-            system="你是一个专业的小说情感节奏优化专家，能够增强爽点密度和情感共鸣。"
+            system="你是一个专业的小说情感节奏优化专家，能够增强爽点密度和情感共鸣。",
         )
         response = await self.llm.execute(task)
         return response if response else chapter_content
 
-    async def repair_state_contradiction(self, issue: Issue, chapter_content: str, context_chapters: List[int] = None) -> str:
+    async def repair_state_contradiction(
+        self, issue: Issue, chapter_content: str, context_chapters: List[int] = None
+    ) -> str:
         """
         修复状态矛盾问题（新增专项方法）
 
@@ -152,7 +155,7 @@ class LLMRepairer:
                 ch_file = self.chapters_dir / f"ch{ch:03d}.md"
                 if ch_file.exists():
                     context_content += f"\n\n=== ch{ch:03d} ===\n"
-                    context_content += ch_file.read_text(encoding='utf-8')[:1000]
+                    context_content += ch_file.read_text(encoding="utf-8")[:1000]
 
         prompt = f"""你是小说状态一致性修复专家，负责修复角色或物品状态矛盾。
 
@@ -179,12 +182,14 @@ class LLMRepairer:
             task_type=TaskType.REPAIR,
             prompt=prompt,
             max_tokens=3000,
-            system="你是一个专业的小说状态一致性修复专家，能够确保角色和物品状态在全文一致。"
+            system="你是一个专业的小说状态一致性修复专家，能够确保角色和物品状态在全文一致。",
         )
         response = await self.llm.execute(task)
         return response if response else chapter_content
 
-    async def repair_timeline_issue(self, issue: Issue, chapter_content: str, context_chapters: List[int] = None) -> str:
+    async def repair_timeline_issue(
+        self, issue: Issue, chapter_content: str, context_chapters: List[int] = None
+    ) -> str:
         """
         修复时间线问题（新增专项方法）
 
@@ -205,7 +210,7 @@ class LLMRepairer:
                 ch_file = self.chapters_dir / f"ch{ch:03d}.md"
                 if ch_file.exists():
                     context_content += f"\n\n=== ch{ch:03d} ===\n"
-                    context_content += ch_file.read_text(encoding='utf-8')[:800]
+                    context_content += ch_file.read_text(encoding="utf-8")[:800]
 
         # 判断是否是宇宙级场景
         cosmic_keywords = ["宇宙", "维度", "星际", "光年", "亿万年", "创世", "永恒", "时间夹缝"]
@@ -248,7 +253,7 @@ class LLMRepairer:
             task_type=TaskType.REPAIR,
             prompt=prompt,
             max_tokens=3000,
-            system="你是一个专业的小说时间线修复专家，能够修复时间线矛盾同时尊重宇宙级场景的特殊性。"
+            system="你是一个专业的小说时间线修复专家，能够修复时间线矛盾同时尊重宇宙级场景的特殊性。",
         )
         response = await self.llm.execute(task)
         return response if response else chapter_content
@@ -279,7 +284,7 @@ class LLMRepairer:
             task_type=TaskType.REPAIR,
             prompt=prompt,
             max_tokens=3000,
-            system="你是一个专业的小说节奏优化专家，能够使章节节奏更加合理。"
+            system="你是一个专业的小说节奏优化专家，能够使章节节奏更加合理。",
         )
         response = await self.llm.execute(task)
         return response if response else chapter_content
@@ -309,7 +314,7 @@ class LLMRepairer:
             task_type=TaskType.REPAIR,
             prompt=prompt,
             max_tokens=3000,
-            system="你是一个专业的小说场景转换修复专家，能够使场景转换自然流畅。"
+            system="你是一个专业的小说场景转换修复专家，能够使场景转换自然流畅。",
         )
         response = await self.llm.execute(task)
         return response if response else chapter_content
@@ -340,7 +345,7 @@ class LLMRepairer:
             task_type=TaskType.REPAIR,
             prompt=prompt,
             max_tokens=3000,
-            system="你是一个专业的小说对话优化专家，能够使对话更加真实自然。"
+            system="你是一个专业的小说对话优化专家，能够使对话更加真实自然。",
         )
         response = await self.llm.execute(task)
         return response if response else chapter_content

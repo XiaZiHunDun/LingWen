@@ -5,6 +5,7 @@ Phase 18.1 — 涟漪/剧情波浪域实体。
 Ripple = 剧情波浪（挖坑→扩散→平复），与 Foreshadow 关系密切
 但 Ripple 是因果链，Foreshadow 是单一提示点。
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -78,13 +79,9 @@ class Ripple:
         if self.origin_ch <= 0:
             raise ValueError(f"Ripple.origin_ch must be positive — got {self.origin_ch}")
         if not 0.0 <= self.decay_rate <= 1.0:
-            raise ValueError(
-                f"Ripple.decay_rate must be in [0, 1] — got {self.decay_rate}"
-            )
+            raise ValueError(f"Ripple.decay_rate must be in [0, 1] — got {self.decay_rate}")
         if not 0.0 <= self.collapse_risk <= 1.0:
-            raise ValueError(
-                f"Ripple.collapse_risk must be in [0, 1] — got {self.collapse_risk}"
-            )
+            raise ValueError(f"Ripple.collapse_risk must be in [0, 1] — got {self.collapse_risk}")
         if self.planned_resolve_ch is not None and self.planned_resolve_ch < self.origin_ch:
             raise ValueError(
                 f"Ripple.planned_resolve_ch ({self.planned_resolve_ch}) must be "
@@ -113,23 +110,15 @@ class Ripple:
             ripple_id=str(d["ripple_id"]),
             origin_event=str(d["origin_event"]),
             origin_ch=int(d["origin_ch"]),
-            affected_nodes=tuple(
-                NodeId.from_string(s) for s in d.get("affected_nodes", [])
-            ),
+            affected_nodes=tuple(NodeId.from_string(s) for s in d.get("affected_nodes", [])),
             state=RippleState(d["state"]) if "state" in d else RippleState.OPEN,
             wavefront=tuple(d.get("wavefront", ())),
             decay_rate=float(d.get("decay_rate", 0.2)),
-            affected_relations=tuple(
-                Relation.from_dict(r) for r in d.get("affected_relations", [])
-            ),
+            affected_relations=tuple(Relation.from_dict(r) for r in d.get("affected_relations", [])),
             planned_resolve_ch=d.get("planned_resolve_ch"),
             resolved_ch=d.get("resolved_ch"),
             collapse_risk=float(d.get("collapse_risk", 0.0)),
-            resolution_mode=(
-                ResolutionMode(d["resolution_mode"])
-                if d.get("resolution_mode")
-                else None
-            ),
+            resolution_mode=(ResolutionMode(d["resolution_mode"]) if d.get("resolution_mode") else None),
         )
 
 
@@ -167,7 +156,9 @@ class WorldSnapshot:
         """基于 nodes + relations + lines + ripples 计算一致性 hash"""
         payload = {
             "nodes": {str(k): v.to_dict() for k, v in sorted(self.nodes.items(), key=lambda x: str(x[0]))},
-            "relations": [r.to_dict() for r in sorted(self.relations, key=lambda r: (str(r.src), str(r.dst)))],
+            "relations": [
+                r.to_dict() for r in sorted(self.relations, key=lambda r: (str(r.src), str(r.dst)))
+            ],
             "physical": self.physical.to_dict(),
             "mental": self.mental.to_dict(),
             "active_ripples": [r.to_dict() for r in self.active_ripples],
@@ -194,10 +185,7 @@ class WorldSnapshot:
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> "WorldSnapshot":
-        nodes = {
-            NodeId.from_string(s): KeyPoint.from_dict(kd)
-            for s, kd in d.get("nodes", {}).items()
-        }
+        nodes = {NodeId.from_string(s): KeyPoint.from_dict(kd) for s, kd in d.get("nodes", {}).items()}
         return cls(
             snapshot_id=str(d["snapshot_id"]),
             chapter=int(d["chapter"]),
@@ -206,12 +194,8 @@ class WorldSnapshot:
             relations=tuple(Relation.from_dict(rd) for rd in d.get("relations", [])),
             physical=PhysicalLine.from_dict(d.get("physical", {"ch": 0})),
             mental=MentalLine.from_dict(d.get("mental", {"ch": 0})),
-            active_ripples=tuple(
-                Ripple.from_dict(rd) for rd in d.get("active_ripples", [])
-            ),
-            active_subplots=tuple(
-                Plot.from_dict(pd) for pd in d.get("active_subplots", [])
-            ),
+            active_ripples=tuple(Ripple.from_dict(rd) for rd in d.get("active_ripples", [])),
+            active_subplots=tuple(Plot.from_dict(pd) for pd in d.get("active_subplots", [])),
             world_mood=d.get("world_mood", "neutral"),
             consistency_hash=d.get("consistency_hash", ""),  # recomputed in __post_init__
         )

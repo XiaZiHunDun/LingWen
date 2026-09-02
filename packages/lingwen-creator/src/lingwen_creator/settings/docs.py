@@ -1,4 +1,5 @@
 """Editable creator settings documents (pillars, global outline)."""
+
 from __future__ import annotations
 
 import difflib
@@ -29,12 +30,8 @@ def text_diff_summary(before: str, after: str) -> dict[str, Any]:
     diff_lines = list(
         difflib.unified_diff(before_lines, after_lines, lineterm=""),
     )
-    added = sum(
-        1 for line in diff_lines if line.startswith("+") and not line.startswith("+++")
-    )
-    removed = sum(
-        1 for line in diff_lines if line.startswith("-") and not line.startswith("---")
-    )
+    added = sum(1 for line in diff_lines if line.startswith("+") and not line.startswith("+++"))
+    removed = sum(1 for line in diff_lines if line.startswith("-") and not line.startswith("---"))
     snippet = [
         line
         for line in diff_lines
@@ -189,10 +186,7 @@ def assert_settings_revisions(
 ) -> None:
     current = creator_settings_docs_payload(project)
     conflicts: list[str] = []
-    if (
-        expected_pillars_revision is not None
-        and expected_pillars_revision != current["pillars_revision"]
-    ):
+    if expected_pillars_revision is not None and expected_pillars_revision != current["pillars_revision"]:
         conflicts.append("pillars")
     if (
         expected_global_outline_revision is not None
@@ -277,9 +271,7 @@ def save_creator_settings_docs(
     if resolved_pillars is not None or resolved_outline is not None:
         assert_settings_revisions(
             project,
-            expected_pillars_revision=expected_pillars_revision
-            if resolved_pillars is not None
-            else None,
+            expected_pillars_revision=expected_pillars_revision if resolved_pillars is not None else None,
             expected_global_outline_revision=expected_global_outline_revision
             if resolved_outline is not None
             else None,
@@ -330,19 +322,16 @@ def save_creator_settings_docs(
             or existing.get("merge_snapshot_id")
         )
         if pillars_merge_source != "history":
-            resolved_pillars_snap = (
-                pillars_merge_snapshot_id
-                or existing.get("pillars_merge_snapshot_id")
-            )
+            resolved_pillars_snap = pillars_merge_snapshot_id or existing.get("pillars_merge_snapshot_id")
         if global_outline_merge_source != "history":
-            resolved_outline_snap = (
-                global_outline_merge_snapshot_id
-                or existing.get("global_outline_merge_snapshot_id")
+            resolved_outline_snap = global_outline_merge_snapshot_id or existing.get(
+                "global_outline_merge_snapshot_id"
             )
         save_merge_preferences(
             project.root,
             pillars_merge_source=pillars_merge_source or existing.get("pillars_merge_source", "editor"),
-            global_outline_merge_source=global_outline_merge_source or existing.get("global_outline_merge_source", "editor"),
+            global_outline_merge_source=global_outline_merge_source
+            or existing.get("global_outline_merge_source", "editor"),
             merge_snapshot_id=merge_snapshot_id or existing.get("merge_snapshot_id"),
             pillars_merge_snapshot_id=resolved_pillars_snap,
             global_outline_merge_snapshot_id=resolved_outline_snap,

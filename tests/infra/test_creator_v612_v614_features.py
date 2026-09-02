@@ -1,4 +1,5 @@
 """Tests for creator v6.12–v6.14 batch features."""
+
 from __future__ import annotations
 
 from lingwen_creator.content.ui_profile import resolve_creator_ui_profile

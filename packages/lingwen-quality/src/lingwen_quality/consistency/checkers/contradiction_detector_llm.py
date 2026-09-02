@@ -59,10 +59,9 @@ class LLMCausalReasoner:
         """构建检测prompt"""
         # 获取相关段落
         related_chunks = context.get("related_chunks", [])
-        chunks_text = "\n\n".join([
-            f"章节{ch.get('chapter', 0)}: {ch.get('content', '')[:500]}"
-            for ch in related_chunks[:5]
-        ])
+        chunks_text = "\n\n".join(
+            [f"章节{ch.get('chapter', 0)}: {ch.get('content', '')[:500]}" for ch in related_chunks[:5]]
+        )
 
         prompt = f"""请检查以下小说片段是否存在矛盾。
 
@@ -105,15 +104,17 @@ class LLMCausalReasoner:
             if json_match:
                 data = json.loads(json_match.group(0))
                 for item in data.get("contradictions", []):
-                    contradictions.append(Contradiction(
-                        entity_name="LLM_DETECTED",
-                        attribute_name=item.get("type", "unknown"),
-                        values=[],
-                        severity=item.get("severity", "P2"),
-                        contradiction_type=item.get("type", "unknown"),
-                        description=item.get("description", ""),
-                        suggestion=item.get("suggestion", ""),
-                    ))
+                    contradictions.append(
+                        Contradiction(
+                            entity_name="LLM_DETECTED",
+                            attribute_name=item.get("type", "unknown"),
+                            values=[],
+                            severity=item.get("severity", "P2"),
+                            contradiction_type=item.get("type", "unknown"),
+                            description=item.get("description", ""),
+                            suggestion=item.get("suggestion", ""),
+                        )
+                    )
         except Exception as e:
             logger.error(f"解析LLM响应失败: {e}")
 

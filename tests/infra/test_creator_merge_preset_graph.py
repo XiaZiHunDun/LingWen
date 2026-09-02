@@ -1,4 +1,5 @@
 """Tests for merge preset package dependency graph."""
+
 from __future__ import annotations
 
 import pytest
@@ -30,8 +31,6 @@ def test_merge_preset_graph_includes_builtin_edges(factory_tmp) -> None:
     graph = build_merge_preset_graph(root)
     assert graph["node_count"] >= 6
     assert graph["edge_count"] >= 3
-    combo_edge = next(
-        edge for edge in graph["edges"] if edge["from"] == "pillars_disk_outline_editor"
-    )
+    combo_edge = next(edge for edge in graph["edges"] if edge["from"] == "pillars_disk_outline_editor")
     assert combo_edge["to"] in {"all_disk", "all_editor"}
     ProjectPaths.reset()

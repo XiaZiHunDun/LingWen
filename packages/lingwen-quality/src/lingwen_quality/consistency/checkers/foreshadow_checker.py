@@ -28,12 +28,13 @@ from .foreshadow_checker_types import (
 
 class ForeshadowChecker(BaseChecker):
     """伏笔回收检查器"""
+
     _checker_type = CheckerType.FORESHADOW
 
     LEVEL_THRESHOLDS = {
-        'core': 1.0,    # 100% must be recycled
-        'normal': 0.8,  # 80%回收率
-        'edge': 0.5    # 50%回收率
+        "core": 1.0,  # 100% must be recycled
+        "normal": 0.8,  # 80%回收率
+        "edge": 0.5,  # 50%回收率
     }
 
     def __init__(self, rules: Optional[Dict[str, Any]] = None, chapters_dir: Optional[str] = None):
@@ -43,15 +44,12 @@ class ForeshadowChecker(BaseChecker):
         self._pending_foreshadow: List[str] = []  # 待回收的伏笔关键词
         if chapters_dir is None:
             project_root = Path(__file__).parent.parent.parent.parent
-            chapters_dir = project_root / '03_内容仓库' / '04_正文'
+            chapters_dir = project_root / "03_内容仓库" / "04_正文"
         self.chapters_dir = Path(chapters_dir)
         self._chapter_content_cache: Dict[int, Optional[str]] = {}
 
     def check(
-        self,
-        chapter_content: str,
-        chapter_num: int,
-        context: Optional[Dict[str, Any]] = None
+        self, chapter_content: str, chapter_num: int, context: Optional[Dict[str, Any]] = None
     ) -> List[Issue]:
         """
         检查伏笔回收
@@ -97,26 +95,24 @@ class ForeshadowChecker(BaseChecker):
                     # 延迟回收
                     delay = chapter_num - thread.expected_resolve_chapter
                     if delay >= 3:  # 延迟3章以上
-                        issues.append(Issue(
-                            id=f"foreshadow_{chapter_num}_{thread_id}_延迟回收",
-                            severity=IssueSeverity.P2,
-                            checker_type=CheckerType.FORESHADOW,
-                            issue_type="伏笔未及时回收",
-                            title="伏笔回收延迟",
-                            description=f"伏笔\"{thread.content}\"应在ch{thread.expected_resolve_chapter}回收，已延迟{delay}章",
-                            location=IssueLocation(chapter=chapter_num),
-                            evidence=f"预期回收章节：ch{thread.expected_resolve_chapter}",
-                            suggestion="考虑在本章或近期章节回收该伏笔",
-                            character=None
-                        ))
+                        issues.append(
+                            Issue(
+                                id=f"foreshadow_{chapter_num}_{thread_id}_延迟回收",
+                                severity=IssueSeverity.P2,
+                                checker_type=CheckerType.FORESHADOW,
+                                issue_type="伏笔未及时回收",
+                                title="伏笔回收延迟",
+                                description=f'伏笔"{thread.content}"应在ch{thread.expected_resolve_chapter}回收，已延迟{delay}章',
+                                location=IssueLocation(chapter=chapter_num),
+                                evidence=f"预期回收章节：ch{thread.expected_resolve_chapter}",
+                                suggestion="考虑在本章或近期章节回收该伏笔",
+                                character=None,
+                            )
+                        )
 
         return issues
 
-    def _check_over_resolution(
-        self,
-        content: str,
-        chapter_num: int
-    ) -> List[Issue]:
+    def _check_over_resolution(self, content: str, chapter_num: int) -> List[Issue]:
         """检查过度揭示"""
         issues = []
 
@@ -125,27 +121,24 @@ class ForeshadowChecker(BaseChecker):
         reveal_count = sum(content.count(kw) for kw in reveal_keywords)
 
         if reveal_count > 3:
-            issues.append(Issue(
-                id=f"foreshadow_{chapter_num}_过度揭示",
-                severity=IssueSeverity.P2,
-                checker_type=CheckerType.FORESHADOW,
-                issue_type="伏笔过度揭示",
-                title="一次性揭示太多",
-                description=f"本章有{reveal_count}处揭示/揭示类表达，可能过于密集",
-                location=IssueLocation(chapter=chapter_num),
-                evidence=f"揭示关键词出现次数：{reveal_count}",
-                suggestion="考虑分散揭示，或将部分揭示留到后续章节",
-                character=None
-            ))
+            issues.append(
+                Issue(
+                    id=f"foreshadow_{chapter_num}_过度揭示",
+                    severity=IssueSeverity.P2,
+                    checker_type=CheckerType.FORESHADOW,
+                    issue_type="伏笔过度揭示",
+                    title="一次性揭示太多",
+                    description=f"本章有{reveal_count}处揭示/揭示类表达，可能过于密集",
+                    location=IssueLocation(chapter=chapter_num),
+                    evidence=f"揭示关键词出现次数：{reveal_count}",
+                    suggestion="考虑分散揭示，或将部分揭示留到后续章节",
+                    character=None,
+                )
+            )
 
         return issues
 
-    def _check_new_foreshadow(
-        self,
-        content: str,
-        chapter_num: int,
-        new_foreshadow: List[str]
-    ) -> List[Issue]:
+    def _check_new_foreshadow(self, content: str, chapter_num: int, new_foreshadow: List[str]) -> List[Issue]:
         """检查新埋的伏笔"""
         issues = []
 
@@ -156,34 +149,32 @@ class ForeshadowChecker(BaseChecker):
         for foreshadow in new_foreshadow:
             # 简化：检查伏笔是否明确
             if len(foreshadow) < 10:  # 太短的伏笔可能不明确
-                issues.append(Issue(
-                    id=f"foreshadow_{chapter_num}_伏笔不明确",
-                    severity=IssueSeverity.P3,
-                    checker_type=CheckerType.FORESHADOW,
-                    issue_type="伏笔不明确",
-                    title="伏笔描述不够明确",
-                    description=f"伏笔\"{foreshadow}\"可能不够明确，读者可能无法识别",
-                    location=IssueLocation(chapter=chapter_num),
-                    evidence=f"伏笔长度：{len(foreshadow)}字符",
-                    suggestion="增强伏笔的明确性或添加更多线索",
-                    character=None
-                ))
+                issues.append(
+                    Issue(
+                        id=f"foreshadow_{chapter_num}_伏笔不明确",
+                        severity=IssueSeverity.P3,
+                        checker_type=CheckerType.FORESHADOW,
+                        issue_type="伏笔不明确",
+                        title="伏笔描述不够明确",
+                        description=f'伏笔"{foreshadow}"可能不够明确，读者可能无法识别',
+                        location=IssueLocation(chapter=chapter_num),
+                        evidence=f"伏笔长度：{len(foreshadow)}字符",
+                        suggestion="增强伏笔的明确性或添加更多线索",
+                        character=None,
+                    )
+                )
 
         return issues
 
     def add_foreshadow(
-        self,
-        thread_id: str,
-        content: str,
-        introduced_chapter: int,
-        expected_resolve_chapter: int
+        self, thread_id: str, content: str, introduced_chapter: int, expected_resolve_chapter: int
     ):
         """添加伏笔"""
         self._plot_threads[thread_id] = PlotThread(
             id=thread_id,
             content=content,
             introduced_chapter=introduced_chapter,
-            expected_resolve_chapter=expected_resolve_chapter
+            expected_resolve_chapter=expected_resolve_chapter,
         )
 
     def resolve_foreshadow(self, thread_id: str, chapter_num: int):
@@ -203,18 +194,20 @@ class ForeshadowChecker(BaseChecker):
             if thread.status == "unresolved" and current_chapter > thread.expected_resolve_chapter:
                 delay = current_chapter - thread.expected_resolve_chapter
                 severity = IssueSeverity.P1 if delay >= 3 else IssueSeverity.P2
-                message = f"伏笔\"{thread.content}\"应在ch{thread.expected_resolve_chapter}回收，已延迟{delay}章仍未回收"
-                alerts.append(ForeshadowAlert(
-                    alert_type="overdue",
-                    thread_id=thread_id,
-                    content=thread.content,
-                    introduced_chapter=thread.introduced_chapter,
-                    expected_resolve_chapter=thread.expected_resolve_chapter,
-                    current_chapter=current_chapter,
-                    delay_chapters=delay,
-                    severity=severity,
-                    message=message
-                ))
+                message = f'伏笔"{thread.content}"应在ch{thread.expected_resolve_chapter}回收，已延迟{delay}章仍未回收'
+                alerts.append(
+                    ForeshadowAlert(
+                        alert_type="overdue",
+                        thread_id=thread_id,
+                        content=thread.content,
+                        introduced_chapter=thread.introduced_chapter,
+                        expected_resolve_chapter=thread.expected_resolve_chapter,
+                        current_chapter=current_chapter,
+                        delay_chapters=delay,
+                        severity=severity,
+                        message=message,
+                    )
+                )
         return alerts
 
     def _detect_approaching_deadline(self, current_chapter: int) -> List[ForeshadowAlert]:
@@ -224,18 +217,20 @@ class ForeshadowChecker(BaseChecker):
             if thread.status == "unresolved":
                 distance = thread.expected_resolve_chapter - current_chapter
                 if 0 < distance <= 2:
-                    message = f"伏笔\"{thread.content}\"还剩{distance}章即将到期（ch{thread.expected_resolve_chapter}），请注意回收"
-                    alerts.append(ForeshadowAlert(
-                        alert_type="approaching",
-                        thread_id=thread_id,
-                        content=thread.content,
-                        introduced_chapter=thread.introduced_chapter,
-                        expected_resolve_chapter=thread.expected_resolve_chapter,
-                        current_chapter=current_chapter,
-                        delay_chapters=0,
-                        severity=IssueSeverity.P3,
-                        message=message
-                    ))
+                    message = f'伏笔"{thread.content}"还剩{distance}章即将到期（ch{thread.expected_resolve_chapter}），请注意回收'
+                    alerts.append(
+                        ForeshadowAlert(
+                            alert_type="approaching",
+                            thread_id=thread_id,
+                            content=thread.content,
+                            introduced_chapter=thread.introduced_chapter,
+                            expected_resolve_chapter=thread.expected_resolve_chapter,
+                            current_chapter=current_chapter,
+                            delay_chapters=0,
+                            severity=IssueSeverity.P3,
+                            message=message,
+                        )
+                    )
         return alerts
 
     def get_foreshadow_alerts(self, current_chapter: int) -> List[ForeshadowAlert]:
@@ -252,13 +247,14 @@ class ForeshadowChecker(BaseChecker):
 
     def _get_current_chapter(self) -> int:
         """获取当前章节号（目录中最高章节号）"""
-        chapter_files = list(self.chapters_dir.glob('ch*.md'))
+        chapter_files = list(self.chapters_dir.glob("ch*.md"))
         if not chapter_files:
             return 0
         max_chapter = 0
         for ch_file in chapter_files:
             import re
-            match = re.match(r'ch(\d+)\.md', ch_file.name)
+
+            match = re.match(r"ch(\d+)\.md", ch_file.name)
             if match:
                 ch_num = int(match.group(1))
                 if ch_num > max_chapter:
@@ -279,9 +275,9 @@ class ForeshadowChecker(BaseChecker):
         返回 None 表示文件不存在 (与 read_text 抛 FileNotFoundError 区分)。
         """
         if ch_num not in self._chapter_content_cache:
-            ch_file = self.chapters_dir / f'ch{ch_num:03d}.md'
+            ch_file = self.chapters_dir / f"ch{ch_num:03d}.md"
             if ch_file.exists():
-                self._chapter_content_cache[ch_num] = ch_file.read_text(encoding='utf-8')
+                self._chapter_content_cache[ch_num] = ch_file.read_text(encoding="utf-8")
             else:
                 self._chapter_content_cache[ch_num] = None
         return self._chapter_content_cache[ch_num]
@@ -297,40 +293,42 @@ class ForeshadowChecker(BaseChecker):
 
     def check_chapter(self, chapter_num: int) -> list[ForeshadowIssue]:
         """检查单章的伏笔记录"""
-        ch_file = self.chapters_dir / f'ch{chapter_num:03d}.md'
+        ch_file = self.chapters_dir / f"ch{chapter_num:03d}.md"
         if not ch_file.exists():
             return []
 
-        content = ch_file.read_text(encoding='utf-8')
+        content = ch_file.read_text(encoding="utf-8")
         issues = []
 
-        foreshadow_pattern = r'【伏笔:(\w+):(.+?):([\w-]+)】'
+        foreshadow_pattern = r"【伏笔:(\w+):(.+?):([\w-]+)】"
         matches = re.findall(foreshadow_pattern, content)
 
         for level, foreshadow_text, expect_range in matches:
             if self._is_recycled(foreshadow_text, chapter_num, expect_range):
                 continue
 
-            severity = 'HIGH' if level == 'core' else 'MEDIUM'
-            issues.append(ForeshadowIssue(
-                chapter=f'ch{chapter_num:03d}',
-                foreshadow_text=foreshadow_text,
-                level=level,
-                severity=severity,
-                description=f"Core级伏笔'{foreshadow_text}'未在{expect_range}内回收"
-            ))
+            severity = "HIGH" if level == "core" else "MEDIUM"
+            issues.append(
+                ForeshadowIssue(
+                    chapter=f"ch{chapter_num:03d}",
+                    foreshadow_text=foreshadow_text,
+                    level=level,
+                    severity=severity,
+                    description=f"Core级伏笔'{foreshadow_text}'未在{expect_range}内回收",
+                )
+            )
 
         return issues
 
     def _is_recycled(self, foreshadow_text: str, start_chapter: int, expect_range: str) -> bool:
         """检查伏笔是否被回收"""
-        match = re.match(r'ch(\d+)-ch(\d+)', expect_range)
+        match = re.match(r"ch(\d+)-ch(\d+)", expect_range)
         if not match:
             return False
 
         start = int(match.group(1))
         end = int(match.group(2))
-        keywords = foreshadow_text.split('/')
+        keywords = foreshadow_text.split("/")
 
         for ch_num in range(start, end + 1):
             if ch_num <= start_chapter:
@@ -375,41 +373,42 @@ class ForeshadowChecker(BaseChecker):
                 continue
 
             if ripple.planned_resolve_ch is None:
-                issues.append(Issue(
-                    id=f"ripple_alignment_no_plan_{ripple.ripple_id}",
-                    severity=IssueSeverity.P3,
-                    checker_type=CheckerType.FORESHADOW,
-                    issue_type="ripple_no_planned_resolve",
-                    title=f"涟漪 {ripple.ripple_id} 缺少平复计划",
-                    description=(
-                        f"状态 {state.value} 的涟漪未设置 planned_resolve_ch,"
-                        f"无法评估是否超期"
-                    ),
-                    location=IssueLocation(chapter=current_ch),
-                    evidence=f"ripple_id={ripple.ripple_id}, state={state.value}",
-                    suggestion="设置 planned_resolve_ch (预估章节号)",
-                ))
+                issues.append(
+                    Issue(
+                        id=f"ripple_alignment_no_plan_{ripple.ripple_id}",
+                        severity=IssueSeverity.P3,
+                        checker_type=CheckerType.FORESHADOW,
+                        issue_type="ripple_no_planned_resolve",
+                        title=f"涟漪 {ripple.ripple_id} 缺少平复计划",
+                        description=(f"状态 {state.value} 的涟漪未设置 planned_resolve_ch,无法评估是否超期"),
+                        location=IssueLocation(chapter=current_ch),
+                        evidence=f"ripple_id={ripple.ripple_id}, state={state.value}",
+                        suggestion="设置 planned_resolve_ch (预估章节号)",
+                    )
+                )
                 continue
 
             overdue_chs = current_ch - ripple.planned_resolve_ch
             if overdue_chs > RESOLUTION_GRACE_CH:
-                issues.append(Issue(
-                    id=f"ripple_alignment_overdue_{ripple.ripple_id}",
-                    severity=IssueSeverity.P1,
-                    checker_type=CheckerType.FORESHADOW,
-                    issue_type="ripple_overdue",
-                    title=f"涟漪 {ripple.ripple_id} 超期未平复",
-                    description=(
-                        f"状态 {state.value} 的涟漪 planned_resolve_ch={ripple.planned_resolve_ch},"
-                        f"当前章节 {current_ch},已超 {overdue_chs} 章 (> grace {RESOLUTION_GRACE_CH})"
-                    ),
-                    location=IssueLocation(chapter=current_ch),
-                    evidence=(
-                        f"ripple_id={ripple.ripple_id}, planned={ripple.planned_resolve_ch},"
-                        f" current={current_ch}, overdue={overdue_chs}"
-                    ),
-                    suggestion="立即调用 resolve 平复,或调整 planned_resolve_ch",
-                ))
+                issues.append(
+                    Issue(
+                        id=f"ripple_alignment_overdue_{ripple.ripple_id}",
+                        severity=IssueSeverity.P1,
+                        checker_type=CheckerType.FORESHADOW,
+                        issue_type="ripple_overdue",
+                        title=f"涟漪 {ripple.ripple_id} 超期未平复",
+                        description=(
+                            f"状态 {state.value} 的涟漪 planned_resolve_ch={ripple.planned_resolve_ch},"
+                            f"当前章节 {current_ch},已超 {overdue_chs} 章 (> grace {RESOLUTION_GRACE_CH})"
+                        ),
+                        location=IssueLocation(chapter=current_ch),
+                        evidence=(
+                            f"ripple_id={ripple.ripple_id}, planned={ripple.planned_resolve_ch},"
+                            f" current={current_ch}, overdue={overdue_chs}"
+                        ),
+                        suggestion="立即调用 resolve 平复,或调整 planned_resolve_ch",
+                    )
+                )
 
         return issues
 
@@ -417,8 +416,8 @@ class ForeshadowChecker(BaseChecker):
         """检查所有章节的伏笔"""
         all_issues = []
 
-        for ch_file in sorted(self.chapters_dir.glob('ch*.md')):
-            match = re.match(r'ch(\d+)\.md', ch_file.name)
+        for ch_file in sorted(self.chapters_dir.glob("ch*.md")):
+            match = re.match(r"ch(\d+)\.md", ch_file.name)
             if match:
                 ch_num = int(match.group(1))
                 issues = self.check_chapter(ch_num)
@@ -431,9 +430,9 @@ class ForeshadowChecker(BaseChecker):
         if not issues:
             return "✅ 伏笔回收检查通过：无core级伏笔遗漏"
 
-        core_issues = [i for i in issues if i.level == 'core']
-        normal_issues = [i for i in issues if i.level == 'normal']
-        edge_issues = [i for i in issues if i.level == 'edge']
+        core_issues = [i for i in issues if i.level == "core"]
+        normal_issues = [i for i in issues if i.level == "normal"]
+        edge_issues = [i for i in issues if i.level == "edge"]
 
         report = ["# 伏笔回收检查报告\n"]
         report.append("## 汇总\n")
@@ -451,6 +450,7 @@ class ForeshadowChecker(BaseChecker):
 
 def main():
     import sys
+
     checker = ForeshadowChecker()
     issues = checker.check_all()
 
@@ -462,5 +462,5 @@ def main():
         sys.exit(0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

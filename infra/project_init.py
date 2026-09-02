@@ -1,4 +1,5 @@
 """Scaffold creator / studio projects."""
+
 from __future__ import annotations
 
 import json
@@ -109,8 +110,7 @@ def validate_slug(slug: str) -> str:
     normalized = slug.strip().lower().replace("_", "-")
     if not _SLUG_RE.match(normalized):
         raise ValueError(
-            "slug must be lowercase alphanumeric/hyphen, 2-64 chars, "
-            f"got {slug!r}",
+            f"slug must be lowercase alphanumeric/hyphen, 2-64 chars, got {slug!r}",
         )
     return normalized
 
@@ -259,11 +259,7 @@ def _project_yaml(
     chapter_count: int,
     creation_mode: str,
 ) -> str:
-    quality = (
-        QUALITY_STUDIO_FULL
-        if creation_mode == CREATION_MODE_STUDIO
-        else QUALITY_CREATOR_RELAXED
-    )
+    quality = QUALITY_STUDIO_FULL if creation_mode == CREATION_MODE_STUDIO else QUALITY_CREATOR_RELAXED
     mode_label = {
         CREATION_MODE_COMPANION: "陪伴模式",
         CREATION_MODE_ADVANCE: "推进模式",

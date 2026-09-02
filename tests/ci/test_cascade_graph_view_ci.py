@@ -1,4 +1,5 @@
 """Phase 9.51 F40: CascadeGraph 3rd view mode contract tests."""
+
 from __future__ import annotations
 
 from pathlib import Path

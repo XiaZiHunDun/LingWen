@@ -10,15 +10,11 @@ from infra.reading_power.hook_tracker import HookTracker
 def test_track_and_get_hooks() -> None:
     """Test tracking hooks and retrieving them."""
     mock_db = MagicMock()
-    mock_db.get_hooks.return_value = [
-        {"hook_type": "危机钩", "strength": 0.8, "position": "结尾"}
-    ]
+    mock_db.get_hooks.return_value = [{"hook_type": "危机钩", "strength": 0.8, "position": "结尾"}]
 
     tracker = HookTracker(mock_db)
 
-    hooks = [
-        {"type": "危机钩", "strength": 0.8, "position": "结尾", "content": "危险..."}
-    ]
+    hooks = [{"type": "危机钩", "strength": 0.8, "position": "结尾", "content": "危险..."}]
     tracker.track(1, hooks)
 
     mock_db.save_hook.assert_called_once()
@@ -83,7 +79,7 @@ def test_get_all_hooks_by_type() -> None:
     mock_conn.close = MagicMock()
 
     tracker = HookTracker(mock_db)
-    result = tracker.get_all_hooks_by_type("危机钩",1, 10)
+    result = tracker.get_all_hooks_by_type("危机钩", 1, 10)
 
     assert len(result) == 2
     mock_conn.execute.assert_called_once()

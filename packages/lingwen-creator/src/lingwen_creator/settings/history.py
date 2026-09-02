@@ -1,4 +1,5 @@
 """Settings document version history for creator mode."""
+
 from __future__ import annotations
 
 import json

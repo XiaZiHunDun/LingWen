@@ -50,7 +50,7 @@ class QualityCoordinator:
         llm_analyzers: Optional[List[str]] = None,
         deduplicate: bool = True,
         parallel: bool = True,
-        max_workers: int = 4
+        max_workers: int = 4,
     ):
         """
         Initialize the QualityCoordinator.
@@ -73,6 +73,7 @@ class QualityCoordinator:
         """Lazy-load consistency engine"""
         if self._consistency_engine is None:
             from lingwen_quality.consistency.engine.consistency_engine import ConsistencyEngine
+
             self._consistency_engine = ConsistencyEngine()
         return self._consistency_engine
 
@@ -82,7 +83,7 @@ class QualityCoordinator:
         chapter_content: str,
         context: Optional[Dict[str, Any]] = None,
         sources: Optional[List[str]] = None,
-        llm_analyzers: Optional[List[str]] = None
+        llm_analyzers: Optional[List[str]] = None,
     ) -> UnifiedQualityReport:
         """
         Check a chapter using both rule-based and LLM analyzers.
@@ -104,13 +105,9 @@ class QualityCoordinator:
         report = UnifiedQualityReport(chapter=chapter_num)
 
         if self.parallel and len(sources) > 1:
-            report = self._check_parallel(
-                chapter_num, chapter_content, context, sources, llm_analyzers
-            )
+            report = self._check_parallel(chapter_num, chapter_content, context, sources, llm_analyzers)
         else:
-            report = self._check_sequential(
-                chapter_num, chapter_content, context, sources, llm_analyzers
-            )
+            report = self._check_sequential(chapter_num, chapter_content, context, sources, llm_analyzers)
 
         # Deduplicate if enabled
         if self.deduplicate and len(sources) > 1:
@@ -130,7 +127,7 @@ class QualityCoordinator:
         chapter_content: str,
         context: Dict[str, Any],
         sources: List[str],
-        llm_analyzers: List[str]
+        llm_analyzers: List[str],
     ) -> UnifiedQualityReport:
         """Run checks in parallel"""
         report = UnifiedQualityReport(chapter=chapter_num)
@@ -139,16 +136,13 @@ class QualityCoordinator:
             futures = {}
 
             if "rule_based" in sources:
-                future = executor.submit(
-                    self._check_rule_based, chapter_num, chapter_content, context
-                )
+                future = executor.submit(self._check_rule_based, chapter_num, chapter_content, context)
                 futures[future] = ("rule_based", None)
 
             if "llm" in sources:
                 for analyzer_name in self._resolve_llm_analyzers(llm_analyzers):
                     future = executor.submit(
-                        self._check_llm_analyzer,
-                        analyzer_name, chapter_num, chapter_content
+                        self._check_llm_analyzer, analyzer_name, chapter_num, chapter_content
                     )
                     futures[future] = ("llm", analyzer_name)
 
@@ -176,7 +170,7 @@ class QualityCoordinator:
         chapter_content: str,
         context: Dict[str, Any],
         sources: List[str],
-        llm_analyzers: List[str]
+        llm_analyzers: List[str],
     ) -> UnifiedQualityReport:
         """Run checks sequentially"""
         report = UnifiedQualityReport(chapter=chapter_num)
@@ -202,17 +196,12 @@ class QualityCoordinator:
         return report
 
     def _check_rule_based(
-        self,
-        chapter_num: int,
-        chapter_content: str,
-        context: Dict[str, Any]
+        self, chapter_num: int, chapter_content: str, context: Dict[str, Any]
     ) -> List[UnifiedIssue]:
         """Run rule-based consistency checks"""
         try:
             consistency_report = self.consistency_engine.check_chapter(
-                chapter_num=chapter_num,
-                chapter_content=chapter_content,
-                context=context
+                chapter_num=chapter_num, chapter_content=chapter_content, context=context
             )
             unified = RuleBasedAdapter.to_unified_report(consistency_report)
             return unified.issues
@@ -221,10 +210,7 @@ class QualityCoordinator:
             return []
 
     def _check_llm_analyzer(
-        self,
-        analyzer_name: str,
-        chapter_num: int,
-        chapter_content: str
+        self, analyzer_name: str, chapter_num: int, chapter_content: str
     ) -> tuple[List[UnifiedIssue], Optional[DomainSpecificReport]]:
         """Run a specific LLM analyzer"""
         if analyzer_name == "foreshadow":
@@ -312,8 +298,12 @@ class QualityCoordinator:
     def _resolve_llm_analyzers(self, requested: List[str]) -> List[str]:
         """Resolve which LLM analyzers to run"""
         all_analyzers = [
-            "foreshadow", "emotional_resonance", "pacing",
-            "character_arc", "protagonist", "readability"
+            "foreshadow",
+            "emotional_resonance",
+            "pacing",
+            "character_arc",
+            "protagonist",
+            "readability",
         ]
 
         if "all" in requested:
@@ -341,7 +331,7 @@ class QualityCoordinator:
                 issue.location.paragraph,
                 issue.location.line,
                 issue.issue_type,
-                issue.source_name
+                issue.source_name,
             )
 
             if key not in seen:

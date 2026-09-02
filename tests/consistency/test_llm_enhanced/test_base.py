@@ -46,8 +46,13 @@ def test_llm_enhanced_checker_type_all():
     from lingwen_quality.consistency.llm_service.base import LLMService
 
     checker_types = [
-        "ability", "character", "relationship",
-        "foreshadow", "battle", "personality", "knowledge"
+        "ability",
+        "character",
+        "relationship",
+        "foreshadow",
+        "battle",
+        "personality",
+        "knowledge",
     ]
 
     for ct in checker_types:
@@ -84,10 +89,22 @@ def test_llm_enhanced_convert_llm_issues():
     enhanced = LLMEnhancedChecker(base_checker, llm_service, "ability")
 
     llm_issues = [
-        LLMIssue(chapter=1, type="test_type", description="test description",
-                 evidence="test evidence", suggestion="test suggestion", severity="P0"),
-        LLMIssue(chapter=2, type="test_type2", description="test description2",
-                 evidence="test evidence2", suggestion="test suggestion2", severity="P1"),
+        LLMIssue(
+            chapter=1,
+            type="test_type",
+            description="test description",
+            evidence="test evidence",
+            suggestion="test suggestion",
+            severity="P0",
+        ),
+        LLMIssue(
+            chapter=2,
+            type="test_type2",
+            description="test description2",
+            evidence="test evidence2",
+            suggestion="test suggestion2",
+            severity="P1",
+        ),
     ]
 
     issues = enhanced._convert_llm_issues(llm_issues, default_chapter=1)

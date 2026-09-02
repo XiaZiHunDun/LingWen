@@ -1,4 +1,5 @@
 """MemoryStateManager 测试"""
+
 import json
 import tempfile
 from pathlib import Path
@@ -137,6 +138,7 @@ class TestMemoryStateManager:
         # YAML 加载需要特殊处理，这里验证文件存在性
         assert plot_file.exists()
 
+
 class TestR2019Rename:
     """R2-019: 类名从 StateManager → MemoryStateManager,保留向后兼容 shim"""
 
@@ -146,12 +148,14 @@ class TestR2019Rename:
             MemoryStateManager,
             StateManager,
         )
+
         # alias 指向同一个类
         assert StateManager is MemoryStateManager
 
     def test_backward_compat_import_still_works(self):
         """旧代码 `from ... import StateManager` 仍能导入"""
         from lingwen_memory.state.state_manager import StateManager
+
         # 实例化能用 — 兼容层生效
         mgr = StateManager({"storage": {"state_file": "tmp.json"}})
         assert isinstance(mgr, StateManager)
@@ -159,6 +163,7 @@ class TestR2019Rename:
     def test_state_package_exports_new_name(self):
         """state 包应同时导出新名 + 别名"""
         from lingwen_memory.state import MemoryStateManager, StateManager
+
         assert MemoryStateManager is StateManager  # 同一类
         assert "MemoryStateManager" in dir(__import__("lingwen_memory.state", fromlist=["*"]))
 
@@ -236,8 +241,9 @@ class TestR2020AtomicSave:
 
         # 至少有 .lock 和 .tmp.{pid} 两个 suffix
         pid_suffix = f".tmp.{os_module.getpid()}"
-        assert any(pid_suffix in s for s in captured_suffixes), \
+        assert any(pid_suffix in s for s in captured_suffixes), (
             f"expected temp suffix with pid, got: {captured_suffixes}"
+        )
 
     def test_save_fsuncs_temp_file_before_rename(self, mock_config, temp_state_dir):
         """fsync 必须在 os.replace 之前,否则断电后 temp → target 不一致"""
@@ -248,15 +254,18 @@ class TestR2020AtomicSave:
 
         # 用 side_effect 记录真实调用顺序
         call_order = []
-        with patch.object(sm_module.os, "fsync", side_effect=lambda *a, **kw: call_order.append("fsync")), \
-             patch.object(sm_module.os, "replace", side_effect=lambda *a, **kw: call_order.append("replace")):
+        with (
+            patch.object(sm_module.os, "fsync", side_effect=lambda *a, **kw: call_order.append("fsync")),
+            patch.object(sm_module.os, "replace", side_effect=lambda *a, **kw: call_order.append("replace")),
+        ):
             manager.save("state_file", test_data)
 
         # 关键:fsync 必须在 replace 之前(否则 rename 后断电,内容可能没落盘)
         assert "fsync" in call_order
         assert "replace" in call_order
-        assert call_order.index("fsync") < call_order.index("replace"), \
+        assert call_order.index("fsync") < call_order.index("replace"), (
             f"fsync must precede replace, got order: {call_order}"
+        )
 
     def test_save_cleans_up_temp_file_on_write_error(self, mock_config, temp_state_dir):
         """写过程中崩溃,target 不被污染;.tmp 文件被清理或可被识别"""
@@ -322,15 +331,15 @@ class TestR2020AtomicSave:
         test_data = {"finally_test": True}
 
         # 让 os.replace 抛异常
-        with patch.object(sm_module.os, "replace", side_effect=OSError("rename failed")), \
-             patch.object(sm_module.fcntl, "flock") as mock_flock:
+        with (
+            patch.object(sm_module.os, "replace", side_effect=OSError("rename failed")),
+            patch.object(sm_module.fcntl, "flock") as mock_flock,
+        ):
             with pytest.raises(OSError, match="rename failed"):
                 manager.save("state_file", test_data)
 
             # LOCK_UN 必须被调用(在 finally 中)— 即便 rename 失败
-            lock_un_calls = [
-                call for call in mock_flock.call_args_list
-                if sm_module.fcntl.LOCK_UN in call[0]
-            ]
-            assert len(lock_un_calls) == 1, \
+            lock_un_calls = [call for call in mock_flock.call_args_list if sm_module.fcntl.LOCK_UN in call[0]]
+            assert len(lock_un_calls) == 1, (
                 f"LOCK_UN must be called exactly once in finally, got {len(lock_un_calls)}"
+            )

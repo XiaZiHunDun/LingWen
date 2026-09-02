@@ -1,4 +1,5 @@
 """PushEngine 测试"""
+
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -31,124 +32,136 @@ class TestPushEngine:
     def mock_query_engine(self):
         """模拟 QueryEngine"""
         engine = MagicMock()
-        engine.hybrid_search = MagicMock(return_value=[
-            {
-                "id": "seg_001",
-                "score": 0.95,
-                "payload": {
-                    "content": "李逍遥与赵灵儿在仙灵岛相遇",
-                    "chapter": 3,
-                    "character": "李逍遥",
+        engine.hybrid_search = MagicMock(
+            return_value=[
+                {
+                    "id": "seg_001",
+                    "score": 0.95,
+                    "payload": {
+                        "content": "李逍遥与赵灵儿在仙灵岛相遇",
+                        "chapter": 3,
+                        "character": "李逍遥",
+                    },
                 },
-            },
-            {
-                "id": "seg_002",
-                "score": 0.85,
-                "payload": {
-                    "content": "林夜是铁蛋的弟弟",
-                    "chapter": 5,
-                    "character": "林夜",
+                {
+                    "id": "seg_002",
+                    "score": 0.85,
+                    "payload": {
+                        "content": "林夜是铁蛋的弟弟",
+                        "chapter": 5,
+                        "character": "林夜",
+                    },
                 },
-            },
-        ])
+            ]
+        )
         return engine
 
     @pytest.fixture
     def mock_character_tracker(self):
         """模拟 CharacterTracker"""
         tracker = MagicMock()
-        tracker.get_all_characters = MagicMock(return_value={
-            "李逍遥": {
-                "current_location": "仙灵岛",
-                "current_form": "人形",
-                "alive": True,
-                "last_updated_chapter": 5,
-                "emotion_state": "平静",
-            },
-            "赵灵儿": {
-                "current_location": "仙灵岛",
-                "current_form": "人形",
-                "alive": True,
-                "last_updated_chapter": 5,
-                "emotion_state": "欢喜",
-            },
-        })
+        tracker.get_all_characters = MagicMock(
+            return_value={
+                "李逍遥": {
+                    "current_location": "仙灵岛",
+                    "current_form": "人形",
+                    "alive": True,
+                    "last_updated_chapter": 5,
+                    "emotion_state": "平静",
+                },
+                "赵灵儿": {
+                    "current_location": "仙灵岛",
+                    "current_form": "人形",
+                    "alive": True,
+                    "last_updated_chapter": 5,
+                    "emotion_state": "欢喜",
+                },
+            }
+        )
         return tracker
 
     @pytest.fixture
     def mock_plot_thread_tracker(self):
         """模拟 PlotThreadTracker"""
         tracker = MagicMock()
-        tracker.get_pending_foreshadows = MagicMock(return_value={
-            "fp_001": {
-                "title": "神秘剑客",
-                "description": "一个神秘剑客在第三章首次出现",
-                "status": "pending",
-                "planted_chapter": 3,
-                "mentions": [3],
-                "expected_recycle_chapter": 10,
-            },
-            "fp_002": {
-                "title": "门派恩怨",
-                "description": "蜀山派与魔教的历史恩怨",
-                "status": "in_progress",
-                "planted_chapter": 2,
-                "mentions": [2, 5],
-                "expected_recycle_chapter": 15,
-            },
-        })
-        tracker.get_all_foreshadows = MagicMock(return_value={
-            "fp_001": {
-                "title": "神秘剑客",
-                "status": "pending",
-                "planted_chapter": 3,
-            },
-            "fp_002": {
-                "title": "门派恩怨",
-                "status": "in_progress",
-                "planted_chapter": 2,
-            },
-            "fp_003": {
-                "title": "已回收伏笔",
-                "status": "recycled",
-                "planted_chapter": 1,
-                "recycled_chapter": 8,
-            },
-        })
+        tracker.get_pending_foreshadows = MagicMock(
+            return_value={
+                "fp_001": {
+                    "title": "神秘剑客",
+                    "description": "一个神秘剑客在第三章首次出现",
+                    "status": "pending",
+                    "planted_chapter": 3,
+                    "mentions": [3],
+                    "expected_recycle_chapter": 10,
+                },
+                "fp_002": {
+                    "title": "门派恩怨",
+                    "description": "蜀山派与魔教的历史恩怨",
+                    "status": "in_progress",
+                    "planted_chapter": 2,
+                    "mentions": [2, 5],
+                    "expected_recycle_chapter": 15,
+                },
+            }
+        )
+        tracker.get_all_foreshadows = MagicMock(
+            return_value={
+                "fp_001": {
+                    "title": "神秘剑客",
+                    "status": "pending",
+                    "planted_chapter": 3,
+                },
+                "fp_002": {
+                    "title": "门派恩怨",
+                    "status": "in_progress",
+                    "planted_chapter": 2,
+                },
+                "fp_003": {
+                    "title": "已回收伏笔",
+                    "status": "recycled",
+                    "planted_chapter": 1,
+                    "recycled_chapter": 8,
+                },
+            }
+        )
         return tracker
 
     @pytest.fixture
     def mock_timeline_manager(self):
         """模拟 TimelineManager"""
         manager = MagicMock()
-        manager.get_all_events = MagicMock(return_value=[
-            {
-                "event_id": "evt_001",
-                "timestamp": "2024-01-01T10:00:00",
-                "description": "李逍遥与赵灵儿相遇",
-                "chapter": 3,
-            },
-            {
-                "event_id": "evt_002",
-                "timestamp": "2024-01-01T12:00:00",
-                "description": "林夜首次出场",
-                "chapter": 5,
-            },
-            {
-                "event_id": "evt_003",
-                "timestamp": "2024-01-01T14:00:00",
-                "description": "神秘剑客出现",
-                "chapter": 3,
-            },
-        ])
-        manager.get_events_by_chapter = MagicMock(return_value=[
-            {
-                "event_id": "evt_001",
-                "timestamp": "2024-01-01T10:00:00",
-                "description": "李逍遥与赵灵儿相遇",
-                "chapter": 3,
-            },
-        ])
+        manager.get_all_events = MagicMock(
+            return_value=[
+                {
+                    "event_id": "evt_001",
+                    "timestamp": "2024-01-01T10:00:00",
+                    "description": "李逍遥与赵灵儿相遇",
+                    "chapter": 3,
+                },
+                {
+                    "event_id": "evt_002",
+                    "timestamp": "2024-01-01T12:00:00",
+                    "description": "林夜首次出场",
+                    "chapter": 5,
+                },
+                {
+                    "event_id": "evt_003",
+                    "timestamp": "2024-01-01T14:00:00",
+                    "description": "神秘剑客出现",
+                    "chapter": 3,
+                },
+            ]
+        )
+        manager.get_events_by_chapter = MagicMock(
+            return_value=[
+                {
+                    "event_id": "evt_001",
+                    "timestamp": "2024-01-01T10:00:00",
+                    "description": "李逍遥与赵灵儿相遇",
+                    "chapter": 3,
+                },
+            ]
+        )
         return manager
 
     @pytest.fixture
@@ -270,9 +283,7 @@ class TestPushEngine:
         # related_segments 仍然应该返回一些结果
         assert "related_segments" in result
 
-    def test_push_context_includes_chapter_events(
-        self, push_engine, mock_timeline_manager
-    ):
+    def test_push_context_includes_chapter_events(self, push_engine, mock_timeline_manager):
         """测试推送上下文包含当前章节的事件"""
         push_engine.push_context(chapter_num=3)
 

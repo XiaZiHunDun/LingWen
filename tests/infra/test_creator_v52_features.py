@@ -1,4 +1,5 @@
 """Tests for creator v5.2 diff expand detail, batch history filter, mode doc links."""
+
 from __future__ import annotations
 
 from lingwen_creator.content.ui_profile import resolve_creator_ui_profile

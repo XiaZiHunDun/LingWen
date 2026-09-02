@@ -1,4 +1,5 @@
 """Phase 9.98 F90: CI run records (e2e-live first-green JSON in infra/.state/ci_records)."""
+
 from __future__ import annotations
 
 import json

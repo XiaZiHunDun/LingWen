@@ -8,6 +8,7 @@ Routes:
 - /api/creator/volume-plan/templates/export, import, sync-sources, sync, factory × list/publish/pull/delete
 
 """
+
 from __future__ import annotations
 
 from typing import Optional
@@ -96,10 +97,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
 
         project = _require_project(ctx)
         return CreatorVolumeTemplateListResponse(
-            templates=[
-                CreatorVolumeTemplateInfo(**row)
-                for row in list_volume_templates(project.root)
-            ],
+            templates=[CreatorVolumeTemplateInfo(**row) for row in list_volume_templates(project.root)],
         )
 
     @app.post(
@@ -294,7 +292,9 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
         "/api/creator/volume-plan/templates/approvals/audit-export",
         response_model=CreatorVolumeTemplateApprovalAuditExportResponse,
     )
-    def creator_volume_plan_template_approval_audit_export() -> CreatorVolumeTemplateApprovalAuditExportResponse:
+    def creator_volume_plan_template_approval_audit_export() -> (
+        CreatorVolumeTemplateApprovalAuditExportResponse
+    ):
         from lingwen_creator.volume.template_approvals import export_template_approval_audit
 
         project = _require_project(ctx)
@@ -616,10 +616,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
         from lingwen_creator.volume.templates import list_factory_volume_templates
 
         return CreatorVolumeTemplateListResponse(
-            templates=[
-                CreatorVolumeTemplateInfo(**row)
-                for row in list_factory_volume_templates()
-            ],
+            templates=[CreatorVolumeTemplateInfo(**row) for row in list_factory_volume_templates()],
         )
 
     @app.post(

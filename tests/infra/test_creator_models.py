@@ -1,4 +1,5 @@
 """Tests for creator_models."""
+
 from __future__ import annotations
 
 from lingwen_creator.content.models import list_creator_models, list_creator_models_payload

@@ -20,6 +20,7 @@ from .base_checker import BaseChecker
 @dataclass
 class ItemState:
     """物品状态"""
+
     name: str
     owner: str
     location: str
@@ -29,8 +30,8 @@ class ItemState:
 
 class ItemChecker(BaseChecker):
     """物品连续性检查器"""
-    _checker_type = CheckerType.ITEM
 
+    _checker_type = CheckerType.ITEM
 
     def __init__(self, rules: Optional[Dict[str, Any]] = None):
         super().__init__(self._checker_type)
@@ -38,10 +39,7 @@ class ItemChecker(BaseChecker):
         self._item_history: Dict[str, List[ItemState]] = {}
 
     def check(
-        self,
-        chapter_content: str,
-        chapter_num: int,
-        context: Optional[Dict[str, Any]] = None
+        self, chapter_content: str, chapter_num: int, context: Optional[Dict[str, Any]] = None
     ) -> List[Issue]:
         """
         检查物品连续性
@@ -75,10 +73,7 @@ class ItemChecker(BaseChecker):
         return issues
 
     def _check_state_conflicts(
-        self,
-        content: str,
-        chapter_num: int,
-        item_history: Dict[str, List[ItemState]]
+        self, content: str, chapter_num: int, item_history: Dict[str, List[ItemState]]
     ) -> List[Issue]:
         """检查状态冲突"""
         issues = []
@@ -100,26 +95,25 @@ class ItemChecker(BaseChecker):
                 if latest_state.condition == conflict_state:
                     for trigger in trigger_words:
                         if item_name in content and trigger in content:
-                            issues.append(Issue(
-                                id=f"item_{chapter_num}_{item_name}_状态冲突",
-                                severity=IssueSeverity.P1,
-                                checker_type=CheckerType.ITEM,
-                                issue_type="物品状态冲突",
-                                title="物品状态矛盾",
-                                description=f"物品\"{item_name}\"已被{conflict_state}，但文本中再次出现",
-                                location=IssueLocation(chapter=chapter_num),
-                                evidence=f"历史记录：{latest_state.condition}",
-                                suggestion="修改物品状态或说明物品如何恢复",
-                                character=None
-                            ))
+                            issues.append(
+                                Issue(
+                                    id=f"item_{chapter_num}_{item_name}_状态冲突",
+                                    severity=IssueSeverity.P1,
+                                    checker_type=CheckerType.ITEM,
+                                    issue_type="物品状态冲突",
+                                    title="物品状态矛盾",
+                                    description=f'物品"{item_name}"已被{conflict_state}，但文本中再次出现',
+                                    location=IssueLocation(chapter=chapter_num),
+                                    evidence=f"历史记录：{latest_state.condition}",
+                                    suggestion="修改物品状态或说明物品如何恢复",
+                                    character=None,
+                                )
+                            )
 
         return issues
 
     def _check_ownership_conflicts(
-        self,
-        content: str,
-        chapter_num: int,
-        item_history: Dict[str, List[ItemState]]
+        self, content: str, chapter_num: int, item_history: Dict[str, List[ItemState]]
     ) -> List[Issue]:
         """检查归属冲突"""
         issues = []
@@ -145,10 +139,7 @@ class ItemChecker(BaseChecker):
         return issues
 
     def _check_quantity_conflicts(
-        self,
-        content: str,
-        chapter_num: int,
-        item_history: Dict[str, List[ItemState]]
+        self, content: str, chapter_num: int, item_history: Dict[str, List[ItemState]]
     ) -> List[Issue]:
         """检查数量冲突"""
         issues = []
@@ -168,18 +159,20 @@ class ItemChecker(BaseChecker):
             # 检查数量是否减少
             if latest_state.quantity == 0:
                 if any(c.isdigit() for c in content):
-                    issues.append(Issue(
-                        id=f"item_{chapter_num}_{item_name}_数量冲突",
-                        severity=IssueSeverity.P2,
-                        checker_type=CheckerType.ITEM,
-                        issue_type="物品数量冲突",
-                        title="消耗品数量未减少",
-                        description=f"物品\"{item_name}\"之前已被消耗完毕，但文本中仍有数量描述",
-                        location=IssueLocation(chapter=chapter_num),
-                        evidence=f"历史记录：数量={latest_state.quantity}",
-                        suggestion="修改物品数量描述或补充获取途径",
-                        character=None
-                    ))
+                    issues.append(
+                        Issue(
+                            id=f"item_{chapter_num}_{item_name}_数量冲突",
+                            severity=IssueSeverity.P2,
+                            checker_type=CheckerType.ITEM,
+                            issue_type="物品数量冲突",
+                            title="消耗品数量未减少",
+                            description=f'物品"{item_name}"之前已被消耗完毕，但文本中仍有数量描述',
+                            location=IssueLocation(chapter=chapter_num),
+                            evidence=f"历史记录：数量={latest_state.quantity}",
+                            suggestion="修改物品数量描述或补充获取途径",
+                            character=None,
+                        )
+                    )
 
         return issues
 

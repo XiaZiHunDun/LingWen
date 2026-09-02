@@ -26,9 +26,11 @@ FEEDBACK_FILE = BASE_DIR / ".claude" / "prompts" / "_lib" / "反馈日志.md"
 
 # ========== 数据结构 ==========
 
+
 @dataclass
 class Feedback:
     """反馈数据"""
+
     date: str
     template_type: str
     chapter: int
@@ -51,6 +53,7 @@ class Feedback:
 
     def to_markdown(self) -> str:
         """转换为Markdown格式"""
+
         def stars(n):
             return "★" * (n or 0) + "☆" * (5 - (n or 0)) if n else "未评分"
 
@@ -59,33 +62,34 @@ class Feedback:
 
 ### 模板类型：{self.template_type}
 ### 章节号：ch{self.chapter:03d}
-### 使用者：{self.user or '匿名'}
+### 使用者：{self.user or "匿名"}
 
 #### 效果评分 (1-5)
-- **完整性**：{stars(self.completeness)} ({self.completeness or '未评分'})
-- **可执行性**：{stars(self.executability)} ({self.executability or '未评分'})
-- **上下文关联**：{stars(self.context_relevance)} ({self.context_relevance or '未评分'})
-- **输出质量**：{stars(self.output_quality)} ({self.output_quality or '未评分'})
+- **完整性**：{stars(self.completeness)} ({self.completeness or "未评分"})
+- **可执行性**：{stars(self.executability)} ({self.executability or "未评分"})
+- **上下文关联**：{stars(self.context_relevance)} ({self.context_relevance or "未评分"})
+- **输出质量**：{stars(self.output_quality)} ({self.output_quality or "未评分"})
 
 #### 优点
-{self.pros or '-'}
+{self.pros or "-"}
 
 #### 问题/不足
-{self.cons or '-'}
+{self.cons or "-"}
 
 #### 改进建议
-{self.suggestions or '-'}
+{self.suggestions or "-"}
 
 #### 实际生成的Prompt Token数
 ~{self.token_count} tokens
 
 #### 备注
-{self.notes or '-'}
+{self.notes or "-"}
 """
         return md.strip()
 
 
 # ========== 命令处理器 ==========
+
 
 def cmd_record(args):
     """记录新反馈"""
@@ -179,6 +183,7 @@ def cmd_stats(args):
 
 # ========== 主入口 ==========
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="灵文提示词效果反馈记录器",
@@ -190,7 +195,7 @@ def main():
       --cons "场景设定需要手动填写"
   python3 feedback_recorder.py list
   python3 feedback_recorder.py stats
-        """
+        """,
     )
 
     subparsers = parser.add_subparsers(dest="command", help="子命令")

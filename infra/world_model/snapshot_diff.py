@@ -19,6 +19,7 @@ Doc 1 §3.4 + Doc 3 联动: 比较两个 WorldSnapshot, 返回 5 类别 (NODE / 
 - LLM 解释 diff (Phase 2+)
 - diff 性能优化 (>1000 chapter 场景)
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -31,8 +32,8 @@ from lingwen_core.domain.ripple import WorldSnapshot
 class ChangeKind(str, Enum):
     """变化类型"""
 
-    ADDED = "added"        # prev 不存在, curr 存在
-    REMOVED = "removed"    # prev 存在, curr 不存在
+    ADDED = "added"  # prev 不存在, curr 存在
+    REMOVED = "removed"  # prev 存在, curr 不存在
     MODIFIED = "modified"  # 两边都存在但字段不同
 
 
@@ -71,9 +72,8 @@ class SnapshotChange:
 
 # ============ 主入口 ============
 
-def diff_snapshots(
-    prev: WorldSnapshot, curr: WorldSnapshot
-) -> tuple[SnapshotChange, ...]:
+
+def diff_snapshots(prev: WorldSnapshot, curr: WorldSnapshot) -> tuple[SnapshotChange, ...]:
     """主入口: 返回 7 类别变化 (5 实体 + 2 delta)"""
     return (
         *_diff_nodes(prev, curr),
@@ -88,27 +88,35 @@ def diff_snapshots(
 
 # ============ 单独导出 (常用) ============
 
-def diff_ripples(
-    prev: WorldSnapshot, curr: WorldSnapshot
-) -> tuple[SnapshotChange, ...]:
+
+def diff_ripples(prev: WorldSnapshot, curr: WorldSnapshot) -> tuple[SnapshotChange, ...]:
     """仅 ripple 类别 diff (state 变化 + wavefront 增删)"""
     prev_rips = {r.ripple_id: r for r in prev.active_ripples}
     curr_rips = {r.ripple_id: r for r in curr.active_ripples}
     return _diff_entity_set(
-        prev_rips, curr_rips, EntityKind.RIPPLE,
-        field_names=("state", "wavefront", "planned_resolve_ch", "resolved_ch",
-                     "decay_rate", "affected_nodes", "affected_relations"),
+        prev_rips,
+        curr_rips,
+        EntityKind.RIPPLE,
+        field_names=(
+            "state",
+            "wavefront",
+            "planned_resolve_ch",
+            "resolved_ch",
+            "decay_rate",
+            "affected_nodes",
+            "affected_relations",
+        ),
     )
 
 
-def diff_subplots(
-    prev: WorldSnapshot, curr: WorldSnapshot
-) -> tuple[SnapshotChange, ...]:
+def diff_subplots(prev: WorldSnapshot, curr: WorldSnapshot) -> tuple[SnapshotChange, ...]:
     """仅 subplot 类别 diff (status 变化)"""
     prev_plots = {_plot_key(p): p for p in prev.active_subplots}
     curr_plots = {_plot_key(p): p for p in curr.active_subplots}
     return _diff_entity_set(
-        prev_plots, curr_plots, EntityKind.SUBPLOT,
+        prev_plots,
+        curr_plots,
+        EntityKind.SUBPLOT,
         field_names=("status", "close_ch", "active_ch_range", "related_ripples"),
     )
 
@@ -121,11 +129,7 @@ def has_state_transition(
 ) -> bool:
     """便捷查询: ripple 是否在 changes 中发生 from_state → to_state 转换"""
     for c in changes:
-        if (
-            c.entity == EntityKind.RIPPLE
-            and c.entity_id == ripple_id
-            and c.kind == ChangeKind.MODIFIED
-        ):
+        if c.entity == EntityKind.RIPPLE and c.entity_id == ripple_id and c.kind == ChangeKind.MODIFIED:
             for field, before, after in c.field_changes:
                 if field == "state" and before == from_state and after == to_state:
                     return True
@@ -134,9 +138,8 @@ def has_state_transition(
 
 # ============ 内部 helpers ============
 
-def _diff_nodes(
-    prev: WorldSnapshot, curr: WorldSnapshot
-) -> tuple[SnapshotChange, ...]:
+
+def _diff_nodes(prev: WorldSnapshot, curr: WorldSnapshot) -> tuple[SnapshotChange, ...]:
     prev_keys = {str(k): k for k in prev.nodes}
     curr_keys = {str(k): k for k in curr.nodes}
     changes: list[SnapshotChange] = []
@@ -168,7 +171,8 @@ def _diff_nodes(
         prev_kp = prev.nodes[prev_keys[k_str]]
         curr_kp = curr.nodes[curr_keys[k_str]]
         field_changes = _diff_fields(
-            prev_kp, curr_kp,
+            prev_kp,
+            curr_kp,
             fields=("description", "stability", "first_ch", "last_ch", "tags"),
         )
         if field_changes:
@@ -185,20 +189,18 @@ def _diff_nodes(
     return tuple(changes)
 
 
-def _diff_relations(
-    prev: WorldSnapshot, curr: WorldSnapshot
-) -> tuple[SnapshotChange, ...]:
+def _diff_relations(prev: WorldSnapshot, curr: WorldSnapshot) -> tuple[SnapshotChange, ...]:
     prev_map = {_rel_key(r): r for r in prev.relations}
     curr_map = {_rel_key(r): r for r in curr.relations}
     return _diff_entity_set(
-        prev_map, curr_map, EntityKind.RELATION,
+        prev_map,
+        curr_map,
+        EntityKind.RELATION,
         field_names=("type", "first_ch", "last_ch", "strength"),
     )
 
 
-def _diff_mood(
-    prev: WorldSnapshot, curr: WorldSnapshot
-) -> tuple[SnapshotChange, ...]:
+def _diff_mood(prev: WorldSnapshot, curr: WorldSnapshot) -> tuple[SnapshotChange, ...]:
     if prev.world_mood == curr.world_mood:
         return ()
     return (
@@ -213,11 +215,10 @@ def _diff_mood(
     )
 
 
-def _diff_physical(
-    prev: WorldSnapshot, curr: WorldSnapshot
-) -> tuple[SnapshotChange, ...]:
+def _diff_physical(prev: WorldSnapshot, curr: WorldSnapshot) -> tuple[SnapshotChange, ...]:
     field_changes = _diff_fields(
-        prev.physical, curr.physical,
+        prev.physical,
+        curr.physical,
         fields=("ch", "state", "intensity", "notes"),
     )
     if not field_changes:
@@ -234,11 +235,10 @@ def _diff_physical(
     )
 
 
-def _diff_mental(
-    prev: WorldSnapshot, curr: WorldSnapshot
-) -> tuple[SnapshotChange, ...]:
+def _diff_mental(prev: WorldSnapshot, curr: WorldSnapshot) -> tuple[SnapshotChange, ...]:
     field_changes = _diff_fields(
-        prev.mental, curr.mental,
+        prev.mental,
+        curr.mental,
         fields=("ch", "state", "intensity", "notes"),
     )
     if not field_changes:
@@ -256,6 +256,7 @@ def _diff_mental(
 
 
 # ============ 通用 helpers ============
+
 
 def _diff_entity_set(
     prev_map: dict[str, Any],
@@ -304,9 +305,7 @@ def _diff_entity_set(
     return tuple(changes)
 
 
-def _diff_fields(
-    prev: Any, curr: Any, fields: tuple[str, ...]
-) -> tuple[tuple[str, Any, Any], ...]:
+def _diff_fields(prev: Any, curr: Any, fields: tuple[str, ...]) -> tuple[tuple[str, Any, Any], ...]:
     """比较两个 dataclass 在指定 fields 上的差异 → (field, before, after)"""
     changes: list[tuple[str, Any, Any]] = []
     for field in fields:

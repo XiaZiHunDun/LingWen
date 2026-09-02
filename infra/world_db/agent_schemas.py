@@ -4,6 +4,7 @@ Phase 118: validates JSON output from the LLM before it is inserted into
 the ``proposal`` table. The ``character.update`` payload mirrors the
 fields accepted by ``accept_proposal`` in apps/studio_api/routes/world.py.
 """
+
 from __future__ import annotations
 
 import json
@@ -98,9 +99,7 @@ def parse_proposals_json(raw: str) -> list[ProposalResponse]:
     elif isinstance(data, dict):
         wrapped = {"proposals": [data]}
     else:
-        raise ValueError(
-            f"unexpected LLM output shape: {type(data).__name__}"
-        )
+        raise ValueError(f"unexpected LLM output shape: {type(data).__name__}")
 
     result = ExtractionResult.model_validate(wrapped)
     return result.proposals

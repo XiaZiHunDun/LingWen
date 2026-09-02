@@ -192,7 +192,7 @@ class TestRegressionQueueOperations:
                 "ch001-ch010": ["衔接断裂(ch006/007)", "重复独白删除"],
                 "ch011-ch020": ["ch016/17内容颠倒(P0)", "时间线矛盾(P1)"],
                 "ch051-ch060": ["星月性别矛盾(P0)", "联盟邀请逻辑"],
-            }
+            },
         }
         with open(state_file, "w") as f:
             json.dump(test_state, f)
@@ -201,10 +201,7 @@ class TestRegressionQueueOperations:
     def test_register_adds_to_queue(self, mock_workflow_state, monkeypatch):
         """When register_regression_check is called, related chapters are added."""
         # Mock the workflow state path
-        monkeypatch.setattr(
-            "regression_tracker.WORKFLOW_STATE_PATH",
-            mock_workflow_state
-        )
+        monkeypatch.setattr("regression_tracker.WORKFLOW_STATE_PATH", mock_workflow_state)
 
         # Register a fix for ch005
         related = register_regression_check("ch005", "Test fix")
@@ -219,10 +216,7 @@ class TestRegressionQueueOperations:
 
     def test_clear_removes_from_queue(self, mock_workflow_state, monkeypatch):
         """clear_regression_check removes a chapter from the queue."""
-        monkeypatch.setattr(
-            "regression_tracker.WORKFLOW_STATE_PATH",
-            mock_workflow_state
-        )
+        monkeypatch.setattr("regression_tracker.WORKFLOW_STATE_PATH", mock_workflow_state)
 
         # Register first
         register_regression_check("ch005", "Test fix")
@@ -234,10 +228,7 @@ class TestRegressionQueueOperations:
 
     def test_clear_all_clears_queue(self, mock_workflow_state, monkeypatch):
         """clear_all_regression_checks removes all pending checks."""
-        monkeypatch.setattr(
-            "regression_tracker.WORKFLOW_STATE_PATH",
-            mock_workflow_state
-        )
+        monkeypatch.setattr("regression_tracker.WORKFLOW_STATE_PATH", mock_workflow_state)
 
         # Register a few
         register_regression_check("ch005", "Test fix 1")
@@ -263,7 +254,7 @@ class TestEndToEnd:
                 "ch001-ch010": ["衔接断裂"],
                 "ch011-ch020": ["ch016/17内容颠倒"],
                 "ch021-ch030": ["黑鸦线索"],
-            }
+            },
         }
         with open(state_file, "w") as f:
             json.dump(test_state, f)

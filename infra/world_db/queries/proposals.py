@@ -1,4 +1,5 @@
 """Proposal CRUD for review flow."""
+
 import json
 
 from lingwen_shared.ports.storage import ConnectionPort
@@ -13,27 +14,27 @@ def create_proposal(conn: ConnectionPort, data: dict) -> int:
             status, created_at)
            VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)""",
         (
-            data["kind"], data.get("target_kind"), data.get("target_id"),
+            data["kind"],
+            data.get("target_kind"),
+            data.get("target_id"),
             json.dumps(data["payload"], ensure_ascii=False),
-            data["source"], data.get("source_context"), now_iso(),
+            data["source"],
+            data.get("source_context"),
+            now_iso(),
         ),
     )
     conn.commit()
     return cur.lastrowid
 
 
-def list_proposals(
-    conn: ConnectionPort, status: str | None = None
-) -> list[dict]:
+def list_proposals(conn: ConnectionPort, status: str | None = None) -> list[dict]:
     if status:
         rows = conn.execute(
             "SELECT * FROM proposal WHERE status = ? ORDER BY created_at DESC",
             (status,),
         ).fetchall()
     else:
-        rows = conn.execute(
-            "SELECT * FROM proposal ORDER BY created_at DESC"
-        ).fetchall()
+        rows = conn.execute("SELECT * FROM proposal ORDER BY created_at DESC").fetchall()
     return [row_to_dict(r, ("payload",)) for r in rows if r is not None]
 
 

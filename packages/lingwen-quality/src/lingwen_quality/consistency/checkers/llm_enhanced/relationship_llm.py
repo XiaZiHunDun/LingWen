@@ -19,9 +19,7 @@ class LLMEnhancedRelationshipStateChecker(LLMEnhancedChecker):
         from ..relationship_state_checker import RelationshipStateChecker
 
         super().__init__(
-            base_checker=RelationshipStateChecker(),
-            llm_service=LLMService(),
-            checker_type="relationship"
+            base_checker=RelationshipStateChecker(), llm_service=LLMService(), checker_type="relationship"
         )
 
     def _find_uncertain_regions(self, content: str, context: dict) -> List[dict]:
@@ -38,12 +36,14 @@ class LLMEnhancedRelationshipStateChecker(LLMEnhancedChecker):
 
         for pattern in relationship_patterns:
             for m in re.finditer(pattern, content):
-                uncertain.append({
-                    "type": "relationship_uncertain",
-                    "text": m.group(),
-                    "start": m.start(),
-                    "end": m.end(),
-                    "context": content[max(0, m.start()-50):m.end()+50]
-                })
+                uncertain.append(
+                    {
+                        "type": "relationship_uncertain",
+                        "text": m.group(),
+                        "start": m.start(),
+                        "end": m.end(),
+                        "context": content[max(0, m.start() - 50) : m.end() + 50],
+                    }
+                )
 
         return uncertain

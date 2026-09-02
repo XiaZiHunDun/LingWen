@@ -18,8 +18,8 @@ from .base_checker import BaseChecker
 
 class OutlineChecker(BaseChecker):
     """大纲偏离度检查器"""
-    _checker_type = CheckerType.OUTLINE
 
+    _checker_type = CheckerType.OUTLINE
 
     def __init__(self, rules: Optional[Dict[str, Any]] = None):
         super().__init__(self._checker_type)
@@ -27,10 +27,7 @@ class OutlineChecker(BaseChecker):
         self._outline: Dict[str, Any] = {}
 
     def check(
-        self,
-        chapter_content: str,
-        chapter_num: int,
-        context: Optional[Dict[str, Any]] = None
+        self, chapter_content: str, chapter_num: int, context: Optional[Dict[str, Any]] = None
     ) -> List[Issue]:
         """
         检查大纲偏离度
@@ -53,27 +50,18 @@ class OutlineChecker(BaseChecker):
         self._outline = outline
 
         # 检查情节偏离
-        issues.extend(self._check_plot_alignment(
-            chapter_content, chapter_num, chapter_outline
-        ))
+        issues.extend(self._check_plot_alignment(chapter_content, chapter_num, chapter_outline))
 
         # 检查角色偏离
-        issues.extend(self._check_character_alignment(
-            chapter_content, chapter_num, chapter_outline
-        ))
+        issues.extend(self._check_character_alignment(chapter_content, chapter_num, chapter_outline))
 
         # 检查节奏偏离
-        issues.extend(self._check_pacing_alignment(
-            chapter_content, chapter_num, chapter_outline
-        ))
+        issues.extend(self._check_pacing_alignment(chapter_content, chapter_num, chapter_outline))
 
         return issues
 
     def _check_plot_alignment(
-        self,
-        content: str,
-        chapter_num: int,
-        chapter_outline: Dict[str, Any]
+        self, content: str, chapter_num: int, chapter_outline: Dict[str, Any]
     ) -> List[Issue]:
         """检查情节偏离"""
         issues = []
@@ -82,26 +70,25 @@ class OutlineChecker(BaseChecker):
 
         for plot_point in required_plot_points:
             if plot_point not in content:
-                issues.append(Issue(
-                    id=f"outline_{chapter_num}_情节偏离",
-                    severity=IssueSeverity.P1,
-                    checker_type=CheckerType.OUTLINE,
-                    issue_type="情节偏离",
-                    title="大纲要求的情节未出现",
-                    description=f"大纲要求本章应包含\"{plot_point}\"，但未在正文中出现",
-                    location=IssueLocation(chapter=chapter_num),
-                    evidence="大纲要求",
-                    suggestion="在正文中加入该情节点",
-                    character=None
-                ))
+                issues.append(
+                    Issue(
+                        id=f"outline_{chapter_num}_情节偏离",
+                        severity=IssueSeverity.P1,
+                        checker_type=CheckerType.OUTLINE,
+                        issue_type="情节偏离",
+                        title="大纲要求的情节未出现",
+                        description=f'大纲要求本章应包含"{plot_point}"，但未在正文中出现',
+                        location=IssueLocation(chapter=chapter_num),
+                        evidence="大纲要求",
+                        suggestion="在正文中加入该情节点",
+                        character=None,
+                    )
+                )
 
         return issues
 
     def _check_character_alignment(
-        self,
-        content: str,
-        chapter_num: int,
-        chapter_outline: Dict[str, Any]
+        self, content: str, chapter_num: int, chapter_outline: Dict[str, Any]
     ) -> List[Issue]:
         """检查角色偏离"""
         issues = []
@@ -111,26 +98,25 @@ class OutlineChecker(BaseChecker):
         for char_name, actions in required_character_actions.items():
             for action in actions:
                 if char_name in content and action not in content:
-                    issues.append(Issue(
-                        id=f"outline_{chapter_num}_{char_name}_角色偏离",
-                        severity=IssueSeverity.P2,
-                        checker_type=CheckerType.OUTLINE,
-                        issue_type="角色行动偏离",
-                        title=f"角色{char_name}的行动偏离大纲",
-                        description=f"大纲要求{char_name}执行\"{action}\"，但未在正文中出现",
-                        location=IssueLocation(chapter=chapter_num),
-                        evidence=f"大纲要求：{action}",
-                        suggestion="在正文中加入该角色行动",
-                        character=char_name
-                    ))
+                    issues.append(
+                        Issue(
+                            id=f"outline_{chapter_num}_{char_name}_角色偏离",
+                            severity=IssueSeverity.P2,
+                            checker_type=CheckerType.OUTLINE,
+                            issue_type="角色行动偏离",
+                            title=f"角色{char_name}的行动偏离大纲",
+                            description=f'大纲要求{char_name}执行"{action}"，但未在正文中出现',
+                            location=IssueLocation(chapter=chapter_num),
+                            evidence=f"大纲要求：{action}",
+                            suggestion="在正文中加入该角色行动",
+                            character=char_name,
+                        )
+                    )
 
         return issues
 
     def _check_pacing_alignment(
-        self,
-        content: str,
-        chapter_num: int,
-        chapter_outline: Dict[str, Any]
+        self, content: str, chapter_num: int, chapter_outline: Dict[str, Any]
     ) -> List[Issue]:
         """检查节奏偏离"""
         issues = []
@@ -140,31 +126,35 @@ class OutlineChecker(BaseChecker):
 
         # 根据预期节奏检查字数
         if expected_pacing == "slow" and actual_word_count > 5000:
-            issues.append(Issue(
-                id=f"outline_{chapter_num}_节奏偏离",
-                severity=IssueSeverity.P2,
-                checker_type=CheckerType.OUTLINE,
-                issue_type="节奏偏离",
-                title="节奏过慢",
-                description="大纲规划本章节奏较慢，但实际字数超过5000字",
-                location=IssueLocation(chapter=chapter_num),
-                evidence=f"实际字数：{actual_word_count}",
-                suggestion="检查是否有过多的背景描写或支线内容",
-                character=None
-            ))
+            issues.append(
+                Issue(
+                    id=f"outline_{chapter_num}_节奏偏离",
+                    severity=IssueSeverity.P2,
+                    checker_type=CheckerType.OUTLINE,
+                    issue_type="节奏偏离",
+                    title="节奏过慢",
+                    description="大纲规划本章节奏较慢，但实际字数超过5000字",
+                    location=IssueLocation(chapter=chapter_num),
+                    evidence=f"实际字数：{actual_word_count}",
+                    suggestion="检查是否有过多的背景描写或支线内容",
+                    character=None,
+                )
+            )
         elif expected_pacing == "fast" and actual_word_count < 2000:
-            issues.append(Issue(
-                id=f"outline_{chapter_num}_节奏偏离",
-                severity=IssueSeverity.P2,
-                checker_type=CheckerType.OUTLINE,
-                issue_type="节奏偏离",
-                title="节奏过快",
-                description="大纲规划本章节奏较快，但实际字数不足2000字",
-                location=IssueLocation(chapter=chapter_num),
-                evidence=f"实际字数：{actual_word_count}",
-                suggestion="检查是否缺少必要的情节推进",
-                character=None
-            ))
+            issues.append(
+                Issue(
+                    id=f"outline_{chapter_num}_节奏偏离",
+                    severity=IssueSeverity.P2,
+                    checker_type=CheckerType.OUTLINE,
+                    issue_type="节奏偏离",
+                    title="节奏过快",
+                    description="大纲规划本章节奏较快，但实际字数不足2000字",
+                    location=IssueLocation(chapter=chapter_num),
+                    evidence=f"实际字数：{actual_word_count}",
+                    suggestion="检查是否缺少必要的情节推进",
+                    character=None,
+                )
+            )
 
         return issues
 

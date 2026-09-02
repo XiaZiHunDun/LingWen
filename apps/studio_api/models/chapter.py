@@ -7,6 +7,7 @@ existing backend imports.
 
 Field-by-field identity verified at migration time (see v16.5 #N.10 T6.1).
 """
+
 from __future__ import annotations
 
 from lingwen_shared.contracts.python.health import (

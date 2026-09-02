@@ -9,6 +9,7 @@ Implementation unchanged from when it lived in
 Future Phase: these functions target ``lingwen_core.use_cases``
 (use-case layer), not domain entities.
 """
+
 from __future__ import annotations
 
 from dataclasses import replace

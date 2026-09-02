@@ -11,6 +11,7 @@ Module structure (Phase 126 v16.2.3):
 - webhook: webhook config + dispatch
 - diff_collab: diff collab notes
 """
+
 from lingwen_creator.onboarding import (
     autodetect,  # noqa: F401
     diff_collab,  # noqa: F401

@@ -16,6 +16,7 @@ Routes must continue to project from backend storage to these presentation
 DTOs at the response boundary. Resolving backend re-export from
 lingwen-shared is v16.5 #N.8+ carryover.
 """
+
 from __future__ import annotations
 
 from typing import Optional

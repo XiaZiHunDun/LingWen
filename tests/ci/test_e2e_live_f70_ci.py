@@ -1,4 +1,5 @@
 """Phase 9.76 F70: e2e-live CI parity contract + verify script."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -21,8 +22,8 @@ class TestE2eLiveF70:
 
     def test_workflow_matches_local_verify_env(self):
         text = FRONTEND_CI.read_text(encoding="utf-8")
-        assert "python-version: \"3.12\"" in text or "python-version: '3.12'" in text
-        assert "node-version: \"20\"" in text or "node-version: '20'" in text
+        assert 'python-version: "3.12"' in text or "python-version: '3.12'" in text
+        assert 'node-version: "20"' in text or "node-version: '20'" in text
         assert "LINGWEN_E2E_LIVE" in text
         assert "playwright install --with-deps chromium" in text
         assert "upload-artifact" in text

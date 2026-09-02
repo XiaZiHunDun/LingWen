@@ -1,4 +1,5 @@
 """Phase 9.89 F81: CI contract — Analytics production rollup."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -31,6 +32,4 @@ class TestAnalyticsProductionRollupF81:
         assert "production-rollup-kpi" in spec.read_text(encoding="utf-8")
 
     def test_dashboard_rollup_pytest(self):
-        assert (
-            NOVEL_FACTORY / "tests" / "dashboard" / "test_app_production_records_rollup_f81.py"
-        ).is_file()
+        assert (NOVEL_FACTORY / "tests" / "dashboard" / "test_app_production_records_rollup_f81.py").is_file()

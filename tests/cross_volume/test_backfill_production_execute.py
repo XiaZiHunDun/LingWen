@@ -1,4 +1,5 @@
 """Phase 9.33 F18: production backfill --execute idempotency + pre/post counts + CLI."""
+
 from pathlib import Path
 from unittest.mock import patch
 
@@ -45,9 +46,7 @@ def corpus(tmp_path):
     root = tmp_path / "corpus"
     root.mkdir()
     (root / "ch001.md").write_text("李青云拜入凌霄宗, 林凡登场.", encoding="utf-8")
-    (root / "ch001_大纲.md").write_text(
-        "# 章节一\n## 青云觉醒获得古剑碎片\n", encoding="utf-8"
-    )
+    (root / "ch001_大纲.md").write_text("# 章节一\n## 青云觉醒获得古剑碎片\n", encoding="utf-8")
     (root / "ch002.md").write_text("李青云与林凡激战.", encoding="utf-8")
     return root
 

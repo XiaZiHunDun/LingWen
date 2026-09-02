@@ -1,4 +1,5 @@
 """Embedder 测试 (TDD 模式)"""
+
 import os
 from unittest.mock import Mock, patch
 
@@ -48,9 +49,7 @@ class TestEmbedder:
         mock_client = embedder._mock_client
 
         mock_response = Mock()
-        mock_response.data = [
-            Mock(embedding=[0.1] * 1536, index=0)
-        ]
+        mock_response.data = [Mock(embedding=[0.1] * 1536, index=0)]
         mock_client.embeddings.create.return_value = mock_response
 
         result = embedder.embed_texts(["hello world"])
@@ -117,9 +116,7 @@ class TestEmbedder:
         mock_client = embedder._mock_client
 
         mock_response = Mock()
-        mock_response.data = [
-            Mock(embedding=[0.1] * 1536, index=i) for i in range(5)
-        ]
+        mock_response.data = [Mock(embedding=[0.1] * 1536, index=i) for i in range(5)]
         mock_client.embeddings.create.return_value = mock_response
 
         texts = [f"text_{i}" for i in range(5)]
@@ -141,7 +138,9 @@ class TestEmbedderEdgeCases:
 
     def test_config_file_not_found(self):
         """测试配置文件不存在"""
-        with patch("lingwen_memory.embeddings.factory.load_yaml", side_effect=RuntimeError("Config not found")):
+        with patch(
+            "lingwen_memory.embeddings.factory.load_yaml", side_effect=RuntimeError("Config not found")
+        ):
             with pytest.raises(RuntimeError, match="Failed to initialize Embedder"):
                 Embedder()
 
@@ -154,7 +153,9 @@ class TestEmbedderEdgeCases:
 
             with patch("lingwen_memory.embeddings.factory.load_yaml") as mock_load_yaml:
                 mock_load_yaml.return_value = _EMBEDDING_CONFIG
-                with patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test", "LINGWEN_EMBEDDING_PROVIDER": "openai"}):
+                with patch.dict(
+                    os.environ, {"OPENAI_API_KEY": "sk-test", "LINGWEN_EMBEDDING_PROVIDER": "openai"}
+                ):
                     instance = Embedder()
 
                     with pytest.raises(Exception):

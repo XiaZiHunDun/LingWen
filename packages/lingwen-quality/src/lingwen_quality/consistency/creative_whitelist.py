@@ -47,8 +47,8 @@ class ChapterNotWhitelistedError(WhitelistError):
 # ── 检查等级常量 ──
 
 DIAMOND = "diamond"  # 钻石级 — 必须执行，不可降级
-GOLD = "gold"        # 金级 — 白名单中降级为建议
-SILVER = "silver"    # 银级 — 白名单中降级为建议
+GOLD = "gold"  # 金级 — 白名单中降级为建议
+SILVER = "silver"  # 银级 — 白名单中降级为建议
 
 # 白名单章节只保留钻石级检查，金/银降级为建议
 DOWNGRADED_LEVELS = frozenset({GOLD, SILVER})
@@ -246,6 +246,7 @@ class CreativeWhitelist:
     def save_to_file(self, filepath: str) -> None:
         """保存白名单到 JSON 文件"""
         import os
+
         os.makedirs(os.path.dirname(filepath) or ".", exist_ok=True)
         data = [
             {

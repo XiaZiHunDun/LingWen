@@ -1,4 +1,5 @@
 """Phase 9.59 F50: cross-volume ripple impact scoring (0 BFS core change)."""
+
 from __future__ import annotations
 
 from infra.cross_volume.reference_graph import CascadedRipple
@@ -35,10 +36,7 @@ def compute_impact_score(
     cascade: CascadedRipple | None = None,
 ) -> float:
     """Return non-negative impact score for dashboard ranking."""
-    direct = (
-        len(ripple.affected_nodes) * _DIRECT_NODE
-        + len(ripple.affected_edges) * _DIRECT_EDGE
-    )
+    direct = len(ripple.affected_nodes) * _DIRECT_NODE + len(ripple.affected_edges) * _DIRECT_EDGE
     cascade_score = 0.0
     if cascade is not None:
         edge_weight_sum = sum(e.weight for e in cascade.cascade_edges)
@@ -47,10 +45,6 @@ def compute_impact_score(
             + edge_weight_sum * _CASCADE_EDGE_WEIGHT
             + cascade.depth_reached * _DEPTH_BONUS
         )
-    cross_vol = (
-        _CROSS_VOLUME_BONUS
-        if len(_distinct_volumes(ripple, cascade)) >= 2
-        else 0.0
-    )
+    cross_vol = _CROSS_VOLUME_BONUS if len(_distinct_volumes(ripple, cascade)) >= 2 else 0.0
     raw = (direct + cascade_score + cross_vol) * _confidence_multiplier(ripple)
     return round(max(0.0, raw), 2)

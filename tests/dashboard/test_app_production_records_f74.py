@@ -1,4 +1,5 @@
 """Phase 9.82 F74: GET /api/production-records."""
+
 from __future__ import annotations
 
 import json
@@ -14,15 +15,17 @@ class TestProductionRecordsApiF74:
         records_dir = tmp_path / "pilot_records"
         records_dir.mkdir()
         (records_dir / "ch360.json").write_text(
-            json.dumps({
-                "pilot_id": "p360",
-                "chapter_num": 360,
-                "operator": "op",
-                "recorded_at": "2026-06-11T00:00:00Z",
-                "env": {"primary_provider": "minimax"},
-                "run": {"emit_chapter_completed": True, "total_cost_usd": 0.03},
-                "hooks": {"memory_context_source": "stub"},
-            }),
+            json.dumps(
+                {
+                    "pilot_id": "p360",
+                    "chapter_num": 360,
+                    "operator": "op",
+                    "recorded_at": "2026-06-11T00:00:00Z",
+                    "env": {"primary_provider": "minimax"},
+                    "run": {"emit_chapter_completed": True, "total_cost_usd": 0.03},
+                    "hooks": {"memory_context_source": "stub"},
+                }
+            ),
             encoding="utf-8",
         )
         monkeypatch.setenv("LINGWEN_PILOT_RECORDS_DIR", str(records_dir))

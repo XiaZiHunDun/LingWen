@@ -4,6 +4,7 @@ dashboard/ 剩余部分应已迁移到 apps/studio_api。
 注: 17.3 fix 把目录从 apps/studio-api 重命名为 apps/studio_api(下划线),
 因 hyphen 不是合法 Python 标识符 — see commit message。
 """
+
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]
@@ -16,9 +17,7 @@ def test_dashboard_frontend_path_removed():
 
 
 def test_apps_dashboard_exists():
-    assert (REPO / "apps" / "dashboard").exists(), (
-        "apps/dashboard should exist after 17.2"
-    )
+    assert (REPO / "apps" / "dashboard").exists(), "apps/dashboard should exist after 17.2"
 
 
 def test_dashboard_root_removed():
@@ -26,8 +25,7 @@ def test_dashboard_root_removed():
     dashboard_path = REPO / "dashboard"
     # dashboard/ root must be gone (no longer a directory); symlinks are tolerated
     assert not (dashboard_path.exists() and dashboard_path.is_dir()), (
-        "dashboard/ root should be moved to apps/studio_api "
-        "(frontend already in apps/dashboard)"
+        "dashboard/ root should be moved to apps/studio_api (frontend already in apps/dashboard)"
     )
 
 

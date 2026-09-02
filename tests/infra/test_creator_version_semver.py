@@ -1,4 +1,5 @@
 """Tests for template version semver validation."""
+
 from __future__ import annotations
 
 import pytest

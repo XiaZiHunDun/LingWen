@@ -11,6 +11,7 @@ Why: 旧实现把 env 变量读取内联在 MasterController._create_default_rou
 2. 想换 provider 优先级 / 加载方式需要改 controller
 3. 同样的 env 读取逻辑无法被其他入口复用
 """
+
 from __future__ import annotations
 
 import os
@@ -59,6 +60,7 @@ class MasterControllerConfig:
         enable_failover: 是否启用 provider 故障转移
         providers: 已配置的 provider 字典（key=provider_name, value=ProviderConfig）
     """
+
     state_dir: str
     primary_provider: str
     enable_failover: bool

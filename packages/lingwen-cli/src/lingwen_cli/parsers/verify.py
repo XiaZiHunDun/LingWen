@@ -1,4 +1,5 @@
 """verify subparser — chapter quality verification (QualityVerifier)."""
+
 import argparse
 
 

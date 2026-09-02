@@ -1,4 +1,5 @@
 """Tests for infra.creator_mode and volume summary."""
+
 from __future__ import annotations
 
 from lingwen_creator.shared.mode import (
@@ -40,7 +41,8 @@ def test_settings_from_project_config_companion(tmp_path):
     (tmp_path / "03_内容仓库" / "04_正文").mkdir(parents=True)
     (tmp_path / "03_内容仓库" / "角色设定").mkdir(parents=True)
     (tmp_path / "03_内容仓库" / "角色设定" / "character_profiles.json").write_text(
-        "{}", encoding="utf-8",
+        "{}",
+        encoding="utf-8",
     )
     (tmp_path / "config").mkdir(parents=True)
     (tmp_path / "config" / "project.yaml").write_text(
@@ -67,7 +69,8 @@ def test_volume_summary_markdown(tmp_path):
     chapters.mkdir(parents=True)
     (tmp_path / "03_内容仓库" / "角色设定").mkdir(parents=True)
     (tmp_path / "03_内容仓库" / "角色设定" / "character_profiles.json").write_text(
-        "{}", encoding="utf-8",
+        "{}",
+        encoding="utf-8",
     )
     (chapters / "ch001.md").write_text("第一章开头内容。" * 20, encoding="utf-8")
     (chapters / "ch002.md").write_text("第二章另一段。" * 15, encoding="utf-8")

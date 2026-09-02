@@ -19,9 +19,7 @@ class LLMEnhancedBattleVisualizationChecker(LLMEnhancedChecker):
         from ..battle_visualization import BattleVisualizationChecker
 
         super().__init__(
-            base_checker=BattleVisualizationChecker(),
-            llm_service=LLMService(),
-            checker_type="battle"
+            base_checker=BattleVisualizationChecker(), llm_service=LLMService(), checker_type="battle"
         )
 
     def _find_uncertain_regions(self, content: str, context: dict) -> List[dict]:
@@ -38,12 +36,14 @@ class LLMEnhancedBattleVisualizationChecker(LLMEnhancedChecker):
 
         for pattern in battle_patterns:
             for m in re.finditer(pattern, content):
-                uncertain.append({
-                    "type": "battle_uncertain",
-                    "text": m.group(),
-                    "start": m.start(),
-                    "end": m.end(),
-                    "context": content[max(0, m.start()-50):m.end()+50]
-                })
+                uncertain.append(
+                    {
+                        "type": "battle_uncertain",
+                        "text": m.group(),
+                        "start": m.start(),
+                        "end": m.end(),
+                        "context": content[max(0, m.start() - 50) : m.end() + 50],
+                    }
+                )
 
         return uncertain

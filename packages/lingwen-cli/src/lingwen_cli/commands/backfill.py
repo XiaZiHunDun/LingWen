@@ -7,6 +7,7 @@ Phase 9.12 additive: LLM opt-in 4 flag (--use-llm/--apply/--cache-path/--llm-con
 LLM path 走 LLMScanner + LLMCache + CostTracker; 真实 LLM scan-and-write 是 Task 9,
 本 Task 7 仅完成 CLI 接线 + 组件实例化 dry-run/apply 开关.
 """
+
 import sys
 from pathlib import Path
 

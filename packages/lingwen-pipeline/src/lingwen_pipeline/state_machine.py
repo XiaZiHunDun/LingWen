@@ -30,24 +30,27 @@ from typing import Any, Callable, Dict, Generic, List, Optional, Tuple, Type, Ty
 
 from infra.errors import BaseError
 
-T = TypeVar('T')
-S = TypeVar('S')
+T = TypeVar("T")
+S = TypeVar("S")
 
 
 class StateError(BaseError):
     """状态错误"""
+
     __error_name__ = "StateError"
     __error_tags__ = ["state"]
 
 
 class UnknownTransformError(StateError):
     """未知转换错误"""
+
     __error_name__ = "UnknownTransformError"
     __error_tags__ = ["state", "transform"]
 
 
 class StateValidationError(StateError):
     """状态验证错误"""
+
     __error_name__ = "StateValidationError"
     __error_tags__ = ["state", "validation"]
 
@@ -62,6 +65,7 @@ class Transform:
         fn: 转换函数 (state, payload) -> new_state
         schema: 参数 Schema（可选）
     """
+
     name: str
     fn: Callable[[Any, Any], Any]
     schema: Optional[Any] = None
@@ -90,9 +94,10 @@ class StateEvent:
         payload: 转换参数
         timestamp: 时间戳
     """
+
     transform: str
     payload: Any
-    timestamp: float = field(default_factory=lambda: __import__('time').time())
+    timestamp: float = field(default_factory=lambda: __import__("time").time())
 
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
@@ -114,9 +119,10 @@ class StateSnapshot:
         timestamp: 时间戳
         event_count: 事件数量
     """
+
     state: Any
     version: int = 1
-    timestamp: float = field(default_factory=lambda: __import__('time').time())
+    timestamp: float = field(default_factory=lambda: __import__("time").time())
     event_count: int = 0
 
     def to_dict(self) -> Dict[str, Any]:
@@ -129,7 +135,7 @@ class StateSnapshot:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'StateSnapshot':
+    def from_dict(cls, data: Dict[str, Any]) -> "StateSnapshot":
         """从字典创建"""
         return cls(**data)
 
@@ -195,7 +201,7 @@ class State(Generic[T]):
         """
         return self._transform_map.get(name)
 
-    def apply(self, transform_name: str, payload: Any = None) -> 'State[T]':
+    def apply(self, transform_name: str, payload: Any = None) -> "State[T]":
         """
         应用转换
 
@@ -230,7 +236,7 @@ class State(Generic[T]):
             version=new_version,
         )
 
-    def apply_many(self, transforms: List[Tuple[str, Any]]) -> 'State[T]':
+    def apply_many(self, transforms: List[Tuple[str, Any]]) -> "State[T]":
         """
         批量应用转换
 
@@ -259,7 +265,7 @@ class State(Generic[T]):
         )
         return self._snapshot
 
-    def restore(self, snapshot: StateSnapshot) -> 'State[T]':
+    def restore(self, snapshot: StateSnapshot) -> "State[T]":
         """
         从快照恢复
 
@@ -277,7 +283,7 @@ class State(Generic[T]):
             version=snapshot.version,
         )
 
-    def replay(self, events: List[StateEvent]) -> 'State[T]':
+    def replay(self, events: List[StateEvent]) -> "State[T]":
         """
         重放事件
 
@@ -299,7 +305,7 @@ class State(Generic[T]):
 
         return result
 
-    def reset(self) -> 'State[T]':
+    def reset(self) -> "State[T]":
         """
         重置到初始状态
 
@@ -326,6 +332,7 @@ class State(Generic[T]):
         """从头重放事件获取初始状态"""
         # 这是一个简化实现，实际应存储原始初始状态
         import copy
+
         state = copy.deepcopy(self._state)
         for event in reversed(self._events):
             # 反向重放（需要可逆转换）
@@ -347,7 +354,7 @@ class State(Generic[T]):
         return json.dumps(self.to_dict())
 
     @classmethod
-    def create(cls, config: Dict[str, Any]) -> 'State':
+    def create(cls, config: Dict[str, Any]) -> "State":
         """
         创建状态机（工厂方法）
 
@@ -365,8 +372,8 @@ class State(Generic[T]):
                 ]
             })
         """
-        initial_state = config.get('initial', {})
-        transformers = config.get('transformers', [])
+        initial_state = config.get("initial", {})
+        transformers = config.get("transformers", [])
 
         return cls(
             initial_state=initial_state,
@@ -420,12 +427,12 @@ class StructuredState(State[T]):
         """
         if self._state_schema:
             try:
-                if hasattr(self._state_schema, 'decode'):
+                if hasattr(self._state_schema, "decode"):
                     self._state_schema.decode(state)
             except Exception as e:
                 raise StateValidationError(f"State validation failed: {e}") from e
 
-    def apply(self, transform_name: str, payload: Any = None) -> 'StructuredState[T]':
+    def apply(self, transform_name: str, payload: Any = None) -> "StructuredState[T]":
         """
         应用转换（带验证）
 
@@ -465,7 +472,7 @@ class CounterState(StructuredState[Dict[str, int]]):
         initial_state: Optional[Dict[str, int]] = None,
         transformers: Optional[List[Transform]] = None,
         state_schema: Optional[Any] = None,
-        events: Optional[List['StateEvent']] = None,
+        events: Optional[List["StateEvent"]] = None,
         version: int = 1,
     ):
         if initial_state is not None:
@@ -480,20 +487,20 @@ class CounterState(StructuredState[Dict[str, int]]):
         else:
             # 正常初始化
             default_transformers = [
-                State.transform('increment', lambda s, n: {'value': s['value'] + n}),
-                State.transform('decrement', lambda s, n: {'value': max(0, s['value'] - n)}),
-                State.transform('reset', lambda s, _: {'value': 0}),
-                State.transform('set', lambda s, v: {'value': v}),
+                State.transform("increment", lambda s, n: {"value": s["value"] + n}),
+                State.transform("decrement", lambda s, n: {"value": max(0, s["value"] - n)}),
+                State.transform("reset", lambda s, _: {"value": 0}),
+                State.transform("set", lambda s, v: {"value": v}),
             ]
             super().__init__(
-                initial_state={'value': initial_value},
+                initial_state={"value": initial_value},
                 transformers=default_transformers,
             )
 
     @property
     def value(self) -> int:
         """获取当前值"""
-        return self.state['value']
+        return self.state["value"]
 
 
 class ToggleState(StructuredState[Dict[str, bool]]):
@@ -510,7 +517,7 @@ class ToggleState(StructuredState[Dict[str, bool]]):
         initial_state: Optional[Dict[str, bool]] = None,
         transformers: Optional[List[Transform]] = None,
         state_schema: Optional[Any] = None,
-        events: Optional[List['StateEvent']] = None,
+        events: Optional[List["StateEvent"]] = None,
         version: int = 1,
     ):
         if initial_state is not None:
@@ -523,20 +530,20 @@ class ToggleState(StructuredState[Dict[str, bool]]):
             )
         else:
             default_transformers = [
-                State.transform('toggle', lambda s, _: {'value': not s['value']}),
-                State.transform('on', lambda s, _: {'value': True}),
-                State.transform('off', lambda s, _: {'value': False}),
-                State.transform('set', lambda s, v: {'value': v}),
+                State.transform("toggle", lambda s, _: {"value": not s["value"]}),
+                State.transform("on", lambda s, _: {"value": True}),
+                State.transform("off", lambda s, _: {"value": False}),
+                State.transform("set", lambda s, v: {"value": v}),
             ]
             super().__init__(
-                initial_state={'value': initial_value},
+                initial_state={"value": initial_value},
                 transformers=default_transformers,
             )
 
     @property
     def value(self) -> bool:
         """获取当前值"""
-        return self.state['value']
+        return self.state["value"]
 
 
 class ListState(StructuredState[Dict[str, List[Any]]]):
@@ -553,7 +560,7 @@ class ListState(StructuredState[Dict[str, List[Any]]]):
         initial_state: Optional[Dict[str, List[Any]]] = None,
         transformers: Optional[List[Transform]] = None,
         state_schema: Optional[Any] = None,
-        events: Optional[List['StateEvent']] = None,
+        events: Optional[List["StateEvent"]] = None,
         version: int = 1,
     ):
         if initial_state is not None:
@@ -566,20 +573,20 @@ class ListState(StructuredState[Dict[str, List[Any]]]):
             )
         else:
             default_transformers = [
-                State.transform('add', lambda s, item: {'items': s['items'] + [item]}),
-                State.transform('remove', lambda s, idx: {'items': s['items'][:idx] + s['items'][idx+1:]}),
-                State.transform('clear', lambda s, _: {'items': []}),
-                State.transform('set', lambda s, items: {'items': items}),
+                State.transform("add", lambda s, item: {"items": s["items"] + [item]}),
+                State.transform("remove", lambda s, idx: {"items": s["items"][:idx] + s["items"][idx + 1 :]}),
+                State.transform("clear", lambda s, _: {"items": []}),
+                State.transform("set", lambda s, items: {"items": items}),
             ]
             super().__init__(
-                initial_state={'items': initial_items or []},
+                initial_state={"items": initial_items or []},
                 transformers=default_transformers,
             )
 
     @property
     def items(self) -> List[Any]:
         """获取当前列表"""
-        return self.state['items']
+        return self.state["items"]
 
     @property
     def length(self) -> int:

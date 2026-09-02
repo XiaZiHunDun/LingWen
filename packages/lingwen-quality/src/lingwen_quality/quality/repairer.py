@@ -24,6 +24,7 @@ from infra.paths import ProjectPaths
 @dataclass
 class RepairResult:
     """修复结果"""
+
     chapter: int
     success: bool
     changes: int = 0
@@ -68,12 +69,7 @@ class Repairer(ABC):
             if changes > 0:
                 self.paths.write_chapter(chapter_num, new_content)
 
-            return RepairResult(
-                chapter=chapter_num,
-                success=True,
-                changes=changes,
-                new_content=new_content
-            )
+            return RepairResult(chapter=chapter_num, success=True, changes=changes, new_content=new_content)
         except Exception as e:
             return RepairResult(chapter=chapter_num, success=False, error=str(e))
 

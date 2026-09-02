@@ -1,4 +1,5 @@
 """Phase 9.71 F63: CI contract — Dashboard chapters page MVP."""
+
 from __future__ import annotations
 
 from pathlib import Path

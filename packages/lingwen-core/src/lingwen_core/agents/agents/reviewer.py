@@ -48,6 +48,7 @@ class ReviewFinding:
         location: 问题所在位置描述（如 "第3段"）
         suggested_fix: 建议修复方案
     """
+
     category: str
     severity: str
     description: str
@@ -76,6 +77,7 @@ class ReviewResult:
         summary: 审稿总结
         suggested_fixes: 建议修复列表
     """
+
     passed: bool = True
     findings: List[ReviewFinding] = field(default_factory=list)
     cycles_used: int = 0
@@ -130,7 +132,7 @@ class ReviewerSession:
 
     def __init__(
         self,
-        router: Optional['AIRouter'] = None,
+        router: Optional["AIRouter"] = None,
         max_cycles: int = MAX_REVIEW_CYCLES,
         stop_threshold: int = STOP_THRESHOLD,
     ):
@@ -220,19 +222,18 @@ class ReviewerSession:
             if len(cycle_findings) <= self.stop_threshold:
                 logger.info(
                     "Review stopped at cycle %d: no new findings (threshold=%d)",
-                    cycle, self.stop_threshold,
+                    cycle,
+                    self.stop_threshold,
                 )
                 break
 
             # STOP 条件：如果连续两轮发现项相同，说明审稿已收敛
             if cycle >= 2:
                 # 简单检查：本轮发现的类别是否与上一轮完全一致
-                prev_categories = {f.category for f in all_findings[:-len(cycle_findings)]}
+                prev_categories = {f.category for f in all_findings[: -len(cycle_findings)]}
                 curr_categories = {f.category for f in cycle_findings}
                 if curr_categories.issubset(prev_categories):
-                    logger.info(
-                        "Review stopped at cycle %d: findings converged", cycle
-                    )
+                    logger.info("Review stopped at cycle %d: findings converged", cycle)
                     break
 
         # 判定是否通过：无 critical 发现项即为通过
@@ -246,9 +247,7 @@ class ReviewerSession:
                 len(all_findings),
             )
 
-        suggested_fixes = [
-            f.suggested_fix for f in all_findings if f.suggested_fix
-        ]
+        suggested_fixes = [f.suggested_fix for f in all_findings if f.suggested_fix]
 
         return ReviewResult(
             passed=passed,
@@ -294,31 +293,31 @@ class ReviewerSession:
         ]
 
         if cycle > 1 and previous_findings:
-            prompt_parts.extend([
-                "",
-                f"=== 第 {cycle} 轮审稿（前几轮已发现 {len(previous_findings)} 个问题）===",
-                "请在前几轮基础上，深入检查是否还有遗漏的问题。",
-                "已发现问题类别: " + ", ".join(
-                    sorted(set(f.category for f in previous_findings))
-                ),
-            ])
+            prompt_parts.extend(
+                [
+                    "",
+                    f"=== 第 {cycle} 轮审稿（前几轮已发现 {len(previous_findings)} 个问题）===",
+                    "请在前几轮基础上，深入检查是否还有遗漏的问题。",
+                    "已发现问题类别: " + ", ".join(sorted(set(f.category for f in previous_findings))),
+                ]
+            )
 
-        prompt_parts.extend([
-            "",
-            "请以 JSON 格式输出审稿结果:",
-            '{',
-            '  "findings": [',
-            '    {"category": "类别", "severity": "critical|major|minor|info", "description": "描述", "location": "位置", "suggested_fix": "建议修复"}',
-            '  ],',
-            '  "summary": "审稿总结"',
-            '}',
-        ])
+        prompt_parts.extend(
+            [
+                "",
+                "请以 JSON 格式输出审稿结果:",
+                "{",
+                '  "findings": [',
+                '    {"category": "类别", "severity": "critical|major|minor|info", "description": "描述", "location": "位置", "suggested_fix": "建议修复"}',
+                "  ],",
+                '  "summary": "审稿总结"',
+                "}",
+            ]
+        )
 
         return "\n".join(prompt_parts)
 
-    def _parse_review_response(
-        self, response: str
-    ) -> tuple[List[ReviewFinding], str]:
+    def _parse_review_response(self, response: str) -> tuple[List[ReviewFinding], str]:
         """解析审稿响应
 
         Args:
@@ -334,9 +333,7 @@ class ReviewerSession:
         summary = ""
 
         # 尝试提取 JSON 块
-        json_match = re.search(
-            r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', response, re.DOTALL
-        )
+        json_match = re.search(r"\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}", response, re.DOTALL)
 
         if not json_match:
             logger.warning("Failed to extract JSON from review response: %s", response[:200])
@@ -372,7 +369,7 @@ def review_chapter(
     chapter_content: str,
     story_contract: Dict[str, Any],
     world_model: Dict[str, Any],
-    router: Optional['AIRouter'] = None,
+    router: Optional["AIRouter"] = None,
 ) -> ReviewResult:
     """便捷函数：独立审阅一个章节
 

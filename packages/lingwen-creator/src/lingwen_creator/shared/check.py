@@ -4,6 +4,7 @@ Migrated from infra/creator_check.py in Phase 126 v16.2.0.
 New location: packages/lingwen-creator/src/lingwen_creator/shared/check.py
 Used primarily by content/agent but available to any subdomain needing check state.
 """
+
 from __future__ import annotations
 
 from dataclasses import replace
@@ -48,15 +49,9 @@ def apply_creator_check_defaults(
 
 def format_check_mode_banner(config: ProjectConfig, settings: CreatorSettings) -> str:
     if settings.creation_mode == CREATION_MODE_STUDIO:
-        return (
-            f"工作室模式 ({settings.quality_profile}) · "
-            f"fail≥{settings.fail_severity or 'any'}"
-        )
+        return f"工作室模式 ({settings.quality_profile}) · fail≥{settings.fail_severity or 'any'}"
     label = {
         "companion": "陪伴模式",
         "advance": "推进模式",
     }.get(settings.creation_mode, settings.creation_mode)
-    return (
-        f"{label} ({settings.quality_profile}) · "
-        f"仅拦 {settings.fail_severity} · 默认无 LLM judge"
-    )
+    return f"{label} ({settings.quality_profile}) · 仅拦 {settings.fail_severity} · 默认无 LLM judge"

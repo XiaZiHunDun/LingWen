@@ -1,4 +1,5 @@
 """Phase 9.32 F16: configurable max_nodes_cap for cascade BFS."""
+
 import tempfile
 from pathlib import Path
 
@@ -21,9 +22,7 @@ def _star_graph(storage: RippleStorage, neighbor_count: int = 150) -> CrossVolum
     for i in range(neighbor_count):
         nid = f"n_{i:03d}"
         g.add_node(ReferenceNode(id=nid, volume=2, chapter=1, dimension="character"))
-        g.add_edge(
-            ReferenceEdge(id=f"e_{i:03d}", from_node_id="trigger", to_node_id=nid, weight=0.5)
-        )
+        g.add_edge(ReferenceEdge(id=f"e_{i:03d}", from_node_id="trigger", to_node_id=nid, weight=0.5))
     return g
 
 

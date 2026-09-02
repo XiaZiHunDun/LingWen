@@ -2,6 +2,7 @@
 
 Mirrors lines 930-989 of the original infra/cli/commands.py.
 """
+
 from lingwen_cli.options import UnifiedOptions
 
 from .base import Command

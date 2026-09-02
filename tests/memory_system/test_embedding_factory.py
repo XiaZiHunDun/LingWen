@@ -1,4 +1,5 @@
 """F89: embedding provider factory resolution tests."""
+
 from __future__ import annotations
 
 import os

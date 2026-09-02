@@ -10,6 +10,7 @@ Mock strategy:
     - patch _load_chapters: 提供 N 章 fixture, 0 读 corpus
     - patch CostTracker: 验证 cost_tracker 0 LLM calls 时仍 instantiate
 """
+
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -58,18 +59,46 @@ def make_mock_scanner_nodes(chapter_num: int, threshold: int) -> list[ReferenceN
     With threshold=3: filtered → 3 nodes (confs 3, 4, 5).
     """
     return [
-        ReferenceNode(dimension="character", volume=1, chapter=chapter_num,
-                      title=f"林轩-{chapter_num}", description="主角",
-                      payload={}, created_by="llm_scanner", confidence=2),
-        ReferenceNode(dimension="foreshadow", volume=1, chapter=chapter_num,
-                      title=f"伏笔-{chapter_num}", description="伏笔desc",
-                      payload={}, created_by="llm_scanner", confidence=3),
-        ReferenceNode(dimension="setting", volume=1, chapter=chapter_num,
-                      title=f"青云宗-{chapter_num}", description="宗门",
-                      payload={}, created_by="llm_scanner", confidence=4),
-        ReferenceNode(dimension="plot_point", volume=1, chapter=chapter_num,
-                      title=f"事件-{chapter_num}", description="事件desc",
-                      payload={}, created_by="llm_scanner", confidence=5),
+        ReferenceNode(
+            dimension="character",
+            volume=1,
+            chapter=chapter_num,
+            title=f"林轩-{chapter_num}",
+            description="主角",
+            payload={},
+            created_by="llm_scanner",
+            confidence=2,
+        ),
+        ReferenceNode(
+            dimension="foreshadow",
+            volume=1,
+            chapter=chapter_num,
+            title=f"伏笔-{chapter_num}",
+            description="伏笔desc",
+            payload={},
+            created_by="llm_scanner",
+            confidence=3,
+        ),
+        ReferenceNode(
+            dimension="setting",
+            volume=1,
+            chapter=chapter_num,
+            title=f"青云宗-{chapter_num}",
+            description="宗门",
+            payload={},
+            created_by="llm_scanner",
+            confidence=4,
+        ),
+        ReferenceNode(
+            dimension="plot_point",
+            volume=1,
+            chapter=chapter_num,
+            title=f"事件-{chapter_num}",
+            description="事件desc",
+            payload={},
+            created_by="llm_scanner",
+            confidence=5,
+        ),
     ]
 
 
@@ -86,8 +115,7 @@ class TestE2ELLMBackfill:
             6. 0 真实 LLM call (router.generate_with_usage 0 调)
         """
         cache_path = tmp_path / "llm_cache.json"
-        options = make_options(tmp_path, apply=True, cache_path=cache_path, vol=1,
-                               llm_confidence_threshold=3)
+        options = make_options(tmp_path, apply=True, cache_path=cache_path, vol=1, llm_confidence_threshold=3)
         cmd = BackfillCommand()
 
         num_chapters = 5
@@ -105,16 +133,14 @@ class TestE2ELLMBackfill:
 
         mock_scanner.scan_chapter.side_effect = fake_scan
 
-        with patch("infra.cross_volume.backfill._load_chapters",
-                   return_value=mock_chapters, create=True), \
-             patch("infra.cross_volume.llm_scanner.LLMScanner",
-                   return_value=mock_scanner), \
-             patch("infra.cross_volume.storage.RippleStorage",
-                   return_value=mock_storage), \
-             patch("lingwen_llm.providers.cost_tracker.CostTracker"), \
-             patch("infra.cross_volume.backfill._default_storage",
-                   return_value=mock_storage, create=True), \
-             patch("lingwen_llm.providers.tiered_router.TieredRouter") as mock_router_cls:
+        with (
+            patch("infra.cross_volume.backfill._load_chapters", return_value=mock_chapters, create=True),
+            patch("infra.cross_volume.llm_scanner.LLMScanner", return_value=mock_scanner),
+            patch("infra.cross_volume.storage.RippleStorage", return_value=mock_storage),
+            patch("lingwen_llm.providers.cost_tracker.CostTracker"),
+            patch("infra.cross_volume.backfill._default_storage", return_value=mock_storage, create=True),
+            patch("lingwen_llm.providers.tiered_router.TieredRouter") as mock_router_cls,
+        ):
             result = cmd.execute(options)
 
         # 1. Exit code 0
@@ -122,8 +148,7 @@ class TestE2ELLMBackfill:
 
         # 2. scanner.scan_chapter called once per chapter
         assert mock_scanner.scan_chapter.call_count == num_chapters, (
-            f"expected {num_chapters} scan_chapter calls, got "
-            f"{mock_scanner.scan_chapter.call_count}"
+            f"expected {num_chapters} scan_chapter calls, got {mock_scanner.scan_chapter.call_count}"
         )
 
         # 3. Confidence filter: storage received exactly expected_total_nodes
@@ -150,24 +175,25 @@ class TestE2ELLMBackfill:
     def test_e2e_llm_backfill_dry_run_no_write(self, tmp_path, capsys):
         """E2E: --use-llm (no --apply) → scan, but 0 写 RippleStorage."""
         cache_path = tmp_path / "llm_cache.json"
-        options = make_options(tmp_path, apply=False, cache_path=cache_path, vol=1,
-                               llm_confidence_threshold=3)
+        options = make_options(
+            tmp_path, apply=False, cache_path=cache_path, vol=1, llm_confidence_threshold=3
+        )
         cmd = BackfillCommand()
 
         num_chapters = 3
         mock_chapters = make_mock_chapters(num_chapters)
         mock_scanner = MagicMock()
-        mock_scanner.scan_chapter.side_effect = lambda *a, **kw: (
-            make_mock_scanner_nodes(kw.get("chapter_id") or a[0], 3)
+        mock_scanner.scan_chapter.side_effect = lambda *a, **kw: make_mock_scanner_nodes(
+            kw.get("chapter_id") or a[0], 3
         )
 
-        with patch("infra.cross_volume.backfill._load_chapters",
-                   return_value=mock_chapters, create=True), \
-             patch("infra.cross_volume.llm_scanner.LLMScanner",
-                   return_value=mock_scanner), \
-             patch("lingwen_llm.providers.cost_tracker.CostTracker"), \
-             patch("lingwen_llm.providers.tiered_router.TieredRouter"), \
-             patch("infra.cross_volume.storage.RippleStorage") as mock_storage:
+        with (
+            patch("infra.cross_volume.backfill._load_chapters", return_value=mock_chapters, create=True),
+            patch("infra.cross_volume.llm_scanner.LLMScanner", return_value=mock_scanner),
+            patch("lingwen_llm.providers.cost_tracker.CostTracker"),
+            patch("lingwen_llm.providers.tiered_router.TieredRouter"),
+            patch("infra.cross_volume.storage.RippleStorage") as mock_storage,
+        ):
             result = cmd.execute(options)
 
         assert result == 0
@@ -181,8 +207,7 @@ class TestE2ELLMBackfill:
     def test_e2e_llm_backfill_continues_on_chapter_error(self, tmp_path, capsys):
         """E2E: 1 章 scan 抛异常 → 警告 + 继续其他章 (resilient)."""
         cache_path = tmp_path / "llm_cache.json"
-        options = make_options(tmp_path, apply=True, cache_path=cache_path, vol=1,
-                               llm_confidence_threshold=3)
+        options = make_options(tmp_path, apply=True, cache_path=cache_path, vol=1, llm_confidence_threshold=3)
         cmd = BackfillCommand()
 
         num_chapters = 4
@@ -198,16 +223,14 @@ class TestE2ELLMBackfill:
         mock_scanner.scan_chapter.side_effect = selective_scan
         mock_storage = MagicMock()
 
-        with patch("infra.cross_volume.backfill._load_chapters",
-                   return_value=mock_chapters, create=True), \
-             patch("infra.cross_volume.llm_scanner.LLMScanner",
-                   return_value=mock_scanner), \
-             patch("infra.cross_volume.storage.RippleStorage",
-                   return_value=mock_storage), \
-             patch("lingwen_llm.providers.cost_tracker.CostTracker"), \
-             patch("infra.cross_volume.backfill._default_storage",
-                   return_value=mock_storage, create=True), \
-             patch("lingwen_llm.providers.tiered_router.TieredRouter"):
+        with (
+            patch("infra.cross_volume.backfill._load_chapters", return_value=mock_chapters, create=True),
+            patch("infra.cross_volume.llm_scanner.LLMScanner", return_value=mock_scanner),
+            patch("infra.cross_volume.storage.RippleStorage", return_value=mock_storage),
+            patch("lingwen_llm.providers.cost_tracker.CostTracker"),
+            patch("infra.cross_volume.backfill._default_storage", return_value=mock_storage, create=True),
+            patch("lingwen_llm.providers.tiered_router.TieredRouter"),
+        ):
             result = cmd.execute(options)
 
         # exit 0 (不因单章 fail 而整批 abort)

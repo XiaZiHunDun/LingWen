@@ -5,6 +5,7 @@ Phase 18.2 — 涟漪合并用例。
 管理 Ripple 状态机 (OPEN → PROPAGATING → RESOLVING → RESOLVED)，
 禁止非法回退。
 """
+
 from __future__ import annotations
 
 from lingwen_core.domain import Ripple, RippleState, RippleStateChangedEvent

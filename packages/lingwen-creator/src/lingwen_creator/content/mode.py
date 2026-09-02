@@ -14,4 +14,5 @@ This content/mode.py shim maintains backwards compat for spec §2.1
 
 Will be deleted in v16.2.7 final cleanup.
 """
+
 from lingwen_creator.shared.mode import *  # noqa: F401,F403

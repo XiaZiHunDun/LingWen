@@ -1,4 +1,5 @@
 """ripple-scan subparser (Phase 9.34 F19 LLM scanner calibration CLI)."""
+
 import argparse
 from pathlib import Path
 

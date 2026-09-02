@@ -1,4 +1,5 @@
 """Project-level production gates for LingWen Studio (Phase 10.01)."""
+
 from __future__ import annotations
 
 import os
@@ -51,11 +52,7 @@ class ProjectConfig:
             bool(raw.get("require_chapter_outline", True)),
         )
         pillars_rel = str(raw.get("pillars_path", "docs/novel-pillars.md"))
-        pillars_path = (
-            Path(pillars_rel)
-            if Path(pillars_rel).is_absolute()
-            else resolved.root / pillars_rel
-        )
+        pillars_path = Path(pillars_rel) if Path(pillars_rel).is_absolute() else resolved.root / pillars_rel
         style = raw.get("style") or {}
         creation_mode = normalize_creation_mode(
             raw.get("creation_mode", CREATION_MODE_STUDIO),
@@ -127,14 +124,12 @@ class ProjectConfig:
                 if prev_outline.is_file() or prev_body.is_file():
                     return (
                         True,
-                        f"testbed legacy seed from ch{prev:03d} "
-                        f"(no ch{chapter_num:03d}_大纲.md)",
+                        f"testbed legacy seed from ch{prev:03d} (no ch{chapter_num:03d}_大纲.md)",
                     )
 
             return (
                 False,
-                f"missing chapter outline: {outline.name} "
-                "(required when LINGWEN_REQUIRE_CHAPTER_OUTLINE=1)",
+                f"missing chapter outline: {outline.name} (required when LINGWEN_REQUIRE_CHAPTER_OUTLINE=1)",
             )
 
         return True, "production gates passed"

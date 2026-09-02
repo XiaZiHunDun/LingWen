@@ -1,4 +1,5 @@
 """Tests for infra.llm_benchmarks.providers."""
+
 from __future__ import annotations
 
 import pytest

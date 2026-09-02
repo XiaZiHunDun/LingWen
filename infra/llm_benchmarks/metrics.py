@@ -3,6 +3,7 @@
 Aggregates CallResult list per provider into ProviderMetrics summary.
 All functions are pure (no I/O), testable without fixtures.
 """
+
 from __future__ import annotations
 
 import statistics
@@ -90,13 +91,9 @@ def compute_metrics(calls: list[CallResult], provider: str) -> ProviderMetrics:
     latency_p95_s = _percentile(latencies, 95)
 
     valid_calls = [c for c in calls if not c.failed]
-    cost_per_call_usd = (
-        sum(c.cost_usd for c in valid_calls) / len(valid_calls) if valid_calls else 0.0
-    )
+    cost_per_call_usd = sum(c.cost_usd for c in valid_calls) / len(valid_calls) if valid_calls else 0.0
 
-    confidence_distribution = _confidence_distribution(
-        [c.parsed_proposals for c in calls if c.parse_ok]
-    )
+    confidence_distribution = _confidence_distribution([c.parsed_proposals for c in calls if c.parse_ok])
 
     return ProviderMetrics(
         provider=provider,

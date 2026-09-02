@@ -1,4 +1,5 @@
 """AIRouter 测试"""
+
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -30,7 +31,7 @@ class TestAIRouter:
                 "anthropic": anthropic_config,
             },
             primary_provider="openai",
-            enable_failover=True
+            enable_failover=True,
         )
         return router
 
@@ -148,11 +149,7 @@ class TestAIRouterWithoutFailover:
     @pytest.fixture
     def router_no_failover(self, config):
         """创建禁用故障转移的路由"""
-        router = AIRouter(
-            config={"openai": config},
-            primary_provider="openai",
-            enable_failover=False
-        )
+        router = AIRouter(config={"openai": config}, primary_provider="openai", enable_failover=False)
         return router
 
     @patch.object(OpenAIProvider, "generate")
@@ -185,7 +182,7 @@ class TestAIRouterCostOptimize:
             },
             primary_provider="openai",
             enable_failover=True,
-            cost_optimize=True
+            cost_optimize=True,
         )
         return router
 

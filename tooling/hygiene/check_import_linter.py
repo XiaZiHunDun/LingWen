@@ -9,6 +9,7 @@ v16.3 (real enforcement): runs two gates:
 
 Returns exit 0 on success, exit 1 on either failure.
 """
+
 from __future__ import annotations
 
 import glob
@@ -63,8 +64,7 @@ def main() -> int:
     ok, shims = _check_no_creator_shims()
     if not ok:
         failures.append(
-            f"creator shim resurrection detected: {len(shims)} file(s)\n"
-            + "\n".join(f"  {s}" for s in shims)
+            f"creator shim resurrection detected: {len(shims)} file(s)\n" + "\n".join(f"  {s}" for s in shims)
         )
 
     if failures:

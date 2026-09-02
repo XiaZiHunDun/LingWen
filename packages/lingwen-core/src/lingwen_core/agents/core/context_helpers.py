@@ -6,6 +6,7 @@ This module preserves the same surface that ``context_builder`` expects
 ``anti_patterns``) so the rest of the agent_system keeps importing cleanly
 after the deferred ``infra.story_contracts`` module is removed.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -39,6 +40,7 @@ class StoryContractEngine:
             from infra.story_contracts import (
                 StoryContractEngine as _Upstream,  # type: ignore[import-not-found]
             )
+
             engine = _Upstream(project_root=self.project_root)
             return engine.load()
         except Exception:

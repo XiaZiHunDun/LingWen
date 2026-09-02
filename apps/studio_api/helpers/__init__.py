@@ -6,6 +6,7 @@ Re-exports the small set of helper symbols used by app.py / routes/.
 Direct attribute access (e.g. `from dashboard.helpers.time_window import _parse_time_window`)
 is the canonical form; this __init__ exists for ergonomics only.
 """
+
 from apps.studio_api.helpers.cvg import (
     _audit_to_response,
     _build_reference_graph_response,

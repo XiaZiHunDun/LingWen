@@ -1,4 +1,5 @@
 """Full-check report generation and parsing (Phase 10.07)."""
+
 from __future__ import annotations
 
 import re
@@ -119,8 +120,7 @@ def format_report_markdown(
         "",
         f"项目: {project_root.resolve()}",
         "",
-        f"**合计**: {total} 问题 | P0={counts['P0']} P1={counts['P1']} "
-        f"P2={counts['P2']} P3={counts['P3']}",
+        f"**合计**: {total} 问题 | P0={counts['P0']} P1={counts['P1']} P2={counts['P2']} P3={counts['P3']}",
         "",
         f"> 生成时间: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')} · "
         "规则引擎 + Phase3 检测器（无 LLM 因果链）",
@@ -272,14 +272,11 @@ def load_report_summary(project_root: Path) -> dict[str, Any]:
     from infra.prose_calibration import build_prose_heatmap
 
     heatmap = build_prose_heatmap(parsed.get("chapters") or [])
-    vitality_chapters = [
-        ch for ch in (parsed.get("chapters") or []) if ch.get("prose_vitality")
-    ]
+    vitality_chapters = [ch for ch in (parsed.get("chapters") or []) if ch.get("prose_vitality")]
     avg_vitality = None
     if vitality_chapters:
         avg_vitality = round(
-            sum(ch["prose_vitality"]["score"] for ch in vitality_chapters)
-            / len(vitality_chapters),
+            sum(ch["prose_vitality"]["score"] for ch in vitality_chapters) / len(vitality_chapters),
             1,
         )
     return {

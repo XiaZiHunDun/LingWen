@@ -37,8 +37,7 @@ def test_clean_file_passes(tmp_path: Path):
     src_dir = tmp_path / "apps" / "dashboard" / "src"
     src_dir.mkdir(parents=True)
     (src_dir / "Page.vue").write_text(
-        "<template><h1>墨灵</h1><p>欢迎使用 MoLing</p></template>\n"
-        "<script>const name = '灵文';</script>\n"
+        "<template><h1>墨灵</h1><p>欢迎使用 MoLing</p></template>\n<script>const name = '灵文';</script>\n"
     )
     # brand.js source-of-truth (must not be flagged itself)
     config_dir = src_dir / "config"
@@ -63,9 +62,7 @@ def test_lingwen_studio_in_src_is_flagged(tmp_path: Path):
     mod = _run_against(tmp_path)
     violations = mod.find_violations()
     assert any(
-        v[0] == "apps/dashboard/src/bad.vue"
-        and v[1] == "forbidden_LingWen Studio"
-        for v in violations
+        v[0] == "apps/dashboard/src/bad.vue" and v[1] == "forbidden_LingWen Studio" for v in violations
     ), violations
 
 
@@ -88,9 +85,7 @@ def test_brand_js_is_ignored(tmp_path: Path):
 
     mod = _run_against(tmp_path)
     violations = mod.find_violations()
-    assert violations == [], (
-        f"brand.js must be exempt; got {violations}"
-    )
+    assert violations == [], f"brand.js must be exempt; got {violations}"
 
 
 def test_historical_doc_is_ignored(tmp_path: Path):
@@ -105,9 +100,7 @@ def test_historical_doc_is_ignored(tmp_path: Path):
 
     mod = _run_against(tmp_path)
     violations = mod.find_violations()
-    assert violations == [], (
-        f"Historical plan files must be exempt; got {violations}"
-    )
+    assert violations == [], f"Historical plan files must be exempt; got {violations}"
 
 
 def test_packages_readme_with_lingwen_studio_is_flagged(tmp_path: Path):
@@ -115,18 +108,14 @@ def test_packages_readme_with_lingwen_studio_is_flagged(tmp_path: Path):
     _git_init(tmp_path)
     pkg_dir = tmp_path / "packages" / "foo"
     pkg_dir.mkdir(parents=True)
-    (pkg_dir / "README.md").write_text(
-        "# foo\nThis package belongs to LingWen Studio.\n"
-    )
+    (pkg_dir / "README.md").write_text("# foo\nThis package belongs to LingWen Studio.\n")
     _git_commit(tmp_path)
 
     mod = _run_against(tmp_path)
     violations = mod.find_violations()
-    assert any(
-        v[0] == "packages/foo/README.md"
-        and v[1] == "forbidden_LingWen Studio"
-        for v in violations
-    ), violations
+    assert any(v[0] == "packages/foo/README.md" and v[1] == "forbidden_LingWen Studio" for v in violations), (
+        violations
+    )
 
 
 def test_standalone_lingwen_in_src_is_flagged(tmp_path: Path, capsys):
@@ -134,19 +123,14 @@ def test_standalone_lingwen_in_src_is_flagged(tmp_path: Path, capsys):
     _git_init(tmp_path)
     src_dir = tmp_path / "apps" / "dashboard" / "src"
     src_dir.mkdir(parents=True)
-    (src_dir / "api.js").write_text(
-        "// LingWen Dashboard API client\n"
-        "export const foo = 1;\n"
-    )
+    (src_dir / "api.js").write_text("// LingWen Dashboard API client\nexport const foo = 1;\n")
     _git_commit(tmp_path)
 
     mod = _run_against(tmp_path)
     violations = mod.find_violations()
-    assert any(
-        v[0] == "apps/dashboard/src/api.js"
-        and v[1] == "lingwen_standalone"
-        for v in violations
-    ), violations
+    assert any(v[0] == "apps/dashboard/src/api.js" and v[1] == "lingwen_standalone" for v in violations), (
+        violations
+    )
 
 
 def test_main_returns_0_on_clean_repo(tmp_path: Path, capsys):
@@ -185,7 +169,7 @@ def test_binary_file_is_skipped(tmp_path: Path):
     src_dir = tmp_path / "apps" / "dashboard" / "src"
     src_dir.mkdir(parents=True)
     # Write raw non-UTF-8 bytes (e.g. simulated font/image header).
-    (src_dir / "asset.bin").write_bytes(b"\xFF\xFE\x00\x01\x80\x90binary")
+    (src_dir / "asset.bin").write_bytes(b"\xff\xfe\x00\x01\x80\x90binary")
     _git_commit(tmp_path)
 
     mod = _run_against(tmp_path)
@@ -202,15 +186,11 @@ def test_lingwen_standalone_in_packages_readme_is_flagged(tmp_path: Path):
     # Non-JSDoc context (plain prose): the standalone 'LingWen' rule only fires
     # in apps/dashboard/src/, but a forbidden product-string like 'LingWen Studio'
     # must still be flagged here.
-    (pkg_dir / "README.md").write_text(
-        "# foo\nLingWen Studio is the product name.\n"
-    )
+    (pkg_dir / "README.md").write_text("# foo\nLingWen Studio is the product name.\n")
     _git_commit(tmp_path)
 
     mod = _run_against(tmp_path)
     violations = mod.find_violations()
-    assert any(
-        v[0] == "packages/foo/README.md"
-        and v[1] == "forbidden_LingWen Studio"
-        for v in violations
-    ), violations
+    assert any(v[0] == "packages/foo/README.md" and v[1] == "forbidden_LingWen Studio" for v in violations), (
+        violations
+    )

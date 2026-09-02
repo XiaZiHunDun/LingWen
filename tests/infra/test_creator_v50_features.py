@@ -1,4 +1,5 @@
 """Tests for creator v5.0 mode switch hint, volume plan diff, batch history."""
+
 from __future__ import annotations
 
 from lingwen_creator.content.ui_profile import resolve_creator_ui_profile

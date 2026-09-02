@@ -12,6 +12,7 @@ Doc 1 §3.4 (涟漪机制 v1.0) — Ripple 4 状态 + 平复模式 + 硬限制�
 - LLM 抽取 ripple 描述 (Phase 2)
 - 跨卷 ripple 谱系 (Phase 3+)
 """
+
 from __future__ import annotations
 
 from lingwen_core.domain.ripple import (
@@ -26,15 +27,15 @@ from lingwen_core.domain.ripple import (
 # 计入:OPEN + PROPAGATING + RESOLVING (RESOLVED 终态不计入)
 # MAX_OPEN_RIPPLOTS 在 data_structures.py 定义 (10),这里 re-export
 
-RESOLUTION_GRACE_CH = 5      # planned_resolve_ch 可超 current_ch + 5
+RESOLUTION_GRACE_CH = 5  # planned_resolve_ch 可超 current_ch + 5
 COLLAPSE_RISK_THRESHOLD = 0.8  # > 0.8 系统报警
 
 
 VALID_TRANSITIONS: dict[RippleState, set[RippleState]] = {
-    RippleState.OPEN:        {RippleState.PROPAGATING, RippleState.RESOLVING, RippleState.RESOLVED},
+    RippleState.OPEN: {RippleState.PROPAGATING, RippleState.RESOLVING, RippleState.RESOLVED},
     RippleState.PROPAGATING: {RippleState.RESOLVING, RippleState.RESOLVED},
-    RippleState.RESOLVING:   {RippleState.RESOLVED},
-    RippleState.RESOLVED:    set(),  # terminal
+    RippleState.RESOLVING: {RippleState.RESOLVED},
+    RippleState.RESOLVED: set(),  # terminal
 }
 
 

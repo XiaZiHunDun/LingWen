@@ -14,6 +14,7 @@ batch_repair.py 是 CLI 工具核心,曾因重构破坏批处理逻辑但无测�
 
 策略:mock 注入 worldview_repairer / ai_trace_repairer,避免触发真实文件 IO。
 """
+
 import json
 import sys
 from pathlib import Path
@@ -33,6 +34,7 @@ from tools.batch_repair import main as batch_main
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 def _result(chapter: int, changes: int) -> RepairResult:
     """构造一个指定 changes 数的 RepairResult"""
@@ -72,6 +74,7 @@ def batch_repairer(mock_repairer_pair):
 # ---------------------------------------------------------------------------
 # repair_track()
 # ---------------------------------------------------------------------------
+
 
 class TestRepairTrack:
     """BatchRepairer.repair_track 行为契约"""
@@ -153,8 +156,12 @@ class TestRepairTrack:
         result = br.repair_track([1], track="worldview", dry_run=False)
 
         assert set(result.keys()) >= {
-            "track", "total_chapters", "modified_chapters",
-            "total_changes", "dry_run", "details",
+            "track",
+            "total_chapters",
+            "modified_chapters",
+            "total_changes",
+            "dry_run",
+            "details",
         }
         assert result["track"] == "世界观统一"
         assert result["dry_run"] is False
@@ -163,6 +170,7 @@ class TestRepairTrack:
 # ---------------------------------------------------------------------------
 # repair_batch()
 # ---------------------------------------------------------------------------
+
 
 class TestRepairBatch:
     """BatchRepairer.repair_batch 行为契约"""
@@ -208,6 +216,7 @@ class TestRepairBatch:
 # generate_summary()
 # ---------------------------------------------------------------------------
 
+
 class TestGenerateSummary:
     """BatchRepairer.generate_summary 行为契约"""
 
@@ -247,6 +256,7 @@ class TestGenerateSummary:
 # ---------------------------------------------------------------------------
 # main() — CLI 章节范围解析
 # ---------------------------------------------------------------------------
+
 
 class TestMainChapterRangeParsing:
     """main() 的章节范围解析逻辑(独立测试,绕开真实 repair 流程)"""
@@ -288,12 +298,11 @@ class TestMainChapterRangeParsing:
 # main() — CLI 端到端
 # ---------------------------------------------------------------------------
 
+
 class TestMainCLI:
     """main() 端到端:用 mock repairer + sys.argv,验证 CLI 走通"""
 
-    def test_dry_run_does_not_write_chapters(
-        self, batch_repairer, mock_repairer_pair, monkeypatch, capsys
-    ):
+    def test_dry_run_does_not_write_chapters(self, batch_repairer, mock_repairer_pair, monkeypatch, capsys):
         """--dry-run 应只输出,不触发文件写"""
         br, wv, _ = batch_repairer
         wv.repair.side_effect = lambda ch: _result(ch, changes=2)
@@ -303,11 +312,11 @@ class TestMainCLI:
         def fake_init(self, paths=None):
             self.worldview_repairer = wv
             self.ai_trace_repairer = ai_repairer
+
         monkeypatch.setattr(BatchRepairer, "__init__", fake_init)
 
         monkeypatch.setattr(
-            "sys.argv", ["batch_repair.py", "--chapters", "1-3", "--track",
-                         "worldview", "--dry-run"]
+            "sys.argv", ["batch_repair.py", "--chapters", "1-3", "--track", "worldview", "--dry-run"]
         )
         batch_main()
 
@@ -315,9 +324,7 @@ class TestMainCLI:
         assert "[干跑]" in captured
         assert "干跑(dry-run)" in captured
 
-    def test_output_writes_json_file(
-        self, batch_repairer, mock_repairer_pair, monkeypatch, tmp_path
-    ):
+    def test_output_writes_json_file(self, batch_repairer, mock_repairer_pair, monkeypatch, tmp_path):
         """--output 应写 JSON,内容含每条轨统计"""
         wv, _ = mock_repairer_pair
         wv.repair.side_effect = lambda ch: _result(ch, changes=3)
@@ -325,12 +332,13 @@ class TestMainCLI:
         def fake_init(self, paths=None):
             self.worldview_repairer = wv
             self.ai_trace_repairer = MagicMock()
+
         monkeypatch.setattr(BatchRepairer, "__init__", fake_init)
 
         output_file = tmp_path / "result.json"
         monkeypatch.setattr(
-            "sys.argv", ["batch_repair.py", "--chapters", "1-2", "--track",
-                         "worldview", "--output", str(output_file)]
+            "sys.argv",
+            ["batch_repair.py", "--chapters", "1-2", "--track", "worldview", "--output", str(output_file)],
         )
         batch_main()
 
@@ -346,6 +354,7 @@ class TestMainCLI:
 # ---------------------------------------------------------------------------
 # R4-008: 修复后自动 verify 闭环
 # ---------------------------------------------------------------------------
+
 
 class TestRunPostRepairVerify:
     """R4-008: batch_repair 修复后自动跑 verify_quality,形成闭环。
@@ -367,9 +376,7 @@ class TestRunPostRepairVerify:
             "worldview": {"total_issues": 1, "issues": [{"ch": 1, "desc": "x"}]},
             "ai_trace": {"total_issues": 0, "issues": []},
         }
-        monkeypatch.setattr(
-            br_module, "QualityVerifier", lambda: mock_verifier
-        )
+        monkeypatch.setattr(br_module, "QualityVerifier", lambda: mock_verifier)
 
         result = br_module.run_post_repair_verify([1, 2, 3])
 
@@ -388,9 +395,7 @@ class TestRunPostRepairVerify:
 
         mock_verifier = MagicMock()
         mock_verifier.verify_chapters.side_effect = RuntimeError("Qdrant down")
-        monkeypatch.setattr(
-            br_module, "QualityVerifier", lambda: mock_verifier
-        )
+        monkeypatch.setattr(br_module, "QualityVerifier", lambda: mock_verifier)
 
         with pytest.raises(RuntimeError, match="Qdrant down"):
             br_module.run_post_repair_verify([1])
@@ -408,24 +413,28 @@ class TestMainVerifyFlag:
         def fake_init(self, paths=None):
             self.worldview_repairer = wv
             self.ai_trace_repairer = MagicMock()
+
         monkeypatch.setattr(BatchRepairer, "__init__", fake_init)
 
         # mock 整个 run_post_repair_verify,避免触发真实检查器
         from tools import batch_repair as br_module
+
         called_with = []
         monkeypatch.setattr(
-            br_module, "run_post_repair_verify",
-            lambda chapters: called_with.append(chapters) or {
-                "chapters_checked": len(chapters),
-                "worldview": {"total_issues": 0, "issues": []},
-                "ai_trace": {"total_issues": 0, "issues": []},
-            }
+            br_module,
+            "run_post_repair_verify",
+            lambda chapters: (
+                called_with.append(chapters)
+                or {
+                    "chapters_checked": len(chapters),
+                    "worldview": {"total_issues": 0, "issues": []},
+                    "ai_trace": {"total_issues": 0, "issues": []},
+                }
+            ),
         )
 
         monkeypatch.setattr(
-            "sys.argv",
-            ["batch_repair.py", "--chapters", "1-2", "--track", "worldview",
-             "--verify"]
+            "sys.argv", ["batch_repair.py", "--chapters", "1-2", "--track", "worldview", "--verify"]
         )
         batch_main()
 
@@ -435,9 +444,7 @@ class TestMainVerifyFlag:
         # 输出应包含 verify 提示
         assert "verify" in captured.lower() or "验证" in captured
 
-    def test_no_verify_flag_skips_post_repair_verify(
-        self, batch_repairer, mock_repairer_pair, monkeypatch
-    ):
+    def test_no_verify_flag_skips_post_repair_verify(self, batch_repairer, mock_repairer_pair, monkeypatch):
         """不传 --verify,run_post_repair_verify 不应被调用"""
         wv, _ = mock_repairer_pair
         wv.repair.side_effect = lambda ch: _result(ch, changes=1)
@@ -445,26 +452,22 @@ class TestMainVerifyFlag:
         def fake_init(self, paths=None):
             self.worldview_repairer = wv
             self.ai_trace_repairer = MagicMock()
+
         monkeypatch.setattr(BatchRepairer, "__init__", fake_init)
 
         from tools import batch_repair as br_module
+
         called = []
         monkeypatch.setattr(
-            br_module, "run_post_repair_verify",
-            lambda chapters: called.append(chapters) or {}
+            br_module, "run_post_repair_verify", lambda chapters: called.append(chapters) or {}
         )
 
-        monkeypatch.setattr(
-            "sys.argv",
-            ["batch_repair.py", "--chapters", "1-2", "--track", "worldview"]
-        )
+        monkeypatch.setattr("sys.argv", ["batch_repair.py", "--chapters", "1-2", "--track", "worldview"])
         batch_main()
 
         assert called == []  # 没有 --verify 就不该调
 
-    def test_verify_works_with_dry_run(
-        self, batch_repairer, mock_repairer_pair, monkeypatch
-    ):
+    def test_verify_works_with_dry_run(self, batch_repairer, mock_repairer_pair, monkeypatch):
         """--verify + --dry-run:仍跑 verify(用户想看"假设改完"会怎样)"""
         wv, _ = mock_repairer_pair
         wv.repair.side_effect = lambda ch: _result(ch, changes=1)
@@ -472,23 +475,28 @@ class TestMainVerifyFlag:
         def fake_init(self, paths=None):
             self.worldview_repairer = wv
             self.ai_trace_repairer = MagicMock()
+
         monkeypatch.setattr(BatchRepairer, "__init__", fake_init)
 
         from tools import batch_repair as br_module
+
         called = []
         monkeypatch.setattr(
-            br_module, "run_post_repair_verify",
-            lambda chapters: called.append(chapters) or {
-                "chapters_checked": len(chapters),
-                "worldview": {"total_issues": 0, "issues": []},
-                "ai_trace": {"total_issues": 0, "issues": []},
-            }
+            br_module,
+            "run_post_repair_verify",
+            lambda chapters: (
+                called.append(chapters)
+                or {
+                    "chapters_checked": len(chapters),
+                    "worldview": {"total_issues": 0, "issues": []},
+                    "ai_trace": {"total_issues": 0, "issues": []},
+                }
+            ),
         )
 
         monkeypatch.setattr(
             "sys.argv",
-            ["batch_repair.py", "--chapters", "1-2", "--track", "worldview",
-             "--dry-run", "--verify"]
+            ["batch_repair.py", "--chapters", "1-2", "--track", "worldview", "--dry-run", "--verify"],
         )
         batch_main()
 

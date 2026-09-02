@@ -1,4 +1,5 @@
 """Tests for PatternRegistry singleton"""
+
 import pytest
 
 from infra.patterns import PatternRegistry
@@ -14,14 +15,14 @@ def test_singleton():
 def test_get_pattern():
     """Test that dialog pattern is available"""
     registry = PatternRegistry.get_instance()
-    assert 'dialog' in registry.list_patterns()
+    assert "dialog" in registry.list_patterns()
 
 
 def test_pattern_is_compiled():
     """Test that pattern has match method (is compiled regex)"""
     registry = PatternRegistry.get_instance()
-    pattern = registry.get('dialog')
-    assert hasattr(pattern, 'match')
+    pattern = registry.get("dialog")
+    assert hasattr(pattern, "match")
 
 
 def test_list_patterns():
@@ -34,8 +35,8 @@ def test_list_patterns():
 def test_dialog_pattern_matches():
     """Test that dialog pattern actually matches dialogue"""
     registry = PatternRegistry.get_instance()
-    pattern = registry.get('dialog')
+    pattern = registry.get("dialog")
     assert pattern is not None
-    match = pattern.search('他说：「你好」')
+    match = pattern.search("他说：「你好」")
     assert match is not None
-    assert match.group() == '「你好」'
+    assert match.group() == "「你好」"

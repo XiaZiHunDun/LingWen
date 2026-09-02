@@ -1,4 +1,5 @@
 """Smoke tests for factions/relationships/lore/timeline/proposals."""
+
 from infra.world_db.queries.factions import create_faction, list_factions
 from infra.world_db.queries.lore import create_lore, get_lore
 from infra.world_db.queries.proposals import create_proposal, list_proposals
@@ -18,8 +19,7 @@ def _setup(tmp_path):
 
 def test_faction_crud(tmp_path):
     c = _setup(tmp_path)
-    fid = create_faction(c, {"slug": "xing-chen", "name": "星辰会",
-                             "description": "ancient order"})
+    fid = create_faction(c, {"slug": "xing-chen", "name": "星辰会", "description": "ancient order"})
     assert fid > 0
     assert len(list_factions(c)) == 1
 
@@ -27,12 +27,19 @@ def test_faction_crud(tmp_path):
 def test_relationship_round_trip(tmp_path):
     c = _setup(tmp_path)
     from infra.world_db.queries.characters import create_character
+
     cid = create_character(c, {"slug": "a", "name": "A", "canon_level": "Draft"})
-    rid = create_relationship(c, {
-        "source_kind": "character", "source_id": cid,
-        "target_kind": "faction", "target_id": 1,
-        "kind": "member_of", "strength": 0.9,
-    })
+    rid = create_relationship(
+        c,
+        {
+            "source_kind": "character",
+            "source_id": cid,
+            "target_kind": "faction",
+            "target_id": 1,
+            "kind": "member_of",
+            "strength": 0.9,
+        },
+    )
     assert rid > 0
     rels = list_relationships(c, source_kind="character", source_id=cid)
     assert len(rels) == 1 and rels[0]["kind"] == "member_of"
@@ -48,9 +55,12 @@ def test_create_relationship_idempotent_returns_same_id(tmp_path):
     """
     c = _setup(tmp_path)
     data = {
-        "source_kind": "character", "source_id": 1,
-        "target_kind": "faction", "target_id": 1,
-        "kind": "member_of", "strength": 0.9,
+        "source_kind": "character",
+        "source_id": 1,
+        "target_kind": "faction",
+        "target_id": 1,
+        "kind": "member_of",
+        "strength": 0.9,
     }
     rid_first = create_relationship(c, data)
     rid_second = create_relationship(c, data)
@@ -61,21 +71,34 @@ def test_create_relationship_idempotent_returns_same_id(tmp_path):
 
 def test_lore_crud(tmp_path):
     c = _setup(tmp_path)
-    lid = create_lore(c, {"slug": "magic", "title": "灵力系统",
-                          "category": "magic_system",
-                          "summary": "...", "body": "long body",
-                          "tags": ["核心"]})
+    lid = create_lore(
+        c,
+        {
+            "slug": "magic",
+            "title": "灵力系统",
+            "category": "magic_system",
+            "summary": "...",
+            "body": "long body",
+            "tags": ["核心"],
+        },
+    )
     lore = get_lore(c, lid)
     assert lore["title"] == "灵力系统" and lore["tags"] == ["核心"]
 
 
 def test_timeline_crud(tmp_path):
     c = _setup(tmp_path)
-    tid = create_timeline_event(c, {"slug": "an-yu", "title": "暗域入侵",
-                                    "story_year": -37,
-                                    "story_label": "T-37",
-                                    "category": "history",
-                                    "description": "..."})
+    tid = create_timeline_event(
+        c,
+        {
+            "slug": "an-yu",
+            "title": "暗域入侵",
+            "story_year": -37,
+            "story_label": "T-37",
+            "category": "history",
+            "description": "...",
+        },
+    )
     assert tid > 0
     events = list_timeline(c)
     assert len(events) == 1 and events[0]["story_year"] == -37
@@ -83,10 +106,15 @@ def test_timeline_crud(tmp_path):
 
 def test_proposal_crud(tmp_path):
     c = _setup(tmp_path)
-    pid = create_proposal(c, {
-        "kind": "character.create", "payload": {"slug": "new"},
-        "source": "human", "source_context": "manual edit",
-    })
+    pid = create_proposal(
+        c,
+        {
+            "kind": "character.create",
+            "payload": {"slug": "new"},
+            "source": "human",
+            "source_context": "manual edit",
+        },
+    )
     assert pid > 0
     proposals = list_proposals(c, status="pending")
     assert len(proposals) == 1

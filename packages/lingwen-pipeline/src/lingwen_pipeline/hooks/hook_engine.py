@@ -2,6 +2,7 @@
 """
 Hook引擎核心 - 负责加载配置、匹配事件、执行动作链
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -23,6 +24,7 @@ _ACTION_EXECUTOR = ThreadPoolExecutor(max_workers=8, thread_name_prefix="hook-ac
 
 class HookStatus(Enum):
     """Hook执行状态"""
+
     PENDING = "pending"
     RUNNING = "running"
     SUCCESS = "success"
@@ -35,6 +37,7 @@ class HookStatus(Enum):
 @dataclass
 class HookResult:
     """Hook执行结果"""
+
     hook_name: str
     status: HookStatus
     action_results: List[ActionResult] = field(default_factory=list)
@@ -54,9 +57,7 @@ class HookEngine:
     """
 
     def __init__(
-        self,
-        event_bus: Optional[EventBus] = None,
-        config_loader: Optional[HookConfigLoader] = None
+        self, event_bus: Optional[EventBus] = None, config_loader: Optional[HookConfigLoader] = None
     ):
         self.event_bus = event_bus or EventBus()
         self.config_loader = config_loader or HookConfigLoader()
@@ -130,12 +131,8 @@ class HookEngine:
                 HookStatus.FAILED,
                 HookStatus.TIMEOUT,
             ):
-                status_label = (
-                    "timed out" if result.status == HookStatus.TIMEOUT else "failed"
-                )
-                raise HookExecutionError(
-                    f"Required hook '{hook_config.name}' {status_label}: {result.error}"
-                )
+                status_label = "timed out" if result.status == HookStatus.TIMEOUT else "failed"
+                raise HookExecutionError(f"Required hook '{hook_config.name}' {status_label}: {result.error}")
 
         return results
 
@@ -164,20 +161,14 @@ class HookEngine:
             # 评估条件表达式
             if hook_config.conditions:
                 context = {**self._current_context, **event.data}
-                if not self.config_loader.evaluate_conditions(
-                    hook_config.conditions, context
-                ):
+                if not self.config_loader.evaluate_conditions(hook_config.conditions, context):
                     continue
 
             matching.append(hook_config)
 
         return matching
 
-    def _execute_hook(
-        self,
-        hook_config: HookConfig,
-        event: Event
-    ) -> HookResult:
+    def _execute_hook(self, hook_config: HookConfig, event: Event) -> HookResult:
         """
         执行单个Hook
 
@@ -189,10 +180,7 @@ class HookEngine:
             Hook执行结果
         """
         start_time = time.time()
-        result = HookResult(
-            hook_name=hook_config.name,
-            status=HookStatus.RUNNING
-        )
+        result = HookResult(hook_name=hook_config.name, status=HookStatus.RUNNING)
 
         try:
             # 构建执行上下文
@@ -206,9 +194,7 @@ class HookEngine:
 
             # 执行动作链
             for action_def in hook_config.actions:
-                action_result = self._execute_action(
-                    action_def, context, hook_config.timeout
-                )
+                action_result = self._execute_action(action_def, context, hook_config.timeout)
                 result.action_results.append(action_result)
 
                 # R3-004: 超时也算失败 — required hook 应阻止流程
@@ -220,9 +206,7 @@ class HookEngine:
                         result.error = f"Action failed: {action_result.error}"
                         break
                     # optional hook 失败不阻止,但记录 (区分超时/普通失败)
-                    result.action_results[-1].error = (
-                        f"Optional action failed: {action_result.error}"
-                    )
+                    result.action_results[-1].error = f"Optional action failed: {action_result.error}"
                     if is_timeout:
                         result.status = HookStatus.TIMEOUT
                         result.error = f"Optional action timed out: {action_result.error}"
@@ -246,10 +230,7 @@ class HookEngine:
         return result
 
     def _execute_action(
-        self,
-        action_def: Dict[str, Any],
-        context: Dict[str, Any],
-        timeout: int
+        self, action_def: Dict[str, Any], context: Dict[str, Any], timeout: int
     ) -> ActionResult:
         """
         执行单个动作
@@ -271,10 +252,7 @@ class HookEngine:
         action_class = self._action_registry.get(action_type)
 
         if not action_class:
-            return ActionResult(
-                success=False,
-                error=f"Unknown action type: {action_type}"
-            )
+            return ActionResult(success=False, error=f"Unknown action type: {action_type}")
 
         try:
             action = action_class()
@@ -296,10 +274,7 @@ class HookEngine:
             return result
 
         except Exception as e:
-            return ActionResult(
-                success=False,
-                error=str(e)
-            )
+            return ActionResult(success=False, error=str(e))
 
     def get_hook_status(self, hook_name: str) -> Optional[HookStatus]:
         """获取Hook状态"""
@@ -325,4 +300,5 @@ class HookEngine:
 
 class HookExecutionError(Exception):
     """Hook执行异常"""
+
     pass

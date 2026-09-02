@@ -2,6 +2,7 @@
 Phase 15.0 T1.4: overview / chapters / production-records routes.
 
 """
+
 from __future__ import annotations
 
 from typing import Optional
@@ -114,9 +115,7 @@ def register_overview(app: FastAPI, ctx: RoutesContext) -> None:
         items = list_production_records(root, chapter_num=chapter_num, limit=limit)
         return ProductionRecordsResponse(
             records_dir=str(root),
-            records=[
-                ProductionRecordResponse(**item.to_dict()) for item in items
-            ],
+            records=[ProductionRecordResponse(**item.to_dict()) for item in items],
         )
 
     @app.get("/api/production-records/rollup", response_model=ProductionRollupResponse)
@@ -132,9 +131,7 @@ def register_overview(app: FastAPI, ctx: RoutesContext) -> None:
         return ProductionRollupResponse(
             **{
                 **data,
-                "batches": [
-                    ProductionBatchRollupResponse(**row) for row in data["batches"]
-                ],
+                "batches": [ProductionBatchRollupResponse(**row) for row in data["batches"]],
             }
         )
 
@@ -147,6 +144,4 @@ def register_overview(app: FastAPI, ctx: RoutesContext) -> None:
             production_cost_trend,
         )
 
-        return ProductionCostTrendResponse(
-            **production_cost_trend(production_records_root(), limit=limit)
-        )
+        return ProductionCostTrendResponse(**production_cost_trend(production_records_root(), limit=limit))

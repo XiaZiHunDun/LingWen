@@ -1,4 +1,5 @@
 """Thin-shell tests for /api/world/* routes."""
+
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -7,8 +8,12 @@ from fastapi.testclient import TestClient
 
 def _stub_ctx():
     from apps.studio_api.routes.ctx import RoutesContext
+
     return RoutesContext(
-        db=None, master_controller=None, manager=None, limiter=None,
+        db=None,
+        master_controller=None,
+        manager=None,
+        limiter=None,
         production_records_root=lambda: Path("/tmp"),
         cvg_storage=lambda: None,
     )
@@ -16,6 +21,7 @@ def _stub_ctx():
 
 def _mount(app):
     from apps.studio_api.routes.world import register_world
+
     register_world(app, _stub_ctx())
 
 
@@ -43,19 +49,20 @@ def test_proposal_post_and_accept(tmp_path, monkeypatch):
     client = TestClient(app)
 
     # POST proposal
-    resp = client.post("/api/world/proposals", json={
-        "kind": "character.create",
-        "payload": {"slug": "new-char", "name": "新人物",
-                    "canon_level": "Draft"},
-        "source": "human",
-        "source_context": "test",
-    })
+    resp = client.post(
+        "/api/world/proposals",
+        json={
+            "kind": "character.create",
+            "payload": {"slug": "new-char", "name": "新人物", "canon_level": "Draft"},
+            "source": "human",
+            "source_context": "test",
+        },
+    )
     assert resp.status_code == 200, resp.text
     pid = resp.json()["id"]
 
     # Accept
-    resp = client.post(f"/api/world/proposals/{pid}/accept",
-                        json={"reviewer": "tester"})
+    resp = client.post(f"/api/world/proposals/{pid}/accept", json={"reviewer": "tester"})
     assert resp.status_code == 200, resp.text
 
     # Verify character exists
@@ -76,13 +83,16 @@ def test_import_and_export_roundtrip(tmp_path, monkeypatch):
     )
     (project_dir / "docs").mkdir(exist_ok=True)
     (project_dir / "docs" / "faction-design.md").write_text(
-        "# 阵营 · 测试阵营\n", encoding="utf-8",
+        "# 阵营 · 测试阵营\n",
+        encoding="utf-8",
     )
     (project_dir / "docs" / "lore-registry.md").write_text(
-        "# 世界观注册表 · 测试\n\n## 设定\n...body...\n", encoding="utf-8",
+        "# 世界观注册表 · 测试\n\n## 设定\n...body...\n",
+        encoding="utf-8",
     )
 
     import apps.studio_api.routes.world as wmod
+
     wmod._world_db_path = lambda: project_dir / ".state" / "world.db"
 
     app = FastAPI()
@@ -117,11 +127,13 @@ def test_agent_extract_from_chapters_happy_path(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     import infra.world_db.agent_extractors as aext
 
-    aext._default_llm_service = lambda: _StubLLM(response=(
-        '{"proposals":[{"kind":"character.update","target_kind":"character",'
-        '"target_id":1,"payload":{"status":"alive","last_seen_chapter":3},'
-        '"source_context":"第3章","confidence":"high"}]}'
-    ))
+    aext._default_llm_service = lambda: _StubLLM(
+        response=(
+            '{"proposals":[{"kind":"character.update","target_kind":"character",'
+            '"target_id":1,"payload":{"status":"alive","last_seen_chapter":3},'
+            '"source_context":"第3章","confidence":"high"}]}'
+        )
+    )
 
     app = FastAPI()
     _mount(app)
@@ -147,6 +159,7 @@ def test_agent_extract_from_chapters_happy_path(tmp_path, monkeypatch):
 def test_agent_extract_from_chapters_missing_slug_400(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     import infra.world_db.agent_extractors as aext
+
     aext._default_llm_service = lambda: _StubLLM()
 
     app = FastAPI()
@@ -163,11 +176,14 @@ def test_agent_extract_from_chapters_missing_slug_400(tmp_path, monkeypatch):
 def test_agent_extract_from_prompt_happy_path(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     import infra.world_db.agent_extractors as aext
-    aext._default_llm_service = lambda: _StubLLM(response=(
-        '{"proposals":[{"kind":"character.update","target_kind":"character",'
-        '"target_id":2,"payload":{"status":"deceased"},'
-        '"source_context":"用户说","confidence":"medium"}]}'
-    ))
+
+    aext._default_llm_service = lambda: _StubLLM(
+        response=(
+            '{"proposals":[{"kind":"character.update","target_kind":"character",'
+            '"target_id":2,"payload":{"status":"deceased"},'
+            '"source_context":"用户说","confidence":"medium"}]}'
+        )
+    )
 
     app = FastAPI()
     _mount(app)
@@ -185,6 +201,7 @@ def test_agent_extract_rate_limit(tmp_path, monkeypatch):
     """After 5 calls the 6th must return HTTP 429."""
     monkeypatch.chdir(tmp_path)
     import infra.world_db.agent_extractors as aext
+
     aext._default_llm_service = lambda: _StubLLM()
 
     app = FastAPI()
@@ -196,7 +213,7 @@ def test_agent_extract_rate_limit(tmp_path, monkeypatch):
             "/api/world/agent/extract-from-chapters",
             json={"character_slug": "x", "chapter_texts": ["y"]},
         )
-        assert resp.status_code == 200, f"call {i+1} failed: {resp.text}"
+        assert resp.status_code == 200, f"call {i + 1} failed: {resp.text}"
 
     resp = client.post(
         "/api/world/agent/extract-from-chapters",
@@ -282,6 +299,7 @@ def test_get_chapter_texts_validates_range(tmp_path, monkeypatch):
 def test_agent_rate_limiter_isolates_per_key():
     """Two keys have independent counters; one hitting cap does not block the other."""
     import apps.studio_api.routes.world as wmod
+
     rl = wmod._AgentRateLimiter(max_calls=5)
 
     # IP1 hits cap
@@ -305,6 +323,7 @@ def test_agent_rate_limiter_isolates_per_key():
 def test_agent_rate_limiter_ttl_evicts_old_keys():
     """Keys not accessed within ttl_seconds are evicted; counter freed."""
     import apps.studio_api.routes.world as wmod
+
     rl = wmod._AgentRateLimiter(max_calls=5, ttl_seconds=10)
 
     # IP1: 5 successful calls at t=100..104

@@ -3,28 +3,40 @@
 章节命名一致性检查器
 检测文件名与内容章节号是否匹配
 """
+
 import os
 import re
 import sys
 from pathlib import Path
 
 # 中文数字转换
-ZH_DIGIT_MAP = {'零': 0, '一': 1, '二': 2, '三': 3, '四': 4, '五': 5,
-                '六': 6, '七': 7, '八': 8, '九': 9, '十': 10}
+ZH_DIGIT_MAP = {
+    "零": 0,
+    "一": 1,
+    "二": 2,
+    "三": 3,
+    "四": 4,
+    "五": 5,
+    "六": 6,
+    "七": 7,
+    "八": 8,
+    "九": 9,
+    "十": 10,
+}
 
 
 def chinese_to_arabic(zh: str) -> int | None:
     """中文数字转阿拉伯数字（正确处理"三十一"等复合数字）"""
-    if zh == '零':
+    if zh == "零":
         return 0
 
-    if zh == '十':
+    if zh == "十":
         return 10
 
-    if '百' in zh:
-        parts = zh.split('百', 1)
-        hundred_part = parts[0] if parts[0] else '一'
-        rest = parts[1] if len(parts) > 1 else ''
+    if "百" in zh:
+        parts = zh.split("百", 1)
+        hundred_part = parts[0] if parts[0] else "一"
+        rest = parts[1] if len(parts) > 1 else ""
         hundred_val = ZH_DIGIT_MAP.get(hundred_part, 1) * 100
 
         if not rest:
@@ -38,7 +50,7 @@ def chinese_to_arabic(zh: str) -> int | None:
     i = 0
     while i < len(zh):
         char = zh[i]
-        if char == '十':
+        if char == "十":
             if temp_num == 0:
                 result = 10
             else:
@@ -56,7 +68,7 @@ def chinese_to_arabic(zh: str) -> int | None:
 
 def extract_chapter_num(title: str) -> int | None:
     """从标题提取章节号"""
-    match = re.search(r'第([零一二三四五六七八九十百]+)章', title)
+    match = re.search(r"第([零一二三四五六七八九十百]+)章", title)
     if not match:
         return None
     zh = match.group(1)
@@ -82,7 +94,7 @@ def check_naming(chapters_dir: str, chapter_range: tuple[int, int] = (1, 360)) -
             continue
 
         try:
-            with open(fpath, 'r', encoding='utf-8') as f:
+            with open(fpath, "r", encoding="utf-8") as f:
                 first_line = f.readline().strip()
         except Exception as e:
             issues.append(("READ_ERROR", i, fname, f"读取失败: {e}"))
@@ -99,8 +111,7 @@ def check_naming(chapters_dir: str, chapter_range: tuple[int, int] = (1, 360)) -
 
         # 检查文件名与章节号是否匹配
         if title_num != i:
-            issues.append(("MISMATCH", i, fname,
-                f"文件名ch{i:03d}对应内容第{title_num}章"))
+            issues.append(("MISMATCH", i, fname, f"文件名ch{i:03d}对应内容第{title_num}章"))
 
     return issues
 
@@ -116,7 +127,7 @@ def report_naming_issues(issues: list[tuple], output_file: str = None) -> str:
         lines.append("\n✅ 所有章节命名一致")
         report = "\n".join(lines)
         if output_file:
-            with open(output_file, 'w', encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 f.write(report)
         return report
 
@@ -139,7 +150,7 @@ def report_naming_issues(issues: list[tuple], output_file: str = None) -> str:
 
     report = "\n".join(lines)
     if output_file:
-        with open(output_file, 'w', encoding='utf-8') as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             f.write(report)
 
     return report
@@ -147,11 +158,12 @@ def report_naming_issues(issues: list[tuple], output_file: str = None) -> str:
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description='章节命名一致性检查')
-    parser.add_argument('chapters_dir', help='章节目录路径')
-    parser.add_argument('--output', '-o', help='输出报告路径')
-    parser.add_argument('--start', type=int, default=1, help='起始章节')
-    parser.add_argument('--end', type=int, default=360, help='结束章节')
+
+    parser = argparse.ArgumentParser(description="章节命名一致性检查")
+    parser.add_argument("chapters_dir", help="章节目录路径")
+    parser.add_argument("--output", "-o", help="输出报告路径")
+    parser.add_argument("--start", type=int, default=1, help="起始章节")
+    parser.add_argument("--end", type=int, default=360, help="结束章节")
     args = parser.parse_args()
 
     issues = check_naming(args.chapters_dir, (args.start, args.end))

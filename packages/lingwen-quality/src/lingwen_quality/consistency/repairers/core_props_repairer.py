@@ -2,6 +2,7 @@
 """
 核心道具修复器 - 确保核心道具在后续章节中出现
 """
+
 import sys
 from pathlib import Path
 
@@ -21,12 +22,7 @@ class CorePropsRepairer(BaseConsistencyRepairer):
     """
 
     # 第1章必须贯穿的核心道具
-    CH1_MANDATORY_PROPS = [
-        '木勺',
-        '地窖',
-        '母亲',
-        '父亲'
-    ]
+    CH1_MANDATORY_PROPS = ["木勺", "地窖", "母亲", "父亲"]
 
     def __init__(self, project_root: Optional[str] = None):
         super().__init__(project_root)
@@ -47,11 +43,12 @@ class CorePropsRepairer(BaseConsistencyRepairer):
             return []
 
         import re
+
         content = ch1_file.read_text(encoding="utf-8")
         props = []
 
         # 提取【道具:名称】标记
-        prop_pattern = r'【道具:(.+?)】'
+        prop_pattern = r"【道具:(.+?)】"
         matches = re.findall(prop_pattern, content)
         props.extend(matches)
 
@@ -87,13 +84,8 @@ class CorePropsRepairer(BaseConsistencyRepairer):
 
         根据道具类型生成自然的出现语句
         """
-        contexts = {
-            '木勺': '握着母亲留下的木勺',
-            '地窖': '走进地窖',
-            '母亲': '想起母亲',
-            '父亲': '想起父亲'
-        }
-        return contexts.get(prop_name, f'看到{prop_name}')
+        contexts = {"木勺": "握着母亲留下的木勺", "地窖": "走进地窖", "母亲": "想起母亲", "父亲": "想起父亲"}
+        return contexts.get(prop_name, f"看到{prop_name}")
 
     def _apply_fixes(self, content: str, issues: List[Any] = None) -> Tuple[str, int, List[str]]:
         """应用修复
@@ -108,7 +100,7 @@ class CorePropsRepairer(BaseConsistencyRepairer):
         # 从文件名提取章节号
         chapter_num = None
         if self._current_file:
-            match = re.search(r'ch(\d+)\.md', self._current_file)
+            match = re.search(r"ch(\d+)\.md", self._current_file)
             if match:
                 chapter_num = int(match.group(1))
 
@@ -134,12 +126,12 @@ class CorePropsRepairer(BaseConsistencyRepairer):
                 # 策略：找到第一个句号后的位置，在适当位置插入
                 insert_point = len(result)
                 for i, char in enumerate(result):
-                    if char == '。' and i > 10:
+                    if char == "。" and i > 10:
                         insert_point = i + 1
                         break
 
                 # 插入道具引用
-                insert_text = f'，{insert_context}'
+                insert_text = f"，{insert_context}"
                 result = result[:insert_point] + insert_text + result[insert_point:]
                 change_count += 1
                 repaired.append(f"插入核心道具'{prop}'")
@@ -162,20 +154,18 @@ def main():
     import argparse
     import re
 
-    parser = argparse.ArgumentParser(description='核心道具修复器')
-    parser.add_argument('--chapters', type=str, default='1-10',
-                        help='章节范围，如 1-10 或 5,7,9')
-    parser.add_argument('--dry-run', action='store_true',
-                        help='只输出不保存')
+    parser = argparse.ArgumentParser(description="核心道具修复器")
+    parser.add_argument("--chapters", type=str, default="1-10", help="章节范围，如 1-10 或 5,7,9")
+    parser.add_argument("--dry-run", action="store_true", help="只输出不保存")
     args = parser.parse_args()
 
     # 解析章节范围
     chapter_nums = []
-    if '-' in args.chapters:
-        start, end = args.chapters.split('-')
+    if "-" in args.chapters:
+        start, end = args.chapters.split("-")
         chapter_nums = list(range(int(start), int(end) + 1))
     else:
-        chapter_nums = [int(x) for x in args.chapters.split(',')]
+        chapter_nums = [int(x) for x in args.chapters.split(",")]
 
     repairer = CorePropsRepairer()
 
@@ -195,8 +185,10 @@ def main():
         else:
             result = repairer.repair(ch)
             status = "✅" if result.success else "❌"
-            print(f"{status} ch{ch:03d}: 修复{result.changes}处 - {', '.join(result.repaired_issues) if result.repaired_issues else '无修复'}")
+            print(
+                f"{status} ch{ch:03d}: 修复{result.changes}处 - {', '.join(result.repaired_issues) if result.repaired_issues else '无修复'}"
+            )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

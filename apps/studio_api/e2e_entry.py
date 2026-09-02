@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Phase 9.65 F56: FastAPI entry for Playwright live-backend e2e."""
+
 from __future__ import annotations
 
 import os

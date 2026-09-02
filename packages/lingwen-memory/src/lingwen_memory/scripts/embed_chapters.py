@@ -10,6 +10,7 @@ Usage:
     python -m memory_system.scripts.embed_chapters --resume          # 断点续传（跳过已处理的章节）
     python -m memory_system.scripts.embed_chapters --max-retries 3    # 失败重试次数
 """
+
 import argparse
 import re
 import sys
@@ -77,7 +78,9 @@ def split_into_segments(text: str) -> list[str]:
                 if not sentence:
                     continue
                 if len(current_segment) + len(sentence) <= MAX_SEGMENT_CHARS:
-                    current_segment += ("。" if current_segment and not current_segment.endswith(("。", "！", "？")) else "") + sentence
+                    current_segment += (
+                        "。" if current_segment and not current_segment.endswith(("。", "！", "？")) else ""
+                    ) + sentence
                 else:
                     if current_segment:
                         segments.append(current_segment)
@@ -237,9 +240,11 @@ def embed_chapters(
         remaining = avg_time * (total_chapters - idx - 1)
         remaining_str = str(timedelta(seconds=int(remaining))) if remaining > 0 else "--:--"
 
-        print(f"\n[{idx + 1}/{total_chapters}] Processing {filename} | "
-              f"Elapsed: {timedelta(seconds=int(elapsed))} | "
-              f"ETA: {remaining_str}")
+        print(
+            f"\n[{idx + 1}/{total_chapters}] Processing {filename} | "
+            f"Elapsed: {timedelta(seconds=int(elapsed))} | "
+            f"ETA: {remaining_str}"
+        )
 
         segments = split_into_segments(content)
         results["total_segments"] += len(segments)
@@ -270,7 +275,7 @@ def embed_chapters(
             try:
                 # 批量嵌入（每批 batch_size 条）
                 for i in range(0, len(segments), batch_size):
-                    batch = segments[i:i + batch_size]
+                    batch = segments[i : i + batch_size]
                     embeddings = embedder.embed_texts(batch)
                     results["embeddings_generated"] += len(embeddings)
 
@@ -288,11 +293,13 @@ def embed_chapters(
                             "segment_index": seg_index,
                             "text": segment[:200],  # 只存储前200字符作为预览
                         }
-                        points_to_insert.append({
-                            "id": point_id,
-                            "vector": embedding,
-                            "payload": payload,
-                        })
+                        points_to_insert.append(
+                            {
+                                "id": point_id,
+                                "vector": embedding,
+                                "payload": payload,
+                            }
+                        )
 
                 # 每批嵌入后立即插入（减少内存占用）
                 if points_to_insert:
@@ -309,10 +316,12 @@ def embed_chapters(
 
                 if retry_count >= max_retries:
                     results["fail_count"] += 1
-                    print(f"  [FATAL] Chapter {chapter_num} failed after {max_retries} attempts, continuing to next chapter")
+                    print(
+                        f"  [FATAL] Chapter {chapter_num} failed after {max_retries} attempts, continuing to next chapter"
+                    )
                 else:
                     # 重试前等待一下
-                    time.sleep(2 ** retry_count)
+                    time.sleep(2**retry_count)
 
     results["elapsed_time"] = time.time() - start_time
     return results
@@ -323,34 +332,13 @@ def main():
         description="批量嵌入章节内容到 Qdrant",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument(
-        "--start", type=int, default=None,
-        help="起始章节号（如 1 表示 ch001）"
-    )
-    parser.add_argument(
-        "--end", type=int, default=None,
-        help="结束章节号（如 50 表示 ch050）"
-    )
-    parser.add_argument(
-        "--dry-run", action="store_true",
-        help="仅预览不执行（显示将处理多少章节和片段）"
-    )
-    parser.add_argument(
-        "--resume", action="store_true",
-        help="断点续传模式，跳过已处理的章节"
-    )
-    parser.add_argument(
-        "--batch-size", type=int, default=20,
-        help="每批嵌入的片段数量（默认 20）"
-    )
-    parser.add_argument(
-        "--max-retries", type=int, default=3,
-        help="单章失败最大重试次数（默认 3）"
-    )
-    parser.add_argument(
-        "--create-collection", action="store_true",
-        help="如果集合不存在则创建"
-    )
+    parser.add_argument("--start", type=int, default=None, help="起始章节号（如 1 表示 ch001）")
+    parser.add_argument("--end", type=int, default=None, help="结束章节号（如 50 表示 ch050）")
+    parser.add_argument("--dry-run", action="store_true", help="仅预览不执行（显示将处理多少章节和片段）")
+    parser.add_argument("--resume", action="store_true", help="断点续传模式，跳过已处理的章节")
+    parser.add_argument("--batch-size", type=int, default=20, help="每批嵌入的片段数量（默认 20）")
+    parser.add_argument("--max-retries", type=int, default=3, help="单章失败最大重试次数（默认 3）")
+    parser.add_argument("--create-collection", action="store_true", help="如果集合不存在则创建")
 
     args = parser.parse_args()
 
@@ -421,8 +409,8 @@ def main():
         print(f"  - {results['embeddings_generated']} embeddings stored")
         print("\nPerformance Statistics:")
         print(f"  - Total time: {timedelta(seconds=int(results['elapsed_time']))}")
-        if results['success_count'] > 0:
-            avg_time = results['elapsed_time'] / results['success_count']
+        if results["success_count"] > 0:
+            avg_time = results["elapsed_time"] / results["success_count"]
             print(f"  - Avg time per chapter: {avg_time:.2f}s")
 
         # 关闭连接

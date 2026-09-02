@@ -13,6 +13,7 @@ Uses pydantic v2's model_json_schema() directly + hand-rolled JSON Schema → TS
 converter. Do not edit generated TS manually — run this script after any
 Pydantic schema change.
 """
+
 from __future__ import annotations
 
 import json

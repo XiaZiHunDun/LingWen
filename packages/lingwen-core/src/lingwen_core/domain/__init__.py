@@ -14,6 +14,7 @@ Phase 18.1 — Domain 实体下沉。
 - ripple: Ripple / RippleState / ResolutionMode / WorldSnapshot + 涟漪事件
 - subplot: Plot / PlotType / PlotPurpose / PlotStatus + MAX_ACTIVE_SUBPLOTS
 """
+
 from __future__ import annotations
 
 from lingwen_core.domain.chapter import (

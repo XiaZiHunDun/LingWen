@@ -5,6 +5,7 @@ _PROVIDER_REGISTRY (via list_registered_providers) instead of the broken
 PluginManager.get_priority() path that tries to import
 'infra.ai_service.<name>' modules which don't exist.
 """
+
 from __future__ import annotations
 
 import pytest

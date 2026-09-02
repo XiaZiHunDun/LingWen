@@ -9,6 +9,7 @@
     gateway = get_memory_gateway()
     context = gateway.auto_push_context(chapter_num=5)
 """
+
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -90,9 +91,7 @@ class NoOpMemoryGateway:
         """返回空字典"""
         return {}
 
-    def check_consistency(
-        self, chapter_content: str, chapter: Optional[int] = None
-    ) -> Dict[str, Any]:
+    def check_consistency(self, chapter_content: str, chapter: Optional[int] = None) -> Dict[str, Any]:
         """返回通过结果"""
         return {
             "is_consistent": True,
@@ -100,9 +99,7 @@ class NoOpMemoryGateway:
             "issues": [],
         }
 
-    def get_relationship_network(
-        self, character: str, depth: int = 1
-    ) -> List[Dict[str, Any]]:
+    def get_relationship_network(self, character: str, depth: int = 1) -> List[Dict[str, Any]]:
         """返回空列表"""
         return []
 

@@ -1,4 +1,5 @@
 """Qdrant query_points compatibility contract (client 1.18+)."""
+
 from __future__ import annotations
 
 from pathlib import Path

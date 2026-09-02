@@ -1,4 +1,5 @@
 """Phase 9.52 F41: DecisionCard meta-info + WorkflowGraph state testid contracts."""
+
 from __future__ import annotations
 
 from pathlib import Path

@@ -1,4 +1,5 @@
 """Prose revision snapshots and diff (Phase 11.05)."""
+
 from __future__ import annotations
 
 import json

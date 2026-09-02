@@ -15,6 +15,7 @@ Phase 1.3.e — RED tests for ContextBuilder + AutoSummarizer.
 - LLM 调用的真实实现 (Phase 1.4+ GoT)
 - 复杂 transform (e.g. "truncate_2000" — Phase 1.5+)
 """
+
 from __future__ import annotations
 
 import pytest
@@ -59,9 +60,7 @@ class TestContextBuilderBasics:
         """add_source 后 build 拿得到"""
         from lingwen_prompt.context_builder import ContextBuilder
 
-        ctx = _ctx(inputs=(
-            _make_item("a", "src_a", 100),
-        ))
+        ctx = _ctx(inputs=(_make_item("a", "src_a", 100),))
         cb = ContextBuilder(ctx).add_source("a", "hello")
         result = cb.build()
         assert result.data["a"] == "hello"
@@ -70,13 +69,13 @@ class TestContextBuilderBasics:
     def test_add_multiple_sources(self):
         from lingwen_prompt.context_builder import ContextBuilder
 
-        ctx = _ctx(inputs=(
-            _make_item("a", "src_a", 50),
-            _make_item("b", "src_b", 80),
-        ))
-        cb = (ContextBuilder(ctx)
-              .add_source("a", "alpha")
-              .add_source("b", "beta"))
+        ctx = _ctx(
+            inputs=(
+                _make_item("a", "src_a", 50),
+                _make_item("b", "src_b", 80),
+            )
+        )
+        cb = ContextBuilder(ctx).add_source("a", "alpha").add_source("b", "beta")
         result = cb.build()
         assert result.data == {"a": "alpha", "b": "beta"}
         assert result.total_tokens == 130
@@ -87,9 +86,7 @@ class TestContextBuilderMissingRequired:
         """required=True 但未 add_source → raise"""
         from lingwen_prompt.context_builder import ContextBuilder, MissingContextError
 
-        ctx = _ctx(inputs=(
-            _make_item("a", "src_a", 100, required=True),
-        ))
+        ctx = _ctx(inputs=(_make_item("a", "src_a", 100, required=True),))
         cb = ContextBuilder(ctx)
         with pytest.raises(MissingContextError, match="(?i)a"):
             cb.build()
@@ -98,9 +95,7 @@ class TestContextBuilderMissingRequired:
         """required=False 缺失不 raise,只记 missing_optionals"""
         from lingwen_prompt.context_builder import ContextBuilder
 
-        ctx = _ctx(inputs=(
-            _make_item("a", "src_a", 100, required=False),
-        ))
+        ctx = _ctx(inputs=(_make_item("a", "src_a", 100, required=False),))
         cb = ContextBuilder(ctx)
         result = cb.build()
         assert "a" not in result.data
@@ -112,26 +107,28 @@ class TestContextBuilderBudgetOverflow:
         """total > budget_tokens → raise"""
         from lingwen_prompt.context_builder import BudgetOverflowError, ContextBuilder
 
-        ctx = _ctx(inputs=(
-            _make_item("a", "src", 800),
-            _make_item("b", "src", 500),
-        ), budget_tokens=1000)
-        cb = (ContextBuilder(ctx)
-              .add_source("a", "x")
-              .add_source("b", "y"))
+        ctx = _ctx(
+            inputs=(
+                _make_item("a", "src", 800),
+                _make_item("b", "src", 500),
+            ),
+            budget_tokens=1000,
+        )
+        cb = ContextBuilder(ctx).add_source("a", "x").add_source("b", "y")
         with pytest.raises(BudgetOverflowError, match="(?i)budget"):
             cb.build()
 
     def test_budget_within_limit_ok(self):
         from lingwen_prompt.context_builder import ContextBuilder
 
-        ctx = _ctx(inputs=(
-            _make_item("a", "src", 400),
-            _make_item("b", "src", 500),
-        ), budget_tokens=1000)
-        cb = (ContextBuilder(ctx)
-              .add_source("a", "x")
-              .add_source("b", "y"))
+        ctx = _ctx(
+            inputs=(
+                _make_item("a", "src", 400),
+                _make_item("b", "src", 500),
+            ),
+            budget_tokens=1000,
+        )
+        cb = ContextBuilder(ctx).add_source("a", "x").add_source("b", "y")
         result = cb.build()
         assert result.total_tokens == 900
 
@@ -142,9 +139,7 @@ class TestContextBuilderTransforms:
         from lingwen_prompt.context_builder import ContextBuilder
 
         long_text = "X" * 5000  # 5000 chars
-        ctx = _ctx(inputs=(
-            _make_item("a", "src", 5000, transform="summary_500"),
-        ), budget_tokens=16000)
+        ctx = _ctx(inputs=(_make_item("a", "src", 5000, transform="summary_500"),), budget_tokens=16000)
         cb = ContextBuilder(ctx).add_source("a", long_text)
         result = cb.build()
         # summary_500 should be <= 500 chars
@@ -156,9 +151,7 @@ class TestContextBuilderTransforms:
         from lingwen_prompt.context_builder import ContextBuilder
 
         long_text = "Y" * 2000
-        ctx = _ctx(inputs=(
-            _make_item("a", "src", 2000, transform="truncate_200"),
-        ), budget_tokens=16000)
+        ctx = _ctx(inputs=(_make_item("a", "src", 2000, transform="truncate_200"),), budget_tokens=16000)
         cb = ContextBuilder(ctx).add_source("a", long_text)
         result = cb.build()
         assert len(result.data["a"]) <= 200
@@ -168,9 +161,7 @@ class TestContextBuilderTransforms:
         """无 transform → 原样"""
         from lingwen_prompt.context_builder import ContextBuilder
 
-        ctx = _ctx(inputs=(
-            _make_item("a", "src", 100, transform=None),
-        ), budget_tokens=16000)
+        ctx = _ctx(inputs=(_make_item("a", "src", 100, transform=None),), budget_tokens=16000)
         cb = ContextBuilder(ctx).add_source("a", "data")
         result = cb.build()
         assert result.data["a"] == "data"
@@ -179,9 +170,7 @@ class TestContextBuilderTransforms:
         """未知 transform → 不报错,原样输出,记入 transforms_applied"""
         from lingwen_prompt.context_builder import ContextBuilder
 
-        ctx = _ctx(inputs=(
-            _make_item("a", "src", 100, transform="unknown_strategy"),
-        ), budget_tokens=16000)
+        ctx = _ctx(inputs=(_make_item("a", "src", 100, transform="unknown_strategy"),), budget_tokens=16000)
         cb = ContextBuilder(ctx).add_source("a", "data")
         result = cb.build()
         assert result.data["a"] == "data"
@@ -228,11 +217,8 @@ class TestBuiltContext:
         """BuiltContext 字段: data, total_tokens, transforms_applied, missing_optionals"""
         from lingwen_prompt.context_builder import ContextBuilder
 
-        ctx = _ctx(inputs=(
-            _make_item("a", "src", 50, transform="truncate_100"),
-        ), budget_tokens=1000)
-        cb = (ContextBuilder(ctx)
-              .add_source("a", "data"))
+        ctx = _ctx(inputs=(_make_item("a", "src", 50, transform="truncate_100"),), budget_tokens=1000)
+        cb = ContextBuilder(ctx).add_source("a", "data")
         result = cb.build()
         assert isinstance(result.data, dict)
         assert isinstance(result.total_tokens, int)

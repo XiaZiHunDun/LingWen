@@ -19,6 +19,7 @@ JSON 容忍:
 - JSON schema 严格校验 (pydantic 等,Phase 3+)
 - 流式解析 (Phase 3+)
 """
+
 from __future__ import annotations
 
 import json
@@ -84,6 +85,7 @@ class RippleExtractionResult:
 
 # ============ 核心 API ============
 
+
 def parse_ripple_extraction(raw: str) -> RippleExtractionResult:
     """解析 LLM 输出 → RippleExtractionResult
 
@@ -133,13 +135,9 @@ def _parse_json(text: str) -> dict[str, Any]:
     try:
         data = json.loads(text)
     except json.JSONDecodeError as e:
-        raise ExtractionParseError(
-            f"invalid JSON at line {e.lineno} col {e.colno}: {e.msg}"
-        ) from e
+        raise ExtractionParseError(f"invalid JSON at line {e.lineno} col {e.colno}: {e.msg}") from e
     if not isinstance(data, dict):
-        raise ExtractionParseError(
-            f"expected JSON object, got {type(data).__name__}"
-        )
+        raise ExtractionParseError(f"expected JSON object, got {type(data).__name__}")
     return data
 
 
@@ -154,18 +152,14 @@ def _build_result(data: dict[str, Any]) -> RippleExtractionResult:
         raise ExtractionParseError("missing required field: 'resolved_ripples'")
 
     if not isinstance(data["new_ripples"], list):
-        raise ExtractionParseError(
-            f"'new_ripples' must be list, got {type(data['new_ripples']).__name__}"
-        )
+        raise ExtractionParseError(f"'new_ripples' must be list, got {type(data['new_ripples']).__name__}")
     if not isinstance(data["resolved_ripples"], list):
         raise ExtractionParseError(
             f"'resolved_ripples' must be list, got {type(data['resolved_ripples']).__name__}"
         )
 
     new_ripples = tuple(_parse_new_ripple(r) for r in data["new_ripples"])
-    resolved_ripples = tuple(
-        _parse_resolved_ripple(r) for r in data["resolved_ripples"]
-    )
+    resolved_ripples = tuple(_parse_resolved_ripple(r) for r in data["resolved_ripples"])
     notes = data.get("notes", "")
     if not isinstance(notes, str):
         notes = str(notes)
@@ -180,29 +174,19 @@ def _build_result(data: dict[str, Any]) -> RippleExtractionResult:
 def _parse_new_ripple(raw: dict[str, Any]) -> ExtractedRipple:
     """dict → ExtractedRipple (严格校验)"""
     if not isinstance(raw, dict):
-        raise ExtractionParseError(
-            f"new_ripple must be dict, got {type(raw).__name__}"
-        )
+        raise ExtractionParseError(f"new_ripple must be dict, got {type(raw).__name__}")
     # 必需字段
     for field_name in ("ripple_id", "origin_event", "origin_ch"):
         if field_name not in raw:
-            raise ExtractionParseError(
-                f"new_ripple missing required field: {field_name!r}"
-            )
+            raise ExtractionParseError(f"new_ripple missing required field: {field_name!r}")
 
     # 类型校验
     if not isinstance(raw["ripple_id"], str):
-        raise ExtractionParseError(
-            f"ripple_id must be str, got {type(raw['ripple_id']).__name__}"
-        )
+        raise ExtractionParseError(f"ripple_id must be str, got {type(raw['ripple_id']).__name__}")
     if not isinstance(raw["origin_event"], str):
-        raise ExtractionParseError(
-            f"origin_event must be str, got {type(raw['origin_event']).__name__}"
-        )
+        raise ExtractionParseError(f"origin_event must be str, got {type(raw['origin_event']).__name__}")
     if not isinstance(raw["origin_ch"], int):
-        raise ExtractionParseError(
-            f"origin_ch must be int, got {type(raw['origin_ch']).__name__}"
-        )
+        raise ExtractionParseError(f"origin_ch must be int, got {type(raw['origin_ch']).__name__}")
 
     # 可选字段
     affected = raw.get("affected_nodes", ())
@@ -224,14 +208,10 @@ def _parse_new_ripple(raw: dict[str, Any]) -> ExtractedRipple:
 def _parse_resolved_ripple(raw: dict[str, Any]) -> ExtractedResolution:
     """dict → ExtractedResolution (严格校验)"""
     if not isinstance(raw, dict):
-        raise ExtractionParseError(
-            f"resolved_ripple must be dict, got {type(raw).__name__}"
-        )
+        raise ExtractionParseError(f"resolved_ripple must be dict, got {type(raw).__name__}")
     for field_name in ("ripple_id", "resolution_ch", "mode"):
         if field_name not in raw:
-            raise ExtractionParseError(
-                f"resolved_ripple missing required field: {field_name!r}"
-            )
+            raise ExtractionParseError(f"resolved_ripple missing required field: {field_name!r}")
     return ExtractedResolution(
         ripple_id=raw["ripple_id"],
         resolution_ch=int(raw["resolution_ch"]),

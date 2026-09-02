@@ -2,6 +2,7 @@
 Phase 15.0 T1.3: workflow + workflow result helpers.
 
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -99,4 +100,3 @@ def _workflow_result_to_response(
         incremental_backfill=result.get("incremental_backfill"),  # Phase 9.68 F60
         production_summary=result.get("production_summary"),  # Phase 9.74 F66
     )
-

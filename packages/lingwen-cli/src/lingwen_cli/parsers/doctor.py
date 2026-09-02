@@ -1,4 +1,5 @@
 """doctor subparser — system diagnostics (env/db/chapters/fixes)."""
+
 import argparse
 
 

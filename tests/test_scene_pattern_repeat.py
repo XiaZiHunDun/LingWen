@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Tests for ScenePatternRepeatChecker"""
+
 import sys
 from pathlib import Path
 
@@ -40,9 +41,7 @@ class TestScenePatternRepeatChecker:
 
     def test_consecutive_scene_repeat_p0(self):
         """Test consecutive scene repeat - P0 level"""
-        context = {
-            "recent_scene_labels": ["星空对话", "星空对话", "星空对话"]
-        }
+        context = {"recent_scene_labels": ["星空对话", "星空对话", "星空对话"]}
         content = "他们再次来到草地上看星星，星空依然美丽。"
 
         issues = self.checker.check(content, 45, context)
@@ -53,9 +52,7 @@ class TestScenePatternRepeatChecker:
 
     def test_no_repeat_within_threshold(self):
         """Test no repeat within threshold"""
-        context = {
-            "recent_scene_labels": ["星空对话", "废墟探索"]
-        }
+        context = {"recent_scene_labels": ["星空对话", "废墟探索"]}
         content = "废墟中到处是残垣断壁，他们小心翼翼地探索着遗迹。"
 
         issues = self.checker.check(content, 45, context)

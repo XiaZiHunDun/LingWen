@@ -1,4 +1,5 @@
 """MiniMax embo-01 embedding provider (beta, non-OpenAI API shape)."""
+
 from __future__ import annotations
 
 import os
@@ -26,16 +27,13 @@ class MiniMaxEmbeddingProvider:
     ):
         key = api_key or os.environ.get("MINIMAX_API_KEY", "")
         if not key:
-            raise EmbeddingProviderError(
-                "MINIMAX_API_KEY required for embedding provider=minimax"
-            )
+            raise EmbeddingProviderError("MINIMAX_API_KEY required for embedding provider=minimax")
         self.model = model
         self.dimension = dimension
         self._api_key = key
-        self._base_url = (
-            base_url
-            or os.environ.get("MINIMAX_API_HOST", "https://api.minimaxi.com")
-        ).rstrip("/")
+        self._base_url = (base_url or os.environ.get("MINIMAX_API_HOST", "https://api.minimaxi.com")).rstrip(
+            "/"
+        )
         self._group_id = group_id or os.environ.get("MINIMAX_GROUP_ID", "")
         self._timeout = timeout
 
@@ -98,15 +96,15 @@ class MiniMaxEmbeddingProvider:
 
         vectors = self._parse_vectors(data)
         if len(vectors) != len(texts):
-            raise EmbeddingProviderError(
-                f"MiniMax returned {len(vectors)} vectors for {len(texts)} texts"
-            )
+            raise EmbeddingProviderError(f"MiniMax returned {len(vectors)} vectors for {len(texts)} texts")
         return vectors
 
     def health_check(self) -> tuple[bool, str]:
         try:
             self.embed_texts(["ping"], purpose="query")
-            group_hint = " group_id=set" if self._group_id else " group_id=unset(CN may need MINIMAX_GROUP_ID)"
+            group_hint = (
+                " group_id=set" if self._group_id else " group_id=unset(CN may need MINIMAX_GROUP_ID)"
+            )
             return True, f"minimax/{self.model} ok{group_hint}"
         except Exception as exc:  # noqa: BLE001
             hint = (

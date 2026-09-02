@@ -6,6 +6,7 @@
 - SettingExtractor: setting 维 (regex 名词后缀)
 - PlotPointExtractor: plot_point 维 (大纲 ## 标题抽取)
 """
+
 from infra.cross_volume.extractors.character_extractor import CharacterExtractor
 from infra.cross_volume.extractors.foreshadow_extractor import ForeshadowExtractor
 from infra.cross_volume.extractors.plot_point_extractor import PlotPointExtractor

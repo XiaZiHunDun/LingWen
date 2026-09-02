@@ -29,6 +29,7 @@ from lingwen_llm.providers import MiniMaxProvider, ProviderConfig
 @dataclass
 class CheckResult:
     """检查结果"""
+
     chapter: int
     dimension: str
     severity: str  # P0, P1, P2, P3, PASS
@@ -51,12 +52,7 @@ class ComprehensiveQualityChecker:
         # 初始化AI Provider
         self.provider = None
         if self.api_key:
-            config = ProviderConfig(
-                api_key=self.api_key,
-                model="MiniMax-M2.7",
-                timeout=180,
-                max_retries=3
-            )
+            config = ProviderConfig(api_key=self.api_key, model="MiniMax-M2.7", timeout=180, max_retries=3)
             self.provider = MiniMaxProvider(config)
             print("[INIT] MiniMax M2.7 Provider已初始化")
 
@@ -71,7 +67,7 @@ class ComprehensiveQualityChecker:
         """获取所有章节文件"""
         chapter_files = []
         for f in sorted(self.chapters_dir.glob("ch*.md")):
-            match = re.search(r'ch(\d+)', f.name)
+            match = re.search(r"ch(\d+)", f.name)
             if match:
                 chapter_num = int(match.group(1))
                 chapter_files.append((chapter_num, f))
@@ -82,14 +78,14 @@ class ComprehensiveQualityChecker:
         chapter_file = self.chapters_dir / f"ch{chapter_num:03d}.md"
         if not chapter_file.exists():
             return None
-        with open(chapter_file, 'r', encoding='utf-8') as f:
+        with open(chapter_file, "r", encoding="utf-8") as f:
             content = f.read()
             # 移除markdown标题
-            lines = content.split('\n')
-            if lines and lines[0].startswith('#'):
+            lines = content.split("\n")
+            if lines and lines[0].startswith("#"):
                 lines = lines[1:]
             # 移除章节分隔线
-            content = '\n'.join(lines)
+            content = "\n".join(lines)
             return content.strip()
 
     def get_context_chapters(self, chapter_num: int, before: int = 3, after: int = 3) -> Dict[int, str]:
@@ -122,15 +118,9 @@ class ComprehensiveQualityChecker:
             if len(content) > 8000:
                 content = content[:8000]
 
-            full_prompt = prompt.format(
-                chapter_num=chapter_num,
-                content=content
-            )
+            full_prompt = prompt.format(chapter_num=chapter_num, content=content)
 
-            response = await asyncio.to_thread(
-                self.provider.generate,
-                full_prompt
-            )
+            response = await asyncio.to_thread(self.provider.generate, full_prompt)
 
             # 解析响应
             results = self._parse_check_response(chapter_num, check_type, response)
@@ -144,33 +134,37 @@ class ComprehensiveQualityChecker:
         """解析LLM响应"""
         results = []
         try:
-            json_match = re.search(r'\[.*\]', response, re.DOTALL)
+            json_match = re.search(r"\[.*\]", response, re.DOTALL)
             if json_match:
                 data = json.loads(json_match.group())
                 for item in data:
-                    results.append(CheckResult(
-                        chapter=chapter_num,
-                        dimension=check_type,
-                        severity=item.get('severity', 'P2'),
-                        issue_type=item.get('issue_type', ''),
-                        description=item.get('description', ''),
-                        evidence=item.get('evidence', ''),
-                        suggestion=item.get('suggestion', '')
-                    ))
+                    results.append(
+                        CheckResult(
+                            chapter=chapter_num,
+                            dimension=check_type,
+                            severity=item.get("severity", "P2"),
+                            issue_type=item.get("issue_type", ""),
+                            description=item.get("description", ""),
+                            evidence=item.get("evidence", ""),
+                            suggestion=item.get("suggestion", ""),
+                        )
+                    )
         except json.JSONDecodeError:
             # 尝试解析为单对象
             try:
                 data = json.loads(response)
                 if isinstance(data, dict):
-                    results.append(CheckResult(
-                        chapter=chapter_num,
-                        dimension=check_type,
-                        severity=data.get('severity', 'P2'),
-                        issue_type=data.get('issue_type', ''),
-                        description=data.get('description', ''),
-                        evidence=data.get('evidence', ''),
-                        suggestion=data.get('suggestion', '')
-                    ))
+                    results.append(
+                        CheckResult(
+                            chapter=chapter_num,
+                            dimension=check_type,
+                            severity=data.get("severity", "P2"),
+                            issue_type=data.get("issue_type", ""),
+                            description=data.get("description", ""),
+                            evidence=data.get("evidence", ""),
+                            suggestion=data.get("suggestion", ""),
+                        )
+                    )
             except json.JSONDecodeError:
                 logger.debug(f"JSON解析失败 (chapter {chapter_num})")
         return results
@@ -294,9 +288,9 @@ class ComprehensiveQualityChecker:
         - 情感节奏：360章
         - 章节钩子：180章
         """
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("第一阶段：快速扫描")
-        print("="*60)
+        print("=" * 60)
 
         chapters = [f[0] for f in self.get_chapter_files()]
         calls_used = 0
@@ -313,12 +307,12 @@ class ComprehensiveQualityChecker:
         # 分批执行，每批50章
         batch_size = 50
         for i in range(0, len(tasks), batch_size):
-            batch = tasks[i:i+batch_size]
+            batch = tasks[i : i + batch_size]
             results = await asyncio.gather(*batch)
             for r in results:
                 self.results.extend(r)
             calls_used += len(batch)
-            print(f"  进度: {min(i+batch_size, len(tasks))}/{len(tasks)} 章, 已用API: {calls_used}")
+            print(f"  进度: {min(i + batch_size, len(tasks))}/{len(tasks)} 章, 已用API: {calls_used}")
             await asyncio.sleep(0.5)  # 避免过快
 
         print(f"  逻辑一致性检查完成，已调用API: {calls_used}")
@@ -333,12 +327,12 @@ class ComprehensiveQualityChecker:
             tasks.append(task)
 
         for i in range(0, len(tasks), batch_size):
-            batch = tasks[i:i+batch_size]
+            batch = tasks[i : i + batch_size]
             results = await asyncio.gather(*batch)
             for r in results:
                 self.results.extend(r)
             calls_used += len(batch)
-            print(f"  进度: {min(i+batch_size, len(tasks))}/{len(tasks)} 章, 已用API: {calls_used}")
+            print(f"  进度: {min(i + batch_size, len(tasks))}/{len(tasks)} 章, 已用API: {calls_used}")
             await asyncio.sleep(0.5)
 
         print(f"  情感节奏检查完成，已调用API: {calls_used}")
@@ -352,12 +346,12 @@ class ComprehensiveQualityChecker:
             tasks.append(task)
 
         for i in range(0, len(tasks), batch_size):
-            batch = tasks[i:i+batch_size]
+            batch = tasks[i : i + batch_size]
             results = await asyncio.gather(*batch)
             for r in results:
                 self.results.extend(r)
             calls_used += len(batch)
-            print(f"  进度: {min(i+batch_size, len(tasks))}/{len(tasks)} 章, 已用API: {calls_used}")
+            print(f"  进度: {min(i + batch_size, len(tasks))}/{len(tasks)} 章, 已用API: {calls_used}")
             await asyncio.sleep(0.5)
 
         print(f"  章节钩子检查完成，已调用API: {calls_used}")
@@ -371,9 +365,9 @@ class ComprehensiveQualityChecker:
         - 伏笔回收验证：180章
         - 关键章节复查：660章（约220章重点章节×3次）
         """
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("第二阶段：深度分析")
-        print("="*60)
+        print("=" * 60)
 
         chapters = [f[0] for f in self.get_chapter_files()]
         calls_used = 0
@@ -384,16 +378,18 @@ class ComprehensiveQualityChecker:
         tasks = []
 
         for chapter_num in chapters:
-            task = self.check_chapter_llm(chapter_num, "character_consistency", self.CHARACTER_CONSISTENCY_PROMPT)
+            task = self.check_chapter_llm(
+                chapter_num, "character_consistency", self.CHARACTER_CONSISTENCY_PROMPT
+            )
             tasks.append(task)
 
         for i in range(0, len(tasks), batch_size):
-            batch = tasks[i:i+batch_size]
+            batch = tasks[i : i + batch_size]
             results = await asyncio.gather(*batch)
             for r in results:
                 self.results.extend(r)
             calls_used += len(batch)
-            print(f"  进度: {min(i+batch_size, len(tasks))}/{len(tasks)} 章, 已用API: {calls_used}")
+            print(f"  进度: {min(i + batch_size, len(tasks))}/{len(tasks)} 章, 已用API: {calls_used}")
             await asyncio.sleep(0.5)
 
         print(f"  角色一致性检查完成，已调用API: {calls_used}")
@@ -407,12 +403,12 @@ class ComprehensiveQualityChecker:
             tasks.append(task)
 
         for i in range(0, len(tasks), batch_size):
-            batch = tasks[i:i+batch_size]
+            batch = tasks[i : i + batch_size]
             results = await asyncio.gather(*batch)
             for r in results:
                 self.results.extend(r)
             calls_used += len(batch)
-            print(f"  进度: {min(i+batch_size, len(tasks))}/{len(tasks)} 章, 已用API: {calls_used}")
+            print(f"  进度: {min(i + batch_size, len(tasks))}/{len(tasks)} 章, 已用API: {calls_used}")
             await asyncio.sleep(0.5)
 
         print(f"  伏笔回收验证完成，已调用API: {calls_used}")
@@ -434,12 +430,14 @@ class ComprehensiveQualityChecker:
 
         # 分批执行
         for i in range(0, len(review_tasks), batch_size):
-            batch = review_tasks[i:i+batch_size]
+            batch = review_tasks[i : i + batch_size]
             results = await asyncio.gather(*batch)
             for r in results:
                 self.results.extend(r)
             calls_used += len(batch)
-            print(f"  复查进度: {min(i+batch_size, len(review_tasks))}/{len(review_tasks)}, 已用API: {calls_used}")
+            print(
+                f"  复查进度: {min(i + batch_size, len(review_tasks))}/{len(review_tasks)}, 已用API: {calls_used}"
+            )
             await asyncio.sleep(0.5)
 
         print(f"  关键章节复查完成，已调用API: {calls_used}")
@@ -454,14 +452,14 @@ class ComprehensiveQualityChecker:
         - 交叉验证：100章×3次
         - 机动储备：剩余额度
         """
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("第三阶段：精准验证")
-        print("="*60)
+        print("=" * 60)
 
         # 找出有问题的章节
         problem_chapters = set()
         for r in self.results:
-            if r.severity in ['P0', 'P1']:
+            if r.severity in ["P0", "P1"]:
                 problem_chapters.add(r.chapter)
 
         calls_used = 0
@@ -470,7 +468,7 @@ class ComprehensiveQualityChecker:
         # P0问题章节复查（每章6次）
         if problem_chapters:
             p0_chapters = list(problem_chapters)[:15]  # 最多15章
-            print(f"\n[Phase 3.1] P0问题章节复查 - {len(p0_chapters)}章 × 6次 = {len(p0_chapters)*6}次")
+            print(f"\n[Phase 3.1] P0问题章节复查 - {len(p0_chapters)}章 × 6次 = {len(p0_chapters) * 6}次")
 
             review_tasks = []
             for _ in range(6):
@@ -479,18 +477,20 @@ class ComprehensiveQualityChecker:
                     review_tasks.append(task)
 
             for i in range(0, len(review_tasks), batch_size):
-                batch = review_tasks[i:i+batch_size]
+                batch = review_tasks[i : i + batch_size]
                 results = await asyncio.gather(*batch)
                 for r in results:
                     self.results.extend(r)
                 calls_used += len(batch)
-                print(f"  P0复查: {min(i+batch_size, len(review_tasks))}/{len(review_tasks)}, 已用API: {calls_used}")
+                print(
+                    f"  P0复查: {min(i + batch_size, len(review_tasks))}/{len(review_tasks)}, 已用API: {calls_used}"
+                )
                 await asyncio.sleep(0.5)
 
         # P1问题章节复查（每章4次）
         if len(problem_chapters) > 15:
             p1_chapters = list(problem_chapters)[15:40]  # 15-40章
-            print(f"\n[Phase 3.2] P1问题章节复查 - {len(p1_chapters)}章 × 4次 = {len(p1_chapters)*4}次")
+            print(f"\n[Phase 3.2] P1问题章节复查 - {len(p1_chapters)}章 × 4次 = {len(p1_chapters) * 4}次")
 
             review_tasks = []
             for _ in range(4):
@@ -499,12 +499,14 @@ class ComprehensiveQualityChecker:
                     review_tasks.append(task)
 
             for i in range(0, len(review_tasks), batch_size):
-                batch = review_tasks[i:i+batch_size]
+                batch = review_tasks[i : i + batch_size]
                 results = await asyncio.gather(*batch)
                 for r in results:
                     self.results.extend(r)
                 calls_used += len(batch)
-                print(f"  P1复查: {min(i+batch_size, len(review_tasks))}/{len(review_tasks)}, 已用API: {calls_used}")
+                print(
+                    f"  P1复查: {min(i + batch_size, len(review_tasks))}/{len(review_tasks)}, 已用API: {calls_used}"
+                )
                 await asyncio.sleep(0.5)
 
         # 交叉验证：100章×3次
@@ -519,23 +521,25 @@ class ComprehensiveQualityChecker:
                 cross_tasks.append(task)
 
         for i in range(0, len(cross_tasks), batch_size):
-            batch = cross_tasks[i:i+batch_size]
+            batch = cross_tasks[i : i + batch_size]
             results = await asyncio.gather(*batch)
             for r in results:
                 self.results.extend(r)
             calls_used += len(batch)
-            print(f"  交叉验证: {min(i+batch_size, len(cross_tasks))}/{len(cross_tasks)}, 已用API: {calls_used}")
+            print(
+                f"  交叉验证: {min(i + batch_size, len(cross_tasks))}/{len(cross_tasks)}, 已用API: {calls_used}"
+            )
             await asyncio.sleep(0.5)
 
         return calls_used - start_calls
 
     async def run_full_check(self):
         """运行完整的三阶段检查"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("《星陨纪元》360章全方位质量检查")
         print(f"总API额度: {self.budget}次")
         print("MiniMax模型: MiniMax-M2.7")
-        print("="*60)
+        print("=" * 60)
 
         total_calls = 0
 
@@ -584,54 +588,54 @@ class ComprehensiveQualityChecker:
                 by_chapter[r.chapter] = []
             by_chapter[r.chapter].append(r)
 
-        by_severity = {'P0': [], 'P1': [], 'P2': [], 'P3': [], 'PASS': []}
+        by_severity = {"P0": [], "P1": [], "P2": [], "P3": [], "PASS": []}
         for r in self.results:
             if r.severity in by_severity:
                 by_severity[r.severity].append(r)
 
         # 生成报告
         report = {
-            'audit_date': datetime.now().isoformat(),
-            'total_chapters': 360,
-            'api_calls_made': total_calls,
-            'budget_used': f"{total_calls}/{self.budget}",
-            'total_issues': len(self.results),
-            'by_severity': {
-                'P0': len(by_severity['P0']),
-                'P1': len(by_severity['P1']),
-                'P2': len(by_severity['P2']),
-                'P3': len(by_severity['P3']),
-                'PASS': len(by_severity['PASS'])
+            "audit_date": datetime.now().isoformat(),
+            "total_chapters": 360,
+            "api_calls_made": total_calls,
+            "budget_used": f"{total_calls}/{self.budget}",
+            "total_issues": len(self.results),
+            "by_severity": {
+                "P0": len(by_severity["P0"]),
+                "P1": len(by_severity["P1"]),
+                "P2": len(by_severity["P2"]),
+                "P3": len(by_severity["P3"]),
+                "PASS": len(by_severity["PASS"]),
             },
-            'chapters_with_issues': len(by_chapter),
-            'issues': [
+            "chapters_with_issues": len(by_chapter),
+            "issues": [
                 {
-                    'chapter': r.chapter,
-                    'dimension': r.dimension,
-                    'issue_type': r.issue_type,
-                    'severity': r.severity,
-                    'description': r.description,
-                    'evidence': r.evidence,
-                    'suggestion': r.suggestion
+                    "chapter": r.chapter,
+                    "dimension": r.dimension,
+                    "issue_type": r.issue_type,
+                    "severity": r.severity,
+                    "description": r.description,
+                    "evidence": r.evidence,
+                    "suggestion": r.suggestion,
                 }
                 for r in sorted(self.results, key=lambda x: (x.chapter, x.severity))
-            ]
+            ],
         }
 
         # 保存
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         report_file = self.output_dir / f"comprehensive_quality_report_{timestamp}.json"
-        with open(report_file, 'w', encoding='utf-8') as f:
+        with open(report_file, "w", encoding="utf-8") as f:
             json.dump(report, f, ensure_ascii=False, indent=2)
 
         latest_file = self.output_dir / "comprehensive_quality_report_latest.json"
-        with open(latest_file, 'w', encoding='utf-8') as f:
+        with open(latest_file, "w", encoding="utf-8") as f:
             json.dump(report, f, ensure_ascii=False, indent=2)
 
         # 打印摘要
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("检查完成摘要")
-        print("="*60)
+        print("=" * 60)
         print(f"API调用: {total_calls}/{self.budget}")
         print(f"发现问题: {len(self.results)}")
         print(f"有问题的章节: {len(by_chapter)}")
@@ -654,9 +658,9 @@ class ComprehensiveQualityChecker:
         print("\n问题章节摘要：")
         for chapter in sorted(by_chapter.keys())[:20]:
             issues = by_chapter[chapter]
-            p0 = sum(1 for i in issues if i.severity == 'P0')
-            p1 = sum(1 for i in issues if i.severity == 'P1')
-            p2 = sum(1 for i in issues if i.severity == 'P2')
+            p0 = sum(1 for i in issues if i.severity == "P0")
+            p1 = sum(1 for i in issues if i.severity == "P1")
+            p2 = sum(1 for i in issues if i.severity == "P2")
             print(f"  ch{chapter:03d}: P0={p0}, P1={p1}, P2={p2}")
 
 

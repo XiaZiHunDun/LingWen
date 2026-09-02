@@ -2,6 +2,7 @@
 """
 状态变更日志动作 - 将状态变更记录到日志文件
 """
+
 from __future__ import annotations
 
 import json
@@ -26,11 +27,7 @@ class LogStateChangeAction(BaseAction):
     def action_type(self) -> str:
         return "log_state_change"
 
-    def execute(
-        self,
-        params: Dict[str, Any],
-        context: Dict[str, Any]
-    ) -> ActionResult:
+    def execute(self, params: Dict[str, Any], context: Dict[str, Any]) -> ActionResult:
         """
         记录状态变更到日志
 
@@ -56,19 +53,13 @@ class LogStateChangeAction(BaseAction):
             "timestamp": datetime.now().isoformat(),
             "event": context.get("event_name", "UNKNOWN"),
             "data": context.get("data", {}),
-            "source": context.get("source", "lib.py")
+            "source": context.get("source", "lib.py"),
         }
 
         # 追加到日志文件
         try:
             with open(log_path, "a", encoding="utf-8") as f:
                 f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
-            return ActionResult(
-                success=True,
-                output={"logged": True, "path": str(log_path)}
-            )
+            return ActionResult(success=True, output={"logged": True, "path": str(log_path)})
         except Exception as e:
-            return ActionResult(
-                success=False,
-                error=f"Failed to write log: {e}"
-            )
+            return ActionResult(success=False, error=f"Failed to write log: {e}")

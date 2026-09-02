@@ -1,4 +1,5 @@
 """Tests for scheduled onboarding notification digest dispatch."""
+
 from __future__ import annotations
 
 from unittest.mock import patch

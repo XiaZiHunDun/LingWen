@@ -2,6 +2,7 @@
 
 Models unchanged — only relocated for code organization.
 """
+
 from __future__ import annotations
 
 from typing import Optional
@@ -16,6 +17,7 @@ class CreatorChapterRow(BaseModel):
     word_count: int
     excerpt: Optional[str] = None
 
+
 class CreatorVolumeSummary(BaseModel):
     path: str
     name: str
@@ -25,6 +27,7 @@ class CreatorVolumeSummary(BaseModel):
     pulse_status: Optional[str] = None
     volume_label: Optional[str] = None
 
+
 class CreatorVolumePlanEntry(BaseModel):
     label: str
     start_chapter: int
@@ -33,12 +36,14 @@ class CreatorVolumePlanEntry(BaseModel):
     locked: bool = False
     locked_at: Optional[str] = None
 
+
 class CreatorVolumeDeviation(BaseModel):
     type: str
     severity: str
     chapter: int
     volume_label: Optional[str] = None
     message: str
+
 
 class CreatorUiProfile(BaseModel):
     creation_mode: str

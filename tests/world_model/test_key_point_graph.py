@@ -10,6 +10,7 @@ should finish in <10ms. The first phase detector should catch at least:
 3. destroyed artifact owned by active character (only if weight > 0)
 4. no false positives on legitimate states
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -153,9 +154,7 @@ class TestFromSnapshot:
                 NodeId(NodeType.CHARACTER, "林尘"): _kp(NodeType.CHARACTER, "林尘"),
                 NodeId(NodeType.LOCATION, "玄域"): _kp(NodeType.LOCATION, "玄域", status="destroyed"),
             },
-            relations=(
-                _rel(NodeType.CHARACTER, "林尘", NodeType.LOCATION, "玄域", "located_in"),
-            ),
+            relations=(_rel(NodeType.CHARACTER, "林尘", NodeType.LOCATION, "玄域", "located_in"),),
         )
         g = KeyPointGraph.from_snapshot(snap)
         assert g.node_count() == 2

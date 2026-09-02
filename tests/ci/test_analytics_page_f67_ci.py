@@ -1,4 +1,5 @@
 """Phase 9.77 F67: CI contract — AnalyticsPage MVP."""
+
 from __future__ import annotations
 
 from pathlib import Path

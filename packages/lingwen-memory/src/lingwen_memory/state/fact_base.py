@@ -3,6 +3,7 @@
 管理已确认的事实，如"林夜是铁蛋的弟弟"。
 事实库存储经过验证的信息，支持按类别、章节查询和事实验证。
 """
+
 from typing import Any, Dict, List, Optional
 
 from lingwen_memory.state.state_manager import MemoryStateManager
@@ -89,9 +90,7 @@ class FactBase:
         all_data = self.state_manager.load("state_file")
         facts = all_data.get("facts", {})
 
-        return [
-            fact for fact in facts.values() if fact.get("category") == category
-        ]
+        return [fact for fact in facts.values() if fact.get("category") == category]
 
     def get_facts_by_chapter(self, chapter: int) -> List[Dict[str, Any]]:
         """按章节获取事实
@@ -105,9 +104,7 @@ class FactBase:
         all_data = self.state_manager.load("state_file")
         facts = all_data.get("facts", {})
 
-        return [
-            fact for fact in facts.values() if fact.get("source_chapter") == chapter
-        ]
+        return [fact for fact in facts.values() if fact.get("source_chapter") == chapter]
 
     def verify_fact(self, fact_id: str) -> bool:
         """验证事实

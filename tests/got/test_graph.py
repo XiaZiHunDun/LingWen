@@ -12,6 +12,7 @@ Phase 1.4.c — RED tests for ThoughtGraph.
 - create_branch(fork_node, branches): 分叉
 - record_execution(node_id, result): 记录执行结果
 """
+
 from __future__ import annotations
 
 import pytest
@@ -113,10 +114,15 @@ class TestReadyNodes:
         g.add_node(_node("b", depends_on=("a",)))
         # 标记 a 为 COMPLETED
         from datetime import datetime
-        g.record_execution("a", NodeExecution(
-            node_id="a", status=NodeStatus.COMPLETED,
-            started_at=datetime.now(),
-        ))
+
+        g.record_execution(
+            "a",
+            NodeExecution(
+                node_id="a",
+                status=NodeStatus.COMPLETED,
+                started_at=datetime.now(),
+            ),
+        )
         assert "b" in g.ready_nodes()
 
     def test_already_running_not_ready(self):
@@ -126,10 +132,15 @@ class TestReadyNodes:
         g = ThoughtGraph()
         g.add_node(_node("a"))
         from datetime import datetime
-        g.record_execution("a", NodeExecution(
-            node_id="a", status=NodeStatus.RUNNING,
-            started_at=datetime.now(),
-        ))
+
+        g.record_execution(
+            "a",
+            NodeExecution(
+                node_id="a",
+                status=NodeStatus.RUNNING,
+                started_at=datetime.now(),
+            ),
+        )
         assert "a" not in g.ready_nodes()
 
     def test_terminal_not_ready(self):
@@ -139,11 +150,16 @@ class TestReadyNodes:
         g = ThoughtGraph()
         g.add_node(_node("a"))
         from datetime import datetime
+
         for status in (NodeStatus.COMPLETED, NodeStatus.FAILED, NodeStatus.SKIPPED):
-            g.record_execution("a", NodeExecution(
-                node_id="a", status=status,
-                started_at=datetime.now(),
-            ))
+            g.record_execution(
+                "a",
+                NodeExecution(
+                    node_id="a",
+                    status=status,
+                    started_at=datetime.now(),
+                ),
+            )
             assert "a" not in g.ready_nodes()
             # 重置(实际可以清空,但简化测试)
             g._executions.pop("a")
@@ -256,8 +272,7 @@ class TestCreateBranch:
         g.add_node(_node("c", depends_on=("a",)))
 
         # 在 a 后分叉
-        branch_id = g.create_branch("a", [_node("alt1", depends_on=("a",)),
-                                           _node("alt2", depends_on=("a",))])
+        branch_id = g.create_branch("a", [_node("alt1", depends_on=("a",)), _node("alt2", depends_on=("a",))])
         assert branch_id  # 返回非空
 
         # 验证 alt1/alt2 是 READY (依赖 a 已存在)
@@ -272,10 +287,15 @@ class TestRecordExecution:
         g = ThoughtGraph()
         g.add_node(_node("a"))
         from datetime import datetime
-        g.record_execution("a", NodeExecution(
-            node_id="a", status=NodeStatus.COMPLETED,
-            started_at=datetime.now(),
-        ))
+
+        g.record_execution(
+            "a",
+            NodeExecution(
+                node_id="a",
+                status=NodeStatus.COMPLETED,
+                started_at=datetime.now(),
+            ),
+        )
         assert g.get_execution("a").status == NodeStatus.COMPLETED
 
     def test_get_nonexistent_execution_raises(self):

@@ -8,6 +8,7 @@ max_depth, status="completed"), 走 CascadedRipple.bfs_algorithm_version
 控制写入的 algorithm column. fixture 用 CascadedRipple(algorithm_version=...)
 构造, 跟既 record_cascade_run 1:1 pattern.
 """
+
 import pytest
 
 from infra.cross_volume.reference_graph import (
@@ -23,6 +24,7 @@ from infra.cross_volume.storage import RippleStorage
 def _make_cascaded(ripple_id: str, depth: int, algorithm_version: str) -> CascadedRipple:
     """Build a CascadedRipple with given depth/algorithm (empty nodes/edges/actions)."""
     from datetime import datetime, timezone
+
     return CascadedRipple(
         trigger_ripple_id=ripple_id,
         cascade_nodes=(),
@@ -49,8 +51,13 @@ def storage_with_runs(tmp_path):
     g.add_edge(ReferenceEdge(id="e12", from_node_id="n1", to_node_id="n2"))
     storage._graph = g
     ripple = CrossVolumeRipple(
-        id="rip-1", trigger_volume=1, trigger_chapter=1,
-        affected_nodes=("n1",), affected_edges=(), proposed_actions=(), status="pending",
+        id="rip-1",
+        trigger_volume=1,
+        trigger_chapter=1,
+        affected_nodes=("n1",),
+        affected_edges=(),
+        proposed_actions=(),
+        status="pending",
     )
     storage.append_ripple(ripple)
 
@@ -68,9 +75,7 @@ def storage_with_runs(tmp_path):
     )
     with storage._connect() as conn:
         # running status: completed_at placeholder (datetime.fromisoformat 需 valid ISO)
-        conn.execute(
-            "UPDATE cascade_runs SET status='running' WHERE max_depth=5"
-        )
+        conn.execute("UPDATE cascade_runs SET status='running' WHERE max_depth=5")
         conn.commit()
     # run #3: v2_weighted @ depth 8
     storage.record_cascade_run(

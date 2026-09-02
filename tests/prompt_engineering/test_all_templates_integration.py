@@ -16,6 +16,7 @@ Doc 2 v1.0 §5: 12 SCENARIOS × YAML 模板 × 22 STEP_CONTRACTS 必须协同。
 - 22 STEP_CONTRACTS 涉及的 SCENARIO 都对应到模板
 - 模板结构 (constraints_block / requirements_block / output_schema) 风格统一
 """
+
 from __future__ import annotations
 
 import re
@@ -36,6 +37,7 @@ from lingwen_prompt.templates import (
 )
 
 # === 完整 context 工厂 (per-scenario) ===
+
 
 def _ctx_chapter_writing() -> dict[str, Any]:
     return {
@@ -167,6 +169,7 @@ def _placeholder_keys(text: str) -> set[str]:
 
 # === TestAllScenariosHaveTemplates ===
 
+
 class TestAllScenariosHaveTemplates:
     """12 SCENARIOS × 模板文件 一一对应"""
 
@@ -182,9 +185,7 @@ class TestAllScenariosHaveTemplates:
     def test_scenario_field_matches_filename(self):
         for s in SCENARIOS:
             t = load_template(s, version=1)
-            assert t.scenario == s, (
-                f"scenario field {t.scenario!r} != file name {s!r}"
-            )
+            assert t.scenario == s, f"scenario field {t.scenario!r} != file name {s!r}"
 
     def test_no_orphan_template_files(self, tmp_path):
         """examples/ 目录不应有不在 12 SCENARIOS 列表中的模板 (除已记录的内部子模板)"""
@@ -207,6 +208,7 @@ class TestAllScenariosHaveTemplates:
 
 # === TestTemplateMetadataConsistency ===
 
+
 class TestTemplateMetadataConsistency:
     """模板的 agent_role / ModelTier 与 SCENARIOS 元数据一致"""
 
@@ -214,9 +216,7 @@ class TestTemplateMetadataConsistency:
         for s in SCENARIOS:
             t = load_template(s, version=1)
             expected = _SCENARIO_METADATA[s]["agent_role"]
-            assert t.agent_role == expected, (
-                f"{s}: agent_role={t.agent_role!r}, expected={expected!r}"
-            )
+            assert t.agent_role == expected, f"{s}: agent_role={t.agent_role!r}, expected={expected!r}"
 
     def test_model_tier_map_covers_all_scenarios(self):
         """SCENARIO_TIER_MAP 覆盖 12 SCENARIOS (Phase 9.12 允许额外 CVG entries)"""
@@ -241,6 +241,7 @@ class TestTemplateMetadataConsistency:
 
 
 # === TestTemplateStructureConsistency ===
+
 
 class TestTemplateStructureConsistency:
     """模板结构 (字段 + block) 风格统一"""
@@ -284,6 +285,7 @@ class TestTemplateStructureConsistency:
 
 # === TestTemplateRenderingWithFullContext ===
 
+
 class TestTemplateRenderingWithFullContext:
     """12 模板用完整 context 渲染 → 无残留 placeholder"""
 
@@ -296,9 +298,7 @@ class TestTemplateRenderingWithFullContext:
 
         # user_prompt 不应有残留 placeholder
         residual = _placeholder_keys(rendered.user_prompt)
-        assert not residual, (
-            f"{scenario}: user_prompt has residual placeholders: {residual}"
-        )
+        assert not residual, f"{scenario}: user_prompt has residual placeholders: {residual}"
 
     @pytest.mark.parametrize("scenario", list(SCENARIOS))
     def test_rendered_user_prompt_nonempty(self, scenario):
@@ -332,6 +332,7 @@ class TestTemplateRenderingWithFullContext:
 
 # === TestStepContractToTemplateMapping ===
 
+
 class TestStepContractToTemplateMapping:
     """22 STEP_CONTRACTS 涉及的 SCENARIO 都必须能找到模板"""
 
@@ -353,6 +354,7 @@ class TestStepContractToTemplateMapping:
 
 # === TestTierComplexityConsistency ===
 
+
 class TestTierComplexityConsistency:
     """ModelTier 与模板复杂度 (system_prompt 长度) 大致一致"""
 
@@ -363,19 +365,18 @@ class TestTierComplexityConsistency:
         assert opus_scenarios, "no OPUS scenarios"
         assert haiku_scenarios, "no HAIKU scenarios"
 
-        opus_avg = sum(
-            len(load_template(s, version=1).system_prompt) for s in opus_scenarios
-        ) / len(opus_scenarios)
-        haiku_avg = sum(
-            len(load_template(s, version=1).system_prompt) for s in haiku_scenarios
-        ) / len(haiku_scenarios)
-        # OPUS 模板应比 HAIKU 更详尽 (允许相等,但鼓励更长)
-        assert opus_avg >= haiku_avg * 0.8, (
-            f"OPUS avg prompt {opus_avg} chars < HAIKU avg {haiku_avg} chars"
+        opus_avg = sum(len(load_template(s, version=1).system_prompt) for s in opus_scenarios) / len(
+            opus_scenarios
         )
+        haiku_avg = sum(len(load_template(s, version=1).system_prompt) for s in haiku_scenarios) / len(
+            haiku_scenarios
+        )
+        # OPUS 模板应比 HAIKU 更详尽 (允许相等,但鼓励更长)
+        assert opus_avg >= haiku_avg * 0.8, f"OPUS avg prompt {opus_avg} chars < HAIKU avg {haiku_avg} chars"
 
 
 # === TestSpecificScenarioRenderings ===
+
 
 class TestSpecificScenarioRenderings:
     """针对每个 SCENARIO 的具体渲染内容校验 (per Doc 2 设计)"""

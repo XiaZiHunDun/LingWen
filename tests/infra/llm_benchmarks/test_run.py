@@ -1,4 +1,5 @@
 """End-to-end tests for infra.llm_benchmarks.run (all-mock)."""
+
 from __future__ import annotations
 
 import os

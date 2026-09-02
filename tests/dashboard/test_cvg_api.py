@@ -3,6 +3,7 @@
 Test the FastAPI layer for cross-volume ripple (CVG) review UI.
 End-to-end test via TestClient + tmp_path RippleStorage.
 """
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -26,6 +27,7 @@ def storage(tmp_path):
 def client(storage, monkeypatch):
     """Create FastAPI TestClient with cvg_storage dependency overridden."""
     from apps.studio_api import app as app_module
+
     monkeypatch.setattr(app_module, "_default_storage", lambda: storage)
     app = create_app()
     return TestClient(app)

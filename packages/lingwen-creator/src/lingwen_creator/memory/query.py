@@ -1,4 +1,5 @@
 """Creator memory semantic query with vector + local fallback."""
+
 from __future__ import annotations
 
 import re
@@ -27,12 +28,7 @@ def _extract_matched_terms(query: str, text: str, *, max_terms: int = 6) -> list
 
 def _normalize_vector_hit(hit: dict[str, Any], query: str) -> dict[str, Any]:
     payload = hit.get("payload") if isinstance(hit.get("payload"), dict) else {}
-    text = (
-        payload.get("text")
-        or payload.get("content")
-        or payload.get("excerpt")
-        or str(hit.get("id", ""))
-    )
+    text = payload.get("text") or payload.get("content") or payload.get("excerpt") or str(hit.get("id", ""))
     chapter = payload.get("chapter") or payload.get("chapter_num")
     asset_name = str(payload.get("title") or payload.get("name") or "")
     snippet = str(text)[:400]

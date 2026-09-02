@@ -97,7 +97,9 @@ class RuleBasedAdapter:
         )
 
         # Determine dimension from checker type
-        checker_value = issue.checker_type.value if hasattr(issue.checker_type, 'value') else str(issue.checker_type)
+        checker_value = (
+            issue.checker_type.value if hasattr(issue.checker_type, "value") else str(issue.checker_type)
+        )
         dimension = cls.CHECKER_TO_DIMENSION.get(checker_value)
 
         return UnifiedIssue(
@@ -115,19 +117,18 @@ class RuleBasedAdapter:
             confidence=issue.confidence_score,
             metadata={
                 "character": issue.character,
-                "confidence_level": issue.confidence.value if hasattr(issue.confidence, 'value') else str(issue.confidence),
+                "confidence_level": issue.confidence.value
+                if hasattr(issue.confidence, "value")
+                else str(issue.confidence),
                 "context_used": issue.context_used,
                 "needs_llm_review": issue.needs_llm_review,
-            }
+            },
         )
 
     @classmethod
     def to_unified_report(cls, report: "ConsistencyReport") -> UnifiedQualityReport:
         """Convert a ConsistencyReport to UnifiedQualityReport"""
-        unified_issues = [
-            cls.to_unified_issue(issue)
-            for issue in report.issues
-        ]
+        unified_issues = [cls.to_unified_issue(issue) for issue in report.issues]
 
         # Convert quality dimension scores
         dim_scores = {
@@ -143,7 +144,7 @@ class RuleBasedAdapter:
 
         checker_names = []
         for cr in report.checker_results:
-            val = cr.checker_type.value if hasattr(cr.checker_type, 'value') else str(cr.checker_type)
+            val = cr.checker_type.value if hasattr(cr.checker_type, "value") else str(cr.checker_type)
             checker_names.append(val)
 
         return UnifiedQualityReport(
@@ -161,10 +162,7 @@ class LLMForeshadowAdapter:
     """Adapter for ForeshadowAnalysisReport"""
 
     @classmethod
-    def to_unified_issues(
-        cls,
-        report: "ForeshadowAnalysisReport"
-    ) -> List[UnifiedIssue]:
+    def to_unified_issues(cls, report: "ForeshadowAnalysisReport") -> List[UnifiedIssue]:
         """Convert foreshadow records to unified issues"""
         issues = []
         for record in report.records:
@@ -189,16 +187,13 @@ class LLMForeshadowAdapter:
                         "release_chapter": record.release_chapter,
                         "release_quality": record.release_quality,
                         "connection_to_main": record.connection_to_main,
-                    }
+                    },
                 )
                 issues.append(issue)
         return issues
 
     @classmethod
-    def to_domain_report(
-        cls,
-        report: "ForeshadowAnalysisReport"
-    ) -> DomainSpecificReport:
+    def to_domain_report(cls, report: "ForeshadowAnalysisReport") -> DomainSpecificReport:
         """Convert to domain-specific report"""
         return DomainSpecificReport(
             report_type="foreshadow",
@@ -212,10 +207,7 @@ class LLMEmotionalAdapter:
     """Adapter for EmotionalResonanceReport"""
 
     @classmethod
-    def to_unified_issues(
-        cls,
-        report: "EmotionalResonanceReport"
-    ) -> List[UnifiedIssue]:
+    def to_unified_issues(cls, report: "EmotionalResonanceReport") -> List[UnifiedIssue]:
         """Convert emotional points to unified issues"""
         issues = []
         for point in report.emotional_points:
@@ -239,16 +231,13 @@ class LLMEmotionalAdapter:
                         "emotion_type": point.type,
                         "trigger_type": point.trigger_type,
                         "quality": point.quality,
-                    }
+                    },
                 )
                 issues.append(issue)
         return issues
 
     @classmethod
-    def to_domain_report(
-        cls,
-        report: "EmotionalResonanceReport"
-    ) -> DomainSpecificReport:
+    def to_domain_report(cls, report: "EmotionalResonanceReport") -> DomainSpecificReport:
         """Convert to domain-specific report"""
         return DomainSpecificReport(
             report_type="emotional_resonance",
@@ -262,10 +251,7 @@ class LLMPacingAdapter:
     """Adapter for PacingReport"""
 
     @classmethod
-    def to_unified_issues(
-        cls,
-        report: "PacingReport"
-    ) -> List[UnifiedIssue]:
+    def to_unified_issues(cls, report: "PacingReport") -> List[UnifiedIssue]:
         """Convert tension points to unified issues"""
         issues = []
         for point in report.tension_points:
@@ -298,16 +284,13 @@ class LLMPacingAdapter:
                         "position": point.position,
                         "is_predictable": point.is_predictable,
                         "urgency_level": point.urgency_level,
-                    }
+                    },
                 )
                 issues.append(issue)
         return issues
 
     @classmethod
-    def to_domain_report(
-        cls,
-        report: "PacingReport"
-    ) -> DomainSpecificReport:
+    def to_domain_report(cls, report: "PacingReport") -> DomainSpecificReport:
         """Convert to domain-specific report"""
         return DomainSpecificReport(
             report_type="pacing",

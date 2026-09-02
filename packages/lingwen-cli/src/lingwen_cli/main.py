@@ -294,6 +294,7 @@ def main() -> int:
         print(f"[错误] 命令执行失败: {e}")
         if args.verbose if hasattr(args, "verbose") else False:
             import traceback
+
             traceback.print_exc()
         return 1
 

@@ -21,6 +21,7 @@ from lingwen_quality.consistency.checkers.attribute_comparer import Contradictio
 @dataclass
 class ContradictionReport:
     """矛盾报告"""
+
     chapter: int
     generated_at: datetime = field(default_factory=datetime.now)
     contradictions: List[Contradiction] = field(default_factory=list)
@@ -108,21 +109,25 @@ class ContradictionReport:
 
     def format_json(self) -> str:
         """格式化JSON报告"""
-        return json.dumps({
-            "chapter": self.chapter,
-            "generated_at": self.generated_at.isoformat(),
-            "summary": {
-                "total": self.total_count,
-                "p0": self.p0_count,
-                "p1": self.p1_count,
-                "p2": self.p2_count,
+        return json.dumps(
+            {
+                "chapter": self.chapter,
+                "generated_at": self.generated_at.isoformat(),
+                "summary": {
+                    "total": self.total_count,
+                    "p0": self.p0_count,
+                    "p1": self.p1_count,
+                    "p2": self.p2_count,
+                },
+                "by_type": self.by_type,
+                "by_entity": self.by_entity,
+                "detection_mode": self.detection_mode,
+                "detection_time_ms": self.detection_time_ms,
+                "contradictions": [c.to_dict() for c in self.contradictions],
             },
-            "by_type": self.by_type,
-            "by_entity": self.by_entity,
-            "detection_mode": self.detection_mode,
-            "detection_time_ms": self.detection_time_ms,
-            "contradictions": [c.to_dict() for c in self.contradictions],
-        }, ensure_ascii=False, indent=2)
+            ensure_ascii=False,
+            indent=2,
+        )
 
     def format_markdown(self) -> str:
         """格式化Markdown报告"""

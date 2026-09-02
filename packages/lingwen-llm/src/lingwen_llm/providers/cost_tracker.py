@@ -11,6 +11,7 @@ Phase 8.8 新增:
 - CostTracker: 内存累积器,按 scenario/tier 聚合
 - 与 TieredRouter 注入点配合 (record(scenario, tier, in, out) → CostRecord)
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -115,9 +116,7 @@ class CostTracker:
             ValueError: tokens 为负
         """
         if input_tokens < 0 or output_tokens < 0:
-            raise ValueError(
-                f"tokens must be non-negative: input={input_tokens}, output={output_tokens}"
-            )
+            raise ValueError(f"tokens must be non-negative: input={input_tokens}, output={output_tokens}")
         cost = compute_cost(input_tokens, output_tokens, tier)
         rec = CostRecord(
             scenario=scenario,
@@ -135,9 +134,7 @@ class CostTracker:
 
     def total_cost(self, since: Optional[datetime] = None) -> float:
         """总成本 (USD). Phase 8.16: since 透传 (additive, default None 走旧 path)."""
-        records = self._records if since is None else [
-            r for r in self._records if r.timestamp >= since
-        ]
+        records = self._records if since is None else [r for r in self._records if r.timestamp >= since]
         return sum(r.cost_usd for r in records)
 
     def total_tokens(self) -> tuple[int, int]:
@@ -148,9 +145,7 @@ class CostTracker:
 
     def cost_by_scenario(self, since: Optional[datetime] = None) -> dict[str, float]:
         """按 scenario 聚合成本. Phase 8.16: since 透传 (additive, default None 走旧 path)."""
-        records = self._records if since is None else [
-            r for r in self._records if r.timestamp >= since
-        ]
+        records = self._records if since is None else [r for r in self._records if r.timestamp >= since]
         result: dict[str, float] = {}
         for r in records:
             result[r.scenario] = result.get(r.scenario, 0.0) + r.cost_usd
@@ -158,9 +153,7 @@ class CostTracker:
 
     def cost_by_tier(self, since: Optional[datetime] = None) -> dict[ModelTier, float]:
         """按 tier 聚合成本. Phase 8.16: since 透传 (additive, default None 走旧 path)."""
-        records = self._records if since is None else [
-            r for r in self._records if r.timestamp >= since
-        ]
+        records = self._records if since is None else [r for r in self._records if r.timestamp >= since]
         result: dict[ModelTier, float] = {}
         for r in records:
             result[r.tier] = result.get(r.tier, 0.0) + r.cost_usd
@@ -175,22 +168,16 @@ class CostTracker:
             Python 3.7+ dict 保 insertion order, 记录按时间顺序插入 → 返回值按 date 升序
             (同一天多条 records 合并; 不同天按时间序).
         """
-        records = self._records if since is None else [
-            r for r in self._records if r.timestamp >= since
-        ]
+        records = self._records if since is None else [r for r in self._records if r.timestamp >= since]
         result: dict[str, float] = {}
         for r in records:
             day = r.timestamp.date().isoformat()  # UTC date 'YYYY-MM-DD'
             result[day] = result.get(day, 0.0) + r.cost_usd
         return result
 
-    def cost_by_day_per_tier(
-        self, since: Optional[datetime] = None
-    ) -> dict[str, dict[str, float]]:
+    def cost_by_day_per_tier(self, since: Optional[datetime] = None) -> dict[str, dict[str, float]]:
         """Phase 9.28 F12: cross-dim day × tier aggregation (YYYY-MM-DD → tier → USD)."""
-        records = self._records if since is None else [
-            r for r in self._records if r.timestamp >= since
-        ]
+        records = self._records if since is None else [r for r in self._records if r.timestamp >= since]
         result: dict[str, dict[str, float]] = {}
         for r in records:
             day = r.timestamp.date().isoformat()
@@ -228,6 +215,4 @@ class CostTracker:
         used = self.total_cost()
         if used > budget_usd:
             last_scenario = self._records[-1].scenario if self._records else None
-            raise CostBudgetExceeded(
-                used_usd=used, budget_usd=budget_usd, scenario=last_scenario
-            )
+            raise CostBudgetExceeded(used_usd=used, budget_usd=budget_usd, scenario=last_scenario)

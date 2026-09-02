@@ -18,6 +18,7 @@ from infra.paths import ProjectPaths
 # 允许与 consistency 子系统的 IssueSeverity 互操作
 try:
     from lingwen_quality.consistency.engine.data_structures import IssueSeverity
+
     _SeverityType = Union[str, IssueSeverity]
 except ImportError:
     _SeverityType = str  # type: ignore[misc]
@@ -30,14 +31,15 @@ class Issue:
     severity 接受 str（如 "P0"/"P1"/"P2"/"P3"）或 IssueSeverity 枚举值。
     实际存储和比较统一使用 str 值。
     """
+
     chapter: int
-    dimension: str          # 问题维度
-    issue_type: str         # 问题类型
+    dimension: str  # 问题维度
+    issue_type: str  # 问题类型
     severity: _SeverityType  # P0/P1/P2/P3 (str 或 IssueSeverity)
-    description: str        # 问题描述
-    location: str = ""      # 位置
-    evidence: str = ""       # 证据
-    suggestion: str = ""    # 建议修复方案
+    description: str  # 问题描述
+    location: str = ""  # 位置
+    evidence: str = ""  # 证据
+    suggestion: str = ""  # 建议修复方案
 
     def __post_init__(self):
         # 归一化：Enum 转 str，避免后续字符串比较失败
@@ -122,14 +124,16 @@ class RuleBasedInspector(Inspector):
         for rule in self.rules:
             if rule in content:
                 count = content.count(rule)
-                issues.append(Issue(
-                    chapter=chapter_num,
-                    dimension=self.dimension,
-                    issue_type=self.issue_type,
-                    severity="P2",
-                    description=f"发现{count}处违规模式: {rule}",
-                    location=f"全文约{count}处"
-                ))
+                issues.append(
+                    Issue(
+                        chapter=chapter_num,
+                        dimension=self.dimension,
+                        issue_type=self.issue_type,
+                        severity="P2",
+                        description=f"发现{count}处违规模式: {rule}",
+                        location=f"全文约{count}处",
+                    )
+                )
         return issues
 
 

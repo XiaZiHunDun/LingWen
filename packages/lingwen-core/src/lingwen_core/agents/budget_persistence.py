@@ -20,6 +20,7 @@ Replaces direct sqlite3.connect() + local _connect contextmanager
 with storage.with_connection/with_transaction (callback-based).
 Public API unchanged (BudgetService(db_path=..., init_if_missing=...)).
 """
+
 from __future__ import annotations
 
 import warnings
@@ -39,6 +40,7 @@ _DB_PATH = Path(__file__).parent.parent / ".state" / "cost_tracker.db"
 @dataclass(frozen=True)
 class BudgetEntry:
     """Budget 持久化条目 (append-only)"""
+
     id: int
     scope: str  # 'run' | 'day' | 'week'
     usd: float
@@ -53,6 +55,7 @@ class TierBudgetEntry:
     Mirror BudgetEntry 但用 ModelTier 替 scope. 跟现 'run/day/week' budget
     独立表 `budgets_by_tier` 共存, 0 共享列 (除 id PK + usd + set_at).
     """
+
     id: int
     tier: ModelTier
     usd: float
@@ -112,6 +115,7 @@ class BudgetService:
         Phase 8.15: 同时建 budgets_by_tier 表 + idx (per-tier budget).
         旧 budgets 表 0 改, 0 删行/列. CREATE IF NOT EXISTS 幂等.
         """
+
         def _do(conn) -> None:
             conn.executescript("""
                 CREATE TABLE IF NOT EXISTS budgets (
@@ -134,6 +138,7 @@ class BudgetService:
                 CREATE INDEX IF NOT EXISTS idx_budgets_by_tier_tier
                     ON budgets_by_tier(tier, id DESC);
             """)
+
         self._storage.with_transaction(_do)
 
     def set(
@@ -181,8 +186,7 @@ class BudgetService:
             params: tuple = (scope, run_id)
         else:
             sql = (
-                "SELECT id, scope, usd, run_id, set_at FROM budgets "
-                "WHERE scope = ? ORDER BY id DESC LIMIT 1"
+                "SELECT id, scope, usd, run_id, set_at FROM budgets WHERE scope = ? ORDER BY id DESC LIMIT 1"
             )
             params = (scope,)
 
@@ -306,8 +310,7 @@ class BudgetService:
 
         def _do(conn):
             return conn.execute(
-                "SELECT id, tier, usd, set_at FROM budgets_by_tier "
-                "WHERE tier = ? ORDER BY id DESC LIMIT 1",
+                "SELECT id, tier, usd, set_at FROM budgets_by_tier WHERE tier = ? ORDER BY id DESC LIMIT 1",
                 (tier.value,),
             ).fetchone()
 

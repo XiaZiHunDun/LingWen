@@ -1,4 +1,5 @@
 """Lore CRUD with optimistic concurrency."""
+
 import json
 
 from lingwen_shared.ports.storage import ConnectionPort
@@ -21,10 +22,14 @@ def create_lore(conn: ConnectionPort, data: dict) -> int:
            (slug, title, category, summary, body, tags, created_at, updated_at, revision)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)""",
         (
-            data["slug"], data["title"], data["category"],
-            data["summary"], data["body"],
+            data["slug"],
+            data["title"],
+            data["category"],
+            data["summary"],
+            data["body"],
             json.dumps(data.get("tags") or [], ensure_ascii=False),
-            now, now,
+            now,
+            now,
         ),
     )
     conn.commit()
@@ -56,12 +61,8 @@ def list_lore(conn: ConnectionPort, category: str | None = None) -> list[dict]:
     return [row_to_dict(r, ("tags",)) for r in rows if r is not None]
 
 
-def update_lore(
-    conn: ConnectionPort, lid: int, patch: dict, expected_revision: int
-) -> None:
-    tags_value = (
-        json.dumps(patch["tags"], ensure_ascii=False) if "tags" in patch else None
-    )
+def update_lore(conn: ConnectionPort, lid: int, patch: dict, expected_revision: int) -> None:
+    tags_value = json.dumps(patch["tags"], ensure_ascii=False) if "tags" in patch else None
     cur = conn.execute(
         """UPDATE lore_entry SET
            title = COALESCE(?, title),
@@ -73,13 +74,16 @@ def update_lore(
            revision = revision + 1
            WHERE id = ? AND revision = ?""",
         (
-            patch.get("title"), patch.get("category"),
-            patch.get("summary"), patch.get("body"),
-            tags_value, now_iso(), lid, expected_revision,
+            patch.get("title"),
+            patch.get("category"),
+            patch.get("summary"),
+            patch.get("body"),
+            tags_value,
+            now_iso(),
+            lid,
+            expected_revision,
         ),
     )
     if cur.rowcount == 0:
-        raise LoreRevisionConflict(
-            f"lore {lid} revision != {expected_revision}"
-        )
+        raise LoreRevisionConflict(f"lore {lid} revision != {expected_revision}")
     conn.commit()

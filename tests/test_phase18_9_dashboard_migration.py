@@ -2,6 +2,7 @@
 
 8 个独特文件迁移到 apps/dashboard/，删除 dashboard/。
 """
+
 from __future__ import annotations
 
 
@@ -65,7 +66,7 @@ def test_ci_baseline_check_path_updated():
     assert '"apps"' in content and '"dashboard"' in content and '"tests"' in content, (
         "ci_baseline_check.py must reference apps/dashboard/tests"
     )
-    assert '"dashboard"' not in content or 'frontend' not in content, (
+    assert '"dashboard"' not in content or "frontend" not in content, (
         "ci_baseline_check.py still has stale dashboard/frontend path"
     )
     # 检查实际拼接路径里有 apps/dashboard（用 split 检查）

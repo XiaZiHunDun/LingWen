@@ -1,4 +1,5 @@
 """Phase 9.14: ripple_audit table schema + audit method tests."""
+
 import sqlite3
 from datetime import datetime, timezone
 
@@ -65,8 +66,12 @@ def seeded_storage(tmp_path):
     """Storage with 1 reference_ripple pre-seeded (for audit tests)."""
     s = RippleStorage(db_path=tmp_path / "audit_method.db")
     ripple = CrossVolumeRipple(
-        id="rip-audit-1", trigger_volume=1, trigger_chapter=1,
-        affected_nodes=(), affected_edges=(), proposed_actions=(),
+        id="rip-audit-1",
+        trigger_volume=1,
+        trigger_chapter=1,
+        affected_nodes=(),
+        affected_edges=(),
+        proposed_actions=(),
         status="applied",
     )
     s.append_ripple(ripple)
@@ -77,9 +82,13 @@ class TestRecordAudit:
     def test_record_audit_writes_row_and_returns_id(self, seeded_storage):
         """record_audit inserts 1 row, returns lastrowid."""
         audit_id = seeded_storage.record_audit(
-            ripple_id="rip-audit-1", action="rolled_back",
-            prev_status="applied", new_status="pending",
-            actor="user", origin="ui", reason="test",
+            ripple_id="rip-audit-1",
+            action="rolled_back",
+            prev_status="applied",
+            new_status="pending",
+            actor="user",
+            origin="ui",
+            reason="test",
         )
         assert isinstance(audit_id, int)
         assert audit_id >= 1
@@ -87,9 +96,13 @@ class TestRecordAudit:
     def test_record_audit_with_null_prev_status(self, seeded_storage):
         """created entry prev_status=NULL allowed (append_ripple hook writes 1 'created' first)."""
         seeded_storage.record_audit(
-            ripple_id="rip-audit-1", action="created",
-            prev_status=None, new_status="pending",
-            actor="system:phase9.11-backfill", origin="system", reason=None,
+            ripple_id="rip-audit-1",
+            action="created",
+            prev_status=None,
+            new_status="pending",
+            actor="system:phase9.11-backfill",
+            origin="system",
+            reason=None,
         )
         entries = seeded_storage.get_audit_history("rip-audit-1")
         # append_ripple hook already wrote 1 'created' entry; record_audit writes 1 more = 2 total
@@ -131,7 +144,10 @@ class TestRollbackRipple:
         before = seeded_storage.get_ripple_by_id("rip-audit-1")
         assert before.status == "applied"
         updated = seeded_storage.rollback_ripple(
-            "rip-audit-1", actor="user", origin="ui", reason="误操作",
+            "rip-audit-1",
+            actor="user",
+            origin="ui",
+            reason="误操作",
         )
         assert updated.status == "pending"
         assert updated.applied_at is None

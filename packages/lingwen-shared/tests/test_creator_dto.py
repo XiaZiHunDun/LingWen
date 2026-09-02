@@ -9,6 +9,7 @@ Verifies:
 - Pydantic v2 validation enforces types (e.g. extra='ignore', Optional defaults)
 - TS codegen produces a matching creator.ts interface
 """
+
 from __future__ import annotations
 
 import pytest
@@ -506,7 +507,9 @@ def test_ts_codegen_produces_creator_file(tmp_path) -> None:
     )
     assert result.returncode == 0, f"codegen failed: {result.stderr}"
 
-    ts_path = "/home/ailearn/projects/LingWen/packages/lingwen-shared/src/lingwen_shared/contracts/ts/creator.ts"
+    ts_path = (
+        "/home/ailearn/projects/LingWen/packages/lingwen-shared/src/lingwen_shared/contracts/ts/creator.ts"
+    )
     import os
 
     assert os.path.exists(ts_path), "creator.ts was not generated"
@@ -813,7 +816,10 @@ def test_publish_platforms_response_has_slug() -> None:
 
     caps = CreatorPublishPlatformCapabilities()
     platform = CreatorPublishPlatform(
-        id="custom", label="自定义", connection="disconnected", capabilities=caps,
+        id="custom",
+        label="自定义",
+        connection="disconnected",
+        capabilities=caps,
     )
     resp = CreatorPublishPlatformsResponse(slug="test-project", platforms=[platform])
     assert resp.slug == "test-project"
@@ -851,7 +857,10 @@ def test_memory_asset_item_defaults() -> None:
     from lingwen_shared.contracts.python.creator import CreatorMemoryAssetItem
 
     item = CreatorMemoryAssetItem(
-        id="asset-pillars", kind="setting", name="创作支柱", excerpt="…",
+        id="asset-pillars",
+        kind="setting",
+        name="创作支柱",
+        excerpt="…",
     )
     assert item.chapters == []
     assert item.editable is False
@@ -874,8 +883,11 @@ def test_memory_assets_response_holds_items() -> None:
         memory_rag_enabled=True,
         items=[
             CreatorMemoryAssetItem(
-                id="memory-ch-1", kind="memory", name="第1章记忆片段",
-                excerpt="…", chapters=[1],
+                id="memory-ch-1",
+                kind="memory",
+                name="第1章记忆片段",
+                excerpt="…",
+                chapters=[1],
             ),
         ],
     )
@@ -888,7 +900,9 @@ def test_memory_assets_response_items_default_empty() -> None:
     from lingwen_shared.contracts.python.creator import CreatorMemoryAssetsResponse
 
     resp = CreatorMemoryAssetsResponse(
-        slug="p", memory_available=True, memory_rag_enabled=False,
+        slug="p",
+        memory_available=True,
+        memory_rag_enabled=False,
     )
     assert resp.items == []
 
@@ -946,8 +960,12 @@ def test_memory_query_response_holds_results() -> None:
         used_fallback=True,
         results=[
             CreatorMemoryQueryResult(
-                id="memory-ch-1", snippet="…", score=0.8, chapter=1,
-                source="local", matched_terms=["李逍遥"],
+                id="memory-ch-1",
+                snippet="…",
+                score=0.8,
+                chapter=1,
+                source="local",
+                matched_terms=["李逍遥"],
             ),
         ],
     )

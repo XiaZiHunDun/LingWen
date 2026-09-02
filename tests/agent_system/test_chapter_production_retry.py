@@ -1,4 +1,5 @@
 """Tests for chapter_production_retry."""
+
 from pathlib import Path
 
 from lingwen_core.agents.chapter_production_retry import chapters_needing_retry
@@ -14,5 +15,8 @@ def test_retry_skips_failed_batch_when_body_exists(tmp_path):
         encoding="utf-8",
     )
     assert chapters_needing_retry(
-        6, 7, chapters_dir=chapters_dir, batch_summary_path=summary,
+        6,
+        7,
+        chapters_dir=chapters_dir,
+        batch_summary_path=summary,
     ) == [6]

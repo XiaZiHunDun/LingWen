@@ -1,4 +1,5 @@
 """LingWen Studio multi-project registry (Phase 10.04)."""
+
 from __future__ import annotations
 
 import json

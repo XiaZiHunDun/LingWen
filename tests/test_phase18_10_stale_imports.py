@@ -4,19 +4,22 @@
 本测试不是必须 PASS 的（标记为 xfail 接受当前已知状态），
 但 Task 18.10 应尽可能修复它们。
 """
+
 from __future__ import annotations
 
 from pathlib import Path
 
 # 允许保留的 infra.* import（Phase 18.8 薄壳白名单）
-ALLOWED_INFRA_PATHS = frozenset({
-    "infra.config",
-    "infra.util",
-    "infra.tools",
-    "infra.paths",
-    "infra.errors",
-    "infra.hooks",
-})
+ALLOWED_INFRA_PATHS = frozenset(
+    {
+        "infra.config",
+        "infra.util",
+        "infra.tools",
+        "infra.paths",
+        "infra.errors",
+        "infra.hooks",
+    }
+)
 
 
 def _is_allowed(line: str) -> bool:
@@ -49,13 +52,11 @@ def test_packages_apps_have_minimal_stale_imports():
     # Phase 18.10 任务: 显著降低此数字（基线 235 → 目标 < 50）
     if len(stale) > 200:
         pytest.xfail(
-            f"Phase 18.10: {len(stale)} stale infra.* imports pending fix. "
-            f"Top 5:\n" + "\n".join(stale[:5])
+            f"Phase 18.10: {len(stale)} stale infra.* imports pending fix. Top 5:\n" + "\n".join(stale[:5])
         )
     elif len(stale) > 50:
         pytest.xfail(
-            f"Phase 18.10 partial: {len(stale)} stale imports remain. "
-            f"Top 5:\n" + "\n".join(stale[:5])
+            f"Phase 18.10 partial: {len(stale)} stale imports remain. Top 5:\n" + "\n".join(stale[:5])
         )
     else:
         assert not stale, "Unexpected stale imports:\n" + "\n".join(stale[:5])

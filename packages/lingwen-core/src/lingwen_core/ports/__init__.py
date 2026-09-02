@@ -11,6 +11,7 @@ Phase 18.0 — 包对外接口契约集合。
 - CheckerPort — 一致性检查器
 - Mock 实现（InMemory* / EchoLLM / HashEmbedding / AlwaysPassChecker）
 """
+
 from __future__ import annotations
 
 from lingwen_core.ports.checker import AlwaysPassChecker, CheckerPort

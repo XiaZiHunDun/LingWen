@@ -8,6 +8,7 @@ exchange both work.
 Phase 1.5.a — Ripple extended with state/wavefront/decay_rate/affected_relations/
 planned_resolve_ch fields (Doc 1 §3.4). Backward-compatible with legacy JSON.
 """
+
 from __future__ import annotations
 
 from dataclasses import FrozenInstanceError

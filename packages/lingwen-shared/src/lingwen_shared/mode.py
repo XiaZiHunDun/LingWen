@@ -13,6 +13,7 @@ Used by:
   - infra.project_config / project_init (YAML resolution)
   - lingwen_cli init_project (CLI)
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -50,8 +51,7 @@ def normalize_creation_mode(value: str | None) -> str:
     mode = (value or CREATION_MODE_STUDIO).strip().lower()
     if mode not in CREATION_MODES:
         raise ValueError(
-            f"invalid creation_mode {value!r}; "
-            f"expected one of {sorted(CREATION_MODES)}",
+            f"invalid creation_mode {value!r}; expected one of {sorted(CREATION_MODES)}",
         )
     return mode
 
@@ -61,8 +61,7 @@ def normalize_quality_profile(value: str | None, *, creation_mode: str) -> str:
         profile = value.strip().lower()
         if profile not in QUALITY_PROFILES:
             raise ValueError(
-                f"invalid quality_profile {value!r}; "
-                f"expected one of {sorted(QUALITY_PROFILES)}",
+                f"invalid quality_profile {value!r}; expected one of {sorted(QUALITY_PROFILES)}",
             )
         return profile
     if creation_mode == CREATION_MODE_STUDIO:

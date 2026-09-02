@@ -10,6 +10,7 @@ Phase 1.3.a — RED tests for PromptContext + ContextItem + StepContract.
 - JSON 序列化 (to_dict / from_dict) — 不含 output_schema 类的运行时引用
 - token 预算字段为 int
 """
+
 from __future__ import annotations
 
 import dataclasses

@@ -8,6 +8,7 @@
 - 情绪状态 (emotion_state)
 - 首次出现章节 (first_appearance_chapter)
 """
+
 from typing import Any, Dict, Optional
 
 from lingwen_memory.state.state_manager import MemoryStateManager
@@ -27,9 +28,7 @@ class CharacterTracker:
         """
         self.state_manager = MemoryStateManager(config)
 
-    def update_character_state(
-        self, character: str, state: Dict[str, Any]
-    ) -> None:
+    def update_character_state(self, character: str, state: Dict[str, Any]) -> None:
         """更新角色状态
 
         Args:

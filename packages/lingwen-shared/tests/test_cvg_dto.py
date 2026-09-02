@@ -2,6 +2,7 @@
 
 12 Pydantic models (presentation shape — see cvg.py docstring).
 """
+
 from __future__ import annotations
 
 import pytest
@@ -29,9 +30,14 @@ def test_cvg_dtos_importable() -> None:
 def test_ripple_list_item_basic() -> None:
     """RippleListItemResponse required fields + defaults."""
     from lingwen_shared.contracts.python.cvg import RippleListItemResponse
+
     obj = RippleListItemResponse(
-        ripple_id="r1", chapter_id=10, title="T", status="pending",
-        source_volume=1, created_at="2026-08-30T00:00:00Z",
+        ripple_id="r1",
+        chapter_id=10,
+        title="T",
+        status="pending",
+        source_volume=1,
+        created_at="2026-08-30T00:00:00Z",
     )
     assert obj.impact_volumes == []
     assert obj.applies_count is None
@@ -45,9 +51,14 @@ def test_ripple_list_item_response_includes_impact_score() -> None:
     Closing the drift means the presentation shape itself carries the field.
     """
     from lingwen_shared.contracts.python.cvg import RippleListItemResponse
+
     obj = RippleListItemResponse(
-        ripple_id="r1", chapter_id=10, title="T", status="pending",
-        source_volume=1, created_at="2026-08-30T00:00:00Z",
+        ripple_id="r1",
+        chapter_id=10,
+        title="T",
+        status="pending",
+        source_volume=1,
+        created_at="2026-08-30T00:00:00Z",
         impact_score=0.42,
     )
     assert obj.impact_score == 0.42
@@ -56,9 +67,14 @@ def test_ripple_list_item_response_includes_impact_score() -> None:
 def test_ripple_list_item_response_impact_score_default_none() -> None:
     """N.11.d: impact_score is Optional[float] with default None — backward compat."""
     from lingwen_shared.contracts.python.cvg import RippleListItemResponse
+
     obj = RippleListItemResponse(
-        ripple_id="r1", chapter_id=10, title="T", status="pending",
-        source_volume=1, created_at="2026-08-30T00:00:00Z",
+        ripple_id="r1",
+        chapter_id=10,
+        title="T",
+        status="pending",
+        source_volume=1,
+        created_at="2026-08-30T00:00:00Z",
     )
     assert obj.impact_score is None
 
@@ -66,9 +82,14 @@ def test_ripple_list_item_response_impact_score_default_none() -> None:
 def test_ripple_detail_inherits_list_item() -> None:
     """RippleDetailResponse extends RippleListItemResponse (all base fields present)."""
     from lingwen_shared.contracts.python.cvg import RippleDetailResponse
+
     obj = RippleDetailResponse(
-        ripple_id="r1", chapter_id=10, title="T", status="pending",
-        source_volume=1, created_at="2026-08-30T00:00:00Z",
+        ripple_id="r1",
+        chapter_id=10,
+        title="T",
+        status="pending",
+        source_volume=1,
+        created_at="2026-08-30T00:00:00Z",
     )
     assert obj.evidence is None
     assert obj.audit_trail is None
@@ -81,11 +102,14 @@ def test_cascade_response_contains_nodes_edges() -> None:
         CascadeNodeResponse,
         CascadeResponse,
     )
+
     obj = CascadeResponse(
         ripple_id="r1",
         nodes=[CascadeNodeResponse(node_id="n1", chapter_id=1, title="T", status="x", depth=0)],
         edges=[CascadeEdgeResponse(source="n1", target="n2", relation="causes")],
-        total_nodes=1, total_edges=1, max_depth=2,
+        total_nodes=1,
+        total_edges=1,
+        max_depth=2,
     )
     assert obj.max_depth == 2
 
@@ -93,9 +117,12 @@ def test_cascade_response_contains_nodes_edges() -> None:
 def test_reference_graph_uses_generic_nodes() -> None:
     """ReferenceGraphResponse nodes/edges are list[dict]."""
     from lingwen_shared.contracts.python.cvg import ReferenceGraphResponse
+
     obj = ReferenceGraphResponse(
-        nodes=[{"id": "n1"}], edges=[{"source": "n1", "target": "n2"}],
-        total_nodes=1, total_edges=1,
+        nodes=[{"id": "n1"}],
+        edges=[{"source": "n1", "target": "n2"}],
+        total_nodes=1,
+        total_edges=1,
     )
     assert obj.total_nodes == 1
 
@@ -107,9 +134,12 @@ def test_reference_graph_response_includes_truncated_flag() -> None:
     hidden limits.
     """
     from lingwen_shared.contracts.python.cvg import ReferenceGraphResponse
+
     obj = ReferenceGraphResponse(
-        nodes=[], edges=[],
-        total_nodes=250, total_edges=42,
+        nodes=[],
+        edges=[],
+        total_nodes=250,
+        total_edges=42,
         truncated=True,
         by_dimension={"character": 5, "foreshadow": 3},
     )
@@ -120,8 +150,12 @@ def test_reference_graph_response_includes_truncated_flag() -> None:
 def test_reference_graph_response_truncated_default_false() -> None:
     """N.11.g: by default truncated is False (back-compat with N.9)."""
     from lingwen_shared.contracts.python.cvg import ReferenceGraphResponse
+
     obj = ReferenceGraphResponse(
-        nodes=[], edges=[], total_nodes=1, total_edges=0,
+        nodes=[],
+        edges=[],
+        total_nodes=1,
+        total_edges=0,
     )
     assert obj.truncated is False
 
@@ -129,6 +163,7 @@ def test_reference_graph_response_truncated_default_false() -> None:
 def test_cascade_response_includes_cascade_actions_field() -> None:
     """CascadeResponse must include cascade_actions list (dashboard consumer cascadeGraphUtils.js:152)."""
     from lingwen_shared.contracts.python.cvg import CascadeEdgeResponse, CascadeNodeResponse, CascadeResponse
+
     response = CascadeResponse(
         ripple_id="r1",
         nodes=[CascadeNodeResponse(node_id="n1", chapter_id=1, title="T", status="applied", depth=1)],
@@ -145,6 +180,7 @@ def test_cascade_response_includes_cascade_actions_field() -> None:
 def test_cascade_response_includes_generated_at_field() -> None:
     """CascadeResponse must include generated_at string (dashboard consumer uses for display)."""
     from lingwen_shared.contracts.python.cvg import CascadeResponse
+
     response = CascadeResponse(
         ripple_id="r1",
         nodes=[],
@@ -161,21 +197,37 @@ def test_cascade_response_includes_generated_at_field() -> None:
 def test_cascade_response_includes_bfs_algorithm_version_field() -> None:
     """CascadeResponse must include bfs_algorithm_version (Literal v1|v2_weighted)."""
     from lingwen_shared.contracts.python.cvg import CascadeResponse
+
     response_v1 = CascadeResponse(
-        ripple_id="r1", nodes=[], edges=[], total_nodes=0, total_edges=0, max_depth=0,
-        cascade_actions=[], generated_at="", bfs_algorithm_version="v1",
+        ripple_id="r1",
+        nodes=[],
+        edges=[],
+        total_nodes=0,
+        total_edges=0,
+        max_depth=0,
+        cascade_actions=[],
+        generated_at="",
+        bfs_algorithm_version="v1",
     )
     assert response_v1.bfs_algorithm_version == "v1"
     with pytest.raises(ValidationError):
         CascadeResponse(
-            ripple_id="r1", nodes=[], edges=[], total_nodes=0, total_edges=0, max_depth=0,
-            cascade_actions=[], generated_at="", bfs_algorithm_version="v9_invalid",
+            ripple_id="r1",
+            nodes=[],
+            edges=[],
+            total_nodes=0,
+            total_edges=0,
+            max_depth=0,
+            cascade_actions=[],
+            generated_at="",
+            bfs_algorithm_version="v9_invalid",
         )
 
 
 def test_cascade_preview_response_includes_storage_counts() -> None:
     """CascadePreviewResponse must include storage-shape aggregate counts."""
     from lingwen_shared.contracts.python.cvg import CascadePreviewResponse
+
     response = CascadePreviewResponse(
         ripple_id="r1",
         estimated_impact=10,
@@ -200,6 +252,7 @@ def test_cascade_preview_response_includes_storage_counts() -> None:
 def test_cascade_preview_response_storage_counts_default_zero() -> None:
     """CascadePreviewResponse storage-shape counts must default to 0 (not None)."""
     from lingwen_shared.contracts.python.cvg import CascadePreviewResponse
+
     response = CascadePreviewResponse(ripple_id="r1", estimated_impact=0)
     assert response.affected_chapter_count == 0
     assert response.affected_character_count == 0

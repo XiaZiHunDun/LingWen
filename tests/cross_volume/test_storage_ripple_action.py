@@ -1,4 +1,5 @@
 """Phase 9.13: storage 3 new methods (get_ripples / get_ripple_by_id / update_ripple_status) + ConflictError."""
+
 import sys
 
 import pytest

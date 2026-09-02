@@ -3,6 +3,7 @@
 Use-cases 接受 LLMPort/EventStorePort 端口依赖，
 不直接 import DB / 文件系统。返回 DomainEvent 供上游订阅。
 """
+
 from __future__ import annotations
 
 

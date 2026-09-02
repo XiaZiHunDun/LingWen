@@ -17,6 +17,7 @@ Doc 4 §10 Phase 5: 决策节点真正暂停工作流,等待 resolve_decision �
   - run_workflow() 现在返回 paused summary (替代一冲到底)
   - 新增 resume_workflow(decision_id, option) API
 """
+
 from __future__ import annotations
 
 import pytest
@@ -33,6 +34,7 @@ from infra.got.scheduler import (
 )
 
 # === Test fixtures ===
+
 
 def _node(
     nid: str,
@@ -62,6 +64,7 @@ class _StubCompute:
 
 
 # === TestDecisionNodePausesExecution ===
+
 
 class TestDecisionNodePausesExecution:
     """DECISION 节点 → scheduler 暂停,compute_fn 不被调用"""
@@ -113,6 +116,7 @@ class TestDecisionNodePausesExecution:
 
 
 # === TestSchedulerResume ===
+
 
 class TestSchedulerResume:
     """scheduler.resume(decision_id, option) 继续执行"""
@@ -195,6 +199,7 @@ class TestSchedulerResume:
 
 # === TestMultipleDecisionNodes ===
 
+
 class TestMultipleDecisionNodes:
     """图中多个 DECISION 节点 → 串行等待"""
 
@@ -234,6 +239,7 @@ class TestMultipleDecisionNodes:
 
 
 # === TestControllerResumeWorkflow ===
+
 
 class TestControllerResumeWorkflow:
     """MasterController.resume_workflow API"""
@@ -285,6 +291,7 @@ class TestControllerResumeWorkflow:
 
         # 构造 scheduler
         from lingwen_core.agents.got_bridge import build_got_scheduler
+
         scheduler, graph = build_got_scheduler(
             master=controller,
             workflow_name="dec_pause",
@@ -345,6 +352,7 @@ class TestControllerResumeWorkflow:
         wf.write_text(workflow_body, encoding="utf-8")
 
         from lingwen_core.agents.got_bridge import build_got_scheduler
+
         scheduler, graph = build_got_scheduler(
             master=controller,
             workflow_name="wf_resume",
@@ -380,9 +388,7 @@ class TestControllerResumeWorkflow:
             "    description: b\n"
             "    depends_on: [judge]\n"
         )
-        controller, scheduler, graph = self._build_controller_with_workflow(
-            monkeypatch, tmp_path, wf_body
-        )
+        controller, scheduler, graph = self._build_controller_with_workflow(monkeypatch, tmp_path, wf_body)
 
         # 缓存活跃工作流 (模拟 run_workflow() 的行为)
         controller._last_scheduler = scheduler
@@ -394,7 +400,9 @@ class TestControllerResumeWorkflow:
         summary1 = scheduler.run(start_nodes=["a"])
         assert summary1.paused is True
         assert "judge" in summary1.paused_nodes
-        assert "b" not in scheduler._graph.get_execution("b").status.value if graph.has_execution("b") else True
+        assert (
+            "b" not in scheduler._graph.get_execution("b").status.value if graph.has_execution("b") else True
+        )
 
         # 注入 HumanDecision (模拟 _harvest_decision_specs)
         d = create_decision(
@@ -484,9 +492,7 @@ class TestControllerResumeWorkflow:
             "    description: outline_judgment\n"
             "    depends_on: [a]\n"
         )
-        controller, scheduler, graph = self._build_controller_with_workflow(
-            monkeypatch, tmp_path, wf_body
-        )
+        controller, scheduler, graph = self._build_controller_with_workflow(monkeypatch, tmp_path, wf_body)
         controller._last_scheduler = scheduler
         controller._last_graph = graph
         controller._last_start_nodes = ["a"]
@@ -511,9 +517,7 @@ class TestControllerResumeWorkflow:
             "    description: outline_judgment\n"
             "    depends_on: []\n"
         )
-        controller, scheduler, graph = self._build_controller_with_workflow(
-            monkeypatch, tmp_path, wf_body
-        )
+        controller, scheduler, graph = self._build_controller_with_workflow(monkeypatch, tmp_path, wf_body)
         controller._last_scheduler = scheduler
         controller._last_graph = graph
         controller._last_start_nodes = ["judge"]
@@ -529,9 +533,7 @@ class TestControllerResumeWorkflow:
         controller._decision_queue.add(d)
 
         # 用非默认 resolved_by
-        result = controller.resume_workflow(
-            d.decision_id, "approve", resolved_by="auto_auditor"
-        )
+        result = controller.resume_workflow(d.decision_id, "approve", resolved_by="auto_auditor")
         # HumanDecision.resolved_by 透传
         assert result["resolved_decision"].resolved_by == "auto_auditor"
         # DECISION 节点 execution.output.resolved_by 透传
@@ -569,9 +571,7 @@ class TestControllerResumeWorkflow:
             "    description: b\n"
             "    depends_on: [d2]\n"
         )
-        controller, scheduler, graph = self._build_controller_with_workflow(
-            monkeypatch, tmp_path, wf_body
-        )
+        controller, scheduler, graph = self._build_controller_with_workflow(monkeypatch, tmp_path, wf_body)
         controller._last_scheduler = scheduler
         controller._last_graph = graph
         controller._last_start_nodes = ["a"]
@@ -619,6 +619,7 @@ class TestControllerResumeWorkflow:
 
 
 # === TestDecisionNodeExecutionOutput ===
+
 
 class TestDecisionNodeExecutionOutput:
     """DECISION 节点的 output 是 {option, resolved_by} 字典"""

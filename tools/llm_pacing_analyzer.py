@@ -30,25 +30,27 @@ from lingwen_llm.port_adapter import LLMServiceAdapter
 @dataclass
 class TensionPoint:
     """张力点"""
+
     chapter: int
-    position: str                    # 位置：开头/中段/结尾
-    tension_type: str               # 类型：conflict（冲突）/ revelation（揭示）/ climax（高潮）/ resolution（解决）
-    is_predictable: bool            # 是否可预测
-    urgency_level: int              # 紧迫度 1-5
-    description: str                # 描述
-    suggestion: str = ""            # 改进建议
+    position: str  # 位置：开头/中段/结尾
+    tension_type: str  # 类型：conflict（冲突）/ revelation（揭示）/ climax（高潮）/ resolution（解决）
+    is_predictable: bool  # 是否可预测
+    urgency_level: int  # 紧迫度 1-5
+    description: str  # 描述
+    suggestion: str = ""  # 改进建议
 
 
 @dataclass
 class PacingReport:
     """节奏分析报告"""
+
     chapter: int
     tension_points: List[TensionPoint] = field(default_factory=list)
-    predictable_count: int = 0      # 可预测高潮数
-    low_urgency_count: int = 0        # 低紧迫感数
-    invalid_buffer_count: int = 0    # 无效缓冲数
+    predictable_count: int = 0  # 可预测高潮数
+    low_urgency_count: int = 0  # 低紧迫感数
+    invalid_buffer_count: int = 0  # 无效缓冲数
     tension_curve: List[int] = field(default_factory=list)  # 张力曲线
-    avg_tension: float = 0.0         # 平均张力
+    avg_tension: float = 0.0  # 平均张力
     score: float = 0.0
     llm_calls: int = 0
     timestamp: str = ""
@@ -81,10 +83,10 @@ class PacingReport:
                     "is_predictable": p.is_predictable,
                     "urgency_level": p.urgency_level,
                     "description": p.description,
-                    "suggestion": p.suggestion
+                    "suggestion": p.suggestion,
                 }
                 for p in self.tension_points
-            ]
+            ],
         }
 
 
@@ -93,17 +95,31 @@ class PacingAnalyzer:
 
     # 可预测模式（辅助检测）
     PREDICTABLE_PATTERNS = [
-        "果不其然", "果然", "正如所料", "不出所料",
-        "不出意外", "毫无疑问", "毫无疑问",
-        "战斗开始", "对决开始", "争端开始",
-        "主角必胜", "反派必败"
+        "果不其然",
+        "果然",
+        "正如所料",
+        "不出所料",
+        "不出意外",
+        "毫无疑问",
+        "毫无疑问",
+        "战斗开始",
+        "对决开始",
+        "争端开始",
+        "主角必胜",
+        "反派必败",
     ]
 
     # 低紧迫感模式（辅助检测）
     LOW_URGENCY_PATTERNS = [
-        "不慌不忙", "从容不迫", "不紧不慢",
-        "悠闲", "淡然", "平静",
-        "缓缓", "慢慢", "逐渐"
+        "不慌不忙",
+        "从容不迫",
+        "不紧不慢",
+        "悠闲",
+        "淡然",
+        "平静",
+        "缓缓",
+        "慢慢",
+        "逐渐",
     ]
 
     def __init__(self, llm_service: Optional[LLMServiceAdapter] = None):
@@ -117,7 +133,7 @@ class PacingAnalyzer:
         ch_file = self.chapters_dir / f"ch{chapter_num:03d}.md"
         if not ch_file.exists():
             return None
-        return ch_file.read_text(encoding='utf-8')
+        return ch_file.read_text(encoding="utf-8")
 
     def load_chapters(self, chapter_nums: List[int]) -> Dict[int, str]:
         """批量加载章节"""
@@ -129,10 +145,7 @@ class PacingAnalyzer:
         return result
 
     async def analyze_pacing(
-        self,
-        chapter_num: int,
-        content: str,
-        context_chapters: Optional[Dict[int, str]] = None
+        self, chapter_num: int, content: str, context_chapters: Optional[Dict[int, str]] = None
     ) -> PacingReport:
         """
         分析章节节奏
@@ -251,7 +264,7 @@ class PacingAnalyzer:
         response = await self.llm.generate(
             prompt=prompt,
             system="你是一个专业的小说节奏分析专家，擅长提升张力曲线和制造悬念。",
-            model="default"
+            model="default",
         )
         report.llm_calls = 1
 
@@ -260,7 +273,7 @@ class PacingAnalyzer:
             try:
                 data = json.loads(response)
             except json.JSONDecodeError:
-                json_match = re.search(r'\{.*\}', response, re.DOTALL)
+                json_match = re.search(r"\{.*\}", response, re.DOTALL)
                 if json_match:
                     data = json.loads(json_match.group())
                 else:
@@ -278,7 +291,7 @@ class PacingAnalyzer:
                     is_predictable=pt.get("is_predictable", False),
                     urgency_level=pt.get("urgency_level", 3),
                     description=pt.get("description", ""),
-                    suggestion=pt.get("suggestion", "")
+                    suggestion=pt.get("suggestion", ""),
                 )
                 report.tension_points.append(tension)
 
@@ -309,21 +322,14 @@ class PacingAnalyzer:
         return report
 
     async def analyze_chapters_batch(
-        self,
-        chapter_nums: List[int],
-        parallel: bool = True,
-        max_workers: int = 5
+        self, chapter_nums: List[int], parallel: bool = True, max_workers: int = 5
     ) -> Dict[int, PacingReport]:
         """批量分析章节节奏"""
         reports = {}
         contents = self.load_chapters(chapter_nums)
 
         async def _run_one(ch: int) -> None:
-            context = {
-                c: contents[c]
-                for c in contents
-                if abs(c - ch) <= 3 and c != ch
-            }
+            context = {c: contents[c] for c in contents if abs(c - ch) <= 3 and c != ch}
             try:
                 reports[ch] = await self.analyze_pacing(ch, contents[ch], context)
             except Exception as e:
@@ -344,10 +350,7 @@ class PacingAnalyzer:
 
         return reports
 
-    def generate_summary_report(
-        self,
-        reports: Dict[int, PacingReport]
-    ) -> dict:
+    def generate_summary_report(self, reports: Dict[int, PacingReport]) -> dict:
         """生成汇总报告"""
         total_predictable = sum(r.predictable_count for r in reports.values())
         total_low_urgency = sum(r.low_urgency_count for r in reports.values())
@@ -364,31 +367,31 @@ class PacingAnalyzer:
             "avg_tension_level": avg_tension,
             "avg_score": avg_score,
             "quality_grade": (
-                "A（优秀）" if avg_score >= 0.85 else
-                "B（良好）" if avg_score >= 0.70 else
-                "C（一般）" if avg_score >= 0.50 else
-                "D（需改进）"
+                "A（优秀）"
+                if avg_score >= 0.85
+                else "B（良好）"
+                if avg_score >= 0.70
+                else "C（一般）"
+                if avg_score >= 0.50
+                else "D（需改进）"
             ),
-            "chapters": {
-                ch: r.to_dict()
-                for ch, r in reports.items()
-            }
+            "chapters": {ch: r.to_dict() for ch, r in reports.items()},
         }
 
     def save_report(self, report_data: dict, output_file: Path):
         """保存报告"""
         output_file.parent.mkdir(parents=True, exist_ok=True)
-        output_file.write_text(json.dumps(report_data, ensure_ascii=False, indent=2), encoding='utf-8')
+        output_file.write_text(json.dumps(report_data, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"节奏分析报告已保存: {output_file}")
 
 
 def parse_chapter_range(chapters_str: str) -> List[int]:
     """解析章节范围字符串"""
     chapters = []
-    for part in chapters_str.split(','):
+    for part in chapters_str.split(","):
         part = part.strip()
-        if '-' in part:
-            start, end = map(int, part.split('-'))
+        if "-" in part:
+            start, end = map(int, part.split("-"))
             chapters.extend(range(start, end + 1))
         else:
             chapters.append(int(part))
@@ -400,12 +403,12 @@ def main():
 
 
 async def _async_main():
-    parser = argparse.ArgumentParser(description='LLM节奏分析器增强版 - S5节奏控制')
-    parser.add_argument('--chapters', type=str, default='1-360', help='章节范围')
-    parser.add_argument('--parallel', action='store_true', default=True, help='并行处理')
-    parser.add_argument('--sequential', dest='parallel', action='store_false', help='顺序处理')
-    parser.add_argument('--output', type=str, help='报告输出路径')
-    parser.add_argument('--workers', type=int, default=5, help='并行工作线程数')
+    parser = argparse.ArgumentParser(description="LLM节奏分析器增强版 - S5节奏控制")
+    parser.add_argument("--chapters", type=str, default="1-360", help="章节范围")
+    parser.add_argument("--parallel", action="store_true", default=True, help="并行处理")
+    parser.add_argument("--sequential", dest="parallel", action="store_false", help="顺序处理")
+    parser.add_argument("--output", type=str, help="报告输出路径")
+    parser.add_argument("--workers", type=int, default=5, help="并行工作线程数")
 
     args = parser.parse_args()
     chapters = parse_chapter_range(args.chapters)
@@ -417,9 +420,7 @@ async def _async_main():
 
     analyzer = PacingAnalyzer()
     reports = await analyzer.analyze_chapters_batch(
-        chapters,
-        parallel=args.parallel,
-        max_workers=args.workers
+        chapters, parallel=args.parallel, max_workers=args.workers
     )
 
     # 生成汇总报告
@@ -442,5 +443,5 @@ async def _async_main():
     print("=" * 60)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

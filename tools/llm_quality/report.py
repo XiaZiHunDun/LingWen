@@ -2,6 +2,7 @@
 
 原 llm_quality_deep_check.py 第 32-54 行 QualityReport dataclass 独立出来。
 """
+
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from typing import List
@@ -10,6 +11,7 @@ from typing import List
 @dataclass
 class QualityReport:
     """质检报告"""
+
     chapter: int
     checker: str
     issues: List = field(default_factory=list)
@@ -28,5 +30,5 @@ class QualityReport:
             "issues": [asdict(i) for i in self.issues],
             "score": self.score,
             "llm_calls": self.llm_calls,
-            "timestamp": self.timestamp
+            "timestamp": self.timestamp,
         }

@@ -4,6 +4,7 @@
 - SAMPLE_CORPUS_ROOT: 10 章 .md (5 正文 + 5 大纲) sample corpus
 - SAMPLE_RULES_YAML: 跟 corpus 匹配的最小 rules (含 character / setting / plot_point 各 ≥ 1)
 """
+
 from pathlib import Path
 
 SAMPLE_CORPUS_ROOT = Path(__file__).parent  # fixtures/ 目录含 5 章 .md

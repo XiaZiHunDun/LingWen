@@ -7,6 +7,7 @@
 - 预期回收章节 (expected_recycle_chapter)
 - 实际回收章节 (recycled_chapter)
 """
+
 from typing import Any, Dict, List, Optional
 
 from lingwen_memory.state.state_manager import MemoryStateManager
@@ -73,9 +74,7 @@ class PlotThreadTracker:
         all_data["foreshadows"][fp_id] = fp_data
         self.state_manager.save("plot_threads_file", all_data)
 
-    def update_foreshadow(
-        self, fp_id: str, chapter: int, event_type: str
-    ) -> None:
+    def update_foreshadow(self, fp_id: str, chapter: int, event_type: str) -> None:
         """更新伏笔状态
 
         Args:

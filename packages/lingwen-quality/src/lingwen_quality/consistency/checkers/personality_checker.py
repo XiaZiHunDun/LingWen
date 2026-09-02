@@ -19,8 +19,8 @@ from .base_checker import BaseChecker
 
 class PersonalityChecker(BaseChecker):
     """人设稳定性检查器"""
-    _checker_type = CheckerType.PERSONALITY
 
+    _checker_type = CheckerType.PERSONALITY
 
     def __init__(self, rules: Optional[Dict[str, Any]] = None):
         super().__init__(self._checker_type)
@@ -28,10 +28,7 @@ class PersonalityChecker(BaseChecker):
         self._personality_history: Dict[str, List[str]] = {}  # 角色 -> 性格记录
 
     def check(
-        self,
-        chapter_content: str,
-        chapter_num: int,
-        context: Optional[Dict[str, Any]] = None
+        self, chapter_content: str, chapter_num: int, context: Optional[Dict[str, Any]] = None
     ) -> List[Issue]:
         """
         检查人设稳定性
@@ -64,17 +61,12 @@ class PersonalityChecker(BaseChecker):
             character_profiles = {}
 
         # 仅检查行为动机一致性（独有功能，不与 character_checker 重复）
-        issues.extend(self._check_motivation_consistency(
-            chapter_content, chapter_num, character_profiles
-        ))
+        issues.extend(self._check_motivation_consistency(chapter_content, chapter_num, character_profiles))
 
         return issues
 
     def _check_motivation_consistency(
-        self,
-        content: str,
-        chapter_num: int,
-        character_profiles: Dict[str, Dict]
+        self, content: str, chapter_num: int, character_profiles: Dict[str, Dict]
     ) -> List[Issue]:
         """检查行为动机一致性"""
         issues = []
@@ -98,26 +90,25 @@ class PersonalityChecker(BaseChecker):
                 if goal in str(current_goal):
                     for opposite in opposites:
                         if opposite in content and char_name in content:
-                            issues.append(Issue(
-                                id=f"personality_{chapter_num}_{char_name}_动机",
-                                severity=IssueSeverity.P2,
-                                checker_type=CheckerType.PERSONALITY,
-                                issue_type="行为动机不一致",
-                                title="行为与目标矛盾",
-                                description=f"角色{char_name}的目标是\"{goal}\"，却做出了相反的行为",
-                                location=IssueLocation(chapter=chapter_num),
-                                evidence=f"目标：{current_goal}",
-                                suggestion="补充行为动机或调整目标设定",
-                                character=char_name
-                            ))
+                            issues.append(
+                                Issue(
+                                    id=f"personality_{chapter_num}_{char_name}_动机",
+                                    severity=IssueSeverity.P2,
+                                    checker_type=CheckerType.PERSONALITY,
+                                    issue_type="行为动机不一致",
+                                    title="行为与目标矛盾",
+                                    description=f'角色{char_name}的目标是"{goal}"，却做出了相反的行为',
+                                    location=IssueLocation(chapter=chapter_num),
+                                    evidence=f"目标：{current_goal}",
+                                    suggestion="补充行为动机或调整目标设定",
+                                    character=char_name,
+                                )
+                            )
 
         return issues
 
     def _check_speech_style_change(
-        self,
-        content: str,
-        chapter_num: int,
-        character_profiles: Dict[str, Dict]
+        self, content: str, chapter_num: int, character_profiles: Dict[str, Dict]
     ) -> List[Issue]:
         """检查语言风格变化（简化版）"""
         # 语言风格检查需要NLP，这里做基础检测

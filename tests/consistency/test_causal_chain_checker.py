@@ -50,6 +50,7 @@ def test_causal_rule_engine_no_contradiction():
 # CausalChainChecker Tests
 # =============================================================================
 
+
 def test_causal_chain_checker_detects_broken_pot():
     from lingwen_quality.consistency.checkers.causal_chain_checker import CausalChainChecker
 

@@ -57,11 +57,7 @@ class TestIssueLocation:
         assert location.paragraph is None
 
     def test_location_with_details(self):
-        location = IssueLocation(
-            chapter=25,
-            paragraph=3,
-            line=45
-        )
+        location = IssueLocation(chapter=25, paragraph=3, line=45)
         assert location.chapter == 25
         assert location.paragraph == 3
         assert location.line == 45
@@ -86,7 +82,7 @@ class TestIssue:
             description="角色表现与设定不符",
             location=location,
             evidence="角色设定为冷静",
-            suggestion="修改为符合性格的行为"
+            suggestion="修改为符合性格的行为",
         )
 
         assert issue.id == "test_001"
@@ -103,7 +99,7 @@ class TestIssue:
             title="测试问题",
             description="测试描述",
             location=IssueLocation(chapter=25),
-            character="林夜"
+            character="林夜",
         )
 
         data = issue.to_dict()
@@ -125,7 +121,7 @@ class TestIssue:
             "evidence": "",
             "suggestion": "",
             "character": "林夜",
-            "created_at": datetime.now().isoformat()
+            "created_at": datetime.now().isoformat(),
         }
 
         issue = Issue.from_dict(data)
@@ -159,7 +155,7 @@ class TestQualityDimension:
             s5_pacing_control=4.0,
             s6_readability=4.0,
             s7_protagonist_charm=4.0,
-            s8_character_arc=4.0
+            s8_character_arc=4.0,
         )
 
         score = quality.overall_score()
@@ -183,15 +179,17 @@ class TestCheckerResult:
 
     def test_checker_result_with_issues(self):
         result = CheckerResult(checker_type=CheckerType.CHARACTER)
-        result.issues.append(Issue(
-            id="test",
-            severity=IssueSeverity.P1,
-            checker_type=CheckerType.CHARACTER,
-            issue_type="test",
-            title="test",
-            description="test",
-            location=IssueLocation(chapter=1)
-        ))
+        result.issues.append(
+            Issue(
+                id="test",
+                severity=IssueSeverity.P1,
+                checker_type=CheckerType.CHARACTER,
+                issue_type="test",
+                title="test",
+                description="test",
+                location=IssueLocation(chapter=1),
+            )
+        )
 
         assert result.issue_count == 1
         assert result.p1_count == 1
@@ -209,39 +207,45 @@ class TestConsistencyReport:
 
     def test_report_add_issue(self):
         report = ConsistencyReport(chapter=25)
-        report.add_issue(Issue(
-            id="test",
-            severity=IssueSeverity.P1,
-            checker_type=CheckerType.CHARACTER,
-            issue_type="test",
-            title="test",
-            description="test",
-            location=IssueLocation(chapter=25)
-        ))
+        report.add_issue(
+            Issue(
+                id="test",
+                severity=IssueSeverity.P1,
+                checker_type=CheckerType.CHARACTER,
+                issue_type="test",
+                title="test",
+                description="test",
+                location=IssueLocation(chapter=25),
+            )
+        )
 
         assert report.issue_count == 1
         assert report.p1_count == 1
 
     def test_report_get_issues_by_severity(self):
         report = ConsistencyReport(chapter=25)
-        report.add_issue(Issue(
-            id="p0",
-            severity=IssueSeverity.P0,
-            checker_type=CheckerType.CHARACTER,
-            issue_type="test",
-            title="p0",
-            description="test",
-            location=IssueLocation(chapter=25)
-        ))
-        report.add_issue(Issue(
-            id="p1",
-            severity=IssueSeverity.P1,
-            checker_type=CheckerType.CHARACTER,
-            issue_type="test",
-            title="p1",
-            description="test",
-            location=IssueLocation(chapter=25)
-        ))
+        report.add_issue(
+            Issue(
+                id="p0",
+                severity=IssueSeverity.P0,
+                checker_type=CheckerType.CHARACTER,
+                issue_type="test",
+                title="p0",
+                description="test",
+                location=IssueLocation(chapter=25),
+            )
+        )
+        report.add_issue(
+            Issue(
+                id="p1",
+                severity=IssueSeverity.P1,
+                checker_type=CheckerType.CHARACTER,
+                issue_type="test",
+                title="p1",
+                description="test",
+                location=IssueLocation(chapter=25),
+            )
+        )
 
         p0_issues = report.get_issues_by_severity(IssueSeverity.P0)
         assert len(p0_issues) == 1
@@ -256,15 +260,17 @@ class TestConsistencyReport:
 
     def test_report_make_verdict_fail_p0(self):
         report = ConsistencyReport(chapter=25)
-        report.add_issue(Issue(
-            id="p0",
-            severity=IssueSeverity.P0,
-            checker_type=CheckerType.CHARACTER,
-            issue_type="test",
-            title="p0",
-            description="test",
-            location=IssueLocation(chapter=25)
-        ))
+        report.add_issue(
+            Issue(
+                id="p0",
+                severity=IssueSeverity.P0,
+                checker_type=CheckerType.CHARACTER,
+                issue_type="test",
+                title="p0",
+                description="test",
+                location=IssueLocation(chapter=25),
+            )
+        )
         verdict = report.make_verdict()
 
         assert verdict == "fail"
@@ -272,15 +278,17 @@ class TestConsistencyReport:
     def test_report_make_verdict_fail_p1(self):
         report = ConsistencyReport(chapter=25)
         for i in range(3):
-            report.add_issue(Issue(
-                id=f"p1_{i}",
-                severity=IssueSeverity.P1,
-                checker_type=CheckerType.CHARACTER,
-                issue_type="test",
-                title="p1",
-                description="test",
-                location=IssueLocation(chapter=25)
-            ))
+            report.add_issue(
+                Issue(
+                    id=f"p1_{i}",
+                    severity=IssueSeverity.P1,
+                    checker_type=CheckerType.CHARACTER,
+                    issue_type="test",
+                    title="p1",
+                    description="test",
+                    location=IssueLocation(chapter=25),
+                )
+            )
         verdict = report.make_verdict()
 
         assert verdict == "fail"
@@ -306,7 +314,7 @@ class TestRealtimeIssue:
             checker_type=CheckerType.AI_GLOSS,
             message="检测到AI痕迹",
             location="第3段",
-            quick_fix="使用更自然的表达"
+            quick_fix="使用更自然的表达",
         )
 
         assert issue.severity == IssueSeverity.P2
@@ -317,7 +325,7 @@ class TestRealtimeIssue:
             severity=IssueSeverity.P2,
             checker_type=CheckerType.AI_GLOSS,
             message="检测到AI痕迹",
-            location="第3段"
+            location="第3段",
         )
 
         data = issue.to_dict()

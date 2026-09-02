@@ -2,6 +2,7 @@
 
 Doc 2 §5 SCENARIOS:emotional_pacing 是 auditor scenario,诊断情感节奏 (过山车/扁平/失衡)。
 """
+
 from __future__ import annotations
 
 from lingwen_prompt.templates import (

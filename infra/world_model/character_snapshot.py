@@ -169,7 +169,8 @@ class CharacterSnapshot:
 
         logger.info(
             "人物状态快照已创建: 章节范围 %d-%d, %d 个人物, %d 条状态记录",
-            self.min_chapter, self.max_chapter,
+            self.min_chapter,
+            self.max_chapter,
             len(self._by_character),
             sum(len(v) for v in self._by_character.values()),
         )
@@ -227,9 +228,7 @@ class CharacterSnapshot:
         states = self._by_character.get(character_id, [])
         return states[-1] if states else None
 
-    def get_changes_for(
-        self, character_id: str
-    ) -> tuple[CharacterAttributeChange, ...]:
+    def get_changes_for(self, character_id: str) -> tuple[CharacterAttributeChange, ...]:
         """获取指定人物的所有属性变更
 
         Args:
@@ -240,9 +239,7 @@ class CharacterSnapshot:
         """
         return tuple(self._changes.get(character_id, []))
 
-    def get_all_changes_in_chapter(
-        self, chapter: int
-    ) -> dict[str, tuple[CharacterAttributeChange, ...]]:
+    def get_all_changes_in_chapter(self, chapter: int) -> dict[str, tuple[CharacterAttributeChange, ...]]:
         """获取指定章节所有人物的属性变更
 
         Args:
@@ -285,10 +282,7 @@ class CharacterSnapshot:
         return {
             "chapter_range": list(self._chapter_range),
             "snapshot_time": self._snapshot_time.isoformat(),
-            "characters": {
-                cid: [s.to_dict() for s in states]
-                for cid, states in self._by_character.items()
-            },
+            "characters": {cid: [s.to_dict() for s in states] for cid, states in self._by_character.items()},
         }
 
     @classmethod
@@ -329,12 +323,14 @@ class CharacterSnapshot:
                     old_val = prev_state.attributes.get(key)
                     new_val = curr_state.attributes.get(key)
                     if old_val != new_val:
-                        changes.append(CharacterAttributeChange(
-                            attribute=key,
-                            old_value=old_val,
-                            new_value=new_val,
-                            chapter=curr_state.chapter,
-                        ))
+                        changes.append(
+                            CharacterAttributeChange(
+                                attribute=key,
+                                old_value=old_val,
+                                new_value=new_val,
+                                chapter=curr_state.chapter,
+                            )
+                        )
 
                 # 比较 relationships
                 all_rel_keys = set(prev_state.relationships.keys()) | set(curr_state.relationships.keys())
@@ -342,12 +338,14 @@ class CharacterSnapshot:
                     old_val = prev_state.relationships.get(key)
                     new_val = curr_state.relationships.get(key)
                     if old_val != new_val:
-                        changes.append(CharacterAttributeChange(
-                            attribute=f"relationship:{key}",
-                            old_value=old_val,
-                            new_value=new_val,
-                            chapter=curr_state.chapter,
-                        ))
+                        changes.append(
+                            CharacterAttributeChange(
+                                attribute=f"relationship:{key}",
+                                old_value=old_val,
+                                new_value=new_val,
+                                chapter=curr_state.chapter,
+                            )
+                        )
 
                 prev_state = curr_state
 

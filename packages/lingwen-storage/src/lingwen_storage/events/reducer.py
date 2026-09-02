@@ -1,4 +1,5 @@
 """Project event stream into current workflow view."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

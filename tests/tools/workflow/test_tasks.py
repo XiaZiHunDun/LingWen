@@ -6,6 +6,7 @@ NOTE: TestDispatchTask.test_dispatch_task_triggers_event patches
 `infra.tools.workflow.lib.events._trigger_event`. tasks.py must import as
 `from . import events; events._trigger_event(...)` for this patch to work.
 """
+
 import time
 from unittest.mock import patch
 
@@ -29,10 +30,10 @@ class TestDispatchTask:
 
         task = get_task_status("test_task")
         assert task is not None
-        assert task['task_id'] == "test_task"
-        assert task['task_name'] == "test_task"
-        assert task['agent'] == "agent-x"
-        assert task['status'] == "pending"
+        assert task["task_id"] == "test_task"
+        assert task["task_name"] == "test_task"
+        assert task["agent"] == "agent-x"
+        assert task["status"] == "pending"
 
     def test_dispatch_task_with_empty_description(self, init_db):
         """Test dispatch_task with empty description"""
@@ -46,7 +47,7 @@ class TestDispatchTask:
         """Test that dispatch_task triggers MANUAL_TRIGGER event"""
         from infra.tools.workflow.lib import dispatch_task
 
-        with patch('infra.tools.workflow.lib.events._trigger_event') as mock_trigger:
+        with patch("infra.tools.workflow.lib.events._trigger_event") as mock_trigger:
             dispatch_task("event_test_task", "agent-z", "desc")
 
             mock_trigger.assert_called()
@@ -61,7 +62,7 @@ class TestDispatchTask:
         dispatch_task("multi_task_2", "writer-b", "Second")
 
         tasks = list_tasks()
-        task_ids = [t['task_id'] for t in tasks]
+        task_ids = [t["task_id"] for t in tasks]
         assert "multi_task_1" in task_ids
         assert "multi_task_2" in task_ids
 
@@ -86,8 +87,8 @@ class TestVerifyTask:
         verify_task("status_test_task", "ext_456", "completed")
 
         task = get_task_status("status_test_task")
-        assert task['status'] == "completed"
-        assert task['task_id_external'] == "ext_456"
+        assert task["status"] == "completed"
+        assert task["task_id_external"] == "ext_456"
 
     def test_verify_task_nonexistent_returns_true(self, init_db):
         """Test verify_task on non-existent task returns True (DB update doesn't error)"""
@@ -104,7 +105,7 @@ class TestVerifyTask:
             dispatch_task(f"status_{status}", "agent", "")
             verify_task(f"status_{status}", f"ext_{status}", status)
             task = get_task_status(f"status_{status}")
-            assert task['status'] == status
+            assert task["status"] == status
 
 
 class TestGetTaskStatus:
@@ -118,8 +119,8 @@ class TestGetTaskStatus:
         task = get_task_status("status_dict_task")
 
         assert isinstance(task, dict)
-        assert 'task_id' in task
-        assert 'agent' in task
+        assert "task_id" in task
+        assert "agent" in task
 
     def test_get_task_status_returns_none_for_missing(self, init_db):
         """Test get_task_status returns None for non-existent task"""
@@ -165,5 +166,5 @@ class TestListTasks:
         dispatch_task("new_task", "writer", "")
 
         tasks = list_tasks()
-        task_ids = [t['task_id'] for t in tasks]
+        task_ids = [t["task_id"] for t in tasks]
         assert "new_task" in task_ids

@@ -4,6 +4,7 @@ Phase 19+ Sub1 — 从 infra/subplot/data_structures.py 迁移到 lingwen-core/d
 
 主支线/支线定义 + 3 个 str Enum。
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

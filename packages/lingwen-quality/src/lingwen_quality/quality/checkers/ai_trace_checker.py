@@ -15,13 +15,28 @@ from lingwen_quality.quality import Inspector, Issue
 
 # AI痕迹模式列表
 AI_TRACE_PATTERNS = [
-    "首先", "其次", "最后",
-    "那一刻", "突然", "霎时", "刹那",
-    "可以看出", "值得注意的是", "实际上", "显然", "明显地", "显而易见",
-    "因此", "所以", "由于",
-    "于是乎", "紧接着",
-    "不断地", "持续地",
-    "他感到一阵", "她感到一阵",
+    "首先",
+    "其次",
+    "最后",
+    "那一刻",
+    "突然",
+    "霎时",
+    "刹那",
+    "可以看出",
+    "值得注意的是",
+    "实际上",
+    "显然",
+    "明显地",
+    "显而易见",
+    "因此",
+    "所以",
+    "由于",
+    "于是乎",
+    "紧接着",
+    "不断地",
+    "持续地",
+    "他感到一阵",
+    "她感到一阵",
 ]
 
 
@@ -53,41 +68,42 @@ class AITraceChecker(Inspector):
         for pattern in AI_TRACE_PATTERNS:
             if pattern in content:
                 count = content.count(pattern)
-                issues.append(Issue(
-                    chapter=chapter_num,
-                    dimension=self.dimension,
-                    issue_type=self.issue_type,
-                    severity="P2",
-                    description=f"发现{count}处AI模板句式: {pattern}",
-                    location=f"全文约{count}处",
-                    evidence=f"句式 '{pattern}' 为AI常用模板",
-                    suggestion="使用 ai_trace_repairer.py 进行替换或删除"
-                ))
+                issues.append(
+                    Issue(
+                        chapter=chapter_num,
+                        dimension=self.dimension,
+                        issue_type=self.issue_type,
+                        severity="P2",
+                        description=f"发现{count}处AI模板句式: {pattern}",
+                        location=f"全文约{count}处",
+                        evidence=f"句式 '{pattern}' 为AI常用模板",
+                        suggestion="使用 ai_trace_repairer.py 进行替换或删除",
+                    )
+                )
 
         return issues
 
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description='AI痕迹检测')
-    parser.add_argument('--chapters', type=str, default='1-10',
-                        help='章节范围')
-    parser.add_argument('--limit', type=int, default=None,
-                        help='限制检测章节数量')
+
+    parser = argparse.ArgumentParser(description="AI痕迹检测")
+    parser.add_argument("--chapters", type=str, default="1-10", help="章节范围")
+    parser.add_argument("--limit", type=int, default=None, help="限制检测章节数量")
 
     args = parser.parse_args()
 
     # 解析章节范围
     chapters = []
-    for part in args.chapters.split(','):
-        if '-' in part:
-            start, end = map(int, part.split('-'))
+    for part in args.chapters.split(","):
+        if "-" in part:
+            start, end = map(int, part.split("-"))
             chapters.extend(range(start, end + 1))
         else:
             chapters.append(int(part))
 
     if args.limit:
-        chapters = chapters[:args.limit]
+        chapters = chapters[: args.limit]
 
     checker = AITraceChecker()
     all_issues = checker.check_batch(chapters)
@@ -105,5 +121,5 @@ def main():
         print(f"  [{issue.severity}] {issue.description}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

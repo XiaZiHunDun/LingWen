@@ -1,4 +1,5 @@
 """Embedding provider abstraction for Memory RAG (F89)."""
+
 from __future__ import annotations
 
 from typing import Literal, Protocol, runtime_checkable

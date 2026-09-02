@@ -2,6 +2,7 @@
 
 Doc 2 §5 SCENARIOS:outline_review 是 auditor scenario,审核大纲结构/伏笔/驱动链。
 """
+
 from __future__ import annotations
 
 from lingwen_prompt.templates import (

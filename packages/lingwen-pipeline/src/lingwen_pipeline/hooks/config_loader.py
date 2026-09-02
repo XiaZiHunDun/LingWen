@@ -2,6 +2,7 @@
 """
 配置加载器 - 负责解析和验证 hooks.yaml 配置文件
 """
+
 from __future__ import annotations
 
 import re
@@ -24,6 +25,7 @@ class HookConfig:
         required: 是否必须（失败时是否阻止流程）
         timeout: 超时时间（秒）
     """
+
     name: str
     trigger: Dict[str, Any]
     actions: List[Dict[str, Any]] = field(default_factory=list)
@@ -95,14 +97,14 @@ class ConditionEvaluator:
         text = text.strip()
 
         # 去除引号
-        if (text.startswith("'") and text.endswith("'")) or \
-           (text.startswith('"') and text.endswith('"')):
+        if (text.startswith("'") and text.endswith("'")) or (text.startswith('"') and text.endswith('"')):
             return text[1:-1]
 
         # 解析列表（如 ['PASS', 'NEED_REVISION']）
         if text.startswith("[") and text.endswith("]"):
             try:
                 import ast
+
                 return ast.literal_eval(text)
             except Exception:
                 return text
@@ -128,21 +130,37 @@ class HookConfigLoader:
 
     # 支持的事件类型
     VALID_EVENTS = {
-        "PHASE_CHANGED", "STEP_COMPLETED", "STEP_FAILED",
-        "CHAPTER_WRITTEN", "CHAPTER_REVISED", "CHAPTER_FINALIZED", "WRITER_IDLE",
-        "REVIEW_STARTED", "REVIEW_COMPLETED", "REVIEW_FAILED",
-        "INSPIRATION_GENERATED", "OUTLINE_APPROVED",
-        "STAGE_SUMMARIZED", "VOLUME_SUMMARIZED", "FINAL_SUMMARY_APPROVED",
+        "PHASE_CHANGED",
+        "STEP_COMPLETED",
+        "STEP_FAILED",
+        "CHAPTER_WRITTEN",
+        "CHAPTER_REVISED",
+        "CHAPTER_FINALIZED",
+        "WRITER_IDLE",
+        "REVIEW_STARTED",
+        "REVIEW_COMPLETED",
+        "REVIEW_FAILED",
+        "INSPIRATION_GENERATED",
+        "OUTLINE_APPROVED",
+        "STAGE_SUMMARIZED",
+        "VOLUME_SUMMARIZED",
+        "FINAL_SUMMARY_APPROVED",
         "MANUAL_TRIGGER",
-        "STEP_17_COMPLETED", "state_updated",
+        "STEP_17_COMPLETED",
+        "state_updated",
         "BEFORE_WRITE",  # R3-011: 用于 story_contract 注入
     }
 
     # 支持的动作类型
     VALID_ACTION_TYPES = {
-        "run_checker", "notify", "update_state",
-        "run_script", "trigger_module", "request_approval",
-        "block_proceed", "log_state_change",
+        "run_checker",
+        "notify",
+        "update_state",
+        "run_script",
+        "trigger_module",
+        "request_approval",
+        "block_proceed",
+        "log_state_change",
         "slow",  # R3-004: 测试用慢动作(校验时也允许)
     }
 
@@ -187,7 +205,7 @@ class HookConfigLoader:
             trigger=data.get("trigger", {}),
             actions=data.get("actions", []),
             required=data.get("required", False),
-            timeout=data.get("timeout", 60)
+            timeout=data.get("timeout", 60),
         )
 
     def validate(self, configs: List[HookConfig]) -> tuple[bool, List[str]]:
@@ -209,9 +227,7 @@ class HookConfigLoader:
 
             # 验证事件类型
             if config.event_name not in self.VALID_EVENTS:
-                errors.append(
-                    f"Hook '{config.name}' 使用了无效的事件类型: {config.event_name}"
-                )
+                errors.append(f"Hook '{config.name}' 使用了无效的事件类型: {config.event_name}")
 
             # 验证动作列表
             if not config.actions:
@@ -221,14 +237,12 @@ class HookConfigLoader:
                     action_type = action.get("type", "")
                     if action_type not in self.VALID_ACTION_TYPES:
                         errors.append(
-                            f"Hook '{config.name}' 的第{i+1}个action使用了无效类型: {action_type}"
+                            f"Hook '{config.name}' 的第{i + 1}个action使用了无效类型: {action_type}"
                         )
 
             # 验证超时时间
             if config.timeout <= 0 or config.timeout > 3600:
-                errors.append(
-                    f"Hook '{config.name}' 的timeout值无效: {config.timeout}"
-                )
+                errors.append(f"Hook '{config.name}' 的timeout值无效: {config.timeout}")
 
         return len(errors) == 0, errors
 
@@ -243,11 +257,7 @@ class HookConfigLoader:
         """获取所有订阅特定事件的Hook配置"""
         return [c for c in self._configs if c.event_name == event_name]
 
-    def evaluate_conditions(
-        self,
-        conditions: List[str],
-        context: Dict[str, Any]
-    ) -> bool:
+    def evaluate_conditions(self, conditions: List[str], context: Dict[str, Any]) -> bool:
         """
         求值条件列表（所有条件都为True才返回True）
 

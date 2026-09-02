@@ -9,6 +9,7 @@ Phase 1.3.c — RED tests for 12 SCENARIOS + 22 STEP_CONTRACTS constants.
 - SCENARIOS 是不可变 tuple[str, ...]
 - STEP_CONTRACTS 是 dict[step, StepContract]
 """
+
 from __future__ import annotations
 
 import pytest
@@ -127,7 +128,10 @@ class TestScenarioMetadata:
             meta = get_scenario(s)
             # agent_role 应该是 5 核心 Agent 之一
             assert meta["agent_role"] in {
-                "content_writer", "auditor", "polisher", "outline_master",
+                "content_writer",
+                "auditor",
+                "polisher",
+                "outline_master",
                 "character_designer",
             }, f"{s} has invalid agent_role {meta['agent_role']!r}"
 

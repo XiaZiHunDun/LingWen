@@ -5,6 +5,7 @@ PoC 范围 (per 计划):
 - 不调用真实 LLM (Mock compute_fn)
 - 提供 scale_estimate 外推到 50 章
 """
+
 from .run_volume_1 import (
     PoCResult,
     ScaleEstimate,

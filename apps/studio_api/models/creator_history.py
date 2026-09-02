@@ -2,6 +2,7 @@
 
 Models unchanged — only relocated for code organization.
 """
+
 from __future__ import annotations
 
 from typing import Optional
@@ -23,8 +24,10 @@ class CreatorBatchHistoryItem(BaseModel):
     error: Optional[str] = None
     failure_reason: Optional[str] = None
 
+
 class CreatorBatchHistoryResponse(BaseModel):
     jobs: list[CreatorBatchHistoryItem] = []
+
 
 class CreatorBatchHistoryExportResponse(BaseModel):
     schema_version: str = "1"

@@ -6,6 +6,7 @@ Usage:
 Or against a saved dump:
     uv run python tooling/contracts/dump_openapi.py --from-file /tmp/openapi.json --out /tmp/openapi.json
 """
+
 from __future__ import annotations
 
 import argparse

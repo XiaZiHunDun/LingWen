@@ -1,4 +1,5 @@
 """Companion e2e project seed tests."""
+
 from __future__ import annotations
 
 import json

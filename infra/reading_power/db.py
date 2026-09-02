@@ -153,7 +153,15 @@ class ReadingPowerDB:
                 (chapter, hook_type, strength, position, content, llm_analyzed, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
-                (chapter, hook_type, strength, position, content, int(llm_analyzed), datetime.now().isoformat()),
+                (
+                    chapter,
+                    hook_type,
+                    strength,
+                    position,
+                    content,
+                    int(llm_analyzed),
+                    datetime.now().isoformat(),
+                ),
             )
             return cursor.lastrowid or 0
 
@@ -216,7 +224,15 @@ class ReadingPowerDB:
                 (chapter, pattern, density, combo_with, content, llm_analyzed, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
-                (chapter, pattern, density, combo_with, content, int(llm_analyzed), datetime.now().isoformat()),
+                (
+                    chapter,
+                    pattern,
+                    density,
+                    combo_with,
+                    content,
+                    int(llm_analyzed),
+                    datetime.now().isoformat(),
+                ),
             )
             return cursor.lastrowid or 0
 
@@ -340,7 +356,16 @@ class ReadingPowerDB:
                 (chapter, analyzer_type, input_tokens, output_tokens, duration_ms, status, error_message, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (chapter, analyzer_type, input_tokens, output_tokens, duration_ms, status, error_message, datetime.now().isoformat()),
+                (
+                    chapter,
+                    analyzer_type,
+                    input_tokens,
+                    output_tokens,
+                    duration_ms,
+                    status,
+                    error_message,
+                    datetime.now().isoformat(),
+                ),
             )
             return cursor.lastrowid or 0
 
@@ -379,11 +404,11 @@ class ReadingPowerDB:
                 cursor = conn.execute("SELECT AVG(coolpoint_density) FROM chapter_summary")
                 avg_coolpoint_density = cursor.fetchone()[0] or 0.0
                 return {
-                    'total_chapters': total_chapters,
-                    'total_hooks': total_hooks,
-                    'avg_hook_strength': avg_hook_strength,
-                    'total_coolpoints': total_coolpoints,
-                    'avg_coolpoint_density': avg_coolpoint_density,
+                    "total_chapters": total_chapters,
+                    "total_hooks": total_hooks,
+                    "avg_hook_strength": avg_hook_strength,
+                    "total_coolpoints": total_coolpoints,
+                    "avg_coolpoint_density": avg_coolpoint_density,
                 }
         except Exception:
             return None

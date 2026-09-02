@@ -14,6 +14,7 @@ Out of scope (later phases):
 - SQLite backend
 - Compression / incremental storage
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -111,6 +112,7 @@ class TestSnapshotStoreIntegrity:
         # 篡改文件 (把 content 改了)
         snap_file = tmp_path / "ch0001.json"
         import json
+
         data = json.loads(snap_file.read_text(encoding="utf-8"))
         data["world_mood"] = "tampered!"
         snap_file.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
@@ -126,6 +128,7 @@ class TestSnapshotStoreIntegrity:
         # 篡改
         snap_file = tmp_path / "ch0001.json"
         import json
+
         data = json.loads(snap_file.read_text(encoding="utf-8"))
         data["world_mood"] = "tampered"
         snap_file.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")

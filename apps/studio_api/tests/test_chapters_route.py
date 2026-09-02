@@ -2,6 +2,7 @@
 
 chapters.py 演示薄壳模式：每路由 < 30 行，仅做 HTTP 解析 + use-case 调用。
 """
+
 from __future__ import annotations
 
 from fastapi import FastAPI

@@ -5,6 +5,7 @@ Uses:
   - infra.persistence (storage)
   - lingwen_creator.shared.mode (settings_from_project_config)
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -27,9 +28,7 @@ def filter_deviations_by_min_severity(
         return list(deviations)
     threshold = _SEVERITY_RANK.get(str(min_severity).lower(), 99)
     return [
-        row
-        for row in deviations
-        if _SEVERITY_RANK.get(str(row.get("severity", "")).lower(), 99) <= threshold
+        row for row in deviations if _SEVERITY_RANK.get(str(row.get("severity", "")).lower(), 99) <= threshold
     ]
 
 

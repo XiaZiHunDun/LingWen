@@ -4,12 +4,21 @@ Parses existing docs/character-bible/*.md files into the world DB
 structured format, and serializes structured rows back to markdown
 preserving section ordering.
 """
+
 import hashlib
 import re
 
 CHARACTER_SECTIONS = [
-    "快速参考", "外貌", "个性", "动机", "弧光",
-    "内心冲突", "关系", "对话笔记", "Lore 连接", "审核检查点",
+    "快速参考",
+    "外貌",
+    "个性",
+    "动机",
+    "弧光",
+    "内心冲突",
+    "关系",
+    "对话笔记",
+    "Lore 连接",
+    "审核检查点",
 ]
 
 # Map Chinese section name → English attribute key (used for storage
@@ -32,11 +41,16 @@ SECTION_KEY_MAP: dict[str, str] = {
 # dependency (pypinyin) at the parser layer. Names not in the map fall back
 # to a hash-based ASCII-safe placeholder.
 PINYIN_MAP: dict[str, str] = {
-    "林": "lin", "夜": "ye",
-    "苏": "su", "琳": "lin",
-    "铁": "tie", "蛋": "dan",
-    "莫": "mo", "言": "yan",
-    "星": "xing", "月": "yue",
+    "林": "lin",
+    "夜": "ye",
+    "苏": "su",
+    "琳": "lin",
+    "铁": "tie",
+    "蛋": "dan",
+    "莫": "mo",
+    "言": "yan",
+    "星": "xing",
+    "月": "yue",
 }
 
 
@@ -268,7 +282,7 @@ def serialize_timeline_markdown(events: list[dict]) -> str:
     event description when present.
     """
     lines = ["# 世界时间线", ""]
-    for ev in sorted(events, key=lambda e: (e.get("story_year") or 0)):
+    for ev in sorted(events, key=lambda e: e.get("story_year") or 0):
         year_label = ev.get("story_label") or (
             f"T{ev['story_year']:+d}" if ev.get("story_year") is not None else ""
         )
@@ -281,7 +295,10 @@ def serialize_timeline_markdown(events: list[dict]) -> str:
 
 
 def import_project_markdown(
-    conn, character_dir, faction_path=None, lore_path=None,
+    conn,
+    character_dir,
+    faction_path=None,
+    lore_path=None,
 ) -> dict:
     """Import markdown files into the world DB. Returns import summary.
 
@@ -306,6 +323,7 @@ def import_project_markdown(
                     create_character,
                     get_character_by_slug,
                 )
+
                 if get_character_by_slug(conn, parsed["slug"]):
                     summary["characters_skipped"] += 1
                     continue
@@ -320,6 +338,7 @@ def import_project_markdown(
                 create_faction,
                 get_faction_by_slug,
             )
+
             md = faction_path.read_text(encoding="utf-8")
             parsed = parse_faction_markdown(md)
             if not get_faction_by_slug(conn, parsed["slug"]):
@@ -331,6 +350,7 @@ def import_project_markdown(
     if lore_path and lore_path.is_file():
         try:
             from infra.world_db.queries.lore import create_lore, list_lore
+
             md = lore_path.read_text(encoding="utf-8")
             parsed = parse_lore_markdown(md)
             existing = {lore_entry["slug"] for lore_entry in list_lore(conn)}

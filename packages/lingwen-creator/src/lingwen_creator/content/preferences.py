@@ -5,6 +5,7 @@ Uses:
   - infra.persistence (storage)
   - lingwen_creator.shared.mode (resolve_creator_settings)
 """
+
 from __future__ import annotations
 
 import json

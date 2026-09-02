@@ -9,6 +9,7 @@ Phase 1.2.e — RED tests for PlotRegistry CRUD + 5-subplot limit + JSON persist
 - update_status: 校验状态转换 + CLOSING≥2ch
 - JSON 持久化到 {base_dir}/subplots.json
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -233,10 +234,12 @@ class TestUpdateStatus:
 class TestRegistryPersistence:
     def test_save_and_load_roundtrip(self, tmp_path: Path):
         r = PlotRegistry(tmp_path)
-        r.add_plot(_plot(plot_id="main-001", type_=PlotType.MAIN, status=PlotStatus.ACTIVE,
-                         purpose=PlotPurpose.GROWTH))
-        r.add_plot(_plot(plot_id="sub-1", status=PlotStatus.ACTIVE,
-                         purpose=PlotPurpose.MYSTERY))
+        r.add_plot(
+            _plot(
+                plot_id="main-001", type_=PlotType.MAIN, status=PlotStatus.ACTIVE, purpose=PlotPurpose.GROWTH
+            )
+        )
+        r.add_plot(_plot(plot_id="sub-1", status=PlotStatus.ACTIVE, purpose=PlotPurpose.MYSTERY))
         r.save()
 
         # 文件应该存在

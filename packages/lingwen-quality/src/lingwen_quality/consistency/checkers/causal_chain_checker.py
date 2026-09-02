@@ -30,13 +30,7 @@ class EntityStateTracker:
             self._states[entity_id] = EntityState(entity_id=entity_id)
         return self._states[entity_id]
 
-    def record_action(
-        self,
-        entity_id: str,
-        action: str,
-        target: str,
-        chapter: int
-    ):
+    def record_action(self, entity_id: str, action: str, target: str, chapter: int):
         """记录实体的动作"""
         entity = self.get_or_create_entity(entity_id)
         entity.apply_action(action, target, chapter)
@@ -48,8 +42,8 @@ class EntityStateTracker:
 
 class CausalChainChecker(BaseChecker):
     """因果断裂检测器 - 检测A做了X但Y没有发生相应改变"""
-    _checker_type = CheckerType.CAUSAL_CHAIN
 
+    _checker_type = CheckerType.CAUSAL_CHAIN
 
     def __init__(self):
         super().__init__(self._checker_type)
@@ -58,10 +52,7 @@ class CausalChainChecker(BaseChecker):
         self.tracker = EntityStateTracker()
 
     def check(
-        self,
-        chapter_content: str,
-        chapter_num: int,
-        context: Optional[Dict[str, Any]] = None
+        self, chapter_content: str, chapter_num: int, context: Optional[Dict[str, Any]] = None
     ) -> List[Issue]:
         issues = []
 
@@ -77,9 +68,8 @@ class CausalChainChecker(BaseChecker):
 
                         # 2. 检查该目标的历史状态（是否被此动作影响）
                         entity_state = self.tracker.get_entity_state(target)
-                        has_causal_history = (
-                            entity_state is not None and
-                            any(e["action"] == rule["action"] for e in entity_state.action_history)
+                        has_causal_history = entity_state is not None and any(
+                            e["action"] == rule["action"] for e in entity_state.action_history
                         )
 
                         # 3. 如果有因果历史，检查当前章节是否有矛盾
@@ -95,10 +85,7 @@ class CausalChainChecker(BaseChecker):
 
                         # 4. 记录当前动作到历史
                         self.tracker.record_action(
-                            entity_id=target,
-                            action=rule["action"],
-                            target=target,
-                            chapter=chapter_num
+                            entity_id=target, action=rule["action"], target=target, chapter=chapter_num
                         )
 
         return issues
@@ -109,14 +96,10 @@ class CausalChainChecker(BaseChecker):
         # 模式: [动作词] + [任意内容] + [目标名]
         # Use re.DOTALL so . matches newlines too
         # The pattern matches: keyword + stuff + Chinese chars (2-8) + item type
-        pattern = f'{re.escape(keyword)}.{{0,50}}?([一-龥]{{0,4}}(?:茶杯|剑|书|物|人|家伙))'
+        pattern = f"{re.escape(keyword)}.{{0,50}}?([一-龥]{{0,4}}(?:茶杯|剑|书|物|人|家伙))"
         flags = re.DOTALL
         for m in re.finditer(pattern, text, flags):
-            results.append({
-                "text": m.group(),
-                "target": m.group(1),
-                "action": keyword
-            })
+            results.append({"text": m.group(), "target": m.group(1), "action": keyword})
         return results
 
     def _create_issue(self, rule: dict, match: dict, chapter_num: int) -> Issue:
@@ -130,5 +113,5 @@ class CausalChainChecker(BaseChecker):
             description=f"前文显示{match['target']}被{match['action']}，但当前章节显示{rule['contradiction_trigger']}",
             location=IssueLocation(chapter=chapter_num),
             evidence=f"匹配: {match['text'][:50]}",
-            suggestion=f"需要加入: {', '.join(rule['resolution_required'])}"
+            suggestion=f"需要加入: {', '.join(rule['resolution_required'])}",
         )

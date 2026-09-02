@@ -1,4 +1,5 @@
 """Dashboard studio endpoints (Phase 10.04)."""
+
 from __future__ import annotations
 
 from pathlib import Path

@@ -15,6 +15,7 @@ Endpoints that use these:
 - ``POST /workflows/budget`` → BudgetSetRequest (per-day / per-week USD)
 - ``POST /workflows/budget/tier`` → BudgetTierSetRequest (per-tier USD)
 """
+
 from __future__ import annotations
 
 from pydantic import BaseModel, Field
@@ -22,11 +23,13 @@ from pydantic import BaseModel, Field
 
 class BudgetSetRequest(BaseModel):
     """Phase 8.12 T5: 设置 day/week budget (per-run 不暴露, run 启动时传)"""
+
     usd: float = Field(ge=0, le=10000)  # 0 表示"无限但仍写行 0"
 
 
 class BudgetTierSetRequest(BaseModel):
     """Phase 8.15 T6: 设置 tier budget (haiku/sonnet/opus 各自)."""
+
     usd: float = Field(ge=0, le=10000)  # 0 表示"无限但仍写行 0"
 
 

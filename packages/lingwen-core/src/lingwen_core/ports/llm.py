@@ -2,6 +2,7 @@
 
 Phase 18.0 — 大语言模型与嵌入接口契约。
 """
+
 from __future__ import annotations
 
 import hashlib

@@ -141,13 +141,7 @@ class VariantLoader:
         style = self.get_style(polisher_id)
         return style.get("tone", "neutral")
 
-    def build_polish_prompt(
-        self,
-        polisher_id: str,
-        base_prompt: str,
-        content: str,
-        context: dict
-    ) -> str:
+    def build_polish_prompt(self, polisher_id: str, base_prompt: str, content: str, context: dict) -> str:
         """构建润色提示
 
         根据润色师配置增强提示词。
@@ -209,6 +203,7 @@ class VariantLoader:
 
 # 全局实例
 _loader = None
+
 
 def get_variant_loader() -> VariantLoader:
     """获取变体加载器单例

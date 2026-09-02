@@ -1,4 +1,5 @@
 """Phase 9.74 F66: GET /api/workflows/active exposes production_summary."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone

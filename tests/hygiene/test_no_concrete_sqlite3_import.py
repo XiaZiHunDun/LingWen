@@ -37,6 +37,7 @@ Carryover:
   implement `lingwen_shared.ports.storage.StoragePort` rather than
   introducing a new stdlib driver import in business code.
 """
+
 from __future__ import annotations
 
 import re
@@ -63,13 +64,9 @@ def test_dp03_contract_targets_sqlite3() -> None:
     """DP-03 contract must forbid sqlite3 in lingwen_creator (business code)."""
     config = tomllib.loads(PYPROJECT.read_text())
     contracts = config["tool"]["importlinter"]["contracts"]
-    dp03 = next(
-        c for c in contracts if c["name"] == "no_concrete_sqlite3_in_business_code"
-    )
+    dp03 = next(c for c in contracts if c["name"] == "no_concrete_sqlite3_in_business_code")
 
-    assert dp03["type"] == "forbidden", (
-        f"DP-03 contract must be of type 'forbidden', got {dp03['type']!r}"
-    )
+    assert dp03["type"] == "forbidden", f"DP-03 contract must be of type 'forbidden', got {dp03['type']!r}"
     assert dp03["forbidden_modules"] == ["sqlite3"], (
         f"DP-03 must forbid exactly ['sqlite3'], got {dp03['forbidden_modules']!r}"
     )
@@ -94,8 +91,7 @@ def test_lint_imports_reports_dp03_kept() -> None:
     output = (result.stdout or "") + (result.stderr or "")
 
     assert "no_concrete_sqlite3_in_business_code KEPT" in output, (
-        f"DP-03 contract not reported as KEPT.\n"
-        f"lint-imports exit={result.returncode}\noutput:\n{output}"
+        f"DP-03 contract not reported as KEPT.\nlint-imports exit={result.returncode}\noutput:\n{output}"
     )
 
 

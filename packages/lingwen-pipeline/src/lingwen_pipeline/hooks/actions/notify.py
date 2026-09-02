@@ -2,6 +2,7 @@
 """
 通知动作 - 发送通知到指定渠道
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -25,12 +26,7 @@ class NotifyAction(BaseAction):
     """
 
     # 支持的通知渠道
-    VALID_CHANNELS = {
-        "writer_channel",
-        "reviewer_channel",
-        "controller_channel",
-        "system_channel"
-    }
+    VALID_CHANNELS = {"writer_channel", "reviewer_channel", "controller_channel", "system_channel"}
 
     # 通知模板目录
     TEMPLATES_DIR = Path(__file__).resolve().parents[2] / "hooks" / "templates"
@@ -39,11 +35,7 @@ class NotifyAction(BaseAction):
     def action_type(self) -> str:
         return "notify"
 
-    def execute(
-        self,
-        params: Dict[str, Any],
-        context: Dict[str, Any]
-    ) -> ActionResult:
+    def execute(self, params: Dict[str, Any], context: Dict[str, Any]) -> ActionResult:
         """
         发送通知
 
@@ -69,10 +61,7 @@ class NotifyAction(BaseAction):
         # 验证渠道
         if channel not in self.VALID_CHANNELS:
             logger.warning(f"Notify action: invalid channel={channel}")
-            return ActionResult(
-                success=False,
-                error=f"Invalid channel: {channel}"
-            )
+            return ActionResult(success=False, error=f"Invalid channel: {channel}")
 
         try:
             # 构建通知内容
@@ -93,19 +82,15 @@ class NotifyAction(BaseAction):
                     "channel": channel,
                     "content": content,
                     "sent_at": result.get("sent_at"),
-                    "status": result.get("status", "sent")
-                }
+                    "status": result.get("status", "sent"),
+                },
             )
 
         except Exception as e:
             logger.error(f"Notify action: failed - {e}")
             return ActionResult(success=False, error=str(e))
 
-    def _render_template(
-        self,
-        template_name: str,
-        context: Dict[str, Any]
-    ) -> str:
+    def _render_template(self, template_name: str, context: Dict[str, Any]) -> str:
         """
         渲染通知模板
 
@@ -120,6 +105,7 @@ class NotifyAction(BaseAction):
         template_path = self.TEMPLATES_DIR / f"{template_name}.yaml"
         if template_path.exists():
             import yaml
+
             with open(template_path, "r", encoding="utf-8") as f:
                 template_data = yaml.safe_load(f)
 
@@ -130,11 +116,7 @@ class NotifyAction(BaseAction):
         # 如果模板不存在，生成默认内容
         return self._generate_from_template_name(template_name, context)
 
-    def _substitute_variables(
-        self,
-        template: str,
-        context: Dict[str, Any]
-    ) -> str:
+    def _substitute_variables(self, template: str, context: Dict[str, Any]) -> str:
         """简单的变量替换"""
         result = template
         for key, value in context.items():
@@ -148,11 +130,7 @@ class NotifyAction(BaseAction):
         event_name = context.get("event_name", "Unknown")
         return f"Hook '{hook_name}' triggered by event '{event_name}'"
 
-    def _generate_from_template_name(
-        self,
-        template_name: str,
-        context: Dict[str, Any]
-    ) -> str:
+    def _generate_from_template_name(self, template_name: str, context: Dict[str, Any]) -> str:
         """根据模板名称生成通知内容"""
         if template_name == "review_complete":
             review_result = context.get("review_result", "UNKNOWN")
@@ -170,12 +148,7 @@ class NotifyAction(BaseAction):
         else:
             return f"通知模板 '{template_name}' 未找到"
 
-    def _send_notification(
-        self,
-        channel: str,
-        content: str,
-        context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _send_notification(self, channel: str, content: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """
         发送通知（Mock实现）
 
@@ -199,8 +172,8 @@ class NotifyAction(BaseAction):
             "context": {
                 "event_name": context.get("event_name"),
                 "hook_name": context.get("hook_name"),
-                "source": context.get("event_source")
-            }
+                "source": context.get("event_source"),
+            },
         }
 
         # 可以写入文件或发送到消息队列

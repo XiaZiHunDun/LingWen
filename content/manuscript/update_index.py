@@ -24,21 +24,23 @@ def atomic_write_json(filepath, data):
     """原子写入JSON文件"""
     filepath = Path(filepath)
     dir_path = filepath.parent
-    with tempfile.NamedTemporaryFile(mode='w', delete=False, dir=dir_path, encoding='utf-8') as f:
+    with tempfile.NamedTemporaryFile(mode="w", delete=False, dir=dir_path, encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     os.rename(f.name, str(filepath))
 
+
 def get_chapter_info(chapter_file):
     """从正文章节文件获取基本信息"""
-    with open(chapter_file, 'r', encoding='utf-8') as f:
+    with open(chapter_file, "r", encoding="utf-8") as f:
         content = f.read()
     return {
         "filename": chapter_file.name,
         "word_count": len(content),
-        "char_count": len(content.replace('\n', '').replace(' ', '')),
-        "lines": content.count('\n'),
-        "last_updated": datetime.fromtimestamp(os.path.getmtime(chapter_file)).strftime('%Y-%m-%d')
+        "char_count": len(content.replace("\n", "").replace(" ", "")),
+        "lines": content.count("\n"),
+        "last_updated": datetime.fromtimestamp(os.path.getmtime(chapter_file)).strftime("%Y-%m-%d"),
     }
+
 
 def update_chapter_index():
     """更新正文目录索引（04_正文/index.json）"""
@@ -49,21 +51,24 @@ def update_chapter_index():
     for f in sorted(chapters_dir.glob("ch*.md")):
         if f.is_file():
             info = get_chapter_info(f)
-            chapters.append({
-                "chapter": f.stem,  # e.g. "ch001"
-                **info
-            })
+            chapters.append(
+                {
+                    "chapter": f.stem,  # e.g. "ch001"
+                    **info,
+                }
+            )
 
     index_data = {
-        "updated_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "total_chapters": len(chapters),
-        "chapters": chapters
+        "chapters": chapters,
     }
 
     atomic_write_json(index_file, index_data)
 
     print(f"Updated chapter index: {len(chapters)} chapters")
     return index_data
+
 
 def update_stage_index(volume=None):
     """更新阶段大纲索引（03_阶段大纲/*/index.json）"""
@@ -77,20 +82,23 @@ def update_stage_index(volume=None):
             stages = []
             for f in stage_files:
                 if f.name != "index.json":
-                    stages.append({
-                        "filename": f.name,
-                        "last_updated": datetime.fromtimestamp(os.path.getmtime(f)).strftime('%Y-%m-%d')
-                    })
+                    stages.append(
+                        {
+                            "filename": f.name,
+                            "last_updated": datetime.fromtimestamp(os.path.getmtime(f)).strftime("%Y-%m-%d"),
+                        }
+                    )
 
             index_data = {
-                "updated_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "total_files": len(stages),
-                "files": stages
+                "files": stages,
             }
 
             atomic_write_json(index_file, index_data)
 
     print("Updated stage indices")
+
 
 def update_volume_index():
     """更新卷大纲索引（02_卷大纲/*/index.json）"""
@@ -104,20 +112,23 @@ def update_volume_index():
             volumes = []
             for f in volume_files:
                 if f.name != "index.json":
-                    volumes.append({
-                        "filename": f.name,
-                        "last_updated": datetime.fromtimestamp(os.path.getmtime(f)).strftime('%Y-%m-%d')
-                    })
+                    volumes.append(
+                        {
+                            "filename": f.name,
+                            "last_updated": datetime.fromtimestamp(os.path.getmtime(f)).strftime("%Y-%m-%d"),
+                        }
+                    )
 
             index_data = {
-                "updated_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "total_files": len(volumes),
-                "files": volumes
+                "files": volumes,
             }
 
             atomic_write_json(index_file, index_data)
 
     print("Updated volume indices")
+
 
 def update_full_index():
     """更新全文大纲索引（01_全文总体大纲/index.json）"""
@@ -128,20 +139,23 @@ def update_full_index():
 
     full_data = []
     for f in full_files:
-        full_data.append({
-            "filename": f.name,
-            "last_updated": datetime.fromtimestamp(os.path.getmtime(f)).strftime('%Y-%m-%d')
-        })
+        full_data.append(
+            {
+                "filename": f.name,
+                "last_updated": datetime.fromtimestamp(os.path.getmtime(f)).strftime("%Y-%m-%d"),
+            }
+        )
 
     index_data = {
-        "updated_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "total_files": len(full_data),
-        "files": full_data
+        "files": full_data,
     }
 
     atomic_write_json(index_file, index_data)
 
     print("Updated full novel index")
+
 
 def update_all():
     """更新所有索引"""
@@ -150,6 +164,7 @@ def update_all():
     update_stage_index()
     update_chapter_index()
     print("All indices updated")
+
 
 def query_chapter(chapter_name):
     """查询指定章节信息"""
@@ -164,14 +179,15 @@ def query_chapter(chapter_name):
     print(f"  Last updated: {info['last_updated']}")
     return info
 
+
 def query_range(start_ch, end_ch):
     """查询章节范围"""
     chapters_dir = CONTENT_ROOT / "04_正文"
     result = []
 
     # 解析章节范围
-    start_num = int(start_ch.replace('ch', ''))
-    end_num = int(end_ch.replace('ch', ''))
+    start_num = int(start_ch.replace("ch", ""))
+    end_num = int(end_ch.replace("ch", ""))
 
     for i in range(start_num, end_num + 1):
         ch_name = f"ch{str(i).zfill(3)}"
@@ -183,28 +199,29 @@ def query_range(start_ch, end_ch):
     print(f"Range {start_ch}-{end_ch}: {len(result)} chapters")
     return result
 
+
 def main():
-    parser = argparse.ArgumentParser(description='内容仓库索引管理脚本')
-    parser.add_argument('--layer', choices=['full', 'volume', 'stage', 'chapter'],
-                        help='指定更新的层级')
-    parser.add_argument('--update', help='更新单个章节索引（章节名，如ch001）')
-    parser.add_argument('--query', help='查询单个章节信息')
-    parser.add_argument('--range', nargs=2, metavar=('START', 'END'),
-                        help='查询章节范围，如 --range ch001 ch010')
-    parser.add_argument('--all', action='store_true', help='更新所有索引')
+    parser = argparse.ArgumentParser(description="内容仓库索引管理脚本")
+    parser.add_argument("--layer", choices=["full", "volume", "stage", "chapter"], help="指定更新的层级")
+    parser.add_argument("--update", help="更新单个章节索引（章节名，如ch001）")
+    parser.add_argument("--query", help="查询单个章节信息")
+    parser.add_argument(
+        "--range", nargs=2, metavar=("START", "END"), help="查询章节范围，如 --range ch001 ch010"
+    )
+    parser.add_argument("--all", action="store_true", help="更新所有索引")
 
     args = parser.parse_args()
 
     if args.all:
         update_all()
     elif args.layer:
-        if args.layer == 'full':
+        if args.layer == "full":
             update_full_index()
-        elif args.layer == 'volume':
+        elif args.layer == "volume":
             update_volume_index()
-        elif args.layer == 'stage':
+        elif args.layer == "stage":
             update_stage_index()
-        elif args.layer == 'chapter':
+        elif args.layer == "chapter":
             update_chapter_index()
     elif args.update:
         update_chapter_index()
@@ -215,5 +232,6 @@ def main():
     else:
         parser.print_help()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

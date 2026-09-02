@@ -17,6 +17,7 @@ E2E 流程:
    - backtrack 联动: 失败 → 下游 STALE → 重新 READY
    - 缓存命中: 第二次相同 inputs 不重复调用 LLM
 """
+
 from __future__ import annotations
 
 from typing import Optional
@@ -33,6 +34,7 @@ from infra.got.llm_compute import LLMComputeFn
 from infra.got.scheduler import ExecutionSummary, GoTScheduler
 
 # === Test fixtures: stub providers ===
+
 
 class _StubProvider(AIProvider):
     """E2E stub — 可配置 response 和 call 记录"""
@@ -83,16 +85,19 @@ def _node(node_id: str, scenario: str, depends_on: tuple[str, ...] = ()) -> Thou
 
 # === E2E Test 1: 完整流水线 — 多节点 + CostTracker + Token 累计 ===
 
+
 class TestE2EWorkflow:
     """E2E: ThoughtGraph → LLMComputeFn → GoTScheduler → CostTracker"""
 
     def test_full_pipeline_completes_all_nodes(self):
         """5 节点串/并混合,全部完成,CostTracker 收到 5 条记录"""
-        router, providers = _make_router({
-            ModelTier.HAIKU: "h",
-            ModelTier.SONNET: "s-out",
-            ModelTier.OPUS: "o",
-        })
+        router, providers = _make_router(
+            {
+                ModelTier.HAIKU: "h",
+                ModelTier.SONNET: "s-out",
+                ModelTier.OPUS: "o",
+            }
+        )
         tracker = CostTracker()
         compute = LLMComputeFn(router, cost_tracker=tracker)
 
@@ -120,11 +125,13 @@ class TestE2EWorkflow:
 
     def test_pipeline_token_aggregation(self):
         """summary.total_cost_tokens == CostTracker 总 tokens (估算)"""
-        router, _ = _make_router({
-            ModelTier.HAIKU: "h",
-            ModelTier.SONNET: "s" * 100,  # 100 字符输出 → 25 tokens
-            ModelTier.OPUS: "o" * 200,  # 200 字符输出 → 50 tokens
-        })
+        router, _ = _make_router(
+            {
+                ModelTier.HAIKU: "h",
+                ModelTier.SONNET: "s" * 100,  # 100 字符输出 → 25 tokens
+                ModelTier.OPUS: "o" * 200,  # 200 字符输出 → 50 tokens
+            }
+        )
         tracker = CostTracker()
         compute = LLMComputeFn(router, cost_tracker=tracker)
 
@@ -142,14 +149,17 @@ class TestE2EWorkflow:
 
     def test_pipeline_dependency_order(self):
         """依赖顺序:b 必在 a 后执行 (验证 inputs 收集自上游)"""
-        router, providers = _make_router({
-            ModelTier.HAIKU: "h-a",
-            ModelTier.SONNET: "s-b",
-            ModelTier.OPUS: "o",
-        })
+        router, providers = _make_router(
+            {
+                ModelTier.HAIKU: "h-a",
+                ModelTier.SONNET: "s-b",
+                ModelTier.OPUS: "o",
+            }
+        )
         compute = LLMComputeFn(router)
 
         execution_order: list[str] = []
+
         # 拦截:用 custom prompt_builder 抓 node id
         def track_builder(node, inputs):
             execution_order.append(node.node_id)
@@ -169,11 +179,13 @@ class TestE2EWorkflow:
 
     def test_pipeline_collects_upstream_outputs_as_inputs(self):
         """b 的 inputs 应包含 a 的 output (即 'h-a')"""
-        router, _ = _make_router({
-            ModelTier.HAIKU: "a-output-text",
-            ModelTier.SONNET: "b-output",
-            ModelTier.OPUS: "o",
-        })
+        router, _ = _make_router(
+            {
+                ModelTier.HAIKU: "a-output-text",
+                ModelTier.SONNET: "b-output",
+                ModelTier.OPUS: "o",
+            }
+        )
         captured_inputs: dict[str, dict] = {}
 
         def capture_builder(node, inputs):
@@ -194,11 +206,13 @@ class TestE2EWorkflow:
 
     def test_pipeline_uses_correct_tier_per_scenario(self):
         """每个 scenario 路由到正确的 tier provider"""
-        router, providers = _make_router({
-            ModelTier.HAIKU: "h",
-            ModelTier.SONNET: "s",
-            ModelTier.OPUS: "o",
-        })
+        router, providers = _make_router(
+            {
+                ModelTier.HAIKU: "h",
+                ModelTier.SONNET: "s",
+                ModelTier.OPUS: "o",
+            }
+        )
         compute = LLMComputeFn(router)
         graph = ThoughtGraph()
         graph.add_node(_node("a", "hook_extraction"))  # HAIKU
@@ -215,16 +229,19 @@ class TestE2EWorkflow:
 
 # === E2E Test 2: 降级链 (TieredRouter) 联动 ===
 
+
 class TestE2EDowngrade:
     """E2E: TieredRouter 降级链在高 tier 失败时自动接管"""
 
     def test_opus_fails_downgrade_to_sonnet(self):
         """OPUS 失败 → 自动降级到 SONNET → 节点仍完成"""
-        router, providers = _make_router({
-            ModelTier.HAIKU: "h",
-            ModelTier.SONNET: "s-fallback",
-            ModelTier.OPUS: ValueError("opus down"),
-        })
+        router, providers = _make_router(
+            {
+                ModelTier.HAIKU: "h",
+                ModelTier.SONNET: "s-fallback",
+                ModelTier.OPUS: ValueError("opus down"),
+            }
+        )
         compute = LLMComputeFn(router)
         graph = ThoughtGraph()
         graph.add_node(_node("a", "subplot_suggest"))  # primary OPUS
@@ -241,11 +258,13 @@ class TestE2EDowngrade:
 
     def test_all_tiers_fail_node_marks_failed(self):
         """所有 tier 都失败 → 节点 FAILED,GoTScheduler 计入 failed"""
-        router, _ = _make_router({
-            ModelTier.HAIKU: ValueError("haiku down"),
-            ModelTier.SONNET: ValueError("sonnet down"),
-            ModelTier.OPUS: ValueError("opus down"),
-        })
+        router, _ = _make_router(
+            {
+                ModelTier.HAIKU: ValueError("haiku down"),
+                ModelTier.SONNET: ValueError("sonnet down"),
+                ModelTier.OPUS: ValueError("opus down"),
+            }
+        )
         compute = LLMComputeFn(router)
         graph = ThoughtGraph()
         graph.add_node(_node("a", "chapter_writing"))  # SONNET primary
@@ -262,6 +281,7 @@ class TestE2EDowngrade:
 
 
 # === E2E Test 3: Backtrack 联动 ===
+
 
 class TestE2EBacktrack:
     """E2E: 节点失败 + max_backtracks > 0 → 触发 backtrack + STALE 下游"""
@@ -316,16 +336,19 @@ class TestE2EBacktrack:
 
 # === E2E Test 4: CostTracker 集成 ===
 
+
 class TestE2ECostTracker:
     """E2E: CostTracker 接收 LLMComputeFn 的记录"""
 
     def test_no_tracker_no_error(self):
         """不传 cost_tracker 也不报错"""
-        router, _ = _make_router({
-            ModelTier.HAIKU: "h",
-            ModelTier.SONNET: "s",
-            ModelTier.OPUS: "o",
-        })
+        router, _ = _make_router(
+            {
+                ModelTier.HAIKU: "h",
+                ModelTier.SONNET: "s",
+                ModelTier.OPUS: "o",
+            }
+        )
         compute = LLMComputeFn(router, cost_tracker=None)
         graph = ThoughtGraph()
         graph.add_node(_node("a", "chapter_writing"))
@@ -336,11 +359,13 @@ class TestE2ECostTracker:
 
     def test_tracker_receives_records_with_primary_tier(self):
         """CostTracker 收到的 tier 是 primary tier (非降级实际 tier)"""
-        router, _ = _make_router({
-            ModelTier.HAIKU: "h-recovered",
-            ModelTier.SONNET: ValueError("sonnet down"),
-            ModelTier.OPUS: ValueError("opus down"),
-        })
+        router, _ = _make_router(
+            {
+                ModelTier.HAIKU: "h-recovered",
+                ModelTier.SONNET: ValueError("sonnet down"),
+                ModelTier.OPUS: ValueError("opus down"),
+            }
+        )
         tracker = CostTracker()
         compute = LLMComputeFn(router, cost_tracker=tracker)
         graph = ThoughtGraph()
@@ -357,11 +382,13 @@ class TestE2ECostTracker:
 
     def test_tracker_cost_by_scenario(self):
         """按 scenario 聚合成本"""
-        router, _ = _make_router({
-            ModelTier.HAIKU: "h",
-            ModelTier.SONNET: "s" * 1000,  # 大量输出
-            ModelTier.OPUS: "o",
-        })
+        router, _ = _make_router(
+            {
+                ModelTier.HAIKU: "h",
+                ModelTier.SONNET: "s" * 1000,  # 大量输出
+                ModelTier.OPUS: "o",
+            }
+        )
         tracker = CostTracker()
         compute = LLMComputeFn(router, cost_tracker=tracker)
 
@@ -382,16 +409,19 @@ class TestE2ECostTracker:
 
 # === E2E Test 5: 缓存 + ExecutionSummary 字段 ===
 
+
 class TestE2ECacheAndSummary:
     """E2E: ThoughtCache 命中 + ExecutionSummary 字段"""
 
     def test_summary_fields_populated(self):
         """ExecutionSummary 所有字段被填"""
-        router, _ = _make_router({
-            ModelTier.HAIKU: "h",
-            ModelTier.SONNET: "s",
-            ModelTier.OPUS: "o",
-        })
+        router, _ = _make_router(
+            {
+                ModelTier.HAIKU: "h",
+                ModelTier.SONNET: "s",
+                ModelTier.OPUS: "o",
+            }
+        )
         compute = LLMComputeFn(router)
         graph = ThoughtGraph()
         graph.add_node(_node("a", "hook_extraction"))
@@ -410,11 +440,13 @@ class TestE2ECacheAndSummary:
 
     def test_cache_hits_skip_llm_call(self):
         """第二次跑相同图 → 缓存命中 → LLM 调用次数不变"""
-        router, providers = _make_router({
-            ModelTier.HAIKU: "h",
-            ModelTier.SONNET: "s",
-            ModelTier.OPUS: "o",
-        })
+        router, providers = _make_router(
+            {
+                ModelTier.HAIKU: "h",
+                ModelTier.SONNET: "s",
+                ModelTier.OPUS: "o",
+            }
+        )
         compute = LLMComputeFn(router)
         graph = ThoughtGraph()
         graph.add_node(_node("a", "hook_extraction"))
@@ -435,16 +467,19 @@ class TestE2ECacheAndSummary:
 
 # === E2E Test 6: 并发/多起点 ===
 
+
 class TestE2EConcurrency:
     """E2E: 多起点 + 并行分支"""
 
     def test_diamond_topology(self):
         """菱形: root → (a, b) → join"""
-        router, _ = _make_router({
-            ModelTier.HAIKU: "h",
-            ModelTier.SONNET: "s",
-            ModelTier.OPUS: "o",
-        })
+        router, _ = _make_router(
+            {
+                ModelTier.HAIKU: "h",
+                ModelTier.SONNET: "s",
+                ModelTier.OPUS: "o",
+            }
+        )
         compute = LLMComputeFn(router)
 
         graph = ThoughtGraph()
@@ -464,11 +499,13 @@ class TestE2EConcurrency:
 
     def test_empty_start_nodes(self):
         """空 start_nodes → 立即返回 (0/0)"""
-        router, _ = _make_router({
-            ModelTier.HAIKU: "h",
-            ModelTier.SONNET: "s",
-            ModelTier.OPUS: "o",
-        })
+        router, _ = _make_router(
+            {
+                ModelTier.HAIKU: "h",
+                ModelTier.SONNET: "s",
+                ModelTier.OPUS: "o",
+            }
+        )
         compute = LLMComputeFn(router)
         graph = ThoughtGraph()
         graph.add_node(_node("a", "hook_extraction"))

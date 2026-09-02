@@ -1,4 +1,5 @@
 """cascade command - Phase 9.19 (run) + 9.20 (--persist) + 9.21 (cancel subcommand)."""
+
 from pathlib import Path
 
 from lingwen_cli.options import CascadeOptions
@@ -9,6 +10,7 @@ from .base import Command
 
 def _get_storage():
     from infra.cross_volume.storage import RippleStorage
+
     # Phase 13.0 T4 M4: resolve via $LINGWEN_PROJECT_ROOT (preferred) or CWD fallback
     return RippleStorage(db_path=resolve_project_db_path())
 
@@ -43,13 +45,8 @@ class CascadeCommand(Command):
 
         storage = _get_storage()
         mode = "execute" if options.execute else "dry-run"
-        result = purge_cascade_runs_older_than(
-            storage, delta, execute=options.execute
-        )
-        print(
-            f"[PURGE] mode={mode} older_than={options.older_than}"
-            f" cutoff={result.cutoff_iso}"
-        )
+        result = purge_cascade_runs_older_than(storage, delta, execute=options.execute)
+        print(f"[PURGE] mode={mode} older_than={options.older_than} cutoff={result.cutoff_iso}")
         print(f"  matched={result.matched} deleted={result.deleted}")
         if not options.execute and result.matched:
             print("  (re-run with --execute to delete)")
@@ -83,6 +80,7 @@ class CascadeCommand(Command):
     def _execute_run(self, options: CascadeOptions) -> int:
         """Phase 9.19+9.20: re-run cascade BFS (原 body, 0 改)."""
         import sys
+
         ripple_id = options.ripple_id
         max_depth = options.max_depth
         max_nodes_cap = options.max_nodes_cap
@@ -95,7 +93,9 @@ class CascadeCommand(Command):
         storage = _get_storage()
         try:
             cascaded = storage.preview_cascade(
-                ripple_id, max_depth=max_depth, max_nodes_cap=max_nodes_cap,
+                ripple_id,
+                max_depth=max_depth,
+                max_nodes_cap=max_nodes_cap,
             )
         except KeyError:
             print(f"Error: ripple {ripple_id} not found", file=sys.stderr)
@@ -105,7 +105,9 @@ class CascadeCommand(Command):
             return 1
         if options.persist:  # Phase 9.20 NEW
             run_id = storage.record_cascade_run(
-                options.ripple_id, cascaded, max_depth=options.max_depth,
+                options.ripple_id,
+                cascaded,
+                max_depth=options.max_depth,
             )
             print(f"persisted as cascade run id={run_id}")
         print(f"Cascade for {ripple_id} (max_depth={max_depth}, max_nodes_cap={max_nodes_cap}):")
@@ -119,6 +121,7 @@ class CascadeCommand(Command):
     def _execute_cancel(self, options: CascadeOptions) -> int:
         """Phase 9.21: cancel persisted cascade run by id."""
         import sys
+
         storage = _get_storage()
         try:
             flipped = storage.cancel_cascade_run(options.run_id, reason=options.reason)

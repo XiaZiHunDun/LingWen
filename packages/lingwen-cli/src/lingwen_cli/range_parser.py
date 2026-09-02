@@ -1,4 +1,5 @@
 """章节范围解析器"""
+
 from typing import List
 
 
@@ -51,7 +52,9 @@ class RangeParser:
                 if start > end:
                     raise ValueError(f"Invalid range: start ({start}) > end ({end})")
                 if start < 1 or end > self.all_chapters:
-                    raise ValueError(f"Range ({start}-{end}) exceeds valid chapter range (1-{self.all_chapters})")
+                    raise ValueError(
+                        f"Range ({start}-{end}) exceeds valid chapter range (1-{self.all_chapters})"
+                    )
                 result.update(range(start, end + 1))
             else:
                 try:

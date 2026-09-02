@@ -11,6 +11,7 @@ Doc 1 §3.4 + Doc 4 联动:节奏检测器集成 Ripple wavefront。
 
 Protocol 抽象 ripple_registry (避免循环 import)
 """
+
 from __future__ import annotations
 
 from typing import Optional, Protocol
@@ -29,6 +30,7 @@ from lingwen_quality.consistency.engine.data_structures import (
 from infra.world_model.registry import RippleRegistry
 
 # === Helpers ===
+
 
 class _RippleRegistryLike(Protocol):
     """最小接口 — PacingChecker 实际需要 list_active + get_ripple"""
@@ -49,6 +51,7 @@ def _ripple(ripple_id: str, state: RippleState = RippleState.OPEN, wavefront: tu
 
 # === TestEmptyCases ===
 
+
 class TestEmptyCases:
     """0 ripple 或全 RESOLVED → 无 issue"""
 
@@ -68,6 +71,7 @@ class TestEmptyCases:
 
 
 # === TestDensityThreshold ===
+
 
 class TestDensityThreshold:
     """活跃 ripple 数 > active_threshold → P2 issue"""
@@ -105,6 +109,7 @@ class TestDensityThreshold:
 
 # === TestConvergence ===
 
+
 class TestConvergence:
     """wavefront 集中在单一章节 → P1 issue (convergence)"""
 
@@ -134,6 +139,7 @@ class TestConvergence:
 
 # === TestMultipleIssues ===
 
+
 class TestMultipleIssues:
     """密度高 + 集中 → 2 issues (1 P1 + 1 P2)"""
 
@@ -153,6 +159,7 @@ class TestMultipleIssues:
 
 
 # === TestProtocolDecoupling ===
+
 
 class TestProtocolDecoupling:
     """最小 stub registry 也能用"""

@@ -25,8 +25,8 @@ class CharacterAgencyChecker(BaseChecker):
 
     计算主动:被动比率，低于阈值时报告问题
     """
-    _checker_type = CheckerType.CHARACTER_AGENCY
 
+    _checker_type = CheckerType.CHARACTER_AGENCY
 
     # 被动情感反应模式
     REACTIVE_PATTERNS = [
@@ -115,10 +115,7 @@ class CharacterAgencyChecker(BaseChecker):
         super().__init__(self._checker_type)
 
     def check(
-        self,
-        chapter_content: str,
-        chapter_num: int,
-        context: Optional[Dict[str, Any]] = None
+        self, chapter_content: str, chapter_num: int, context: Optional[Dict[str, Any]] = None
     ) -> List[Issue]:
         """
         检查角色能动性
@@ -211,7 +208,7 @@ class CharacterAgencyChecker(BaseChecker):
         Returns:
             包含角色的段落列表
         """
-        paragraphs = content.split('\n\n')
+        paragraphs = content.split("\n\n")
         relevant = []
 
         for para in paragraphs:

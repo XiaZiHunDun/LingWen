@@ -10,6 +10,7 @@ CLI:
   python -m lingwen_core.agents.chapter_production_pilot --preflight-only
   python -m lingwen_core.agents.chapter_production_pilot --chapter-num 360
 """
+
 from __future__ import annotations
 
 import json
@@ -40,9 +41,7 @@ _PROVIDER_ENV_KEYS: tuple[tuple[str, str], ...] = (
     ("anthropic", "ANTHROPIC_API_KEY"),
     ("openai", "OPENAI_API_KEY"),
 )
-_NOVEL_WRITING_YAML = (
-    Path(__file__).resolve().parents[1] / "got" / "workflows" / "novel_writing.yaml"
-)
+_NOVEL_WRITING_YAML = Path(__file__).resolve().parents[1] / "got" / "workflows" / "novel_writing.yaml"
 
 PRODUCTION_PILOT_BEHAVIOR: tuple[dict[str, str], ...] = (
     {
@@ -133,12 +132,14 @@ def build_pilot_initial_inputs(
     """Minimal novel_writing seed inputs (short chapter for pilot cost control)."""
     if outline is None:
         outline = {
-            "chapters": [{
-                "num": chapter_num,
-                "title": f"第{chapter_num}章 pilot",
-                "events": ["pilot_event_1"],
-                "word_count_target": word_count_target,
-            }],
+            "chapters": [
+                {
+                    "num": chapter_num,
+                    "title": f"第{chapter_num}章 pilot",
+                    "events": ["pilot_event_1"],
+                    "word_count_target": word_count_target,
+                }
+            ],
         }
     return {
         "chapter_num": chapter_num,
@@ -161,28 +162,32 @@ def preflight_checklist(
     checks: list[PreflightCheck] = []
 
     gate_ok = real_llm_enabled()
-    checks.append(PreflightCheck(
-        name="real_llm_gate",
-        passed=gate_ok or not require_real_llm_gate,
-        message=(
-            "LINGWEN_REAL_LLM=1 set"
-            if gate_ok
-            else "set LINGWEN_REAL_LLM=1 to opt in (never in default CI)"
-        ),
-        required=require_real_llm_gate,
-    ))
+    checks.append(
+        PreflightCheck(
+            name="real_llm_gate",
+            passed=gate_ok or not require_real_llm_gate,
+            message=(
+                "LINGWEN_REAL_LLM=1 set"
+                if gate_ok
+                else "set LINGWEN_REAL_LLM=1 to opt in (never in default CI)"
+            ),
+            required=require_real_llm_gate,
+        )
+    )
 
     provider = detect_available_provider()
-    checks.append(PreflightCheck(
-        name="api_key",
-        passed=provider is not None,
-        message=(
-            f"provider={provider} key present"
-            if provider
-            else "set MINIMAX_API_KEY, ANTHROPIC_API_KEY, or OPENAI_API_KEY"
-        ),
-        required=require_real_llm_gate,
-    ))
+    checks.append(
+        PreflightCheck(
+            name="api_key",
+            passed=provider is not None,
+            message=(
+                f"provider={provider} key present"
+                if provider
+                else "set MINIMAX_API_KEY, ANTHROPIC_API_KEY, or OPENAI_API_KEY"
+            ),
+            required=require_real_llm_gate,
+        )
+    )
 
     resolved_dir = Path(state_dir or DEFAULT_STATE_DIR)
     try:
@@ -196,15 +201,13 @@ def preflight_checklist(
     checks.append(PreflightCheck(name="state_dir", passed=dir_ok, message=dir_msg))
 
     wf_ok = _NOVEL_WRITING_YAML.is_file()
-    checks.append(PreflightCheck(
-        name="workflow_yaml",
-        passed=wf_ok,
-        message=(
-            f"found {_NOVEL_WRITING_YAML.name}"
-            if wf_ok
-            else f"missing {_NOVEL_WRITING_YAML}"
-        ),
-    ))
+    checks.append(
+        PreflightCheck(
+            name="workflow_yaml",
+            passed=wf_ok,
+            message=(f"found {_NOVEL_WRITING_YAML.name}" if wf_ok else f"missing {_NOVEL_WRITING_YAML}"),
+        )
+    )
 
     try:
         cfg = load_default_config(state_dir=str(resolved_dir))
@@ -213,55 +216,67 @@ def preflight_checklist(
     except RuntimeError as exc:
         config_ok = False
         config_msg = str(exc)
-    checks.append(PreflightCheck(
-        name="master_controller_config",
-        passed=config_ok,
-        message=config_msg,
-        required=require_real_llm_gate,
-    ))
+    checks.append(
+        PreflightCheck(
+            name="master_controller_config",
+            passed=config_ok,
+            message=config_msg,
+            required=require_real_llm_gate,
+        )
+    )
 
     mem_mode = resolve_memory_rag_mode()
     if mem_mode == "live":
         embed_ok, embed_msg = describe_embedding_requirements()
-        checks.append(PreflightCheck(
-            name="embedding_provider_keys",
-            passed=embed_ok,
-            message=embed_msg,
-            required=True,
-        ))
+        checks.append(
+            PreflightCheck(
+                name="embedding_provider_keys",
+                passed=embed_ok,
+                message=embed_msg,
+                required=True,
+            )
+        )
         live_ok, live_msg = memory_rag_live_gateway_check()
-        checks.append(PreflightCheck(
-            name="memory_rag_live_gateway",
-            passed=live_ok,
-            message=live_msg,
-            required=True,
-        ))
+        checks.append(
+            PreflightCheck(
+                name="memory_rag_live_gateway",
+                passed=live_ok,
+                message=live_msg,
+                required=True,
+            )
+        )
     else:
-        checks.append(PreflightCheck(
-            name="memory_rag_mode",
-            passed=True,
-            message=f"LINGWEN_MEMORY_RAG={mem_mode or 'off'} (stub recommended for first pilot)",
-            required=False,
-        ))
+        checks.append(
+            PreflightCheck(
+                name="memory_rag_mode",
+                passed=True,
+                message=f"LINGWEN_MEMORY_RAG={mem_mode or 'off'} (stub recommended for first pilot)",
+                required=False,
+            )
+        )
 
     backfill_on = incremental_backfill_enabled()
-    checks.append(PreflightCheck(
-        name="incremental_backfill",
-        passed=True,
-        message=(
-            "LINGWEN_INCREMENTAL_BACKFILL enabled"
-            if backfill_on
-            else "LINGWEN_INCREMENTAL_BACKFILL off (optional for pilot)"
-        ),
-        required=False,
-    ))
+    checks.append(
+        PreflightCheck(
+            name="incremental_backfill",
+            passed=True,
+            message=(
+                "LINGWEN_INCREMENTAL_BACKFILL enabled"
+                if backfill_on
+                else "LINGWEN_INCREMENTAL_BACKFILL off (optional for pilot)"
+            ),
+            required=False,
+        )
+    )
 
     if chapter_num < 1:
-        checks.append(PreflightCheck(
-            name="chapter_num",
-            passed=False,
-            message=f"chapter_num must be >= 1, got {chapter_num}",
-        ))
+        checks.append(
+            PreflightCheck(
+                name="chapter_num",
+                passed=False,
+                message=f"chapter_num must be >= 1, got {chapter_num}",
+            )
+        )
 
     mode = production_mode()
     if mode == "canon" or require_real_llm_gate:
@@ -271,19 +286,23 @@ def preflight_checklist(
                 chapter_num,
                 mode=mode,
             )
-            checks.append(PreflightCheck(
-                name="project_production_gate",
-                passed=gate_ok,
-                message=gate_msg,
-                required=mode == "canon",
-            ))
+            checks.append(
+                PreflightCheck(
+                    name="project_production_gate",
+                    passed=gate_ok,
+                    message=gate_msg,
+                    required=mode == "canon",
+                )
+            )
         except Exception as exc:  # noqa: BLE001 — preflight must surface config errors
-            checks.append(PreflightCheck(
-                name="project_production_gate",
-                passed=False,
-                message=f"project config error: {exc}",
-                required=mode == "canon",
-            ))
+            checks.append(
+                PreflightCheck(
+                    name="project_production_gate",
+                    passed=False,
+                    message=f"project config error: {exc}",
+                    required=mode == "canon",
+                )
+            )
 
     return checks
 
@@ -378,12 +397,10 @@ def run_production_pilot(
     summary = run_out["summary"]
     executions = run_out.get("executions") or {}
     emit_exec = executions.get("emit_chapter")
-    emit_ok = (
-        emit_exec is not None
-        and emit_exec.status == NodeStatus.COMPLETED
-    )
+    emit_ok = emit_exec is not None and emit_exec.status == NodeStatus.COMPLETED
     mem_ctx = run_out.get("memory_context") or master._last_initial_inputs.get(
-        "memory_context", {},
+        "memory_context",
+        {},
     )
 
     result.paused = bool(summary.paused)
@@ -392,9 +409,7 @@ def run_production_pilot(
     result.failed = summary.failed
     result.emit_chapter_completed = emit_ok
     result.incremental_backfill = run_out.get("incremental_backfill")
-    result.memory_context_source = (
-        mem_ctx.get("source") if isinstance(mem_ctx, dict) else None
-    )
+    result.memory_context_source = mem_ctx.get("source") if isinstance(mem_ctx, dict) else None
     result.total_cost_usd = cost_tracker.total_cost()
     result.provider = master._config.primary_provider if master._config else provider
     return result

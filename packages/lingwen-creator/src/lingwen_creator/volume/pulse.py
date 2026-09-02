@@ -3,6 +3,7 @@
 Migrated from infra/creator_volume_pulse.py in Phase 126 v16.2.1.
 New location: packages/lingwen-creator/src/lingwen_creator/volume/pulse.py
 """
+
 from __future__ import annotations
 
 from pathlib import Path

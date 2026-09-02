@@ -12,7 +12,7 @@ CAUSAL_BREAK_RULES = [
         "contradiction_trigger": "完好无损",
         "contradiction_patterns": ["完好无损", "完整无缺", "丝毫无损"],
         "resolution_required": ["修复", "修补", "复原", "神奇恢复", "换了一个", "取出另一个"],
-        "severity": "P0"
+        "severity": "P0",
     },
     {
         "action": "killed",
@@ -21,7 +21,7 @@ CAUSAL_BREAK_RULES = [
         "contradiction_trigger": "活着",
         "contradiction_patterns": ["活着", "生存", "气息尚存", "并未真正死亡"],
         "resolution_required": ["复活", "假死", "替身", "逃亡", "救治"],
-        "severity": "P0"
+        "severity": "P0",
     },
     {
         "action": "stole",
@@ -30,7 +30,7 @@ CAUSAL_BREAK_RULES = [
         "contradiction_trigger": "仍然持有",
         "contradiction_patterns": ["仍然持有", "还在", "未曾丢失"],
         "resolution_required": ["归还", "夺回", "丢失后找回"],
-        "severity": "P1"
+        "severity": "P1",
     },
     {
         "action": "revealed_secret",
@@ -39,7 +39,7 @@ CAUSAL_BREAK_RULES = [
         "contradiction_trigger": "不知情",
         "contradiction_patterns": ["不知道", "毫不知情", "并未得知"],
         "resolution_required": ["忘记", "失忆", "故意隐瞒"],
-        "severity": "P1"
+        "severity": "P1",
     },
 ]
 
@@ -56,12 +56,9 @@ class CausalRuleEngine:
         for rule in self.rules:
             for keyword in rule["action_keywords"]:
                 if keyword in action_text:
-                    results.append({
-                        "rule": rule,
-                        "action": rule["action"],
-                        "target": target,
-                        "keyword": keyword
-                    })
+                    results.append(
+                        {"rule": rule, "action": rule["action"], "target": target, "keyword": keyword}
+                    )
         return results
 
     def match_contradiction(self, text: str, rule: dict) -> bool:

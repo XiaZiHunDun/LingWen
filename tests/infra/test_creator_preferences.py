@@ -1,4 +1,5 @@
 """Tests for creator_preferences."""
+
 from __future__ import annotations
 
 from pathlib import Path

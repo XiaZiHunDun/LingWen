@@ -10,6 +10,7 @@ import SqliteStorageAdapter`` while new code should prefer:
 The shim does NOT import sqlite3 directly (the architectural invariant is
 preserved by delegating to lingwen_storage).
 """
+
 from lingwen_storage.sqlite_storage_adapter import (  # noqa: F401
     FileSystemMarkdownRoundtrip,
     SqliteConnection,

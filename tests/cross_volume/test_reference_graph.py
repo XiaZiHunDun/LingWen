@@ -3,6 +3,7 @@
 
 TDD: 这些测试在 step 1 阶段会全部 FAIL (ImportError), 在 Task 3 (CVG impl) 后通过.
 """
+
 import pytest
 
 from infra.cross_volume import (
@@ -25,9 +26,14 @@ def graph(storage):
 
 class TestReferenceGraph:
     def test_add_and_get_node(self, graph):
-        node = ReferenceNode(dimension="character", volume=1, chapter=3,
-                             title="李青云", description="主角",
-                             payload={"name": "李青云", "role": "主角"})
+        node = ReferenceNode(
+            dimension="character",
+            volume=1,
+            chapter=3,
+            title="李青云",
+            description="主角",
+            payload={"name": "李青云", "role": "主角"},
+        )
         graph.add_node(node)
         got = graph.get_node(node.id)
         assert got is not None
@@ -36,17 +42,14 @@ class TestReferenceGraph:
         assert got.title == "李青云"
 
     def test_add_node_rejects_duplicate_id(self, graph):
-        node = ReferenceNode(dimension="character", volume=1, chapter=1,
-                             title="A", description="")
+        node = ReferenceNode(dimension="character", volume=1, chapter=1, title="A", description="")
         graph.add_node(node)
         with pytest.raises(ValueError, match="duplicate node id"):
             graph.add_node(node)  # same id → raise
 
     def test_add_edge_validates_fk(self, graph):
-        node_a = ReferenceNode(dimension="character", volume=1, chapter=1,
-                                title="A", description="")
-        node_b = ReferenceNode(dimension="foreshadow", volume=2, chapter=5,
-                                title="B", description="")
+        node_a = ReferenceNode(dimension="character", volume=1, chapter=1, title="A", description="")
+        node_b = ReferenceNode(dimension="foreshadow", volume=2, chapter=5, title="B", description="")
         graph.add_node(node_a)
         graph.add_node(node_b)
         # Missing FK
@@ -81,7 +84,9 @@ class TestReferenceGraph:
         for n in (n_a, n_b, n_c):
             graph.add_node(n)
         graph.add_edge(ReferenceEdge(from_node_id=n_a.id, to_node_id=n_b.id, relationship_type="mentions"))
-        graph.add_edge(ReferenceEdge(from_node_id=n_a.id, to_node_id=n_c.id, relationship_type="appears_with"))
+        graph.add_edge(
+            ReferenceEdge(from_node_id=n_a.id, to_node_id=n_c.id, relationship_type="appears_with")
+        )
         neighbors = graph.get_neighbors(n_a.id)
         assert len(neighbors) == 2
         assert {n.id for n in neighbors} == {n_b.id, n_c.id}

@@ -1,4 +1,5 @@
 """MemoryGateway 测试"""
+
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -62,17 +63,21 @@ class TestMemoryGateway:
         """模拟 CharacterTracker"""
         tracker = MagicMock()
         tracker.update_character_state = MagicMock()
-        tracker.get_character_state = MagicMock(return_value={
-            "current_location": "仙灵岛",
-            "current_form": "人形",
-            "alive": True,
-            "last_updated_chapter": 5,
-            "emotion_state": "平静",
-        })
-        tracker.get_all_characters = MagicMock(return_value={
-            "李逍遥": {"current_location": "仙灵岛", "alive": True},
-            "赵灵儿": {"current_location": "仙灵岛", "alive": True},
-        })
+        tracker.get_character_state = MagicMock(
+            return_value={
+                "current_location": "仙灵岛",
+                "current_form": "人形",
+                "alive": True,
+                "last_updated_chapter": 5,
+                "emotion_state": "平静",
+            }
+        )
+        tracker.get_all_characters = MagicMock(
+            return_value={
+                "李逍遥": {"current_location": "仙灵岛", "alive": True},
+                "赵灵儿": {"current_location": "仙灵岛", "alive": True},
+            }
+        )
         return tracker
 
     @pytest.fixture
@@ -81,33 +86,43 @@ class TestMemoryGateway:
         tracker = MagicMock()
         tracker.plant_foreshadow = MagicMock()
         tracker.update_foreshadow = MagicMock()
-        tracker.get_foreshadow = MagicMock(return_value={
-            "title": "神秘剑客",
-            "status": "pending",
-            "planted_chapter": 3,
-            "mentions": [3],
-        })
-        tracker.get_pending_foreshadows = MagicMock(return_value={
-            "fp_001": {"title": "神秘剑客", "status": "pending"},
-        })
+        tracker.get_foreshadow = MagicMock(
+            return_value={
+                "title": "神秘剑客",
+                "status": "pending",
+                "planted_chapter": 3,
+                "mentions": [3],
+            }
+        )
+        tracker.get_pending_foreshadows = MagicMock(
+            return_value={
+                "fp_001": {"title": "神秘剑客", "status": "pending"},
+            }
+        )
         return tracker
 
     @pytest.fixture
     def mock_timeline_manager(self, mock_config):
         """模拟 TimelineManager"""
         manager = MagicMock()
-        manager.add_event = MagicMock(return_value={
-            "event_id": "evt_001",
-            "timestamp": "2024-01-01T10:00:00",
-            "description": "测试事件",
-            "chapter": 5,
-        })
-        manager.get_events_by_chapter = MagicMock(return_value=[
-            {"event_id": "evt_001", "chapter": 5},
-        ])
-        manager.get_all_events = MagicMock(return_value=[
-            {"event_id": "evt_001", "chapter": 5},
-        ])
+        manager.add_event = MagicMock(
+            return_value={
+                "event_id": "evt_001",
+                "timestamp": "2024-01-01T10:00:00",
+                "description": "测试事件",
+                "chapter": 5,
+            }
+        )
+        manager.get_events_by_chapter = MagicMock(
+            return_value=[
+                {"event_id": "evt_001", "chapter": 5},
+            ]
+        )
+        manager.get_all_events = MagicMock(
+            return_value=[
+                {"event_id": "evt_001", "chapter": 5},
+            ]
+        )
         return manager
 
     @pytest.fixture
@@ -115,55 +130,69 @@ class TestMemoryGateway:
         """模拟 FactBase"""
         base = MagicMock()
         base.add_fact = MagicMock()
-        base.get_fact = MagicMock(return_value={
-            "fact_id": "fact_001",
-            "content": "林夜是铁蛋的弟弟",
-            "verified": True,
-        })
-        base.get_all_facts = MagicMock(return_value={
-            "fact_001": {"fact_id": "fact_001", "content": "林夜是铁蛋的弟弟"},
-        })
+        base.get_fact = MagicMock(
+            return_value={
+                "fact_id": "fact_001",
+                "content": "林夜是铁蛋的弟弟",
+                "verified": True,
+            }
+        )
+        base.get_all_facts = MagicMock(
+            return_value={
+                "fact_001": {"fact_id": "fact_001", "content": "林夜是铁蛋的弟弟"},
+            }
+        )
         return base
 
     @pytest.fixture
     def mock_query_engine(self):
         """模拟 QueryEngine"""
         engine = MagicMock()
-        engine.hybrid_search = MagicMock(return_value=[
-            {
-                "id": "seg_001",
-                "score": 0.95,
-                "payload": {
-                    "content": "李逍遥与赵灵儿在仙灵岛相遇",
-                    "chapter": 3,
+        engine.hybrid_search = MagicMock(
+            return_value=[
+                {
+                    "id": "seg_001",
+                    "score": 0.95,
+                    "payload": {
+                        "content": "李逍遥与赵灵儿在仙灵岛相遇",
+                        "chapter": 3,
+                    },
                 },
-            },
-        ])
-        engine.get_character_state = MagicMock(return_value={
-            "current_location": "仙灵岛",
-            "alive": True,
-        })
-        engine.get_relationship_network = MagicMock(return_value=[
-            {"from_character": "李逍遥", "to_character": "赵灵儿", "relationship_type": "恋人"},
-        ])
-        engine.check_consistency = MagicMock(return_value={
-            "is_consistent": True,
-            "consistency_score": 1.0,
-            "issues": [],
-        })
+            ]
+        )
+        engine.get_character_state = MagicMock(
+            return_value={
+                "current_location": "仙灵岛",
+                "alive": True,
+            }
+        )
+        engine.get_relationship_network = MagicMock(
+            return_value=[
+                {"from_character": "李逍遥", "to_character": "赵灵儿", "relationship_type": "恋人"},
+            ]
+        )
+        engine.check_consistency = MagicMock(
+            return_value={
+                "is_consistent": True,
+                "consistency_score": 1.0,
+                "issues": [],
+            }
+        )
         return engine
 
     @pytest.fixture
     def mock_push_engine(self):
         """模拟 PushEngine"""
         engine = MagicMock()
-        engine.push_context = MagicMock(return_value={
-            "chapter": 5,
-            "character_states": {"李逍遥": {"alive": True}},
-            "pending_foreshadows": {"fp_001": {"title": "神秘剑客"}},
-            "recent_events": [],
-            "related_segments": [],
-        })
+        engine.push_context = MagicMock(
+            return_value={
+                "chapter": 5,
+                "character_states": {"李逍遥": {"alive": True}},
+                "pending_foreshadows": {"fp_001": {"title": "神秘剑客"}},
+                "recent_events": [],
+                "related_segments": [],
+            }
+        )
         return engine
 
     @pytest.fixture
@@ -271,9 +300,7 @@ class TestMemoryGateway:
         }
         memory_gateway.update_character_state("李逍遥", state)
 
-        mock_character_tracker.update_character_state.assert_called_once_with(
-            "李逍遥", state
-        )
+        mock_character_tracker.update_character_state.assert_called_once_with("李逍遥", state)
 
     def test_plant_foreshadow(self, memory_gateway, mock_plot_thread_tracker):
         """测试登记伏笔"""
@@ -285,25 +312,19 @@ class TestMemoryGateway:
         }
         memory_gateway.plant_foreshadow("fp_001", metadata)
 
-        mock_plot_thread_tracker.plant_foreshadow.assert_called_once_with(
-            "fp_001", metadata
-        )
+        mock_plot_thread_tracker.plant_foreshadow.assert_called_once_with("fp_001", metadata)
 
     def test_update_foreshadow(self, memory_gateway, mock_plot_thread_tracker):
         """测试更新伏笔状态"""
         memory_gateway.update_foreshadow("fp_001", chapter=5, event_type="activate")
 
-        mock_plot_thread_tracker.update_foreshadow.assert_called_once_with(
-            "fp_001", 5, "activate"
-        )
+        mock_plot_thread_tracker.update_foreshadow.assert_called_once_with("fp_001", 5, "activate")
 
     def test_update_foreshadow_recycle(self, memory_gateway, mock_plot_thread_tracker):
         """测试伏笔回收"""
         memory_gateway.update_foreshadow("fp_001", chapter=15, event_type="recycle")
 
-        mock_plot_thread_tracker.update_foreshadow.assert_called_once_with(
-            "fp_001", 15, "recycle"
-        )
+        mock_plot_thread_tracker.update_foreshadow.assert_called_once_with("fp_001", 15, "recycle")
 
     def test_update_foreshadow_invalid_event_type(self, memory_gateway, mock_plot_thread_tracker):
         """测试无效事件类型不调用更新"""
@@ -334,10 +355,7 @@ class TestMemoryGateway:
 
     def test_check_consistency(self, memory_gateway, mock_query_engine):
         """测试一致性检查"""
-        result = memory_gateway.check_consistency(
-            chapter_content="李逍遥在仙灵岛遇到赵灵儿",
-            chapter=5
-        )
+        result = memory_gateway.check_consistency(chapter_content="李逍遥在仙灵岛遇到赵灵儿", chapter=5)
 
         assert isinstance(result, dict)
         assert "is_consistent" in result
@@ -383,13 +401,15 @@ class TestMemoryGatewayEdgeCases:
     def mock_push_engine(self):
         """模拟 PushEngine"""
         engine = MagicMock()
-        engine.push_context = MagicMock(return_value={
-            "chapter": 1,
-            "character_states": {},
-            "pending_foreshadows": {},
-            "recent_events": [],
-            "related_segments": [],
-        })
+        engine.push_context = MagicMock(
+            return_value={
+                "chapter": 1,
+                "character_states": {},
+                "pending_foreshadows": {},
+                "recent_events": [],
+                "related_segments": [],
+            }
+        )
         return engine
 
     def test_auto_push_context_without_push_engine(self, mock_qdrant_wrapper, mock_embedder):
@@ -415,9 +435,7 @@ class TestMemoryGatewayEdgeCases:
         # 当 query 为空字符串时应该返回空列表
         assert gateway.query_engine is not None  # 验证自动创建
 
-    def test_update_character_state_without_tracker(
-        self, mock_qdrant_wrapper, mock_embedder
-    ):
+    def test_update_character_state_without_tracker(self, mock_qdrant_wrapper, mock_embedder):
         """测试没有 CharacterTracker 时更新角色状态"""
         gateway = MemoryGateway(
             qdrant_wrapper=mock_qdrant_wrapper,
@@ -475,9 +493,7 @@ class TestMemoryGatewayEdgeCases:
         result = gateway.get_character_state("李逍遥")
         assert result is None
 
-    def test_check_consistency_without_query_engine(
-        self, mock_qdrant_wrapper, mock_embedder
-    ):
+    def test_check_consistency_without_query_engine(self, mock_qdrant_wrapper, mock_embedder):
         """测试没有 QueryEngine 时一致性检查"""
         gateway = MemoryGateway(
             qdrant_wrapper=mock_qdrant_wrapper,

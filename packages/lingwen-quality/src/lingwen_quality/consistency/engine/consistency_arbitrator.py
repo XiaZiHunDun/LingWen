@@ -14,6 +14,7 @@ from .data_structures import ConfidenceLevel, Issue, IssueSeverity
 @dataclass
 class ArbitrationResult:
     """仲裁结果"""
+
     original_issues: List[Issue]
     resolved_issues: List[Issue]  # 经仲裁确认的问题
     ambiguous_issues: List[Issue]  # 模糊问题，需LLM复核
@@ -25,6 +26,7 @@ class ArbitrationResult:
 @dataclass
 class IssueGroup:
     """问题组（相同位置的问题）"""
+
     location_key: str  # "chXXX_pYY" 格式
     issues: List[Issue] = field(default_factory=list)
     checker_types: List[str] = field(default_factory=list)
@@ -150,7 +152,7 @@ class ConsistencyArbitrator:
                 resolved_issues=[],
                 ambiguous_issues=[],
                 false_positive_issues=[],
-                arbitration_summary="无问题可仲裁"
+                arbitration_summary="无问题可仲裁",
             )
 
         # 按位置分组
@@ -175,17 +177,19 @@ class ConsistencyArbitrator:
             ambiguous_issues=all_ambiguous,
             false_positive_issues=all_false_positives,
             arbitration_summary=summary,
-            needs_llm_review=len(all_ambiguous) > 0
+            needs_llm_review=len(all_ambiguous) > 0,
         )
 
         # 记录日志
-        self.arbitration_log.append({
-            "timestamp": datetime.now().isoformat(),
-            "original_count": len(issues),
-            "resolved_count": len(all_resolved),
-            "ambiguous_count": len(all_ambiguous),
-            "false_positive_count": len(all_false_positives)
-        })
+        self.arbitration_log.append(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "original_count": len(issues),
+                "resolved_count": len(all_resolved),
+                "ambiguous_count": len(all_ambiguous),
+                "false_positive_count": len(all_false_positives),
+            }
+        )
 
         return result
 

@@ -1,4 +1,5 @@
 """Scheduled digest dispatch for creator onboarding notifications."""
+
 from __future__ import annotations
 
 import json
@@ -47,9 +48,12 @@ def _normalize_channel_retry_config(raw: Any) -> dict[str, dict[str, int]]:
         key = str(channel).strip().lower()
         if not key or not isinstance(policy, dict):
             continue
-        max_attempts = int(policy.get("max_attempts") or _DEFAULT_CHANNEL_RETRY.get(key, {}).get("max_attempts", 5))
+        max_attempts = int(
+            policy.get("max_attempts") or _DEFAULT_CHANNEL_RETRY.get(key, {}).get("max_attempts", 5)
+        )
         base_backoff = int(
-            policy.get("base_backoff_sec") or _DEFAULT_CHANNEL_RETRY.get(key, {}).get("base_backoff_sec", _BASE_BACKOFF_SEC),
+            policy.get("base_backoff_sec")
+            or _DEFAULT_CHANNEL_RETRY.get(key, {}).get("base_backoff_sec", _BASE_BACKOFF_SEC),
         )
         result[key] = {
             "max_attempts": max(1, min(max_attempts, 20)),

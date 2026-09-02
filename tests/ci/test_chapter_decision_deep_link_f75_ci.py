@@ -1,4 +1,5 @@
 """Phase 9.83 F75: CI contract — chapter decision deep link."""
+
 from __future__ import annotations
 
 from pathlib import Path

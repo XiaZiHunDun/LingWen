@@ -7,6 +7,7 @@
 - 已知关系但描述为初次见面
 - 关系状态在后续章节中丢失
 """
+
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -65,7 +66,7 @@ class RelationshipStateRepairer(BaseConsistencyRepairer):
         else:
             # 处理检测到的问题
             for issue in issues:
-                if hasattr(issue, 'issue_type') and '关系' in issue.issue_type:
+                if hasattr(issue, "issue_type") and "关系" in issue.issue_type:
                     new_content, cnt = self._fix_single_relationship_issue(content, issue)
                     if cnt > 0:
                         content = new_content
@@ -89,7 +90,7 @@ class RelationshipStateRepairer(BaseConsistencyRepairer):
 
         # 检查已知的角色关系对
         for char_pair, relationship in relationships.items():
-            chars = char_pair.split('-')
+            chars = char_pair.split("-")
             if len(chars) != 2:
                 continue
 
@@ -123,11 +124,7 @@ class RelationshipStateRepairer(BaseConsistencyRepairer):
         except Exception:
             return {}
 
-    def _fix_single_relationship_issue(
-        self,
-        content: str,
-        issue: Any
-    ) -> Tuple[str, int]:
+    def _fix_single_relationship_issue(self, content: str, issue: Any) -> Tuple[str, int]:
         """
         修复单个关系问题
 
@@ -141,14 +138,14 @@ class RelationshipStateRepairer(BaseConsistencyRepairer):
         changes = 0
 
         # 根据问题类型选择修复策略
-        issue_desc = getattr(issue, 'description', '')
-        getattr(issue, 'issue_type', '')
+        issue_desc = getattr(issue, "description", "")
+        getattr(issue, "issue_type", "")
 
-        if '敌对' in issue_desc and '盟友' in issue_desc:
+        if "敌对" in issue_desc and "盟友" in issue_desc:
             # 敌人变盟友，添加过渡描述
             result = self._add_transition_for_enemy_to_ally(content, issue)
             changes = 1 if result != content else 0
-        elif '陌生' in issue_desc and '熟悉' in issue_desc:
+        elif "陌生" in issue_desc and "熟悉" in issue_desc:
             # 陌生变熟悉，添加过渡描述
             result = self._add_transition_for_stranger_to_familiar(content, issue)
             changes = 1 if result != content else 0
@@ -157,14 +154,10 @@ class RelationshipStateRepairer(BaseConsistencyRepairer):
 
         return result, changes
 
-    def _add_transition_for_enemy_to_ally(
-        self,
-        content: str,
-        issue: Any
-    ) -> str:
+    def _add_transition_for_enemy_to_ally(self, content: str, issue: Any) -> str:
         """为敌人变盟友添加过渡描述"""
         # 查找关系转变的位置并添加过渡句
-        character = getattr(issue, 'character', '')
+        character = getattr(issue, "character", "")
         if not character:
             return content
 
@@ -172,13 +165,9 @@ class RelationshipStateRepairer(BaseConsistencyRepairer):
         # 实际实现应该更复杂，需要定位具体位置
         return content
 
-    def _add_transition_for_stranger_to_familiar(
-        self,
-        content: str,
-        issue: Any
-    ) -> str:
+    def _add_transition_for_stranger_to_familiar(self, content: str, issue: Any) -> str:
         """为陌生变熟悉添加过渡描述"""
-        character = getattr(issue, 'character', '')
+        character = getattr(issue, "character", "")
         if not character:
             return content
 
@@ -187,15 +176,16 @@ class RelationshipStateRepairer(BaseConsistencyRepairer):
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description='关系状态修复器')
-    parser.add_argument('--chapters', type=str, default='1-10', help='章节范围 (如 1-10)')
-    parser.add_argument('--dry-run', action='store_true', help='只输出不保存')
-    parser.add_argument('--project-root', type=str, default=None, help='项目根目录')
+
+    parser = argparse.ArgumentParser(description="关系状态修复器")
+    parser.add_argument("--chapters", type=str, default="1-10", help="章节范围 (如 1-10)")
+    parser.add_argument("--dry-run", action="store_true", help="只输出不保存")
+    parser.add_argument("--project-root", type=str, default=None, help="项目根目录")
     args = parser.parse_args()
 
     # 解析章节范围
-    if '-' in args.chapters:
-        start, end = args.chapters.split('-')
+    if "-" in args.chapters:
+        start, end = args.chapters.split("-")
         chapter_nums = list(range(int(start), int(end) + 1))
     else:
         chapter_nums = [int(args.chapters)]
@@ -224,5 +214,5 @@ def main():
         print(f"\n总计修复: {total_changes} 处")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -34,9 +34,9 @@ from infra.schema import Struct, to_json_schema
 from infra.schema import decode as schema_decode
 from infra.schema import encode as schema_encode
 
-T = TypeVar('T')
-P = TypeVar('P')
-S = TypeVar('S')
+T = TypeVar("T")
+P = TypeVar("P")
+S = TypeVar("S")
 
 
 class ToolFailure(BaseError):
@@ -45,6 +45,7 @@ class ToolFailure(BaseError):
 
     参考 opencode 的 ToolFailure，用于表示工具执行过程中的错误。
     """
+
     __error_name__ = "ToolFailure"
     __error_tags__ = ["tool", "failure"]
 
@@ -57,6 +58,7 @@ class ToolExecuteContext(BaseModel):
         id: 工具调用 ID
         name: 工具名称
     """
+
     id: str
     name: str
 
@@ -67,6 +69,7 @@ class ToolDefinition(BaseModel):
 
     参考 opencode 的 ToolDefinition，用于生成发送给 LLM 的工具定义。
     """
+
     name: str
     description: str
     input_schema: Dict[str, Any] = Field(default_factory=dict)
@@ -92,22 +95,21 @@ class ToolOutput(BaseModel):
         content: 结构化输出
         model_output: 模型输出内容列表
     """
+
     content: Any
     model_output: List[Dict[str, Any]] = Field(default_factory=list)
 
     @classmethod
-    def make(cls, content: Any, model_output: List[Dict[str, Any]] = None) -> 'ToolOutput':
+    def make(cls, content: Any, model_output: List[Dict[str, Any]] = None) -> "ToolOutput":
         """创建工具输出"""
-        return cls(
-            content=content,
-            model_output=model_output or []
-        )
+        return cls(content=content, model_output=model_output or [])
 
 
 class ToolSchema(Generic[T]):
     """
     工具 Schema 类型别名
     """
+
     def __init__(self, model: Type[T]):
         self.model = model
 
@@ -130,6 +132,7 @@ class ExecutableTool(Generic[P, S]):
 
     参考 opencode 的 ExecutableTool，包含 execute 方法。
     """
+
     def execute(self, params: P, context: Optional[ToolExecuteContext] = None) -> Any:
         raise NotImplementedError
 
@@ -138,6 +141,7 @@ class AnyTool:
     """
     任意工具类型
     """
+
     pass
 
 
@@ -145,6 +149,7 @@ class AnyExecutableTool(ExecutableTool[Any, Any], AnyTool):
     """
     任意可执行工具类型
     """
+
     pass
 
 
@@ -198,13 +203,13 @@ class Tool(Generic[P, S], AnyTool):
 
     def _default_decode(self, input_data: Any) -> Any:
         """默认解码函数"""
-        if hasattr(self.parameters, 'decode'):
+        if hasattr(self.parameters, "decode"):
             return self.parameters.decode(input_data)
         return input_data
 
     def _default_encode(self, value: Any) -> Any:
         """默认编码函数"""
-        if hasattr(self.success, 'encode'):
+        if hasattr(self.success, "encode"):
             return self.success.encode(value)
         return value
 
@@ -213,12 +218,12 @@ class Tool(Generic[P, S], AnyTool):
         input_schema = {}
         output_schema = None
 
-        if hasattr(self.parameters, 'schema'):
+        if hasattr(self.parameters, "schema"):
             input_schema = self.parameters.schema()
         elif isinstance(self.parameters, dict):
             input_schema = self.parameters
 
-        if hasattr(self.success, 'schema'):
+        if hasattr(self.success, "schema"):
             output_schema = self.success.schema()
         elif isinstance(self.success, dict):
             output_schema = self.success
@@ -238,11 +243,17 @@ class Tool(Generic[P, S], AnyTool):
     ) -> ToolOutput:
         """默认输出投影函数"""
         structured_output = self.to_structured_output(output) if self.to_structured_output else output
-        model_output = self.to_model_output({
-            "callID": call_id,
-            "parameters": parameters,
-            "output": output,
-        }) if self.to_model_output else []
+        model_output = (
+            self.to_model_output(
+                {
+                    "callID": call_id,
+                    "parameters": parameters,
+                    "output": output,
+                }
+            )
+            if self.to_model_output
+            else []
+        )
 
         if isinstance(model_output, str):
             model_output = [{"type": "text", "text": model_output}]
@@ -256,6 +267,7 @@ class TypedToolConfig(BaseModel):
     """
     静态类型工具配置
     """
+
     description: str
     parameters: Type[Struct]
     success: Type[Struct]
@@ -268,6 +280,7 @@ class DynamicToolConfig(BaseModel):
     """
     动态工具配置（使用 JSON Schema）
     """
+
     description: str
     json_schema: Dict[str, Any]
     output_schema: Optional[Dict[str, Any]] = None
@@ -339,11 +352,17 @@ class ToolFactory:
 
         def project_func(parameters: Any, call_id: str, output: Any) -> ToolOutput:
             structured = to_structured_output(output) if to_structured_output else output
-            model_out = to_model_output({
-                "callID": call_id,
-                "parameters": parameters,
-                "output": output,
-            }) if to_model_output else []
+            model_out = (
+                to_model_output(
+                    {
+                        "callID": call_id,
+                        "parameters": parameters,
+                        "output": output,
+                    }
+                )
+                if to_model_output
+                else []
+            )
 
             if isinstance(model_out, str):
                 model_out = [{"type": "text", "text": model_out}]
@@ -392,11 +411,17 @@ class ToolFactory:
 
         def project_func(parameters: Any, call_id: str, output: Any) -> ToolOutput:
             structured = to_structured_output(output) if to_structured_output else output
-            model_out = to_model_output({
-                "callID": call_id,
-                "parameters": parameters,
-                "output": output,
-            }) if to_model_output else []
+            model_out = (
+                to_model_output(
+                    {
+                        "callID": call_id,
+                        "parameters": parameters,
+                        "output": output,
+                    }
+                )
+                if to_model_output
+                else []
+            )
 
             if isinstance(model_out, str):
                 model_out = [{"type": "text", "text": model_out}]
@@ -443,7 +468,7 @@ def to_definitions(tools: Dict[str, AnyTool]) -> List[ToolDefinition]:
     """
     definitions = []
     for name, tool in tools.items():
-        if hasattr(tool, '_definition'):
+        if hasattr(tool, "_definition"):
             definition = ToolDefinition(
                 name=name,
                 description=tool._definition.description,
@@ -474,7 +499,7 @@ def dispatch(tool: AnyTool, call_id: str, params: Any) -> ToolOutput:
 
         # 执行工具
         if tool.execute:
-            definition = getattr(tool, '_definition', None)
+            definition = getattr(tool, "_definition", None)
             name = definition.name if definition else ""
             context = ToolExecuteContext(id=call_id, name=name)
             result = tool.execute(decoded_params, context)

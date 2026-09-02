@@ -25,13 +25,14 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CreativeOption:
     """创意选项"""
+
     id: str
-    setting: str          # 世界观/设定
-    conflict: str        # 核心冲突
-    character: str       # 主角设定
-    twist: str           # 转折设计
+    setting: str  # 世界观/设定
+    conflict: str  # 核心冲突
+    character: str  # 主角设定
+    twist: str  # 转折设计
     anti_trope_tags: List[str]  # 反套路标签
-    match_score: float   # 与高概念库的匹配度
+    match_score: float  # 与高概念库的匹配度
 
 
 class AntiTropeEnhancer:
@@ -70,11 +71,7 @@ class AntiTropeEnhancer:
         self._llm = llm_service or LLMServiceAdapter()
         self._config = get_api_config()
 
-    async def generate_options(
-        self,
-        chapter_outline: str,
-        count: int = 3
-    ) -> List[CreativeOption]:
+    async def generate_options(self, chapter_outline: str, count: int = 3) -> List[CreativeOption]:
         """
         生成反套路创意选项
 
@@ -88,13 +85,15 @@ class AntiTropeEnhancer:
         prompt = self._build_prompt(chapter_outline, count)
 
         try:
-            response = await self._llm.execute(LLMTask(
-                task_type=TaskType.QUALITY_ANALYSIS,
-                prompt=prompt,
-                system=self.SYSTEM_PROMPT,
-                max_tokens=3000,
-                temperature=0.7,
-            ))
+            response = await self._llm.execute(
+                LLMTask(
+                    task_type=TaskType.QUALITY_ANALYSIS,
+                    prompt=prompt,
+                    system=self.SYSTEM_PROMPT,
+                    max_tokens=3000,
+                    temperature=0.7,
+                )
+            )
             return self._parse_response(response, count)
         except Exception as e:
             logger.error(f"AntiTropeEnhancer failed: {e}")
@@ -133,7 +132,8 @@ class AntiTropeEnhancer:
         try:
             # 找JSON数组
             import re
-            json_match = re.search(r'\[.*\]', response, re.DOTALL)
+
+            json_match = re.search(r"\[.*\]", response, re.DOTALL)
             if json_match:
                 data = json.loads(json_match.group())
             else:
@@ -141,15 +141,17 @@ class AntiTropeEnhancer:
 
             options = []
             for i, item in enumerate(data[:count]):
-                options.append(CreativeOption(
-                    id=f"anti_trope_{i+1}",
-                    setting=item.get("setting", ""),
-                    conflict=item.get("conflict", ""),
-                    character=item.get("character", ""),
-                    twist=item.get("twist", ""),
-                    anti_trope_tags=item.get("anti_trope_tags", []),
-                    match_score=0.8,  # 默认分数
-                ))
+                options.append(
+                    CreativeOption(
+                        id=f"anti_trope_{i + 1}",
+                        setting=item.get("setting", ""),
+                        conflict=item.get("conflict", ""),
+                        character=item.get("character", ""),
+                        twist=item.get("twist", ""),
+                        anti_trope_tags=item.get("anti_trope_tags", []),
+                        match_score=0.8,  # 默认分数
+                    )
+                )
             return options
         except Exception as e:
             logger.error(f"Failed to parse response: {e}")
@@ -182,7 +184,7 @@ def main():
 async def _async_main():
     import argparse
 
-    parser = argparse.ArgumentParser(description='反套路创意生成器')
+    parser = argparse.ArgumentParser(description="反套路创意生成器")
     parser.add_argument("--outline", type=str, required=True, help="章节大纲")
     parser.add_argument("--count", type=int, default=3, help="生成数量")
     parser.add_argument("--format", action="store_true", help="格式化输出")
@@ -196,14 +198,24 @@ async def _async_main():
         print(enhancer.format_options(options))
     else:
         import json
-        print(json.dumps([{
-            "setting": o.setting,
-            "conflict": o.conflict,
-            "character": o.character,
-            "twist": o.twist,
-            "anti_trope_tags": o.anti_trope_tags,
-        } for o in options], ensure_ascii=False, indent=2))
+
+        print(
+            json.dumps(
+                [
+                    {
+                        "setting": o.setting,
+                        "conflict": o.conflict,
+                        "character": o.character,
+                        "twist": o.twist,
+                        "anti_trope_tags": o.anti_trope_tags,
+                    }
+                    for o in options
+                ],
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

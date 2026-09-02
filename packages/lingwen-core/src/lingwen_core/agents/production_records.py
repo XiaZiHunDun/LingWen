@@ -1,4 +1,5 @@
 """Phase 9.82 F74: read pilot / batch JSON records for Dashboard (read-only)."""
+
 from __future__ import annotations
 
 import json
@@ -100,9 +101,7 @@ def _parse_batch(data: dict[str, Any], source_file: str) -> ProductionRecordItem
             else None
         ),
         memory_context_source=None,
-        stopped_reason=data.get("stopped_reason")
-        if isinstance(data.get("stopped_reason"), str)
-        else None,
+        stopped_reason=data.get("stopped_reason") if isinstance(data.get("stopped_reason"), str) else None,
         source_file=source_file,
     )
 
@@ -260,14 +259,16 @@ def rollup_production_records(
     for rec in records:
         if rec.record_type != "batch":
             continue
-        batches.append(ProductionBatchRollupItem(
-            record_id=rec.record_id,
-            chapter_range=rec.chapter_range,
-            total_cost_usd=rec.total_cost_usd,
-            stopped_reason=rec.stopped_reason,
-            recorded_at=rec.recorded_at,
-            source_file=rec.source_file,
-        ).to_dict())
+        batches.append(
+            ProductionBatchRollupItem(
+                record_id=rec.record_id,
+                chapter_range=rec.chapter_range,
+                total_cost_usd=rec.total_cost_usd,
+                stopped_reason=rec.stopped_reason,
+                recorded_at=rec.recorded_at,
+                source_file=rec.source_file,
+            ).to_dict()
+        )
 
     return {
         "records_dir": str(root),
@@ -318,15 +319,17 @@ def production_cost_trend(
                     incremental = float(rec.total_cost_usd)
 
         cumulative += incremental
-        points.append({
-            "recorded_at": rec.recorded_at,
-            "record_id": rec.record_id,
-            "record_type": rec.record_type,
-            "label": _record_label(rec),
-            "cost_usd": rec.total_cost_usd,
-            "incremental_cost_usd": round(incremental, 6),
-            "cumulative_cost_usd": round(cumulative, 6),
-        })
+        points.append(
+            {
+                "recorded_at": rec.recorded_at,
+                "record_id": rec.record_id,
+                "record_type": rec.record_type,
+                "label": _record_label(rec),
+                "cost_usd": rec.total_cost_usd,
+                "incremental_cost_usd": round(incremental, 6),
+                "cumulative_cost_usd": round(cumulative, 6),
+            }
+        )
 
     return {
         "records_dir": str(root),

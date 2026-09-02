@@ -16,6 +16,7 @@ Usage:
     # 使用优化后的引擎
     optimized_engine = optimizer.wrap_query_engine(query_engine)
 """
+
 import hashlib
 import threading
 import time
@@ -55,10 +56,7 @@ class PerformanceOptimizer:
         }
 
     def configure_embedding_cache(
-        self,
-        max_size: int = 5000,
-        ttl: Optional[float] = 3600,
-        enabled: bool = True
+        self, max_size: int = 5000, ttl: Optional[float] = 3600, enabled: bool = True
     ) -> None:
         """配置向量嵌入缓存
 
@@ -68,19 +66,11 @@ class PerformanceOptimizer:
             enabled: 是否启用
         """
         with self._lock:
-            self._cache_manager.get_cache(
-                "embeddings",
-                max_size=max_size,
-                ttl=ttl,
-                track_stats=True
-            )
+            self._cache_manager.get_cache("embeddings", max_size=max_size, ttl=ttl, track_stats=True)
             self._optimizations_enabled["embedding_cache"] = enabled
 
     def configure_character_cache(
-        self,
-        max_size: int = 500,
-        ttl: Optional[float] = 1800,
-        enabled: bool = True
+        self, max_size: int = 500, ttl: Optional[float] = 1800, enabled: bool = True
     ) -> None:
         """配置角色状态缓存
 
@@ -90,19 +80,11 @@ class PerformanceOptimizer:
             enabled: 是否启用
         """
         with self._lock:
-            self._cache_manager.get_cache(
-                "character_states",
-                max_size=max_size,
-                ttl=ttl,
-                track_stats=True
-            )
+            self._cache_manager.get_cache("character_states", max_size=max_size, ttl=ttl, track_stats=True)
             self._optimizations_enabled["character_cache"] = enabled
 
     def configure_query_cache(
-        self,
-        max_size: int = 1000,
-        ttl: Optional[float] = 600,
-        enabled: bool = True
+        self, max_size: int = 1000, ttl: Optional[float] = 600, enabled: bool = True
     ) -> None:
         """配置查询结果缓存
 
@@ -112,12 +94,7 @@ class PerformanceOptimizer:
             enabled: 是否启用
         """
         with self._lock:
-            self._cache_manager.get_cache(
-                "query_results",
-                max_size=max_size,
-                ttl=ttl,
-                track_stats=True
-            )
+            self._cache_manager.get_cache("query_results", max_size=max_size, ttl=ttl, track_stats=True)
             self._optimizations_enabled["query_cache"] = enabled
 
     def get_cache(self, name: str) -> LRUCache:
@@ -208,12 +185,7 @@ class CachedEmbedder:
         vectors = cached_embedder.embed_texts(["text"])
     """
 
-    def __init__(
-        self,
-        base_embedder: Any,
-        cache: Optional[LRUCache] = None,
-        enabled: bool = True
-    ):
+    def __init__(self, base_embedder: Any, cache: Optional[LRUCache] = None, enabled: bool = True):
         """初始化带缓存的嵌入器
 
         Args:
@@ -330,12 +302,7 @@ class CachedVectorSearch:
         results = cached_client.search(collection_name="chapters_seg", query_vector=[...])
     """
 
-    def __init__(
-        self,
-        base_client: Any,
-        cache: Optional[LRUCache] = None,
-        enabled: bool = True
-    ):
+    def __init__(self, base_client: Any, cache: Optional[LRUCache] = None, enabled: bool = True):
         """初始化带缓存的向量搜索
 
         Args:
@@ -348,11 +315,7 @@ class CachedVectorSearch:
         self._enabled = enabled
 
     def _make_cache_key(
-        self,
-        collection_name: str,
-        query_vector: List[float],
-        top_k: int,
-        query_filter: Any
+        self, collection_name: str, query_vector: List[float], top_k: int, query_filter: Any
     ) -> str:
         """生成缓存键
 
@@ -371,7 +334,7 @@ class CachedVectorSearch:
         query_vector: List[float],
         top_k: Optional[int] = None,
         query_filter: Any = None,
-        **kwargs
+        **kwargs,
     ) -> List[Dict[str, Any]]:
         """搜索（带缓存）
 
@@ -391,12 +354,10 @@ class CachedVectorSearch:
                 query_vector=query_vector,
                 top_k=top_k,
                 query_filter=query_filter,
-                **kwargs
+                **kwargs,
             )
 
-        cache_key = self._make_cache_key(
-            collection_name, query_vector, top_k or 5, query_filter
-        )
+        cache_key = self._make_cache_key(collection_name, query_vector, top_k or 5, query_filter)
 
         cached = self._cache.get(cache_key)
         if cached is not None:
@@ -407,7 +368,7 @@ class CachedVectorSearch:
             query_vector=query_vector,
             top_k=top_k,
             query_filter=query_filter,
-            **kwargs
+            **kwargs,
         )
 
         self._cache.set(cache_key, results)
@@ -439,9 +400,7 @@ class CachedVectorSearch:
 
 
 def create_cached_embedder(
-    base_embedder: Any,
-    optimizer: Optional[PerformanceOptimizer] = None,
-    cache_name: str = "embeddings"
+    base_embedder: Any, optimizer: Optional[PerformanceOptimizer] = None, cache_name: str = "embeddings"
 ) -> CachedEmbedder:
     """创建带缓存的嵌入器
 
@@ -458,9 +417,7 @@ def create_cached_embedder(
 
 
 def create_cached_vector_client(
-    base_client: Any,
-    optimizer: Optional[PerformanceOptimizer] = None,
-    cache_name: str = "query_results"
+    base_client: Any, optimizer: Optional[PerformanceOptimizer] = None, cache_name: str = "query_results"
 ) -> CachedVectorSearch:
     """创建带缓存的向量客户端
 

@@ -16,6 +16,7 @@ protocol on ``_connect``):
 - ``_connect(db_path, *, timeout=DEFAULT_TIMEOUT)``: transactional
   context manager (commit on success, rollback on error).
 """
+
 from __future__ import annotations
 
 from contextlib import contextmanager

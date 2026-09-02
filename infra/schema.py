@@ -31,24 +31,27 @@ except ImportError:
 from infra.errors import BaseError, wrap
 from infra.errors import ValidationError as InfraValidationError
 
-T = TypeVar('T')
-S = TypeVar('S')
+T = TypeVar("T")
+S = TypeVar("S")
 
 
 class SchemaValidationError(InfraValidationError):
     """Schema 验证错误"""
+
     __error_name__ = "SchemaValidationError"
     __error_tags__ = ["validation", "schema"]
 
 
 class SchemaDecodeError(BaseError):
     """解码错误"""
+
     __error_name__ = "SchemaDecodeError"
     __error_tags__ = ["schema", "decode"]
 
 
 class SchemaEncodeError(BaseError):
     """编码错误"""
+
     __error_name__ = "SchemaEncodeError"
     __error_tags__ = ["schema", "encode"]
 
@@ -198,6 +201,7 @@ class Array(BaseModel, Generic[T]):
 
 class String(BaseModel):
     """字符串验证"""
+
     value: str
 
     @classmethod
@@ -208,6 +212,7 @@ class String(BaseModel):
 
 class Number(BaseModel):
     """数字验证"""
+
     value: float
 
     @classmethod
@@ -218,6 +223,7 @@ class Number(BaseModel):
 
 class Integer(BaseModel):
     """整数验证"""
+
     value: int
 
     @classmethod
@@ -228,6 +234,7 @@ class Integer(BaseModel):
 
 class Boolean(BaseModel):
     """布尔值验证"""
+
     value: bool
 
     @classmethod
@@ -256,6 +263,7 @@ def optional(schema: Type[T]) -> OptionalSchema[T]:
 
 class PositiveInt(BaseModel):
     """正整数验证"""
+
     value: int = Field(gt=0)
 
     @classmethod
@@ -266,6 +274,7 @@ class PositiveInt(BaseModel):
 
 class NonNegativeInt(BaseModel):
     """非负整数验证"""
+
     value: int = Field(ge=0)
 
     @classmethod
@@ -298,9 +307,9 @@ def encode(value: Any) -> Dict[str, Any]:
     Returns:
         编码后的字典
     """
-    if hasattr(value, 'encode'):
+    if hasattr(value, "encode"):
         return value.encode()
-    if hasattr(value, 'model_dump'):
+    if hasattr(value, "model_dump"):
         return value.model_dump()
     return dict(value)
 
@@ -320,7 +329,7 @@ def validate(schema: Type[T], data: Any) -> Tuple[bool, Optional[List[Dict[str, 
         schema.decode(data)
         return True, None
     except SchemaDecodeError as e:
-        errors = e.details.get('errors', []) if hasattr(e, 'details') else []
+        errors = e.details.get("errors", []) if hasattr(e, "details") else []
         return False, errors
 
 

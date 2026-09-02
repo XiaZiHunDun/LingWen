@@ -5,7 +5,7 @@ import sys
 import pytest
 
 # Add project root to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
 from lingwen_core.agents.agents.auditor.tools import AuditorTools
 from lingwen_core.agents.agents.character_designer.tools import CharacterDesignerTools
@@ -18,34 +18,29 @@ def test_outline_master_tools():
     """测试大纲师工具"""
     tools = OutlineMasterTools()
     outline = tools.generate_outline(
-        settings={"title": "测试小说", "genre": "玄幻"},
-        requirements={"total_chapters": 100}
+        settings={"title": "测试小说", "genre": "玄幻"}, requirements={"total_chapters": 100}
     )
     assert outline["title"] == "测试小说"
     assert len(outline["chapters"]) == 100
 
+
 def test_outline_master_generate_chapter_outline():
     """测试生成章大纲"""
     tools = OutlineMasterTools()
-    chapter = tools.generate_chapter_outline(
-        chapter_num=50,
-        events=["战斗", "胜利"],
-        foreshadow=["神秘剑客"]
-    )
+    chapter = tools.generate_chapter_outline(chapter_num=50, events=["战斗", "胜利"], foreshadow=["神秘剑客"])
     assert chapter["num"] == 50
     assert "战斗" in chapter["events"]
+
 
 def test_character_designer_tools():
     """测试人设师工具"""
     tools = CharacterDesignerTools()
-    character = tools.generate_character_card({
-        "name": "铁蛋",
-        "role": "protagonist",
-        "personality": ["冷静", "务实"],
-        "first_appearance": 1
-    })
+    character = tools.generate_character_card(
+        {"name": "铁蛋", "role": "protagonist", "personality": ["冷静", "务实"], "first_appearance": 1}
+    )
     assert character["name"] == "铁蛋"
     assert "冷静" in character["personality"]
+
 
 def test_character_designer_add_relationship():
     """测试添加关系"""
@@ -55,17 +50,19 @@ def test_character_designer_add_relationship():
     assert len(result["relationships"]) == 1
     assert result["relationships"][0]["target"] == "林夜"
 
+
 def test_content_writer_tools_build_prompt():
     """测试构建写作Prompt"""
     tools = ContentWriterTools()
     context = {
         "chapter_outline": {"num": 50, "title": "第五十章", "events": ["战斗"], "word_count_target": 2500},
         "characters": [{"name": "铁蛋", "personality": ["冷静"]}],
-        "style_guide": {"tone": "简洁有力", "dialogue_ratio": "30%"}
+        "style_guide": {"tone": "简洁有力", "dialogue_ratio": "30%"},
     }
     prompt = tools.build_writing_prompt(context)
     assert "第五十章" in prompt
     assert "铁蛋" in prompt
+
 
 def test_content_writer_add_hook():
     """测试添加章末钩子"""
@@ -74,12 +71,14 @@ def test_content_writer_add_hook():
     result = tools.add_chapter_hook(content, "cliffhanger")
     assert len(result) > len(content)
 
+
 def test_auditor_tools_detect_ai_gloss():
     """测试AI痕迹检测"""
     tools = AuditorTools()
     content = "首先，我们需要明确目标。其次，制定计划。最后，执行。"
     issues = tools.detect_ai_gloss(content)
     assert len(issues) >= 3  # 首先、其次、最后
+
 
 def test_auditor_tools_check_consistency():
     """测试角色一致性检查"""
@@ -89,6 +88,7 @@ def test_auditor_tools_check_consistency():
     issues = tools.check_character_consistency(content, character_cards)
     assert len(issues) >= 1
 
+
 def test_auditor_generate_report():
     """测试生成审核报告"""
     tools = AuditorTools()
@@ -97,6 +97,7 @@ def test_auditor_generate_report():
     assert report["chapter"] == 50
     assert "issues" in report
 
+
 def test_polisher_tools_remove_ai_gloss():
     """测试去除AI痕迹"""
     tools = PolisherTools()
@@ -104,6 +105,7 @@ def test_polisher_tools_remove_ai_gloss():
     result = tools.remove_ai_gloss(content)
     assert "首先" not in result
     assert "其次" not in result
+
 
 def test_polisher_tools_apply_style():
     """测试应用文风指南"""

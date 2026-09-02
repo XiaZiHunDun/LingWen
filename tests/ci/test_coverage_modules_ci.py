@@ -1,4 +1,5 @@
 """Phase 11.11: coverage gate contract + module policy tests."""
+
 from __future__ import annotations
 
 from pathlib import Path

@@ -7,6 +7,7 @@ Phase 18.0 — 持久化与事件溯源接口契约。
 - 业务侧只依赖本模块，不依赖具体存储后端（SQLite/JSON/内存）
 - Mock 实现位于同模块，便于测试
 """
+
 from __future__ import annotations
 
 import time

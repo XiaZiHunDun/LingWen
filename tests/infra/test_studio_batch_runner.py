@@ -1,4 +1,5 @@
 """Tests for infra/studio_batch_runner.py."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -102,7 +103,9 @@ def test_start_batch_job_spawns_process(mock_popen, anye_project, tmp_path: Path
 
 @patch("infra.studio_batch_runner._process_running", return_value=True)
 @patch("infra.studio_batch_runner.subprocess.Popen")
-def test_start_batch_job_rejects_duplicate(mock_popen, _mock_running, anye_project, tmp_path: Path, monkeypatch):
+def test_start_batch_job_rejects_duplicate(
+    mock_popen, _mock_running, anye_project, tmp_path: Path, monkeypatch
+):
     monkeypatch.setenv("LINGWEN_ALLOW_DASHBOARD_BATCH", "1")
     monkeypatch.setattr(
         "infra.studio_batch_runner._jobs_dir",

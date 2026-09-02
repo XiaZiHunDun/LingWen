@@ -19,6 +19,7 @@ from prompt_assembler import PromptAssembler, TemperatureConfig, TemplateCategor
 
 # ==================== Fixtures ====================
 
+
 @pytest.fixture
 def temp_config_dir(tmp_path):
     """创建临时配置目录"""
@@ -60,7 +61,7 @@ templates:
       context:
         required_fields: [chapter_num, pov_character, scene_type]
 """
-    (tmp_path / "00_模板索引.yaml").write_text(index_content, encoding='utf-8')
+    (tmp_path / "00_模板索引.yaml").write_text(index_content, encoding="utf-8")
 
     # 创建温度映射
     temp_content = """
@@ -88,7 +89,7 @@ genre_scene_mapping:
       战斗场景:
         temperature: 0.75
 """
-    (tmp_path / "场景温度映射.yaml").write_text(temp_content, encoding='utf-8')
+    (tmp_path / "场景温度映射.yaml").write_text(temp_content, encoding="utf-8")
 
     # 创建模板目录和文件
     outline_dir = tmp_path / "01_大纲生成"
@@ -116,7 +117,7 @@ genre_scene_mapping:
 
 [示例内容]
 """
-    (outline_dir / "全文大纲_CARE.md").write_text(outline_content, encoding='utf-8')
+    (outline_dir / "全文大纲_CARE.md").write_text(outline_content, encoding="utf-8")
 
     continuation_dir = tmp_path / "02_正文续写"
     continuation_dir.mkdir(parents=True)
@@ -141,7 +142,7 @@ genre_scene_mapping:
 
 [示例内容]
 """
-    (continuation_dir / "标准续写_CARE.md").write_text(continuation_content, encoding='utf-8')
+    (continuation_dir / "标准续写_CARE.md").write_text(continuation_content, encoding="utf-8")
 
     return tmp_path
 
@@ -154,6 +155,7 @@ def assembler(temp_config_dir):
 
 # ==================== 测试 PromptAssembler 初始化 ====================
 
+
 class TestPromptAssemblerInit:
     def test_loads_config(self, assembler):
         """测试加载配置"""
@@ -163,10 +165,11 @@ class TestPromptAssemblerInit:
     def test_loads_temperature_mapping(self, assembler):
         """测试加载温度映射"""
         assert len(assembler.temperature_mapping) > 0
-        assert 'scene_types' in assembler.temperature_mapping
+        assert "scene_types" in assembler.temperature_mapping
 
 
 # ==================== 测试模板操作 ====================
+
 
 class TestTemplateOperations:
     def test_get_template(self, assembler):
@@ -201,6 +204,7 @@ class TestTemplateOperations:
 
 # ==================== 测试温度配置 ====================
 
+
 class TestTemperatureConfig:
     def test_get_temperature_by_scene(self, assembler):
         """测试按场景获取温度"""
@@ -224,22 +228,17 @@ class TestTemperatureConfig:
 
 # ==================== 测试上下文验证 ====================
 
+
 class TestContextValidation:
     def test_validate_complete_context(self, assembler):
         """测试验证完整的上下文"""
-        context = {
-            "chapter_num": "25",
-            "pov_character": "林夜",
-            "scene_type": "战斗"
-        }
+        context = {"chapter_num": "25", "pov_character": "林夜", "scene_type": "战斗"}
         missing = assembler.validate_context("标准续写", context)
         assert len(missing) == 0
 
     def test_validate_missing_fields(self, assembler):
         """测试验证缺失字段"""
-        context = {
-            "chapter_num": "25"
-        }
+        context = {"chapter_num": "25"}
         missing = assembler.validate_context("标准续写", context)
         assert len(missing) == 2
         assert "pov_character" in missing
@@ -253,6 +252,7 @@ class TestContextValidation:
 
 # ==================== 测试模板组装 ====================
 
+
 class TestTemplateAssembly:
     def test_assemble_with_context(self, assembler):
         """测试使用上下文组装"""
@@ -260,7 +260,7 @@ class TestTemplateAssembly:
             "world_setting_summary": "修真界分为人、妖、仙三界",
             "project_name": "仙路苍穹",
             "novel_type": "玄幻",
-            "volume_count": "3"
+            "volume_count": "3",
         }
 
         prompt = assembler.assemble("全文大纲", context)
@@ -276,7 +276,7 @@ class TestTemplateAssembly:
             "world_setting_summary": "测试",
             "project_name": "测试",
             "novel_type": "测试",
-            "volume_count": "1"
+            "volume_count": "1",
         }
 
         prompt = assembler.assemble("全文大纲", context, temperature=0.8)
@@ -285,11 +285,7 @@ class TestTemplateAssembly:
 
     def test_assemble_fills_all_variables(self, assembler):
         """测试填充所有变量"""
-        context = {
-            "chapter_num": "25",
-            "pov_character": "林夜",
-            "scene_type": "战斗"
-        }
+        context = {"chapter_num": "25", "pov_character": "林夜", "scene_type": "战斗"}
 
         prompt = assembler.assemble("标准续写", context)
 
@@ -299,6 +295,7 @@ class TestTemplateAssembly:
 
 
 # ==================== 测试边界情况 ====================
+
 
 class TestEdgeCases:
     def test_assemble_nonexistent_template(self, assembler):
@@ -315,6 +312,7 @@ class TestEdgeCases:
 
 
 # ==================== 测试数据类 ====================
+
 
 class TestDataClasses:
     def test_temperature_config_defaults(self):
@@ -337,7 +335,7 @@ class TestDataClasses:
             status="active",
             file_path="test.md",
             description="测试",
-            temperature=temp
+            temperature=temp,
         )
         assert meta.id == "test_v1"
         assert meta.category == TemplateCategory.OUTLINE

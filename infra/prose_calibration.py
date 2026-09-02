@@ -1,4 +1,5 @@
 """Prose calibration and heatmap helpers (Phase 11.23)."""
+
 from __future__ import annotations
 
 from functools import lru_cache
@@ -39,7 +40,9 @@ def is_prose_issue(issue_type: str, config: dict[str, Any] | None = None) -> boo
     return False
 
 
-def build_prose_heatmap(chapters: list[dict[str, Any]], config: dict[str, Any] | None = None) -> dict[str, Any]:
+def build_prose_heatmap(
+    chapters: list[dict[str, Any]], config: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Build per-chapter prose issue counts for Studio dashboard."""
     cfg = config or load_prose_config()
     rows: list[dict[str, Any]] = []
@@ -48,9 +51,7 @@ def build_prose_heatmap(chapters: list[dict[str, Any]], config: dict[str, Any] |
     for ch in chapters:
         chapter_num = int(ch.get("chapter") or 0)
         issues = ch.get("issues") or []
-        prose_issues = [
-            i for i in issues if is_prose_issue(str(i.get("issue_type", "")), cfg)
-        ]
+        prose_issues = [i for i in issues if is_prose_issue(str(i.get("issue_type", "")), cfg)]
         structural = len(issues) - len(prose_issues)
         prose_count = len(prose_issues)
         max_prose = max(max_prose, prose_count)
@@ -188,4 +189,3 @@ def resolve_llm_post_check(
     if primary:
         return "run" if has_api_key else "fail_no_key"
     return "run" if has_api_key else "skip"
-

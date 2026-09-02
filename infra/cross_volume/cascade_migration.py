@@ -3,6 +3,7 @@
 Recomputes BFS with weighted=True (preview_cascade) and rewrites algorithm +
 nodes/edges/actions JSON on existing cascade_runs rows. 0 schema change.
 """
+
 from __future__ import annotations
 
 import logging

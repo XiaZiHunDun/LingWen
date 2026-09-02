@@ -169,5 +169,5 @@ class TestDialogueActionChecker:
         assert len(issues) == 0
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

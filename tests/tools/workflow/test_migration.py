@@ -2,6 +2,7 @@
 
 Migration layer: one-shot JSON → SQLite conversion for legacy workflow_state.json.
 """
+
 import json
 
 
@@ -36,7 +37,7 @@ class TestMigrateJsonToSqlite:
 
         task = get_task_status("task_001")
         assert task is not None
-        assert task['agent'] == "writer-a"
+        assert task["agent"] == "writer-a"
 
     def test_migrate_json_to_sqlite_no_file_returns_zero(self, mock_env):
         """Test migrate_json_to_sqlite returns (0, 0) when JSON doesn't exist"""
@@ -56,10 +57,10 @@ class TestMigrateJsonToSqlite:
         data = {
             "simple_key": "simple_value",
             "complex_key": {"nested": "value", "list": [1, 2, 3]},
-            "current_step": "STEP_01"
+            "current_step": "STEP_01",
         }
         json_path = mock_env / "workflow_state.json"
-        with open(json_path, 'w', encoding='utf-8') as f:
+        with open(json_path, "w", encoding="utf-8") as f:
             json.dump(data, f)
 
         state_count, _ = migrate_json_to_sqlite()

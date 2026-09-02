@@ -2,6 +2,7 @@
 """
 动作测试
 """
+
 import json
 import os
 import tempfile
@@ -69,7 +70,7 @@ class TestNotifyAction(TestCase):
         """测试有效渠道的通知"""
         result = self.action.execute(
             params={"channel": "writer_channel", "message": "Test message"},
-            context={"event_name": "TEST_EVENT"}
+            context={"event_name": "TEST_EVENT"},
         )
         self.assertTrue(result.success)
         self.assertEqual(result.output["channel"], "writer_channel")
@@ -78,16 +79,13 @@ class TestNotifyAction(TestCase):
         """测试模板渲染"""
         result = self.action.execute(
             params={"channel": "writer_channel", "template": "review_complete"},
-            context={"chapter_id": "ch001", "review_result": "PASS"}
+            context={"chapter_id": "ch001", "review_result": "PASS"},
         )
         self.assertTrue(result.success)
 
     def test_execute_with_invalid_channel(self):
         """测试无效渠道"""
-        result = self.action.execute(
-            params={"channel": "invalid_channel"},
-            context={}
-        )
+        result = self.action.execute(params={"channel": "invalid_channel"}, context={})
         self.assertFalse(result.success)
         self.assertIn("Invalid channel", result.error)
 
@@ -110,7 +108,7 @@ class TestUpdateStateAction(TestCase):
         self.initial_state = {
             "current_step": "STEP_01",
             "project_status": {"phase": "PHASE_1"},
-            "nested": {"field": "original"}
+            "nested": {"field": "original"},
         }
         with open(self.state_file, "w", encoding="utf-8") as f:
             json.dump(self.initial_state, f)
@@ -128,12 +126,7 @@ class TestUpdateStateAction(TestCase):
     def test_update_simple_field(self):
         """测试更新简单字段"""
         result = self.action.execute(
-            params={
-                "target": str(self.state_file),
-                "field": "current_step",
-                "value": "STEP_02"
-            },
-            context={}
+            params={"target": str(self.state_file), "field": "current_step", "value": "STEP_02"}, context={}
         )
         self.assertTrue(result.success)
 
@@ -145,12 +138,8 @@ class TestUpdateStateAction(TestCase):
     def test_update_nested_field(self):
         """测试更新嵌套字段"""
         result = self.action.execute(
-            params={
-                "target": str(self.state_file),
-                "field": "project_status.phase",
-                "value": "PHASE_2"
-            },
-            context={}
+            params={"target": str(self.state_file), "field": "project_status.phase", "value": "PHASE_2"},
+            context={},
         )
         self.assertTrue(result.success)
 
@@ -161,12 +150,8 @@ class TestUpdateStateAction(TestCase):
     def test_update_with_context_variable(self):
         """测试使用context变量"""
         result = self.action.execute(
-            params={
-                "target": str(self.state_file),
-                "field": "current_step",
-                "value": "$step"
-            },
-            context={"step": "STEP_05"}
+            params={"target": str(self.state_file), "field": "current_step", "value": "$step"},
+            context={"step": "STEP_05"},
         )
         self.assertTrue(result.success)
 
@@ -176,19 +161,13 @@ class TestUpdateStateAction(TestCase):
 
     def test_update_missing_field_param(self):
         """测试缺少field参数"""
-        result = self.action.execute(
-            params={"value": "some_value"},
-            context={}
-        )
+        result = self.action.execute(params={"value": "some_value"}, context={})
         self.assertFalse(result.success)
         self.assertIn("缺少必需参数", result.error)
 
     def test_update_missing_value_param(self):
         """测试缺少value参数"""
-        result = self.action.execute(
-            params={"field": "current_step"},
-            context={}
-        )
+        result = self.action.execute(params={"field": "current_step"}, context={})
         self.assertFalse(result.success)
 
 
@@ -198,12 +177,14 @@ class TestRunCheckerAction(TestCase):
     def test_action_type(self):
         """测试动作类型"""
         from lingwen_pipeline.hooks.actions.run_checker import RunCheckerAction
+
         action = RunCheckerAction()
         self.assertEqual(action.action_type, "run_checker")
 
     def test_missing_checker_param(self):
         """测试缺少checker参数"""
         from lingwen_pipeline.hooks.actions.run_checker import RunCheckerAction
+
         action = RunCheckerAction()
 
         result = action.execute(params={}, context={})
@@ -213,12 +194,10 @@ class TestRunCheckerAction(TestCase):
     def test_unknown_checker(self):
         """测试未知检查器"""
         from lingwen_pipeline.hooks.actions.run_checker import RunCheckerAction
+
         action = RunCheckerAction()
 
-        result = action.execute(
-            params={"checker": "unknown_checker"},
-            context={}
-        )
+        result = action.execute(params={"checker": "unknown_checker"}, context={})
         self.assertFalse(result.success)
         self.assertIn("Unknown checker", result.error)
 
@@ -230,11 +209,11 @@ class TestRunCheckerAction(TestCase):
         契约:任何 "auto_consistency_checker" 请求都应返回 Unknown。
         """
         from lingwen_pipeline.hooks.actions.run_checker import RunCheckerAction
+
         action = RunCheckerAction()
 
         result = action.execute(
-            params={"checker": "auto_consistency_checker", "chapter_id": "ch001"},
-            context={}
+            params={"checker": "auto_consistency_checker", "chapter_id": "ch001"}, context={}
         )
         self.assertFalse(result.success)
         self.assertIn("Unknown checker", result.error)
@@ -257,19 +236,14 @@ class TestRunCheckerAction(TestCase):
             create=True,
         ) as mock_run:
             # 还需要让 import 走通 — patch 掉整个模块
-            with patch.dict("sys.modules", {
-                "infra.tools.consistency.run_quality_checks": MagicMock(
-                    run_quality_checks=mock_run
-                )
-            }):
+            with patch.dict(
+                "sys.modules",
+                {"infra.tools.consistency.run_quality_checks": MagicMock(run_quality_checks=mock_run)},
+            ):
                 action = RunCheckerAction()
                 result = action.execute(
-                    params={
-                        "checker": "quality_gate",
-                        "chapter_range": "1-10",
-                        "threshold": "Silver"
-                    },
-                    context={}
+                    params={"checker": "quality_gate", "chapter_range": "1-10", "threshold": "Silver"},
+                    context={},
                 )
 
         # 修复后契约:成功返回,score / threshold / range 正确
@@ -303,6 +277,7 @@ class TestTriggerModuleActionShellSafety(TestCase):
 
     def setUp(self):
         from lingwen_pipeline.hooks.actions.trigger_module import TriggerModuleAction
+
         self.action = TriggerModuleAction()
         self._run_calls = []
 
@@ -340,17 +315,14 @@ class TestTriggerModuleActionShellSafety(TestCase):
         with patch("lingwen_pipeline.hooks.actions.trigger_module.subprocess.run", fake_run):
             self.action.execute(
                 params={"command": "anti-trope", "count": 3},
-                context={"chapter_num": 5, "outline": "some outline"}
+                context={"chapter_num": 5, "outline": "some outline"},
             )
 
         self.assertEqual(len(self._run_calls), 1, "subprocess.run 应被调一次")
         called_args, _ = self._run_calls[0]
         self.assertEqual(len(called_args), 1, "应有 1 个位置参数 (cmd)")
         cmd = called_args[0]
-        self.assertIsInstance(
-            cmd, list,
-            f"P0 安全: cmd 必须是 list,不能是 str(实际 {type(cmd).__name__})"
-        )
+        self.assertIsInstance(cmd, list, f"P0 安全: cmd 必须是 list,不能是 str(实际 {type(cmd).__name__})")
 
     def test_execute_via_cli_does_not_use_shell_true(self):
         """shell=True 绝不能出现(参数里没有,或显式 False)"""
@@ -365,17 +337,13 @@ class TestTriggerModuleActionShellSafety(TestCase):
             return r
 
         with patch("lingwen_pipeline.hooks.actions.trigger_module.subprocess.run", fake_run):
-            self.action.execute(
-                params={"command": "anti-trope", "count": 2},
-                context={"chapter_num": 1}
-            )
+            self.action.execute(params={"command": "anti-trope", "count": 2}, context={"chapter_num": 1})
 
         _, called_kwargs = self._run_calls[0]
         # shell 参数要么不存在,要么显式 False
         shell_value = called_kwargs.get("shell", False)
         self.assertFalse(
-            shell_value,
-            f"P0 安全: shell=True 是 shell 注入漏洞,禁止使用(实际 shell={shell_value!r})"
+            shell_value, f"P0 安全: shell=True 是 shell 注入漏洞,禁止使用(实际 shell={shell_value!r})"
         )
 
     def test_execute_via_cli_passes_injection_attempt_safely(self):
@@ -399,12 +367,13 @@ class TestTriggerModuleActionShellSafety(TestCase):
 
         with patch("lingwen_pipeline.hooks.actions.trigger_module.subprocess.run", fake_run):
             result = self.action.execute(
-                params={"command": "anti-trope"},
-                context={"chapter_num": 1, "outline": malicious}
+                params={"command": "anti-trope"}, context={"chapter_num": 1, "outline": malicious}
             )
 
         # 命令成功(没让 shell 误执行 malicious)
-        self.assertTrue(result.success, f"subprocess 应被以 list 方式调用,结果应 success (实际: {result.error})")
+        self.assertTrue(
+            result.success, f"subprocess 应被以 list 方式调用,结果应 success (实际: {result.error})"
+        )
 
         called_args, _ = self._run_calls[0]
         cmd = called_args[0]
@@ -427,7 +396,7 @@ class TestTriggerModuleActionShellSafety(TestCase):
         with patch("lingwen_pipeline.hooks.actions.trigger_module.subprocess.run", fake_run):
             self.action.execute(
                 params={"command": "anti-trope", "count": 7, "timeout": 60},
-                context={"chapter_num": 42, "outline": "my outline"}
+                context={"chapter_num": 42, "outline": "my outline"},
             )
 
         called_args, _ = self._run_calls[0]
@@ -456,10 +425,7 @@ class TestTriggerModuleActionShellSafety(TestCase):
             return r
 
         with patch("lingwen_pipeline.hooks.actions.trigger_module.subprocess.run", fake_run):
-            self.action.execute(
-                params={"command": "anti-trope", "timeout": 45},
-                context={}
-            )
+            self.action.execute(params={"command": "anti-trope", "timeout": 45}, context={})
 
         _, called_kwargs = self._run_calls[0]
         self.assertEqual(called_kwargs.get("timeout"), 45, "timeout 参数应传给 subprocess.run")
@@ -470,6 +436,7 @@ class TestBlockProceedAction(TestCase):
 
     def setUp(self):
         from lingwen_pipeline.hooks.actions.block_proceed import BlockProceedAction
+
         self.action = BlockProceedAction()
 
     def test_action_type(self):
@@ -479,7 +446,7 @@ class TestBlockProceedAction(TestCase):
         """核心契约:verify_result 为 None + block_on_null 默认 True → 阻止"""
         result = self.action.execute(
             params={"reason": "审核未通过"},
-            context={"event_name": "post_verify", "hook_name": "verify_check", "verify_result": None}
+            context={"event_name": "post_verify", "hook_name": "verify_check", "verify_result": None},
         )
         self.assertFalse(result.success)
         self.assertIn("审核未通过", result.error)
@@ -489,17 +456,13 @@ class TestBlockProceedAction(TestCase):
 
         上游 hook 可能把缺失值序列化成字符串 'null',需要兼容。
         """
-        result = self.action.execute(
-            params={"reason": "结果为空"},
-            context={"verify_result": "null"}
-        )
+        result = self.action.execute(params={"reason": "结果为空"}, context={"verify_result": "null"})
         self.assertFalse(result.success)
 
     def test_does_not_block_when_verify_result_exists(self):
         """verify_result 存在(非 None / 非 'null') → 不阻止"""
         result = self.action.execute(
-            params={"reason": "x"},
-            context={"verify_result": {"score": 0.9, "passed": True}}
+            params={"reason": "x"}, context={"verify_result": {"score": 0.9, "passed": True}}
         )
         self.assertTrue(result.success)
         self.assertFalse(result.output["blocked"])
@@ -507,8 +470,7 @@ class TestBlockProceedAction(TestCase):
     def test_does_not_block_when_block_on_null_false(self):
         """即使 verify_result 是 None,只要 block_on_null=False 也不阻止"""
         result = self.action.execute(
-            params={"reason": "test", "block_on_null_result": False},
-            context={"verify_result": None}
+            params={"reason": "test", "block_on_null_result": False}, context={"verify_result": None}
         )
         self.assertTrue(result.success)
         self.assertFalse(result.output["blocked"])
@@ -524,10 +486,11 @@ class TestBlockProceedAction(TestCase):
             recorded[key] = value
 
         from unittest.mock import patch
+
         with patch("infra.tools.workflow.lib.set_state", fake_set_state, create=True):
             result = self.action.execute(
                 params={"reason": "数据不达标"},
-                context={"event_name": "post_verify", "hook_name": "verify_check", "verify_result": None}
+                context={"event_name": "post_verify", "hook_name": "verify_check", "verify_result": None},
             )
 
         self.assertFalse(result.success)
@@ -543,10 +506,7 @@ class TestBlockProceedAction(TestCase):
             raise RuntimeError("db locked")
 
         with patch("infra.tools.workflow.lib.set_state", broken_set_state, create=True):
-            result = self.action.execute(
-                params={"reason": "test"},
-                context={"verify_result": None}
-            )
+            result = self.action.execute(params={"reason": "test"}, context={"verify_result": None})
 
         # 即使 state 写入失败,仍然返回阻止结果
         self.assertFalse(result.success)
@@ -554,10 +514,7 @@ class TestBlockProceedAction(TestCase):
 
     def test_default_reason_when_not_provided(self):
         """params 缺 reason 时,error 应包含默认提示而不是空字符串"""
-        result = self.action.execute(
-            params={},
-            context={"verify_result": None}
-        )
+        result = self.action.execute(params={}, context={"verify_result": None})
         self.assertFalse(result.success)
         self.assertIn("未指定原因", result.error)
 
@@ -567,11 +524,13 @@ class TestLogStateChangeAction(TestCase):
 
     def setUp(self):
         from lingwen_pipeline.hooks.actions.log_state_change import LogStateChangeAction
+
         self.action = LogStateChangeAction()
         self.temp_dir = Path(tempfile.mkdtemp())
 
     def tearDown(self):
         import shutil
+
         if self.temp_dir.exists():
             shutil.rmtree(self.temp_dir, ignore_errors=True)
 
@@ -586,8 +545,8 @@ class TestLogStateChangeAction(TestCase):
             context={
                 "event_name": "STEP_TRANSITION",
                 "data": {"from": "STEP_14", "to": "STEP_15"},
-                "source": "lib.py"
-            }
+                "source": "lib.py",
+            },
         )
 
         self.assertTrue(result.success, f"应成功 (error={result.error})")
@@ -609,7 +568,7 @@ class TestLogStateChangeAction(TestCase):
         for i in range(3):
             self.action.execute(
                 params={"log_path": str(log_path)},
-                context={"event_name": f"E{i}", "data": {"i": i}, "source": "test"}
+                context={"event_name": f"E{i}", "data": {"i": i}, "source": "test"},
             )
 
         lines = log_path.read_text(encoding="utf-8").strip().split("\n")
@@ -623,8 +582,7 @@ class TestLogStateChangeAction(TestCase):
         self.assertFalse(nested_log.parent.exists())
 
         result = self.action.execute(
-            params={"log_path": str(nested_log)},
-            context={"event_name": "X", "data": {}, "source": "test"}
+            params={"log_path": str(nested_log)}, context={"event_name": "X", "data": {}, "source": "test"}
         )
 
         self.assertTrue(result.success)
@@ -633,8 +591,7 @@ class TestLogStateChangeAction(TestCase):
     def test_uses_defaults_when_log_path_missing(self):
         """params 缺 log_path 时,使用默认路径 (相对项目根)"""
         result = self.action.execute(
-            params={},
-            context={"event_name": "DEFAULT_TEST", "data": {"k": "v"}, "source": "test"}
+            params={}, context={"event_name": "DEFAULT_TEST", "data": {"k": "v"}, "source": "test"}
         )
 
         # 默认路径会成功创建 / 追加,即使 .state/ 之前没建过
@@ -645,10 +602,7 @@ class TestLogStateChangeAction(TestCase):
     def test_handles_missing_context_keys(self):
         """context 缺 event_name / data / source 时不报错(用默认值)"""
         log_path = self.temp_dir / "history.log"
-        result = self.action.execute(
-            params={"log_path": str(log_path)},
-            context={}
-        )
+        result = self.action.execute(params={"log_path": str(log_path)}, context={})
         self.assertTrue(result.success)
 
         entry = json.loads(log_path.read_text(encoding="utf-8").strip())
@@ -669,12 +623,14 @@ class TestRunScriptAction(TestCase):
 
     def setUp(self):
         from lingwen_pipeline.hooks.actions.run_script import RunScriptAction
+
         self.action = RunScriptAction()
         self.temp_dir = Path(tempfile.mkdtemp())
         self._run_calls = []
 
     def tearDown(self):
         import shutil
+
         if self.temp_dir.exists():
             shutil.rmtree(self.temp_dir, ignore_errors=True)
 
@@ -711,10 +667,7 @@ class TestRunScriptAction(TestCase):
         from unittest.mock import patch
 
         with patch("lingwen_pipeline.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
-            result = self.action.execute(
-                params={"script": "/nonexistent/path/fake_script.sh"},
-                context={}
-            )
+            result = self.action.execute(params={"script": "/nonexistent/path/fake_script.sh"}, context={})
 
         self.assertFalse(result.success)
         self.assertIn("不存在", result.error)
@@ -728,13 +681,11 @@ class TestRunScriptAction(TestCase):
         real_script.write_text("#!/bin/sh\necho hi\n", encoding="utf-8")
         real_script.chmod(0o755)
 
-        with patch("lingwen_pipeline.hooks.actions.run_script.subprocess.run", self._mock_subprocess(
-            returncode=0, stdout="hi\n", stderr=""
-        )):
-            result = self.action.execute(
-                params={"script": str(real_script)},
-                context={}
-            )
+        with patch(
+            "lingwen_pipeline.hooks.actions.run_script.subprocess.run",
+            self._mock_subprocess(returncode=0, stdout="hi\n", stderr=""),
+        ):
+            result = self.action.execute(params={"script": str(real_script)}, context={})
 
         self.assertTrue(result.success, f"error={result.error}")
         self.assertEqual(result.output["stdout"], "hi\n")
@@ -749,13 +700,11 @@ class TestRunScriptAction(TestCase):
         real_script.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
         real_script.chmod(0o755)
 
-        with patch("lingwen_pipeline.hooks.actions.run_script.subprocess.run", self._mock_subprocess(
-            returncode=2, stdout="", stderr="something went wrong"
-        )):
-            result = self.action.execute(
-                params={"script": str(real_script)},
-                context={}
-            )
+        with patch(
+            "lingwen_pipeline.hooks.actions.run_script.subprocess.run",
+            self._mock_subprocess(returncode=2, stdout="", stderr="something went wrong"),
+        ):
+            result = self.action.execute(params={"script": str(real_script)}, context={})
 
         self.assertFalse(result.success)
         self.assertIn("something went wrong", result.error)
@@ -769,9 +718,10 @@ class TestRunScriptAction(TestCase):
         real_script.write_text("#!/bin/sh\nexit 3\n", encoding="utf-8")
         real_script.chmod(0o755)
 
-        with patch("lingwen_pipeline.hooks.actions.run_script.subprocess.run", self._mock_subprocess(
-            returncode=3, stdout="", stderr=""
-        )):
+        with patch(
+            "lingwen_pipeline.hooks.actions.run_script.subprocess.run",
+            self._mock_subprocess(returncode=3, stdout="", stderr=""),
+        ):
             result = self.action.execute(params={"script": str(real_script)}, context={})
 
         self.assertFalse(result.success)
@@ -801,10 +751,7 @@ class TestRunScriptAction(TestCase):
         real_script.chmod(0o755)
 
         with patch("lingwen_pipeline.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
-            self.action.execute(
-                params={"script": str(real_script), "python": True},
-                context={}
-            )
+            self.action.execute(params={"script": str(real_script), "python": True}, context={})
 
         called_args, _ = self._run_calls[0]
         cmd = called_args[0]
@@ -819,10 +766,7 @@ class TestRunScriptAction(TestCase):
         real_script.chmod(0o755)
 
         with patch("lingwen_pipeline.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
-            self.action.execute(
-                params={"script": str(real_script), "python": False},
-                context={}
-            )
+            self.action.execute(params={"script": str(real_script), "python": False}, context={})
 
         called_args, _ = self._run_calls[0]
         cmd = called_args[0]
@@ -839,8 +783,7 @@ class TestRunScriptAction(TestCase):
 
         with patch("lingwen_pipeline.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
             self.action.execute(
-                params={"script": str(real_script), "args": ["--foo", "bar", "--baz", "qux"]},
-                context={}
+                params={"script": str(real_script), "args": ["--foo", "bar", "--baz", "qux"]}, context={}
             )
 
         called_args, _ = self._run_calls[0]
@@ -867,16 +810,10 @@ class TestRunScriptAction(TestCase):
         called_args, called_kwargs = self._run_calls[0]
         cmd = called_args[0]
         # 必须是 list,不能是 string(避免 shell 注入)
-        self.assertIsInstance(
-            cmd, list,
-            f"P0 安全: cmd 必须是 list,不是 str(实际 {type(cmd).__name__})"
-        )
+        self.assertIsInstance(cmd, list, f"P0 安全: cmd 必须是 list,不是 str(实际 {type(cmd).__name__})")
         # shell=True 绝不能出现
         shell_value = called_kwargs.get("shell", False)
-        self.assertFalse(
-            shell_value,
-            f"P0 安全: shell=True 禁止使用(实际 shell={shell_value!r})"
-        )
+        self.assertFalse(shell_value, f"P0 安全: shell=True 禁止使用(实际 shell={shell_value!r})")
 
     def test_injection_attempt_passed_as_literal(self):
         """恶意参数应作为字面字符串传给程序,不被 shell 解释"""
@@ -890,12 +827,8 @@ class TestRunScriptAction(TestCase):
 
         with patch("lingwen_pipeline.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
             result = self.action.execute(
-                params={
-                    "script": str(real_script),
-                    "python": False,
-                    "args": ["--input", malicious]
-                },
-                context={}
+                params={"script": str(real_script), "python": False, "args": ["--input", malicious]},
+                context={},
             )
 
         # 命令应能成功(mock 总是返回 0)
@@ -916,8 +849,7 @@ class TestRunScriptAction(TestCase):
 
         with patch("lingwen_pipeline.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
             self.action.execute(
-                params={"script": str(real_script), "python": False, "timeout": 30},
-                context={}
+                params={"script": str(real_script), "python": False, "timeout": 30}, context={}
             )
 
         _, called_kwargs = self._run_calls[0]
@@ -936,8 +868,7 @@ class TestRunScriptAction(TestCase):
 
         with patch("lingwen_pipeline.hooks.actions.run_script.subprocess.run", fake_run):
             result = self.action.execute(
-                params={"script": str(real_script), "python": False, "timeout": 5},
-                context={}
+                params={"script": str(real_script), "python": False, "timeout": 5}, context={}
             )
 
         self.assertFalse(result.success)
@@ -953,8 +884,7 @@ class TestRunScriptAction(TestCase):
 
         with patch("lingwen_pipeline.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
             self.action.execute(
-                params={"script": str(real_script), "python": False, "cwd": str(self.temp_dir)},
-                context={}
+                params={"script": str(real_script), "python": False, "cwd": str(self.temp_dir)}, context={}
             )
 
         _, called_kwargs = self._run_calls[0]
@@ -970,12 +900,7 @@ class TestRunScriptAction(TestCase):
 
         with patch("lingwen_pipeline.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
             self.action.execute(
-                params={
-                    "script": str(real_script),
-                    "python": False,
-                    "env": {"MY_VAR": "hello"}
-                },
-                context={}
+                params={"script": str(real_script), "python": False, "env": {"MY_VAR": "hello"}}, context={}
             )
 
         _, called_kwargs = self._run_calls[0]
@@ -988,4 +913,5 @@ class TestRunScriptAction(TestCase):
 
 if __name__ == "__main__":
     import unittest
+
     unittest.main()

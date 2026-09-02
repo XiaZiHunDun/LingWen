@@ -3,6 +3,7 @@
 Ports 是包对外接口的 Protocol 定义。所有 use-case / studio_api
 应通过这些 Port 与底层实现（LLM、storage、checker）解耦。
 """
+
 from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
@@ -29,41 +30,31 @@ def test_storage_port_is_protocol():
     """StoragePort 必须是 runtime_checkable Protocol（用于依赖注入 duck typing）。"""
     from lingwen_core.ports.storage import StoragePort
 
-    assert isinstance(StoragePort, runtime_checkable(Protocol)) or hasattr(
-        StoragePort, "_is_protocol"
-    )
+    assert isinstance(StoragePort, runtime_checkable(Protocol)) or hasattr(StoragePort, "_is_protocol")
 
 
 def test_event_store_port_is_protocol():
     from lingwen_core.ports.storage import EventStorePort
 
-    assert isinstance(EventStorePort, runtime_checkable(Protocol)) or hasattr(
-        EventStorePort, "_is_protocol"
-    )
+    assert isinstance(EventStorePort, runtime_checkable(Protocol)) or hasattr(EventStorePort, "_is_protocol")
 
 
 def test_llm_port_is_protocol():
     from lingwen_core.ports.llm import LLMPort
 
-    assert isinstance(LLMPort, runtime_checkable(Protocol)) or hasattr(
-        LLMPort, "_is_protocol"
-    )
+    assert isinstance(LLMPort, runtime_checkable(Protocol)) or hasattr(LLMPort, "_is_protocol")
 
 
 def test_embedding_port_is_protocol():
     from lingwen_core.ports.llm import EmbeddingPort
 
-    assert isinstance(EmbeddingPort, runtime_checkable(Protocol)) or hasattr(
-        EmbeddingPort, "_is_protocol"
-    )
+    assert isinstance(EmbeddingPort, runtime_checkable(Protocol)) or hasattr(EmbeddingPort, "_is_protocol")
 
 
 def test_checker_port_is_protocol():
     from lingwen_core.ports.checker import CheckerPort
 
-    assert isinstance(CheckerPort, runtime_checkable(Protocol)) or hasattr(
-        CheckerPort, "_is_protocol"
-    )
+    assert isinstance(CheckerPort, runtime_checkable(Protocol)) or hasattr(CheckerPort, "_is_protocol")
 
 
 def _port_required_attrs(port_cls) -> list[str]:

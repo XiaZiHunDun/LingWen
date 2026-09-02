@@ -4,6 +4,7 @@
 - true + active workflow → status_applied=True, node_statuses 含各节点状态
 - true + 无活跃工作流 → status_applied=False, node_statuses={} (不报错)
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -64,15 +65,17 @@ class TestMermaidStatusEndpoint:
 
     def test_mermaid_endpoint_with_include_status_returns_node_statuses(self, tmp_db: Path):
         """?include_status=true + active workflow → status_applied=True + node_statuses 完整"""
-        stub = _StubMaster({
-            "read_snapshot": "completed",
-            "write_chapter": "completed",
-            "review_chapter": "running",
-            "polish_emotional_pacing": "pending",
-            "polish_ai_trace_removal": "pending",
-            "polish_merge": "pending",
-            "emit_chapter": "pending",
-        })
+        stub = _StubMaster(
+            {
+                "read_snapshot": "completed",
+                "write_chapter": "completed",
+                "review_chapter": "running",
+                "polish_emotional_pacing": "pending",
+                "polish_ai_trace_removal": "pending",
+                "polish_merge": "pending",
+                "emit_chapter": "pending",
+            }
+        )
         app = create_app(db_path=tmp_db, master_controller=stub)
         client = TestClient(app)
 

@@ -1,4 +1,5 @@
 """Phase 9.82 F74: production_records scanner."""
+
 from __future__ import annotations
 
 import json
@@ -17,18 +18,20 @@ class TestProductionRecords:
     def test_parse_pilot_json(self, tmp_path):
         path = tmp_path / "ch360.json"
         path.write_text(
-            json.dumps({
-                "pilot_id": "p1",
-                "chapter_num": 360,
-                "operator": "tester",
-                "recorded_at": "2026-06-11T00:00:00Z",
-                "env": {"primary_provider": "minimax"},
-                "run": {
-                    "emit_chapter_completed": True,
-                    "total_cost_usd": 0.025,
-                },
-                "hooks": {"memory_context_source": "stub"},
-            }),
+            json.dumps(
+                {
+                    "pilot_id": "p1",
+                    "chapter_num": 360,
+                    "operator": "tester",
+                    "recorded_at": "2026-06-11T00:00:00Z",
+                    "env": {"primary_provider": "minimax"},
+                    "run": {
+                        "emit_chapter_completed": True,
+                        "total_cost_usd": 0.025,
+                    },
+                    "hooks": {"memory_context_source": "stub"},
+                }
+            ),
             encoding="utf-8",
         )
         item = parse_record_file(path)
@@ -40,15 +43,17 @@ class TestProductionRecords:
     def test_parse_batch_json(self, tmp_path):
         path = tmp_path / "batch-361-363.json"
         path.write_text(
-            json.dumps({
-                "batch_id": "b1",
-                "start_chapter": 361,
-                "chapters_attempted": 3,
-                "chapters_succeeded": 3,
-                "total_cost_usd": 0.08,
-                "stopped_reason": "completed",
-                "recorded_at": "2026-06-11T01:00:00Z",
-            }),
+            json.dumps(
+                {
+                    "batch_id": "b1",
+                    "start_chapter": 361,
+                    "chapters_attempted": 3,
+                    "chapters_succeeded": 3,
+                    "total_cost_usd": 0.08,
+                    "stopped_reason": "completed",
+                    "recorded_at": "2026-06-11T01:00:00Z",
+                }
+            ),
             encoding="utf-8",
         )
         item = parse_record_file(path)
@@ -71,30 +76,36 @@ class TestProductionRecords:
 
     def test_rollup_deduplicates_batch_and_pilot_cost(self, tmp_path):
         (tmp_path / "ch360.json").write_text(
-            json.dumps({
-                "pilot_id": "p360",
-                "chapter_num": 360,
-                "run": {"total_cost_usd": 0.025},
-            }),
+            json.dumps(
+                {
+                    "pilot_id": "p360",
+                    "chapter_num": 360,
+                    "run": {"total_cost_usd": 0.025},
+                }
+            ),
             encoding="utf-8",
         )
         (tmp_path / "batch-361-363.json").write_text(
-            json.dumps({
-                "batch_id": "b1",
-                "start_chapter": 361,
-                "chapters_attempted": 3,
-                "total_cost_usd": 0.083,
-                "stopped_reason": "completed",
-                "recorded_at": "2026-06-11T02:00:00Z",
-            }),
+            json.dumps(
+                {
+                    "batch_id": "b1",
+                    "start_chapter": 361,
+                    "chapters_attempted": 3,
+                    "total_cost_usd": 0.083,
+                    "stopped_reason": "completed",
+                    "recorded_at": "2026-06-11T02:00:00Z",
+                }
+            ),
             encoding="utf-8",
         )
         (tmp_path / "ch361.json").write_text(
-            json.dumps({
-                "pilot_id": "p361",
-                "chapter_num": 361,
-                "run": {"total_cost_usd": 0.025},
-            }),
+            json.dumps(
+                {
+                    "pilot_id": "p361",
+                    "chapter_num": 361,
+                    "run": {"total_cost_usd": 0.025},
+                }
+            ),
             encoding="utf-8",
         )
         records = list_production_records(tmp_path, limit=10)
@@ -107,32 +118,38 @@ class TestProductionRecords:
 
     def test_production_cost_trend_time_order_and_dedup(self, tmp_path):
         (tmp_path / "ch360.json").write_text(
-            json.dumps({
-                "pilot_id": "p360",
-                "chapter_num": 360,
-                "run": {"total_cost_usd": 0.025},
-                "recorded_at": "2026-06-11T00:00:00Z",
-            }),
+            json.dumps(
+                {
+                    "pilot_id": "p360",
+                    "chapter_num": 360,
+                    "run": {"total_cost_usd": 0.025},
+                    "recorded_at": "2026-06-11T00:00:00Z",
+                }
+            ),
             encoding="utf-8",
         )
         (tmp_path / "batch-361-363.json").write_text(
-            json.dumps({
-                "batch_id": "b1",
-                "start_chapter": 361,
-                "chapters_attempted": 3,
-                "total_cost_usd": 0.083,
-                "stopped_reason": "completed",
-                "recorded_at": "2026-06-11T01:00:00Z",
-            }),
+            json.dumps(
+                {
+                    "batch_id": "b1",
+                    "start_chapter": 361,
+                    "chapters_attempted": 3,
+                    "total_cost_usd": 0.083,
+                    "stopped_reason": "completed",
+                    "recorded_at": "2026-06-11T01:00:00Z",
+                }
+            ),
             encoding="utf-8",
         )
         (tmp_path / "ch361.json").write_text(
-            json.dumps({
-                "pilot_id": "p361",
-                "chapter_num": 361,
-                "run": {"total_cost_usd": 0.025},
-                "recorded_at": "2026-06-11T02:00:00Z",
-            }),
+            json.dumps(
+                {
+                    "pilot_id": "p361",
+                    "chapter_num": 361,
+                    "run": {"total_cost_usd": 0.025},
+                    "recorded_at": "2026-06-11T02:00:00Z",
+                }
+            ),
             encoding="utf-8",
         )
         trend = production_cost_trend(tmp_path, limit=10)

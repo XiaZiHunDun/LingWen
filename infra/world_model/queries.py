@@ -12,6 +12,7 @@ ripple_audit scenario 用本模块。
 - 跨卷 ripple 谱系 (Phase 3+)
 - 真实 LLM 抽取 `new_ripples/resolved_ripples` (Phase 2)
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol
@@ -45,7 +46,8 @@ def detect_unresolved_ripples(
     Doc 1 §3.4:用于 `foreshadow_scan` (Doc 2 line 80) 标记逾期未填的坑。
     """
     return tuple(
-        r for r in registry.list_active()
+        r
+        for r in registry.list_active()
         if r.state != RippleState.RESOLVED
         and r.planned_resolve_ch is not None
         and current_ch > r.planned_resolve_ch + grace

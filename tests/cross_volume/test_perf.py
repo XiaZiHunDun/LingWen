@@ -1,4 +1,5 @@
 """Phase 9.42 F31: lazy per-volume graph load + query_impact cache integration."""
+
 from __future__ import annotations
 
 from infra.cross_volume import CrossVolumeReferenceGraph, ReferenceEdge, ReferenceNode

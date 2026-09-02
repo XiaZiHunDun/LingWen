@@ -6,6 +6,7 @@
 新布局:
     content/roles/<role>/skills/<slug>/SKILL.md
 """
+
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]

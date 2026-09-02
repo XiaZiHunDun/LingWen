@@ -1,4 +1,5 @@
 """Phase 9.65 F56: e2e fixture seed/reset tests."""
+
 from __future__ import annotations
 
 from lingwen_core.agents.decision_queue import HumanDecisionQueue

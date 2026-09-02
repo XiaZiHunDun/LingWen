@@ -7,6 +7,7 @@ FileLock — 跨进程文件互斥锁 (Phase 6.5)
 - 锁文件路径:由调用者决定 (本项目用 <state_file>.lock)
 - 用法: with FileLock(path): ...  # 自动释放
 """
+
 from __future__ import annotations
 
 import fcntl

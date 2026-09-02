@@ -36,10 +36,7 @@ class ConsistencyEngineContextMixin:
     memory_gateway: Optional[Any]
 
     def _enrich_context_from_memory(
-        self,
-        chapter_num: int,
-        chapter_content: str,
-        context: Dict[str, Any]
+        self, chapter_num: int, chapter_content: str, context: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
         从记忆系统获取上下文并 enriched context
@@ -99,10 +96,7 @@ class ConsistencyEngineContextMixin:
         return enriched
 
     def _inject_scene_and_age_context(
-        self,
-        chapter_num: int,
-        chapter_content: str,
-        context: Dict[str, Any]
+        self, chapter_num: int, chapter_content: str, context: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
         注入场景标签和角色年龄上下文
@@ -130,7 +124,9 @@ class ConsistencyEngineContextMixin:
         if current_label:
             recent_labels = enriched["recent_scene_labels"]
             # 添加当前标签到历史
-            enriched["recent_scene_labels"] = recent_labels[-2:] + [current_label] if recent_labels else [current_label]
+            enriched["recent_scene_labels"] = (
+                recent_labels[-2:] + [current_label] if recent_labels else [current_label]
+            )
 
         # 获取角色年龄上下文（用于TimelineAgeConsistencyChecker）
         if "character_ages" not in enriched:
@@ -146,9 +142,7 @@ class ConsistencyEngineContextMixin:
         return cls().get_scene_label(content)
 
     def _get_character_ages_context(
-        self,
-        chapter_num: int,
-        context: Dict[str, Any]
+        self, chapter_num: int, context: Dict[str, Any]
     ) -> Dict[str, Dict[int, int]]:
         """获取角色年龄上下文"""
         # 从context或记忆系统获取角色年龄历史
@@ -156,16 +150,14 @@ class ConsistencyEngineContextMixin:
             return context["character_ages"]
 
         # 默认返回林夜的关键年龄节点
-        return {
-            "林夜": {1: 7, 24: 22}
-        }
+        return {"林夜": {1: 7, 24: 22}}
 
     def _load_character_profiles(self) -> Dict[str, Any]:
         """加载角色档案"""
         if not CHARACTER_PROFILES_PATH.exists():
             return {}
         try:
-            with open(CHARACTER_PROFILES_PATH, 'r', encoding='utf-8') as f:
+            with open(CHARACTER_PROFILES_PATH, "r", encoding="utf-8") as f:
                 data = yaml.safe_load(f)
                 return data.get("characters", {})
         except Exception:
@@ -176,7 +168,7 @@ class ConsistencyEngineContextMixin:
         if not SCENE_TYPES_PATH.exists():
             return {}
         try:
-            with open(SCENE_TYPES_PATH, 'r', encoding='utf-8') as f:
+            with open(SCENE_TYPES_PATH, "r", encoding="utf-8") as f:
                 data = yaml.safe_load(f)
                 scene_registry = data.get("scene_registry", {})
                 ch_key = f"ch{chapter_num:03d}"
@@ -184,11 +176,7 @@ class ConsistencyEngineContextMixin:
         except Exception:
             return {}
 
-    def _find_similar_plots(
-        self,
-        chapter_content: str,
-        top_k: int = 3
-    ) -> List[Dict[str, Any]]:
+    def _find_similar_plots(self, chapter_content: str, top_k: int = 3) -> List[Dict[str, Any]]:
         """
         通过向量检索查找相似情节
 
@@ -209,11 +197,7 @@ class ConsistencyEngineContextMixin:
             if not query:
                 return []
 
-            results = self.memory_gateway.query(
-                query=query,
-                scope="all",
-                top_k=top_k
-            )
+            results = self.memory_gateway.query(query=query, scope="all", top_k=top_k)
             return results
         except Exception:
             return []

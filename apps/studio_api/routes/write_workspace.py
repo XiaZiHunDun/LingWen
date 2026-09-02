@@ -5,6 +5,7 @@ Wraps the FastAPI router defined in `infra.persistence.write_workspace_api`
 and mounts it onto the studio_api app. The router carries the
 `/api/write` prefix and a `write-workspace` tag.
 """
+
 from __future__ import annotations
 
 from fastapi import FastAPI
@@ -20,5 +21,5 @@ def register_write_workspace(app: FastAPI, ctx: RoutesContext) -> None:
     directly under `projects/{project}/03_内容仓库/04_正文/`. Future work
     may thread ctx to inject the project root (Phase 116+).
     """
-    _ =ctx  # silence unused-arg warning; reserved for future use
+    _ = ctx  # silence unused-arg warning; reserved for future use
     app.include_router(write_workspace_router)

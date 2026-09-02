@@ -4,6 +4,7 @@ Phase 18.3 — 把 LLM / EventStorePort / Use-cases 注入到 FastAPI 路由。
 
 所有 get_*() 是 FastAPI Depends() 工厂函数，单例缓存。
 """
+
 from __future__ import annotations
 
 from functools import lru_cache

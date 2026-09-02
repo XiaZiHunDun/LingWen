@@ -3,6 +3,7 @@
 一致性修复器基类
 为一致性检测器提供修复能力
 """
+
 from __future__ import annotations
 
 import logging
@@ -17,6 +18,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ConsistencyRepairResult:
     """一致性修复结果"""
+
     chapter: int
     success: bool
     changes: int = 0
@@ -61,11 +63,7 @@ class BaseConsistencyRepairer:
         """
         content = self._read_chapter(chapter_num)
         if not content:
-            return ConsistencyRepairResult(
-                chapter=chapter_num,
-                success=False,
-                error="章节不存在"
-            )
+            return ConsistencyRepairResult(chapter=chapter_num, success=False, error="章节不存在")
 
         try:
             new_content, changes, repaired = self._apply_fixes(content, issues or [])
@@ -77,17 +75,15 @@ class BaseConsistencyRepairer:
                 success=True,
                 changes=changes,
                 new_content=new_content,
-                repaired_issues=repaired
+                repaired_issues=repaired,
             )
         except Exception as e:
             logger.exception(f"修复章节{chapter_num}失败: {e}")
-            return ConsistencyRepairResult(
-                chapter=chapter_num,
-                success=False,
-                error=str(e)
-            )
+            return ConsistencyRepairResult(chapter=chapter_num, success=False, error=str(e))
 
-    def repair_batch(self, chapter_nums: List[int], issues_map: Dict[int, List[Any]] = None) -> Dict[int, ConsistencyRepairResult]:
+    def repair_batch(
+        self, chapter_nums: List[int], issues_map: Dict[int, List[Any]] = None
+    ) -> Dict[int, ConsistencyRepairResult]:
         """
         批量修复章节
 
@@ -183,4 +179,3 @@ from .gender_consistency_repairer import GenderConsistencyRepairer
 from .pacing_repairer import PacingRepairer
 from .relationship_state_repairer import RelationshipStateRepairer
 from .scene_transition_repairer import SceneTransitionRepairer
-

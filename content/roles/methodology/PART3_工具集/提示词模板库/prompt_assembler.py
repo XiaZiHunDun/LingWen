@@ -93,7 +93,7 @@ class PromptAssembler:
 
         for temp_file in possible_temp_paths:
             if temp_file.exists():
-                with open(temp_file, 'r', encoding='utf-8') as f:
+                with open(temp_file, "r", encoding="utf-8") as f:
                     self.temperature_mapping = yaml.safe_load(f)
                 break
 
@@ -104,42 +104,42 @@ class PromptAssembler:
 
         if style_dir.exists():
             for style_file in style_dir.glob("*.yaml"):
-                with open(style_file, 'r', encoding='utf-8') as f:
+                with open(style_file, "r", encoding="utf-8") as f:
                     style_data = yaml.safe_load(f)
                     genre = style_file.stem
                     self.style_guides[genre] = style_data
 
     def _load_template_index(self, index_file: Path):
         """加载模板索引"""
-        with open(index_file, 'r', encoding='utf-8') as f:
+        with open(index_file, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
 
-        for template_data in data.get('templates', []):
-            temp_config = template_data.get('temperature', {})
+        for template_data in data.get("templates", []):
+            temp_config = template_data.get("temperature", {})
             temp = TemperatureConfig(
-                recommended=temp_config.get('recommended', 0.7),
-                min_value=temp_config.get('range', [0.0, 1.0])[0],
-                max_value=temp_config.get('range', [0.0, 1.0])[1],
+                recommended=temp_config.get("recommended", 0.7),
+                min_value=temp_config.get("range", [0.0, 1.0])[0],
+                max_value=temp_config.get("range", [0.0, 1.0])[1],
             )
 
-            cat_str = template_data.get('category', 'continuation')
+            cat_str = template_data.get("category", "continuation")
             try:
                 category = TemplateCategory(cat_str)
             except ValueError:
                 category = TemplateCategory.CONTINUATION
 
             metadata = TemplateMetadata(
-                id=template_data['id'],
-                name=template_data['name'],
+                id=template_data["id"],
+                name=template_data["name"],
                 category=category,
-                version=template_data['version'],
-                status=template_data['status'],
-                file_path=template_data['file'],
-                description=template_data['description'],
+                version=template_data["version"],
+                status=template_data["status"],
+                file_path=template_data["file"],
+                description=template_data["description"],
                 temperature=temp,
-                care_elements=template_data.get('care_elements', {}),
+                care_elements=template_data.get("care_elements", {}),
             )
-            self.template_index[template_data['name']] = metadata
+            self.template_index[template_data["name"]] = metadata
 
     def get_template(self, template_name: str) -> Optional[TemplateMetadata]:
         """获取模板元数据"""
@@ -149,30 +149,27 @@ class PromptAssembler:
         """列出可用模板"""
         if category is None:
             return list(self.template_index.keys())
-        return [
-            name for name, meta in self.template_index.items()
-            if meta.category == category
-        ]
+        return [name for name, meta in self.template_index.items() if meta.category == category]
 
     def get_temperature_config(self, scene_type: str, genre: str = "玄幻") -> TemperatureConfig:
         """获取场景温度配置"""
-        scenes = self.temperature_mapping.get('scene_types', {})
+        scenes = self.temperature_mapping.get("scene_types", {})
         scene_config = scenes.get(scene_type)
 
         if scene_config:
-            temp = scene_config.get('temperature', {})
+            temp = scene_config.get("temperature", {})
             return TemperatureConfig(
-                recommended=temp.get('recommended', 0.7),
-                min_value=temp.get('range', [0.0, 1.0])[0],
-                max_value=temp.get('range', [0.0, 1.0])[1],
-                top_p=scene_config.get('top_p', 0.9),
-                max_tokens=scene_config.get('max_tokens', 4000),
+                recommended=temp.get("recommended", 0.7),
+                min_value=temp.get("range", [0.0, 1.0])[0],
+                max_value=temp.get("range", [0.0, 1.0])[1],
+                top_p=scene_config.get("top_p", 0.9),
+                max_tokens=scene_config.get("max_tokens", 4000),
             )
 
         # 回退到类型-场景映射
-        genre_mapping = self.temperature_mapping.get('genre_scene_mapping', {})
+        genre_mapping = self.temperature_mapping.get("genre_scene_mapping", {})
         genre_config = genre_mapping.get(genre, {})
-        base_temp = genre_config.get('base_temperature', 0.7)
+        base_temp = genre_config.get("base_temperature", 0.7)
         return TemperatureConfig(recommended=base_temp)
 
     def assemble(
@@ -180,7 +177,7 @@ class PromptAssembler:
         template_name: str,
         context: Dict[str, Any],
         temperature: Optional[float] = None,
-        genre: str = "玄幻"
+        genre: str = "玄幻",
     ) -> str:
         """
         组装提示词
@@ -207,7 +204,7 @@ class PromptAssembler:
         if not template_file.exists():
             raise FileNotFoundError(f"Template file not found: {template_file}")
 
-        with open(template_file, 'r', encoding='utf-8') as f:
+        with open(template_file, "r", encoding="utf-8") as f:
             template_content = f.read()
 
         # 填充上下文变量
@@ -229,19 +226,15 @@ class PromptAssembler:
             result = result.replace(placeholder, str(value))
 
         # 清理未填充的变量（标记为警告）
-        unfilled = re.findall(r'\{[^}]+\}', result)
+        unfilled = re.findall(r"\{[^}]+\}", result)
         if unfilled:
             import warnings
+
             warnings.warn(f"Unfilled variables: {unfilled}")
 
         return result
 
-    def _generate_header(
-        self,
-        template: TemplateMetadata,
-        temperature: float,
-        genre: str
-    ) -> str:
+    def _generate_header(self, template: TemplateMetadata, temperature: float, genre: str) -> str:
         """生成提示词头部"""
         header_lines = [
             f"# CARE提示词：{template.name}",
@@ -256,11 +249,7 @@ class PromptAssembler:
         ]
         return "\n".join(header_lines)
 
-    def validate_context(
-        self,
-        template_name: str,
-        context: Dict[str, Any]
-    ) -> List[str]:
+    def validate_context(self, template_name: str, context: Dict[str, Any]) -> List[str]:
         """
         验证上下文是否满足模板要求
 
@@ -271,9 +260,7 @@ class PromptAssembler:
         if template is None:
             return [f"Template '{template_name}' not found"]
 
-        required_fields = template.care_elements.get('context', {}).get(
-            'required_fields', []
-        )
+        required_fields = template.care_elements.get("context", {}).get("required_fields", [])
         missing = []
 
         for field_name in required_fields:
@@ -312,20 +299,17 @@ def main():
     if args.input:
         input_path = Path(args.input)
         if input_path.exists():
-            with open(input_path, 'r', encoding='utf-8') as f:
+            with open(input_path, "r", encoding="utf-8") as f:
                 context = yaml.safe_load(f) or {}
 
     # 组装提示词
     try:
         prompt = assembler.assemble(
-            template_name=args.template,
-            context=context,
-            temperature=args.temp,
-            genre=args.genre
+            template_name=args.template, context=context, temperature=args.temp, genre=args.genre
         )
 
         if args.output:
-            with open(args.output, 'w', encoding='utf-8') as f:
+            with open(args.output, "w", encoding="utf-8") as f:
                 f.write(prompt)
             print(f"提示词已保存到: {args.output}")
         else:
@@ -340,4 +324,5 @@ def main():
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main() or 0)

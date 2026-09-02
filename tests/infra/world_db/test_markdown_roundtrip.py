@@ -1,4 +1,5 @@
 """Tests for character/faction/lore/timeline markdown round-trip parser/serializer."""
+
 from pathlib import Path
 
 from infra.world_db.markdown_roundtrip import (
@@ -33,8 +34,7 @@ def test_round_trip_preserves_sections():
     assert parsed2["slug"] == parsed["slug"]
     assert parsed2["name"] == parsed["name"]
     assert parsed2["canon_level"] == parsed["canon_level"]
-    assert parsed2["attributes"].get("appearance") == \
-           parsed["attributes"].get("appearance")
+    assert parsed2["attributes"].get("appearance") == parsed["attributes"].get("appearance")
 
 
 def test_faction_round_trip():
@@ -55,9 +55,14 @@ def test_lore_round_trip():
 
 def test_timeline_serialize():
     events = [
-        {"slug": "an-yu", "title": "暗域入侵",
-         "story_year": -37, "story_label": "T-37",
-         "description": "...", "category": "history"},
+        {
+            "slug": "an-yu",
+            "title": "暗域入侵",
+            "story_year": -37,
+            "story_label": "T-37",
+            "description": "...",
+            "category": "history",
+        },
     ]
     out = serialize_timeline_markdown(events)
     assert "暗域入侵" in out and "T-37" in out
@@ -66,6 +71,7 @@ def test_timeline_serialize():
 def test_import_project_markdown(tmp_path):
     from infra.world_db.markdown_roundtrip import import_project_markdown
     from infra.world_db.schema import get_connection, init_schema
+
     conn = get_connection(tmp_path / "w.db")
     init_schema(conn)
 

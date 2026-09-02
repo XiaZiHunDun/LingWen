@@ -1,4 +1,5 @@
 """Phase 9.78 F68: CI contract — SettingsPage MVP."""
+
 from __future__ import annotations
 
 from pathlib import Path

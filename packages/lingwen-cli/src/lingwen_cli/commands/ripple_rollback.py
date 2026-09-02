@@ -6,6 +6,7 @@
 
 --reason 强需 (argparse 拦 layer 1, command.execute 再 double-check 空字符串)。
 """
+
 import sys
 from pathlib import Path
 
@@ -22,6 +23,7 @@ def _get_storage():
     or CWD fallback with WARNING (1-version deprecation).
     """
     from infra.cross_volume.storage import RippleStorage
+
     return RippleStorage(db_path=resolve_project_db_path())
 
 
@@ -47,10 +49,7 @@ class RippleRollbackCommand(Command):
                 origin="cli",
                 reason=reason,
             )
-            print(
-                f"Rolled back {ripple_id} -> status={updated.status} "
-                f"(audit entry written, broadcast sent)"
-            )
+            print(f"Rolled back {ripple_id} -> status={updated.status} (audit entry written, broadcast sent)")
             return 0
         except KeyError as e:
             print(f"Error: {e}", file=sys.stderr)

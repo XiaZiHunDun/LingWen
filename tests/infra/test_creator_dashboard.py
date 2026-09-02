@@ -1,4 +1,5 @@
 """Tests for infra.creator_dashboard."""
+
 from __future__ import annotations
 
 from lingwen_creator.content.dashboard import creator_overview

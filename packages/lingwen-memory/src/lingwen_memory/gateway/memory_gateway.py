@@ -5,6 +5,7 @@ MemoryGateway 是记忆系统的统一入口，整合所有组件，提供：
 - 主动查询：作家/审核/主控手动输入查询
 - 状态管理：角色状态更新、伏笔管理
 """
+
 from typing import Any, Dict, List, Optional
 
 from lingwen_memory.gateway.push_engine import PushEngine
@@ -245,7 +246,7 @@ class MemoryGateway:
         fp_id: str,
         event_type: str,
         metadata: Optional[Dict[str, Any]] = None,
-        chapter: Optional[int] = None
+        chapter: Optional[int] = None,
     ) -> None:
         """更新伏笔状态
 
@@ -285,9 +286,7 @@ class MemoryGateway:
 
         return self.plot_thread_tracker.get_pending_foreshadows()
 
-    def check_consistency(
-        self, chapter_content: str, chapter: Optional[int] = None
-    ) -> Dict[str, Any]:
+    def check_consistency(self, chapter_content: str, chapter: Optional[int] = None) -> Dict[str, Any]:
         """一致性检查
 
         检查章节内容与已知角色状态、时间线、伏笔的一致性。
@@ -311,9 +310,7 @@ class MemoryGateway:
 
         return self.query_engine.check_consistency(chapter_content, chapter)
 
-    def get_relationship_network(
-        self, character: str, depth: int = 1
-    ) -> List[Dict[str, Any]]:
+    def get_relationship_network(self, character: str, depth: int = 1) -> List[Dict[str, Any]]:
         """获取角色关系网络
 
         Args:

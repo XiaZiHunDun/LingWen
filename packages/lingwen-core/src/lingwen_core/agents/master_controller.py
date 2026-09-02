@@ -7,4 +7,5 @@ This shim preserves:
   - ``from lingwen_core.agents.master_controller import MasterController``
   - ``from lingwen_core.agents import master_controller as mc_mod``
 """
+
 from lingwen_pipeline.master_controller import MasterController  # noqa: F401

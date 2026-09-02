@@ -91,13 +91,15 @@ class CheckerFeedback:
         self._entries = []
         for item in raw:
             if isinstance(item, dict):
-                self._entries.append(FeedbackEntry(
-                    checker_id=item.get("checker_id", ""),
-                    result_type=item.get("result_type", ""),
-                    chapter=item.get("chapter", 0),
-                    details=item.get("details", ""),
-                    timestamp=item.get("timestamp", ""),
-                ))
+                self._entries.append(
+                    FeedbackEntry(
+                        checker_id=item.get("checker_id", ""),
+                        result_type=item.get("result_type", ""),
+                        chapter=item.get("chapter", 0),
+                        details=item.get("details", ""),
+                        timestamp=item.get("timestamp", ""),
+                    )
+                )
         self._storage_path = filepath
         logger.info("从 %s 加载了 %d 条反馈记录", filepath, len(self._entries))
 
@@ -118,6 +120,7 @@ class CheckerFeedback:
             for e in self._entries
         ]
         import os
+
         os.makedirs(os.path.dirname(target) or ".", exist_ok=True)
         with open(target, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
@@ -202,9 +205,7 @@ class CheckerFeedback:
 
         for cid in stats:
             s = stats[cid]
-            s["false_positive_rate"] = round(
-                s["false_positive"] / max(s["total"], 1) * 100, 2
-            )
+            s["false_positive_rate"] = round(s["false_positive"] / max(s["total"], 1) * 100, 2)
 
         return stats
 

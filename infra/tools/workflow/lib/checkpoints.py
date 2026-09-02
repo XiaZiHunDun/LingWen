@@ -6,6 +6,7 @@ v16.5 #N.4: drop direct ``import sqlite3``; use ``SqliteStorageAdapter``
 for connection management. The flock lock helpers and schema/queries
 are unchanged.
 """
+
 import json
 import logging
 from datetime import datetime
@@ -65,13 +66,16 @@ def create_checkpoint(note: str = "") -> str:
                 "step": step,
                 "state": state_data,
                 "tasks": task_data,
-                "workflow_file": str(db.WORKFLOW_FILE)
+                "workflow_file": str(db.WORKFLOW_FILE),
             }
 
-            conn.execute("""
+            conn.execute(
+                """
                 INSERT INTO checkpoints (checkpoint_id, phase, step, snapshot, note)
                 VALUES (?, ?, ?, ?, ?)
-            """, (checkpoint_id, phase, step, json.dumps(snapshot, ensure_ascii=False), note))
+            """,
+                (checkpoint_id, phase, step, json.dumps(snapshot, ensure_ascii=False), note),
+            )
             conn.commit()
         finally:
             conn.close()
@@ -119,15 +123,12 @@ def restore_checkpoint(checkpoint_id: str) -> Tuple[bool, str]:
         # 先读取快照
         conn = _open_conn()
         try:
-            cur = conn.execute(
-                "SELECT snapshot FROM checkpoints WHERE checkpoint_id = ?",
-                (checkpoint_id,)
-            )
+            cur = conn.execute("SELECT snapshot FROM checkpoints WHERE checkpoint_id = ?", (checkpoint_id,))
             row = cur.fetchone()
             if not row:
                 return False, f"Checkpoint not found: {checkpoint_id}"
 
-            snapshot = json.loads(row['snapshot'])
+            snapshot = json.loads(row["snapshot"])
         finally:
             conn.close()
 
@@ -141,27 +142,33 @@ def restore_checkpoint(checkpoint_id: str) -> Tuple[bool, str]:
 
             # 恢复状态数据
             for item in snapshot.get("state", []):
-                conn.execute("""
+                conn.execute(
+                    """
                     INSERT INTO workflow_state (key, value, updated_at)
                     VALUES (?, ?, CURRENT_TIMESTAMP)
-                """, (item['key'], item['value']))
+                """,
+                    (item["key"], item["value"]),
+                )
 
             # 恢复任务数据
             for task in snapshot.get("tasks", []):
-                conn.execute("""
+                conn.execute(
+                    """
                     INSERT INTO agent_tasks
                     (task_id, task_name, agent, status, heartbeat_at, task_id_external, dispatched_at, created_at)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    task['task_id'],
-                    task['task_name'],
-                    task.get('agent', ''),
-                    task.get('status', 'pending'),
-                    task.get('heartbeat_at'),
-                    task.get('task_id_external'),
-                    task.get('dispatched_at'),
-                    task.get('created_at', datetime.now().isoformat())
-                ))
+                """,
+                    (
+                        task["task_id"],
+                        task["task_name"],
+                        task.get("agent", ""),
+                        task.get("status", "pending"),
+                        task.get("heartbeat_at"),
+                        task.get("task_id_external"),
+                        task.get("dispatched_at"),
+                        task.get("created_at", datetime.now().isoformat()),
+                    ),
+                )
 
             conn.commit()
             return True, f"Restored checkpoint {checkpoint_id}"

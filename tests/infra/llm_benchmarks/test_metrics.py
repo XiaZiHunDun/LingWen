@@ -1,4 +1,5 @@
 """Tests for infra.llm_benchmarks.metrics."""
+
 from __future__ import annotations
 
 from infra.llm_benchmarks.metrics import (
@@ -131,10 +132,7 @@ from infra.llm_benchmarks.metrics import (
 
 def test_consistency_score_perfect_when_proposals_match_across_runs():
     proposals = [{"kind": "character.update", "target_id": 5}]
-    calls = [
-        _make_call(chapter_id=1, run_index=i, parsed_proposals=proposals)
-        for i in range(1, 4)
-    ]
+    calls = [_make_call(chapter_id=1, run_index=i, parsed_proposals=proposals) for i in range(1, 4)]
     assert consistency_score(calls) == 1.0
 
 
@@ -168,15 +166,33 @@ def test_quality_composite_is_simple_average():
 
 def test_recommend_priority_orders_by_cost_above_threshold():
     metrics = [
-        ProviderMetrics(provider="a", n_calls=10, n_failed=0, parse_rate=1.0,
-                        schema_compliance=1.0, canon_level_compliance=1.0,
-                        cost_per_call_usd=0.005),
-        ProviderMetrics(provider="b", n_calls=10, n_failed=0, parse_rate=1.0,
-                        schema_compliance=1.0, canon_level_compliance=1.0,
-                        cost_per_call_usd=0.001),
-        ProviderMetrics(provider="c", n_calls=10, n_failed=0, parse_rate=0.5,
-                        schema_compliance=0.5, canon_level_compliance=0.5,
-                        cost_per_call_usd=0.0001),  # composite=0.5, below 0.9
+        ProviderMetrics(
+            provider="a",
+            n_calls=10,
+            n_failed=0,
+            parse_rate=1.0,
+            schema_compliance=1.0,
+            canon_level_compliance=1.0,
+            cost_per_call_usd=0.005,
+        ),
+        ProviderMetrics(
+            provider="b",
+            n_calls=10,
+            n_failed=0,
+            parse_rate=1.0,
+            schema_compliance=1.0,
+            canon_level_compliance=1.0,
+            cost_per_call_usd=0.001,
+        ),
+        ProviderMetrics(
+            provider="c",
+            n_calls=10,
+            n_failed=0,
+            parse_rate=0.5,
+            schema_compliance=0.5,
+            canon_level_compliance=0.5,
+            cost_per_call_usd=0.0001,
+        ),  # composite=0.5, below 0.9
     ]
     priority = recommend_priority(metrics, threshold=0.9)
     # a and b pass (composite=1.0), c fails (composite=0.5)

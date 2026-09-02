@@ -44,8 +44,7 @@ def test_root_pyproject_declares_uv_workspace() -> None:
     text = _read_toml(REPO_ROOT / "pyproject.toml")
     section = _extract_section(text, "tool.uv.workspace")
     assert section is not None, (
-        "root pyproject.toml missing [tool.uv.workspace] section — "
-        "v16.0 plan §6.2 T2 requires uv workspaces"
+        "root pyproject.toml missing [tool.uv.workspace] section — v16.0 plan §6.2 T2 requires uv workspaces"
     )
 
 

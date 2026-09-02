@@ -1,4 +1,5 @@
 """Phase 9.69 F61: CI contract — human review resolve → resume smoke."""
+
 from __future__ import annotations
 
 from pathlib import Path

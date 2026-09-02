@@ -1,4 +1,5 @@
 """QueryEngine 测试"""
+
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -48,66 +49,82 @@ class TestQueryEngine:
     def mock_character_tracker(self, mock_config):
         """模拟 CharacterTracker"""
         tracker = MagicMock()
-        tracker.get_character_state = MagicMock(return_value={
-            "current_location": "王宫",
-            "current_form": "人形",
-            "alive": True,
-            "last_updated_chapter": 5,
-            "emotion_state": "平静",
-        })
-        tracker.get_all_characters = MagicMock(return_value={
-            "李逍遥": {"current_location": "王宫", "alive": True},
-            "赵灵儿": {"current_location": "仙灵岛", "alive": True},
-        })
+        tracker.get_character_state = MagicMock(
+            return_value={
+                "current_location": "王宫",
+                "current_form": "人形",
+                "alive": True,
+                "last_updated_chapter": 5,
+                "emotion_state": "平静",
+            }
+        )
+        tracker.get_all_characters = MagicMock(
+            return_value={
+                "李逍遥": {"current_location": "王宫", "alive": True},
+                "赵灵儿": {"current_location": "仙灵岛", "alive": True},
+            }
+        )
         return tracker
 
     @pytest.fixture
     def mock_plot_thread_tracker(self, mock_config):
         """模拟 PlotThreadTracker"""
         tracker = MagicMock()
-        tracker.get_all_foreshadows = MagicMock(return_value={
-            "fp_001": {
-                "title": "神秘剑客",
-                "status": "pending",
-                "planted_chapter": 1,
-                "mentions": [1, 3],
-            },
-            "fp_002": {
-                "title": "门派恩怨",
-                "status": "in_progress",
-                "planted_chapter": 2,
-                "mentions": [2, 5],
-            },
-        })
-        tracker.get_pending_foreshadows = MagicMock(return_value={
-            "fp_001": {"title": "神秘剑客", "status": "pending"},
-        })
+        tracker.get_all_foreshadows = MagicMock(
+            return_value={
+                "fp_001": {
+                    "title": "神秘剑客",
+                    "status": "pending",
+                    "planted_chapter": 1,
+                    "mentions": [1, 3],
+                },
+                "fp_002": {
+                    "title": "门派恩怨",
+                    "status": "in_progress",
+                    "planted_chapter": 2,
+                    "mentions": [2, 5],
+                },
+            }
+        )
+        tracker.get_pending_foreshadows = MagicMock(
+            return_value={
+                "fp_001": {"title": "神秘剑客", "status": "pending"},
+            }
+        )
         return tracker
 
     @pytest.fixture
     def mock_timeline_manager(self, mock_config):
         """模拟 TimelineManager"""
         manager = MagicMock()
-        manager.get_events_in_range = MagicMock(return_value=[
-            {"event_id": "evt_001", "timestamp": "2024-01-01T10:00:00", "chapter": 1},
-            {"event_id": "evt_002", "timestamp": "2024-01-01T12:00:00", "chapter": 2},
-        ])
-        manager.get_events_by_chapter = MagicMock(return_value=[
-            {"event_id": "evt_001", "timestamp": "2024-01-01T10:00:00", "chapter": 1},
-        ])
+        manager.get_events_in_range = MagicMock(
+            return_value=[
+                {"event_id": "evt_001", "timestamp": "2024-01-01T10:00:00", "chapter": 1},
+                {"event_id": "evt_002", "timestamp": "2024-01-01T12:00:00", "chapter": 2},
+            ]
+        )
+        manager.get_events_by_chapter = MagicMock(
+            return_value=[
+                {"event_id": "evt_001", "timestamp": "2024-01-01T10:00:00", "chapter": 1},
+            ]
+        )
         return manager
 
     @pytest.fixture
     def mock_fact_base(self, mock_config):
         """模拟 FactBase"""
         base = MagicMock()
-        base.get_facts_by_chapter = MagicMock(return_value=[
-            {"fact_id": "fact_001", "content": "林夜是铁蛋的弟弟", "category": "character_relationship"},
-        ])
-        base.get_all_facts = MagicMock(return_value={
-            "fact_001": {"fact_id": "fact_001", "content": "林夜是铁蛋的弟弟", "verified": True},
-            "fact_002": {"fact_id": "fact_002", "content": "李逍遥是蜀山弟子", "verified": True},
-        })
+        base.get_facts_by_chapter = MagicMock(
+            return_value=[
+                {"fact_id": "fact_001", "content": "林夜是铁蛋的弟弟", "category": "character_relationship"},
+            ]
+        )
+        base.get_all_facts = MagicMock(
+            return_value={
+                "fact_001": {"fact_id": "fact_001", "content": "林夜是铁蛋的弟弟", "verified": True},
+                "fact_002": {"fact_id": "fact_002", "content": "李逍遥是蜀山弟子", "verified": True},
+            }
+        )
         return base
 
     @pytest.fixture
@@ -199,9 +216,7 @@ class TestQueryEngine:
         results = query_engine.hybrid_search("不存在的查询")
         assert results == []
 
-    def test_get_character_state_existing(
-        self, query_engine, mock_character_tracker
-    ):
+    def test_get_character_state_existing(self, query_engine, mock_character_tracker):
         """测试获取已存在角色的状态"""
         result = query_engine.get_character_state("李逍遥")
 
@@ -211,9 +226,7 @@ class TestQueryEngine:
         assert result["alive"] is True
         mock_character_tracker.get_character_state.assert_called_once_with("李逍遥")
 
-    def test_get_character_state_with_before_chapter(
-        self, query_engine, mock_character_tracker
-    ):
+    def test_get_character_state_with_before_chapter(self, query_engine, mock_character_tracker):
         """测试获取指定章节之前的角色状态"""
         result = query_engine.get_character_state("李逍遥", before_chapter=10)
 
@@ -279,9 +292,7 @@ class TestQueryEngine:
         assert isinstance(result, dict)
         assert "is_consistent" in result or "issues" in result or "consistency_score" in result
 
-    def test_check_consistency_with_plot_threads(
-        self, query_engine, mock_plot_thread_tracker
-    ):
+    def test_check_consistency_with_plot_threads(self, query_engine, mock_plot_thread_tracker):
         """测试包含伏笔的一致性检查"""
         mock_plot_thread_tracker.get_pending_foreshadows.return_value = {
             "fp_001": {
@@ -306,9 +317,7 @@ class TestQueryEngine:
         if "consistency_score" in result:
             assert result["consistency_score"] >= 0.5
 
-    def test_check_consistency_detects_issues(
-        self, query_engine, mock_character_tracker, mock_fact_base
-    ):
+    def test_check_consistency_detects_issues(self, query_engine, mock_character_tracker, mock_fact_base):
         """测试一致性检查能检测出问题"""
         # 设置角色状态与内容矛盾
         mock_character_tracker.get_all_characters.return_value = {
@@ -327,9 +336,7 @@ class TestQueryEngine:
         if "issues" in result:
             assert len(result["issues"]) > 0
 
-    def test_check_consistency_uses_timeline(
-        self, query_engine, mock_timeline_manager
-    ):
+    def test_check_consistency_uses_timeline(self, query_engine, mock_timeline_manager):
         """测试一致性检查使用时间线信息"""
         mock_timeline_manager.get_events_in_range.return_value = [
             {"event_id": "evt_001", "timestamp": "2024-01-01T10:00:00", "chapter": 1},

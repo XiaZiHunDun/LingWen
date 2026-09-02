@@ -39,7 +39,11 @@ def get(name: str, db_path: Optional[str | Path] = None) -> Any:
         if entry.instance is None or (db_path is not None and str(db_path) != str(entry.db_path)):
             if isinstance(effective_path, str):
                 effective_path = Path(effective_path)
-            if str(effective_path) != ":memory:" and effective_path.parent and not effective_path.parent.exists():
+            if (
+                str(effective_path) != ":memory:"
+                and effective_path.parent
+                and not effective_path.parent.exists()
+            ):
                 effective_path.parent.mkdir(parents=True, exist_ok=True)
             entry.instance = entry.cls(db_path=effective_path, **entry.kwargs)
 

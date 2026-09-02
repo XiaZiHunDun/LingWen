@@ -1,4 +1,5 @@
 """Phase 9.88 F80: CI contract — batch dry-run + batch_plan."""
+
 from __future__ import annotations
 
 from pathlib import Path

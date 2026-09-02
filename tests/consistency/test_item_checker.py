@@ -56,8 +56,7 @@ class TestItemChecker:
         """已销毁物品再次出现"""
         checker = ItemChecker()
         item_history = {
-            "木勺": [ItemState(name="木勺", owner="张三", location="背包",
-                                condition="已销毁", quantity=0)],
+            "木勺": [ItemState(name="木勺", owner="张三", location="背包", condition="已销毁", quantity=0)],
         }
         context = {"item_history": item_history, "mentioned_items": ["木勺"]}
         # 内容中木勺"完好无损" — 与已销毁冲突
@@ -69,8 +68,7 @@ class TestItemChecker:
         """已丢失物品再次出现"""
         checker = ItemChecker()
         item_history = {
-            "宝剑": [ItemState(name="宝剑", owner="张三", location="未知",
-                                condition="已丢失", quantity=1)],
+            "宝剑": [ItemState(name="宝剑", owner="张三", location="未知", condition="已丢失", quantity=1)],
         }
         context = {"item_history": item_history, "mentioned_items": ["宝剑"]}
         issues = checker.check("张三手中拿着宝剑，腰间佩着宝剑。", 3, context)
@@ -80,8 +78,7 @@ class TestItemChecker:
         """消耗品数量为0但仍有描述"""
         checker = ItemChecker()
         item_history = {
-            "丹药": [ItemState(name="丹药", owner="张三", location="背包",
-                                condition="已消耗", quantity=0)],
+            "丹药": [ItemState(name="丹药", owner="张三", location="背包", condition="已消耗", quantity=0)],
         }
         context = {"item_history": item_history, "mentioned_items": ["丹药"]}
         issues = checker.check("张三还有3颗丹药。", 5, context)
@@ -92,8 +89,7 @@ class TestItemChecker:
         """正常使用不报告问题"""
         checker = ItemChecker()
         item_history = {
-            "木勺": [ItemState(name="木勺", owner="张三", location="背包",
-                                condition="良好", quantity=1)],
+            "木勺": [ItemState(name="木勺", owner="张三", location="背包", condition="良好", quantity=1)],
         }
         context = {"item_history": item_history, "mentioned_items": ["木勺"]}
         issues = checker.check("张三使用木勺吃饭。", 2, context)
@@ -114,10 +110,12 @@ class TestItemChecker:
 
     def test_update_multiple_states(self):
         checker = ItemChecker()
-        checker.update_item_state("木勺", ItemState(
-            name="木勺", owner="张三", location="背包", condition="良好"))
-        checker.update_item_state("木勺", ItemState(
-            name="木勺", owner="李四", location="仓库", condition="损坏"))
+        checker.update_item_state(
+            "木勺", ItemState(name="木勺", owner="张三", location="背包", condition="良好")
+        )
+        checker.update_item_state(
+            "木勺", ItemState(name="木勺", owner="李四", location="仓库", condition="损坏")
+        )
         history = checker.get_item_history("木勺")
         assert len(history) == 2
         assert history[0].owner == "张三"
@@ -150,8 +148,7 @@ class TestItemChecker:
         """非消耗品不检查数量"""
         checker = ItemChecker()
         item_history = {
-            "木勺": [ItemState(name="木勺", owner="张三", location="背包",
-                                condition="已消耗", quantity=0)],
+            "木勺": [ItemState(name="木勺", owner="张三", location="背包", condition="已消耗", quantity=0)],
         }
         context = {"item_history": item_history, "mentioned_items": ["木勺"]}
         # 木勺不是消耗品关键词，数量为0不触发

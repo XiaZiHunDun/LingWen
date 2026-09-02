@@ -1,4 +1,5 @@
 """Relationship CRUD."""
+
 from lingwen_shared.ports.storage import ConnectionPort
 
 from infra.world_db.queries._helpers import now_iso
@@ -22,10 +23,16 @@ def create_relationship(conn: ConnectionPort, data: dict) -> int:
             strength, chapter, notes, created_at, updated_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (
-            data["source_kind"], data["source_id"],
-            data["target_kind"], data["target_id"], data["kind"],
-            data.get("strength"), data.get("chapter"),
-            data.get("notes"), now, now,
+            data["source_kind"],
+            data["source_id"],
+            data["target_kind"],
+            data["target_id"],
+            data["kind"],
+            data.get("strength"),
+            data.get("chapter"),
+            data.get("notes"),
+            now,
+            now,
         ),
     )
     conn.commit()
@@ -33,15 +40,12 @@ def create_relationship(conn: ConnectionPort, data: dict) -> int:
         "SELECT id FROM relationship "
         "WHERE source_kind = ? AND source_id = ? "
         "AND target_kind = ? AND target_id = ? AND kind = ?",
-        (data["source_kind"], data["source_id"],
-         data["target_kind"], data["target_id"], data["kind"]),
+        (data["source_kind"], data["source_id"], data["target_kind"], data["target_id"], data["kind"]),
     ).fetchone()
     if row is None:
         # Should be unreachable — INSERT OR IGNORE either inserts or finds
         # a conflicting row, both of which leave a row matching the key.
-        raise RuntimeError(
-            "create_relationship: row missing after INSERT OR IGNORE"
-        )
+        raise RuntimeError("create_relationship: row missing after INSERT OR IGNORE")
     return row["id"]
 
 

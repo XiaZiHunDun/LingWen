@@ -1,4 +1,5 @@
 """Phase 9.96 F87: GET /api/production-records/trend."""
+
 from __future__ import annotations
 
 import json
@@ -14,23 +15,27 @@ class TestProductionTrendApiF87:
         records_dir = tmp_path / "pilot_records"
         records_dir.mkdir()
         (records_dir / "ch360.json").write_text(
-            json.dumps({
-                "pilot_id": "p360",
-                "chapter_num": 360,
-                "run": {"total_cost_usd": 0.025},
-                "recorded_at": "2026-06-11T00:00:00Z",
-            }),
+            json.dumps(
+                {
+                    "pilot_id": "p360",
+                    "chapter_num": 360,
+                    "run": {"total_cost_usd": 0.025},
+                    "recorded_at": "2026-06-11T00:00:00Z",
+                }
+            ),
             encoding="utf-8",
         )
         (records_dir / "batch-361-363.json").write_text(
-            json.dumps({
-                "batch_id": "b1",
-                "start_chapter": 361,
-                "chapters_attempted": 3,
-                "total_cost_usd": 0.083,
-                "stopped_reason": "completed",
-                "recorded_at": "2026-06-11T01:00:00Z",
-            }),
+            json.dumps(
+                {
+                    "batch_id": "b1",
+                    "start_chapter": 361,
+                    "chapters_attempted": 3,
+                    "total_cost_usd": 0.083,
+                    "stopped_reason": "completed",
+                    "recorded_at": "2026-06-11T01:00:00Z",
+                }
+            ),
             encoding="utf-8",
         )
         monkeypatch.setenv("LINGWEN_PILOT_RECORDS_DIR", str(records_dir))

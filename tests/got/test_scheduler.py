@@ -12,6 +12,7 @@ Phase 1.4.i — RED tests for GoTScheduler.
 - visualize() → str (mermaid)
 - 支持 compute_fn 注入 (测试用 lambda)
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -41,9 +42,11 @@ def _node(node_id: str, depends_on=(), **kwargs) -> ThoughtNode:
 
 # === Helpers ===
 
+
 @dataclass
 class _FakeComputeResult:
     """compute_fn 的返回类型 — scheduler 内部用,非 public"""
+
     output: Any = None
     cost_tokens: int = 10
     fail: bool = False
@@ -52,15 +55,19 @@ class _FakeComputeResult:
 
 def _ok_compute(output: Any = "ok", cost: int = 10) -> Callable:
     """返回成功的 compute_fn"""
+
     def _fn(node, inputs):
         return _FakeComputeResult(output=output, cost_tokens=cost)
+
     return _fn
 
 
 def _fail_compute(error: str = "boom") -> Callable:
     """返回失败的 compute_fn"""
+
     def _fn(node, inputs):
         return _FakeComputeResult(fail=True, error=error, cost_tokens=5)
+
     return _fn
 
 
@@ -73,10 +80,12 @@ def _flaky_compute(attempts_to_pass: int = 2) -> Callable:
         if state["count"] < attempts_to_pass:
             return _FakeComputeResult(fail=True, error="transient", cost_tokens=3)
         return _FakeComputeResult(output=f"ok_after_{state['count']}", cost_tokens=10)
+
     return _fn
 
 
 # === Test classes ===
+
 
 class TestSchedulerRunBasics:
     def test_run_empty_graph(self):
@@ -184,7 +193,8 @@ class TestSchedulerBacktrack:
         g.add_node(_node("a"))
         # 第 2 次成功 (1 次 backtrack)
         sched = GoTScheduler(
-            graph=g, compute_fn=_flaky_compute(attempts_to_pass=2),
+            graph=g,
+            compute_fn=_flaky_compute(attempts_to_pass=2),
             max_backtracks=3,
         )
         summary = sched.run(start_nodes=["a"])
@@ -203,7 +213,8 @@ class TestSchedulerBacktrack:
         g.add_node(_node("a"))
         # 永不成功
         sched = GoTScheduler(
-            graph=g, compute_fn=_fail_compute(),
+            graph=g,
+            compute_fn=_fail_compute(),
             max_backtracks=3,
         )
         with pytest.raises(HumanInterventionRequired):
@@ -217,7 +228,8 @@ class TestSchedulerBacktrack:
         g = ThoughtGraph()
         g.add_node(_node("a"))
         sched = GoTScheduler(
-            graph=g, compute_fn=_flaky_compute(attempts_to_pass=3),
+            graph=g,
+            compute_fn=_flaky_compute(attempts_to_pass=3),
             max_backtracks=5,
         )
         summary = sched.run(start_nodes=["a"])

@@ -14,6 +14,7 @@ v16.5 #N.3: Migrated SQLite backend to SqliteStorageAdapter from lingwen_storage
 JSON backend unchanged (no storage abstraction needed for filesystem reads).
 Public API preserved.
 """
+
 import json
 import logging
 import warnings
@@ -26,9 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 # 基于 __file__ 解析的绝对路径,避免 cwd-相对路径在不同工作目录下产生歧义
-DEFAULT_STATE_FILE = str(
-    Path(__file__).resolve().parent / "relationship_network.db"
-)
+DEFAULT_STATE_FILE = str(Path(__file__).resolve().parent / "relationship_network.db")
 
 
 class RelationshipTracker:
@@ -112,6 +111,7 @@ class RelationshipTracker:
                     chapter INTEGER NOT NULL
                 );
             """)
+
         # Use private _transaction_cm to allow PRAGMA + executescript (which
         # implicitly commits); we then commit explicitly at end of callback.
         with self._storage._transaction_cm() as conn:
@@ -128,26 +128,31 @@ class RelationshipTracker:
                 "SELECT from_char, to_char, type, trust, conflict, last_event FROM relationships"
             ).fetchall():
                 d = dict(r)
-                relationships.append({
-                    "from": d["from_char"],
-                    "to": d["to_char"],
-                    "type": d["type"],
-                    "trust": d["trust"],
-                    "conflict": d["conflict"],
-                    "last_event": d["last_event"],
-                })
+                relationships.append(
+                    {
+                        "from": d["from_char"],
+                        "to": d["to_char"],
+                        "type": d["type"],
+                        "trust": d["trust"],
+                        "conflict": d["conflict"],
+                        "last_event": d["last_event"],
+                    }
+                )
             events = []
             for r in conn.execute(
                 "SELECT from_char, to_char, type, chapter FROM events ORDER BY id"
             ).fetchall():
                 d = dict(r)
-                events.append({
-                    "from": d["from_char"],
-                    "to": d["to_char"],
-                    "type": d["type"],
-                    "chapter": d["chapter"],
-                })
+                events.append(
+                    {
+                        "from": d["from_char"],
+                        "to": d["to_char"],
+                        "type": d["type"],
+                        "chapter": d["chapter"],
+                    }
+                )
             return {"characters": characters, "relationships": relationships, "events": events}
+
         return self._storage.with_connection(_do)
 
     # ---------- JSON 后端 (legacy) ----------
@@ -181,6 +186,7 @@ class RelationshipTracker:
         `conn.execute("BEGIN")/COMMIT/ROLLBACK` is no longer needed — the
         adapter handles the transaction boundary.
         """
+
         def _do(conn) -> None:
             # characters
             conn.execute("DELETE FROM characters")
@@ -211,6 +217,7 @@ class RelationshipTracker:
                     "INSERT INTO events (from_char, to_char, type, chapter) VALUES (?, ?, ?, ?)",
                     (e["from"], e["to"], e["type"], e["chapter"]),
                 )
+
         self._storage.with_transaction(_do)
 
     # ---------- 公共 API (与 JSON 版完全一致) ----------
@@ -224,20 +231,24 @@ class RelationshipTracker:
             network["characters"].append({"name": name, "role": role})
             self._save_network(network)
 
-    def add_relationship(self, from_char: str, to_char: str, rel_type: str, trust: float = 0.5, conflict: float = 0.1):
+    def add_relationship(
+        self, from_char: str, to_char: str, rel_type: str, trust: float = 0.5, conflict: float = 0.1
+    ):
         network = self._load_network()
         existing = self.get_relationship(from_char, to_char)
         if existing:
             return
 
-        network["relationships"].append({
-            "from": from_char,
-            "to": to_char,
-            "type": rel_type,
-            "trust": trust,
-            "conflict": conflict,
-            "last_event": None,
-        })
+        network["relationships"].append(
+            {
+                "from": from_char,
+                "to": to_char,
+                "type": rel_type,
+                "trust": trust,
+                "conflict": conflict,
+                "last_event": None,
+            }
+        )
         self._save_network(network)
 
     def get_relationship(self, from_char: str, to_char: str) -> Optional[Dict[str, Any]]:
@@ -287,12 +298,14 @@ class RelationshipTracker:
 
     def record_event(self, from_char: str, to_char: str, event_type: str, chapter: int):
         network = self._load_network()
-        network["events"].append({
-            "from": from_char,
-            "to": to_char,
-            "type": event_type,
-            "chapter": chapter,
-        })
+        network["events"].append(
+            {
+                "from": from_char,
+                "to": to_char,
+                "type": event_type,
+                "chapter": chapter,
+            }
+        )
         for rel in network["relationships"]:
             if rel["from"] == from_char and rel["to"] == to_char:
                 rel["last_event"] = f"ch{chapter}"

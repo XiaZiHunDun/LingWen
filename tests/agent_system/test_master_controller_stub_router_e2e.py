@@ -25,6 +25,7 @@ Out of scope (Phase 7.1 跳过的 Polisher 候选):
 
 合计:2 类 11 tests + 1 类 3 tests = 14 tests
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -298,9 +299,13 @@ class TestNovelWritingE2E:
 
         executions = result["executions"]
         expected_ids = {
-            "read_snapshot", "write_chapter", "review_chapter",
-            "polish_emotional_pacing", "polish_ai_trace_removal",
-            "polish_merge", "emit_chapter",
+            "read_snapshot",
+            "write_chapter",
+            "review_chapter",
+            "polish_emotional_pacing",
+            "polish_ai_trace_removal",
+            "polish_merge",
+            "emit_chapter",
         }
         assert set(executions.keys()) == expected_ids
         for ex in executions.values():
@@ -456,9 +461,7 @@ class TestNovelWritingE2E:
         failed = summary.failed
 
         # 至少 1 node FAILED (触阈那个)
-        assert failed >= 1, (
-            f"期望 ≥1 FAILED (触阈), 实际 completed={completed} failed={failed}"
-        )
+        assert failed >= 1, f"期望 ≥1 FAILED (触阈), 实际 completed={completed} failed={failed}"
 
         # 触阈后下游 node 不跑 (留 PENDING), total 应 < 7 (Phase 7.4 节点数)
         # NOTE: ExecutionSummary 无 .skipped 字段, PENDING 节点不计入
@@ -471,15 +474,12 @@ class TestNovelWritingE2E:
 
         # finally reset: run 完后 _current_budget_usd = None
         assert master._current_budget_usd is None, (
-            f"期望 master._current_budget_usd = None (T3 finally reset), "
-            f"实际 {master._current_budget_usd}"
+            f"期望 master._current_budget_usd = None (T3 finally reset), 实际 {master._current_budget_usd}"
         )
 
         # cost_tracker 至少 1 笔 record (触阈前 N 个 node)
         records = cost_tracker.records()
-        assert len(records) >= 1, (
-            f"期望 cost_tracker 至少 1 笔 record, 实际 {len(records)}"
-        )
+        assert len(records) >= 1, f"期望 cost_tracker 至少 1 笔 record, 实际 {len(records)}"
         # record 后 cost 累加, 触阈时已 > 0.0001
         assert cost_tracker.total_cost() > 0.0001, (
             f"期望 total_cost > 0.0001 (超 budget 触发), 实际 {cost_tracker.total_cost()}"
@@ -505,9 +505,11 @@ class TestRouterFailure:
 
         错误链路应包含原 provider 错误消息 + 失败节点名。
         """
-        router, _ = make_stub_router_with_responses({
-            "anthropic": ValueError("anthropic down"),
-        })
+        router, _ = make_stub_router_with_responses(
+            {
+                "anthropic": ValueError("anthropic down"),
+            }
+        )
         master = make_master_with_router(tmp_path, router)
 
         with pytest.raises(HumanInterventionRequired) as exc_info:
@@ -595,13 +597,12 @@ def test_emit_chapter_depends_on_polish_yaml_static():
 
 # === TestNovelWritingMultiVariantPolish (Phase 7.4 NEW) ===
 
+
 class TestNovelWritingMultiVariantPolish:
     """Phase 7.4: novel_writing.yaml 7 节点 — review_chapter 后 2 个并行 polish + AGGREGATION merge"""
 
     MINIMAL_OUTLINE = {
-        "chapters": [
-            {"num": 1, "title": "第一章", "events": ["event_a"], "word_count_target": 2500}
-        ]
+        "chapters": [{"num": 1, "title": "第一章", "events": ["event_a"], "word_count_target": 2500}]
     }
 
     def _run_novel_writing(self, tmp_path: Path, router: AIRouter):
@@ -675,6 +676,7 @@ class TestNovelWritingMultiVariantPolish:
 
 # === TestNovelWritingMultiVariantPolishYAML (Phase 7.4 NEW) ===
 
+
 def test_novel_writing_emit_depends_on_polish_merge_yaml_static():
     """Phase 7.4: YAML 静态检查 — emit_chapter.depends_on == [polish_merge]"""
     from pathlib import Path
@@ -706,7 +708,9 @@ def test_novel_writing_emit_depends_on_polish_merge_yaml_static():
     assert "polish_emotional_pacing" in merge_node["depends_on"]
     assert "polish_ai_trace_removal" in merge_node["depends_on"]
     # Phase 7.5: polish_merge token_budget=4000, timeout_s=90
-    assert merge_node["token_budget"] == 4000, f"polish_merge.token_budget should be 4000, got {merge_node['token_budget']}"
+    assert merge_node["token_budget"] == 4000, (
+        f"polish_merge.token_budget should be 4000, got {merge_node['token_budget']}"
+    )
     assert merge_node["timeout_s"] == 90
     # version 升级到 3
     assert data["version"] == 3, f"novel_writing workflow version should be 3, got {data['version']}"
