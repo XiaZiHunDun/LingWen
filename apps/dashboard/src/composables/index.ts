@@ -70,6 +70,7 @@ export { useEffectiveCreationMode } from './useEffectiveCreationMode.js';
 export { useFilteredPageError } from './useFilteredPageError.js';
 export { useOverviewStore } from './useOverviewStore.js';
 export { usePageLeadDismiss } from './usePageLeadDismiss.js';
+export { usePilotBatch } from './usePilotBatch.js';
 export { useRippleSocket } from './useRippleSocket.js';
 export { useRippleStore } from './useRippleStore.js';
 export { useStudioProject } from './useStudioProject.js';
