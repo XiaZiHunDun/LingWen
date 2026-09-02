@@ -157,6 +157,33 @@ def _poll_job(job: BatchJob) -> BatchJob:
     return job
 
 
+def replay_events(job: BatchJob) -> list[tuple[str, dict[str, Any]]]:
+    """Reconstruct a deterministic event history for ``job`` from disk.
+
+    Used by the SSE route when ``replay=1`` so a client that connects after
+    events were already published can recover chapter progress without missing
+    events. Returns ``job_state``, one ``chapter_completed`` per on-disk chapter
+    within ``job``'s range, and a terminal event when the job is terminal.
+
+    Note: ``chapter_started`` is not reliably reconstructable from disk, so it is
+    intentionally omitted.
+    """
+    events: list[tuple[str, dict[str, Any]]] = [(EVENT_JOB_STATE, job.to_dict())]
+    for chapter_num in _completed_chapter_nums(job):
+        events.append(
+            (EVENT_CHAPTER_COMPLETED, {"chapter_num": chapter_num, "completed_at": _now_iso()})
+        )
+    terminal_map = {
+        "completed": EVENT_JOB_COMPLETED,
+        "failed": EVENT_JOB_FAILED,
+        "cancelled": EVENT_JOB_CANCELLED,
+    }
+    terminal_type = terminal_map.get(job.status)
+    if terminal_type is not None:
+        events.append((terminal_type, job.to_dict()))
+    return events
+
+
 def _process_running(pid: int) -> bool:
     try:
         os.kill(pid, 0)
