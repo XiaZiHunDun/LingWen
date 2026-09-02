@@ -10,10 +10,10 @@
 
 | 项目 | 状态 |
 |------|------|
-| **版本** | v25.1（Phase 25.1 — 双会话并行开发合流） |
-| **git main** | master `a1826b33`（已推送 origin） |
-| **当前阶段** | Phase 25.1 已合流；下一步 = P1-SHIM |
-| **并行开发** | 已建 `COORDINATION.md`（A=前端 / B=后端，独立 worktree+分支） |
+| **版本** | v25.2（Phase 25.2 — 自治并发：自推进 + 自服务 BACKLOG + 门禁自合并） |
+| **git main** | master（最近 `806a4194`）|
+| **当前阶段** | A=前端 P1-SHIM；B=后端认领 P2-QUEUE（自服务） |
+| **并行开发** | [COORDINATION.md](https://github.com) §3 自治契约：两会话自认领→全量门绿→自 ff-merge 到 master（常驻 worktree `track-a`/`track-b`）|
 | **阻塞项** | 无 |
 
 ---
