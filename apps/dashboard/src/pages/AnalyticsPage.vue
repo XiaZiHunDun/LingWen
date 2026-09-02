@@ -31,6 +31,39 @@
       {{ displayError }}
     </div>
 
+    <section class="kpi-section batch-progress-kpi" data-testid="batch-progress-kpi">
+      <h2 class="section-title">当前生产 Batch 进度</h2>
+      <p
+        v-if="!batch.activeJob.value"
+        class="empty-hint analytics-batch-progress-empty"
+        data-testid="analytics-batch-progress-empty"
+      >
+        无进行中的 batch（可在生产 / Pilot 页发起）
+      </p>
+      <div v-else class="batch-progress analytics-batch-progress" data-testid="analytics-batch-progress">
+        <div class="batch-progress-row">
+          <span class="batch-progress-label">状态:</span>
+          <strong :class="`batch-status-${batch.activeJob.value.status}`">{{ batch.activeJob.value.status }}</strong>
+          <span v-if="batch.isConnected.value" class="batch-progress-live analytics-batch-progress-live" data-testid="analytics-batch-progress-live">● 实时</span>
+          <span class="batch-progress-range">{{ batchRange }}</span>
+          <span v-if="batch.activeJob.value.budget_usd != null" class="batch-progress-budget">${{ batch.activeJob.value.budget_usd }}</span>
+          <span v-if="batch.activeJob.value.pid" class="batch-progress-pid">pid: {{ batch.activeJob.value.pid }}</span>
+        </div>
+        <div class="batch-progress-stage analytics-batch-progress-stage" data-testid="analytics-batch-progress-stage">
+          已完成 {{ batchCompletedCount }} / {{ batchTotalChapters }} 章
+        </div>
+        <ul
+          v-if="batchChapterItems.length"
+          class="batch-progress-chapters analytics-batch-progress-chapters"
+          data-testid="analytics-batch-progress-chapters"
+        >
+          <li v-for="item in batchChapterItems" :key="`${item.chapter_num}-${item.receivedAt}`">
+            ch{{ String(item.chapter_num).padStart(3, '0') }}
+          </li>
+        </ul>
+      </div>
+    </section>
+
     <section class="kpi-section production-kpi" data-testid="production-kpi">
       <h2 class="section-title">正文生产 KPI</h2>
       <div class="stats-row">
@@ -153,6 +186,7 @@ import CoolpointChart from '../components/CoolpointChart.vue';
 import ProductionCostTrendChart from '../components/ProductionCostTrendChart.vue';
 import { fetchProductionCostTrend, fetchProductionRollup } from '@/api/health';
 import { useOverviewStore, useRippleStore, useStudioProject, useWorkflowSocket, useFilteredPageError } from '../composables/index.js';
+import { usePilotBatch } from '../composables/usePilotBatch';
 import {
   buildProductionKpiCards,
   buildRippleKpiCards,
@@ -181,6 +215,28 @@ const overviewStore = useOverviewStore();
 const rippleStore = useRippleStore();
 const { status } = useWorkflowSocket();
 const { activeSlug, projectRevision } = useStudioProject();
+
+// P2-INSIGHT: 复用 usePilotBatch 把实时 batch 进度汇入主看板（只读展示）。
+const batch = usePilotBatch();
+
+const batchTotalChapters = computed(() => {
+  const a = batch.activeJob.value;
+  if (!a) return 0;
+  return (a.end_chapter ?? 0) - (a.start_chapter ?? 0) + 1;
+});
+
+const batchCompletedCount = computed(() => {
+  const done = new Set(batch.chapterEvents.value.map((e) => e.chapter_num));
+  return done.size;
+});
+
+const batchRange = computed(() => {
+  const a = batch.activeJob.value;
+  if (!a) return '';
+  return `ch${String(a.start_chapter).padStart(3, '0')}–ch${String(a.end_chapter).padStart(3, '0')}`;
+});
+
+const batchChapterItems = computed(() => batch.chapterEvents.value.slice(-8));
 
 const refreshing = ref(false);
 const rollupError = ref(null);
@@ -262,6 +318,7 @@ async function refreshAll() {
 onMounted(() => {
   loadProductionRollup();
   loadProductionCostTrend();
+  void batch.refreshActive();
 });
 
 watch(projectRevision, () => {
@@ -404,4 +461,15 @@ watch(projectRevision, () => {
   opacity: 0.8;
   margin: var(--space-sm) 0 0;
 }
+.batch-progress { display: flex; flex-direction: column; gap: var(--space-sm); font-family: monospace; font-size: var(--text-sm); }
+.batch-progress-row { display: flex; gap: var(--space-md); align-items: center; flex-wrap: wrap; }
+.batch-progress-label { opacity: 0.8; }
+.batch-status-running { color: var(--color-success, #2c7a2c); font-weight: 600; }
+.batch-status-completed { color: var(--color-accent); font-weight: 600; }
+.batch-status-failed, .batch-status-cancelled { color: var(--color-danger, #c33); font-weight: 600; }
+.batch-progress-live { font-size: var(--text-xs); color: var(--color-success, #2c7a2c); border: 1px solid currentColor; border-radius: 999px; padding: 0 var(--space-sm); }
+.batch-progress-range, .batch-progress-budget, .batch-progress-pid { opacity: 0.85; }
+.batch-progress-stage { opacity: 0.9; }
+.batch-progress-chapters { list-style: none; display: flex; flex-wrap: wrap; gap: var(--space-sm); margin: 0; padding: 0; }
+.batch-progress-chapters li { background: var(--bg-secondary); border-radius: var(--radius-sm); padding: var(--space-xs) var(--space-sm); }
 </style>

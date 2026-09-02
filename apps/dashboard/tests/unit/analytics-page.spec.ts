@@ -37,6 +37,12 @@ const mocks = vi.hoisted(() => ({
       },
     },
   },
+  pilotBatch: {
+    activeJob: { value: null },
+    chapterEvents: { value: [] },
+    isConnected: { value: true },
+    refreshActive: vi.fn().mockResolvedValue(undefined),
+  },
 }))
 
 vi.mock('../../src/api/index.js', async (importOriginal) => {
@@ -74,6 +80,10 @@ vi.mock('../../src/composables/useWorkflowSocket.js', () => ({
     connected: { value: true },
     lastError: { value: null },
   }),
+}))
+
+vi.mock('@/composables/usePilotBatch', () => ({
+  usePilotBatch: () => mocks.pilotBatch,
 }))
 
 vi.mock('../../src/composables/useStudioProject.js', () => ({
@@ -167,5 +177,43 @@ describe('AnalyticsPage (F67/F81/F87)', () => {
     expect(mocks.ripple.refresh).toHaveBeenCalled()
     expect(mocks.fetchProductionRollup).toHaveBeenCalled()
     expect(mocks.fetchProductionCostTrend).toHaveBeenCalled()
+  })
+
+  test('refreshes active batch on mount', async () => {
+    mount(AnalyticsPage)
+    await flushPromises()
+    expect(mocks.pilotBatch.refreshActive).toHaveBeenCalled()
+  })
+
+  test('shows empty batch progress when no active job', async () => {
+    mocks.pilotBatch.activeJob.value = null
+    const wrapper = mount(AnalyticsPage)
+    await flushPromises()
+    expect(wrapper.find(byTestid('batch-progress-kpi')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('analytics-batch-progress-empty')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('analytics-batch-progress')).exists()).toBe(false)
+  })
+
+  test('shows live batch progress when a job is running', async () => {
+    mocks.pilotBatch.activeJob.value = {
+      job_id: 'j1',
+      status: 'running',
+      start_chapter: 1,
+      end_chapter: 5,
+      budget_usd: 2,
+      pid: 42,
+    }
+    mocks.pilotBatch.chapterEvents.value = [
+      { chapter_num: 1, receivedAt: 't1' },
+      { chapter_num: 2, receivedAt: 't2' },
+    ]
+    mocks.pilotBatch.isConnected.value = true
+    const wrapper = mount(AnalyticsPage)
+    await flushPromises()
+    expect(wrapper.find(byTestid('analytics-batch-progress')).exists()).toBe(true)
+    expect(wrapper.text()).toContain('ch001')
+    expect(wrapper.text()).toContain('ch005')
+    expect(wrapper.find(byTestid('analytics-batch-progress-stage')).text()).toContain('2 / 5')
+    expect(wrapper.find(byTestid('analytics-batch-progress-live')).exists()).toBe(true)
   })
 })
