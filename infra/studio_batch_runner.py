@@ -170,9 +170,7 @@ def replay_events(job: BatchJob) -> list[tuple[str, dict[str, Any]]]:
     """
     events: list[tuple[str, dict[str, Any]]] = [(EVENT_JOB_STATE, job.to_dict())]
     for chapter_num in _completed_chapter_nums(job):
-        events.append(
-            (EVENT_CHAPTER_COMPLETED, {"chapter_num": chapter_num, "completed_at": _now_iso()})
-        )
+        events.append((EVENT_CHAPTER_COMPLETED, {"chapter_num": chapter_num, "completed_at": _now_iso()}))
     terminal_map = {
         "completed": EVENT_JOB_COMPLETED,
         "failed": EVENT_JOB_FAILED,
