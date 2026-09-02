@@ -1,15 +1,14 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 
-import type {
-  StudioBatchJobResponseDTO,
-  StudioBatchJobSummaryDTO,
-} from '@lingwen/dashboard-contracts/shared';
-
 import {
   cancelStudioBatchJob,
   fetchStudioActiveBatchJob,
   listStudioBatchJobs,
   studioProductionRun,
+} from '@/api/studio';
+import type {
+  StudioBatchJobResponseDTO,
+  StudioBatchJobSummaryDTO,
 } from '@/api/studio';
 import { useBatchEventStream } from '@/composables/useBatchEventStream';
 import type { BatchEvent, BatchEventType } from '@/composables/useBatchEventStream';

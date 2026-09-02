@@ -25,6 +25,14 @@ import type {
 } from '@lingwen/dashboard-contracts/shared';
 import { request } from './core.js';
 
+// Re-export the Pilot batch DTOs so composables consume the app's contract
+// boundary (@/api/studio) instead of reaching into the external contracts
+// package directly (Phase 26+ P2-DTOMIGR).
+export type {
+  StudioBatchJobResponseDTO,
+  StudioBatchJobSummaryDTO,
+} from '@lingwen/dashboard-contracts/shared';
+
 // ---------------------------------------------------------------------------
 // /studio/active (set the active studio project by slug)
 // ---------------------------------------------------------------------------
