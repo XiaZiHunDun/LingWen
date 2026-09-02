@@ -18,7 +18,7 @@
       <div class="dialog-actions">
         <button
           type="button"
-          class="hold-btn pixel-border"
+          class="cancel-hold-btn hold-btn pixel-border"
           data-testid="cancel-hold-btn"
           :disabled="loading"
           @click="emit('hold-on')"
@@ -27,7 +27,7 @@
         </button>
         <button
           type="button"
-          class="confirm-btn pixel-border"
+          class="cancel-confirm-btn confirm-btn pixel-border"
           data-testid="cancel-confirm-btn"
           :disabled="loading"
           @click="emit('confirm')"

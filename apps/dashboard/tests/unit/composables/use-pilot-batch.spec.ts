@@ -11,7 +11,6 @@ const mockCancel = vi.fn();
 vi.mock('@/api/studio', () => ({
   studioProductionRun: (...args: unknown[]) => mockStartBatch(...args),
   fetchStudioActiveBatchJob: () => mockActive(),
-  fetchStudioBatchJob: (...args: unknown[]) => mockGetJob(...args),
   listStudioBatchJobs: (...args: unknown[]) => mockList(...args),
   cancelStudioBatchJob: (...args: unknown[]) => mockCancel(...args),
 }));

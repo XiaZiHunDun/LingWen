@@ -3,6 +3,7 @@
 4 paths: happy (running → cancelled), 409 (already completed), 404 (not found),
 grace-timeout SIGKILL fallback (Task 2).
 """
+
 import json
 import os
 import signal
@@ -64,9 +65,16 @@ def test_cancel_running_job_sends_sigterm_and_returns_cancelled(temp_jobs_dir):
     pid = _spawn_dummy_process()
     try:
         job = BatchJob(
-            job_id="abc-123", slug="test-slug", start_chapter=1, end_chapter=10,
-            budget_usd=5.0, mode="pilot", status="running", pid=pid,
-            log_path="/tmp/dummy.log", started_at="2026-09-02T00:00:00+00:00",
+            job_id="abc-123",
+            slug="test-slug",
+            start_chapter=1,
+            end_chapter=10,
+            budget_usd=5.0,
+            mode="pilot",
+            status="running",
+            pid=pid,
+            log_path="/tmp/dummy.log",
+            started_at="2026-09-02T00:00:00+00:00",
         )
         _write_job(temp_jobs_dir, job)
 
@@ -83,10 +91,18 @@ def test_cancel_running_job_sends_sigterm_and_returns_cancelled(temp_jobs_dir):
 
 def test_cancel_already_completed_job_returns_completed(temp_jobs_dir):
     job = BatchJob(
-        job_id="done-001", slug="test-slug", start_chapter=1, end_chapter=10,
-        budget_usd=5.0, mode="pilot", status="completed", pid=None,
-        log_path="/tmp/dummy.log", started_at="2026-09-02T00:00:00+00:00",
-        finished_at="2026-09-02T00:01:00+00:00", exit_code=0,
+        job_id="done-001",
+        slug="test-slug",
+        start_chapter=1,
+        end_chapter=10,
+        budget_usd=5.0,
+        mode="pilot",
+        status="completed",
+        pid=None,
+        log_path="/tmp/dummy.log",
+        started_at="2026-09-02T00:00:00+00:00",
+        finished_at="2026-09-02T00:01:00+00:00",
+        exit_code=0,
     )
     _write_job(temp_jobs_dir, job)
 
@@ -104,12 +120,17 @@ def test_cancel_unknown_job_raises_lookup_error(temp_jobs_dir):
 def test_cancel_job_ignoring_sigterm_triggers_sigkill(temp_jobs_dir):
     """Process that ignores SIGTERM should be SIGKILL'd after 5s grace."""
     proc = subprocess.Popen(
-        [sys.executable, "-u", "-c", textwrap.dedent("""
+        [
+            sys.executable,
+            "-u",
+            "-c",
+            textwrap.dedent("""
             import signal, time
             signal.signal(signal.SIGTERM, signal.SIG_IGN)
             print('READY')
             time.sleep(60)
-        """)],
+        """),
+        ],
         stdout=subprocess.PIPE,
         text=True,
     )
@@ -121,9 +142,16 @@ def test_cancel_job_ignoring_sigterm_triggers_sigkill(temp_jobs_dir):
     pid = proc.pid
     try:
         job = BatchJob(
-            job_id="stubborn-001", slug="test-slug", start_chapter=1, end_chapter=10,
-            budget_usd=5.0, mode="pilot", status="running", pid=pid,
-            log_path="/tmp/dummy.log", started_at="2026-09-02T00:00:00+00:00",
+            job_id="stubborn-001",
+            slug="test-slug",
+            start_chapter=1,
+            end_chapter=10,
+            budget_usd=5.0,
+            mode="pilot",
+            status="running",
+            pid=pid,
+            log_path="/tmp/dummy.log",
+            started_at="2026-09-02T00:00:00+00:00",
         )
         _write_job(temp_jobs_dir, job)
 

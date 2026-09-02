@@ -4,7 +4,7 @@
 <template>
   <section class="pilot-history-list pixel-card" data-testid="pilot-history-list">
     <h2 class="section-title">历史 batch</h2>
-    <p v-if="history.length === 0" class="empty-msg" data-testid="pilot-history-empty">无历史 batch</p>
+    <p v-if="history.length === 0" class="pilot-history-empty empty-msg" data-testid="pilot-history-empty">无历史 batch</p>
     <table v-else class="history-table" aria-label="Pilot 历史 batch">
       <thead>
         <tr>

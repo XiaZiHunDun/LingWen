@@ -72,7 +72,6 @@ export {
   studioProductionPreflight,
   studioProductionRun,
   fetchStudioActiveBatchJob,
-  fetchStudioBatchJob,
 } from './studio.js';
 
 // Phase 126 v16.2.6 T5.b: memory aliases re-pointed from memory.js shim (deleted)

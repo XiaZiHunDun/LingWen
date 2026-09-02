@@ -1,4 +1,5 @@
 """Integration tests for GET /api/studio/batch/history (Phase 23 Task 6)."""
+
 from unittest.mock import patch
 
 import pytest

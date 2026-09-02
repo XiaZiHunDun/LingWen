@@ -4,22 +4,22 @@
 <template>
   <section class="pilot-live-panel pixel-card" data-testid="pilot-live-panel">
     <h2 class="section-title">实时状态</h2>
-    <p v-if="!activeJob" class="empty-msg" data-testid="pilot-live-empty">无正在运行的 batch</p>
+    <p v-if="!activeJob" class="pilot-live-empty empty-msg" data-testid="pilot-live-empty">无正在运行的 batch</p>
     <div v-else class="live-content">
       <div class="status-row">
         <span class="status-label">状态:</span>
-        <strong :class="`job-status-${statusColor}`" data-testid="pilot-status">{{ activeJob.status }}</strong>
+        <strong class="pilot-status" :class="`job-status-${statusColor}`" data-testid="pilot-status">{{ activeJob.status }}</strong>
         <span class="chapter-range">{{ chapterRange }}</span>
         <span class="budget">${{ activeJob.budget_usd }}</span>
         <span v-if="activeJob.pid" class="pid">pid: {{ activeJob.pid }}</span>
       </div>
       <div class="eta-row">
         <span class="eta-label">预计剩余:</span>
-        <span class="eta-value" data-testid="pilot-eta">{{ etaDisplay }}</span>
+        <span class="eta-value pilot-eta" data-testid="pilot-eta">{{ etaDisplay }}</span>
       </div>
-      <pre v-if="activeJob.log_tail" class="log-tail" data-testid="pilot-log-tail">{{ activeJob.log_tail }}</pre>
+      <pre v-if="activeJob.log_tail" class="log-tail pilot-log-tail" data-testid="pilot-log-tail">{{ activeJob.log_tail }}</pre>
       <div class="actions-row">
-        <button v-if="activeJob.status === 'running'" type="button" class="cancel-btn pixel-border" data-testid="pilot-cancel-btn" :disabled="cancelLoading" @click="emit('request-cancel', activeJob.job_id)">
+        <button v-if="activeJob.status === 'running'" type="button" class="cancel-btn pilot-cancel-btn pixel-border" data-testid="pilot-cancel-btn" :disabled="cancelLoading" @click="emit('request-cancel', activeJob.job_id)">
           {{ cancelLoading ? '取消中…' : 'Cancel' }}
         </button>
       </div>

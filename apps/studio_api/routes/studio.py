@@ -331,6 +331,4 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
         from infra.studio_batch_runner import list_batch_jobs_for_slug
 
         rows = list_batch_jobs_for_slug(slug, limit=limit)
-        return StudioBatchJobListResponse(
-            jobs=[StudioBatchJobSummary.model_validate(r) for r in rows]
-        )
+        return StudioBatchJobListResponse(jobs=[StudioBatchJobSummary.model_validate(r) for r in rows])

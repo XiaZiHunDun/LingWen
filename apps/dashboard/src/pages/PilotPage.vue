@@ -20,7 +20,7 @@ const eta = ref<number | null>(null);
 
 onMounted(async () => {
   await pilot.refreshActive();
-  const slug = studio.activeSlug?.value ?? '';
+  const slug = studio.activeSlug ?? '';
   if (slug) await pilot.refreshHistory(slug);
 });
 
@@ -51,9 +51,9 @@ function onHoldOn() {
   <div class="pilot-page l1-page" data-testid="pilot-page">
     <div class="l1-page__body l1-panel-enter hub-l1__panel">
       <h1 class="page-title">Pilot 流水线</h1>
-      <p v-if="pilot.startError.value" class="page-error" data-testid="pilot-page-error" role="alert">{{ pilot.startError.value }}</p>
+      <p v-if="pilot.startError.value" class="page-error pilot-page-error" data-testid="pilot-page-error" role="alert">{{ pilot.startError.value }}</p>
       <PilotStartForm
-        :slug="studio.activeSlug?.value ?? ''"
+        :slug="studio.activeSlug ?? ''"
         :preflight-rows="pilot.preflightRows.value"
         :preflight-loading="pilot.preflightLoading.value"
         :start-loading="pilot.startLoading.value"

@@ -1,4 +1,5 @@
 """Integration tests for POST /api/studio/batch/<job_id>/cancel."""
+
 from unittest.mock import patch
 
 import pytest
@@ -62,9 +63,7 @@ def test_cancel_route_returns_404_for_unknown_job_id(client):
 def test_cancel_route_returns_409_for_terminal_state(client):
     with patch(
         "infra.studio_batch_runner.cancel_batch_job",
-        side_effect=RuntimeError(
-            "batch job 'done-001' is in terminal state 'completed', cannot cancel"
-        ),
+        side_effect=RuntimeError("batch job 'done-001' is in terminal state 'completed', cannot cancel"),
     ):
         resp = client.post("/api/studio/batch/done-001/cancel")
     assert resp.status_code == 409

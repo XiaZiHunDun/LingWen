@@ -3,7 +3,7 @@
 -->
 <template>
   <div class="pilot-preflight" data-testid="pilot-preflight">
-    <p v-if="rows.length === 0" data-testid="pilot-preflight-empty" class="empty-msg">
+    <p v-if="rows.length === 0" data-testid="pilot-preflight-empty" class="pilot-preflight-empty empty-msg">
       无 preflight 结果
     </p>
     <table v-else class="preflight-table" aria-label="Pilot preflight 检查结果">

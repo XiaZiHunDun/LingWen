@@ -11,7 +11,7 @@
           id="pilot-mode"
           v-model="mode"
           data-testid="start-mode"
-          class="form-input pixel-border"
+          class="form-input start-mode pixel-border"
         >
           <option value="canon">canon</option>
           <option value="pilot">pilot</option>
@@ -25,7 +25,7 @@
           type="number"
           min="1"
           data-testid="start-chapter-from"
-          class="form-input pixel-border"
+          class="form-input start-chapter-from pixel-border"
         />
       </div>
       <div class="form-row">
@@ -36,7 +36,7 @@
           type="number"
           min="1"
           data-testid="start-chapter-to"
-          class="form-input pixel-border"
+          class="form-input start-chapter-to pixel-border"
         />
       </div>
       <div class="form-row">
@@ -49,7 +49,7 @@
           max="100"
           step="0.01"
           data-testid="start-budget-usd"
-          class="form-input pixel-border"
+          class="form-input start-budget-usd pixel-border"
         />
       </div>
       <div class="form-actions">
@@ -64,7 +64,7 @@
         </button>
         <button
           type="button"
-          class="run-btn pixel-border start-btn"
+          class="run-btn pixel-border start-submit-btn start-btn"
           data-testid="start-submit-btn"
           :disabled="startLoading || !isValid || !preflightAllOk"
           @click="onStart"
@@ -74,7 +74,7 @@
       </div>
       <p
         v-if="error"
-        class="form-error"
+        class="form-error start-form-error"
         data-testid="start-form-error"
         role="alert"
       >

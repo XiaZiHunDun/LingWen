@@ -2,6 +2,7 @@
 
 ETA algorithm: completed_chapters / elapsed_seconds → projected total time.
 """
+
 from datetime import datetime, timedelta, timezone
 
 import pytest

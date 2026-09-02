@@ -145,15 +145,6 @@ export async function fetchStudioActiveBatchJob(): Promise<StudioBatchJobRespons
 }
 
 // ---------------------------------------------------------------------------
-// /studio/production/jobs/{id} (single batch job status)
-// ---------------------------------------------------------------------------
-
-export async function fetchStudioBatchJob(jobId: string): Promise<StudioBatchJobResponseDTO> {
-  const data = await request(`/studio/production/jobs/${encodeURIComponent(jobId)}`);
-  return data as StudioBatchJobResponseDTO;
-}
-
-// ---------------------------------------------------------------------------
 // /studio/batch/{id}/cancel (cancel a batch production job)
 // ---------------------------------------------------------------------------
 
