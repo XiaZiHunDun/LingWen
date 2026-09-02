@@ -127,9 +127,9 @@ def test_cancel_job_ignoring_sigterm_triggers_sigkill(temp_jobs_dir):
         )
         _write_job(temp_jobs_dir, job)
 
-        start = time.time()
+        start = time.monotonic()
         result = cancel_batch_job("stubborn-001")
-        elapsed = time.time() - start
+        elapsed = time.monotonic() - start
 
         assert result.status == "cancelled"
         assert "force killed" in (result.error or "")
@@ -138,4 +138,8 @@ def test_cancel_job_ignoring_sigterm_triggers_sigkill(temp_jobs_dir):
         try:
             os.kill(pid, signal.SIGKILL)
         except OSError:
+            pass
+        try:
+            proc.wait(timeout=2)
+        except subprocess.TimeoutExpired:
             pass
