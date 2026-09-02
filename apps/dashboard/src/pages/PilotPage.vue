@@ -7,6 +7,7 @@
 import { onMounted, ref } from 'vue';
 import { useStudioProject } from '@/composables';
 import { usePilotBatch } from '@/composables/usePilotBatch';
+import type { BatchEventType } from '@/composables/useBatchEventStream';
 import PilotStartForm from '@/components/pilot/PilotStartForm.vue';
 import PilotLivePanel from '@/components/pilot/PilotLivePanel.vue';
 import PilotHistoryList from '@/components/pilot/PilotHistoryList.vue';
@@ -45,6 +46,10 @@ async function onConfirmCancel() {
 function onHoldOn() {
   cancelDialogJobId.value = null;
 }
+
+function onToggleEventType(value: BatchEventType) {
+  pilot.toggleEventType(value);
+}
 </script>
 
 <template>
@@ -66,7 +71,10 @@ function onHoldOn() {
         :eta-seconds="eta"
         :cancel-loading="pilot.cancelLoading.value"
         :chapter-events="pilot.chapterEvents.value"
+        :event-type-options="pilot.eventTypeOptions"
+        :selected-event-types="pilot.selectedEventTypes.value"
         @request-cancel="onRequestCancel"
+        @toggle-event-type="onToggleEventType"
       />
       <PilotHistoryList :history="pilot.history.value" />
       <PilotCancelDialog

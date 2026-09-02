@@ -12,13 +12,23 @@ import {
   studioProductionRun,
 } from '@/api/studio';
 import { useBatchEventStream } from '@/composables/useBatchEventStream';
-import type { BatchEvent } from '@/composables/useBatchEventStream';
+import type { BatchEvent, BatchEventType } from '@/composables/useBatchEventStream';
 
 /** Fallback REST polling interval used only while the SSE stream is disconnected. */
 const FALLBACK_POLL_INTERVAL_MS = 5000;
 /** Keep the most recent chapter_completed entries for the LivePanel list. */
 const CHAPTER_EVENTS_CAP = 20;
 const TERMINAL_STATUSES = new Set(['completed', 'failed', 'cancelled']);
+
+/** Lightweight live-filter options shown as toggle chips in the live panel. */
+const EVENT_TYPE_OPTIONS: ReadonlyArray<{ value: BatchEventType; label: string }> = [
+  { value: 'job_state', label: '状态' },
+  { value: 'chapter_started', label: '章节开始' },
+  { value: 'chapter_completed', label: '章节完成' },
+  { value: 'job_completed', label: '完成' },
+  { value: 'job_failed', label: '失败' },
+  { value: 'job_cancelled', label: '取消' },
+];
 
 export interface PilotForm {
   slug: string;
@@ -46,9 +56,21 @@ export function usePilotBatch() {
   const cancelError = ref<string | null>(null);
 
   const activeJobId = computed(() => activeJob.value?.job_id ?? null);
+  // Empty selection = no `event_types` filter → server streams all event types
+  // (Phase 25 carryover: live filter UI wires these into the SSE query).
+  const selectedEventTypes = ref<BatchEventType[]>([]);
   // replay=true: on any connect the server replays deterministic chapter history
   // from disk, so chapterEvents is never left empty after a reload/reconnect.
-  const { events, isConnected, lastError } = useBatchEventStream(activeJobId, { replay: true });
+  const { events, isConnected, lastError } = useBatchEventStream(activeJobId, {
+    replay: true,
+    eventTypes: selectedEventTypes,
+  });
+
+  function toggleEventType(type: BatchEventType): void {
+    selectedEventTypes.value = selectedEventTypes.value.includes(type)
+      ? selectedEventTypes.value.filter((t) => t !== type)
+      : [...selectedEventTypes.value, type];
+  }
 
   let fallbackPoll: ReturnType<typeof setInterval> | null = null;
   let processedEventIndex = 0;
@@ -217,6 +239,9 @@ export function usePilotBatch() {
     isConnected,
     lastError,
     isJobActive,
+    eventTypeOptions: EVENT_TYPE_OPTIONS,
+    selectedEventTypes,
+    toggleEventType,
     refreshActive,
     refreshHistory,
     runPreflight,

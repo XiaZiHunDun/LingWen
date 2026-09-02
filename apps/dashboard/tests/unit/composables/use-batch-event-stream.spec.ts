@@ -5,7 +5,7 @@
  * that records instances so tests can fire named events / error handlers.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { defineComponent, ref } from 'vue';
+import { defineComponent, nextTick, ref } from 'vue';
 import { flushPromises, mount } from '@vue/test-utils';
 
 interface HandlerMap {
@@ -156,6 +156,23 @@ describe('useBatchEventStream', () => {
     await flushPromises();
     expect(MockEventSource.instances.at(-1)!.url).toContain('replay=1');
     expect(MockEventSource.instances.at(-1)!.url).toContain('event_types=chapter_completed%2Cjob_state');
+    wrapper.unmount();
+  });
+
+  it('reconnects with a new event_types query when a reactive filter changes', async () => {
+    const { useBatchEventStream } = await import('@/composables/useBatchEventStream');
+    const jobId = ref('j5');
+    const filter = ref<Array<'chapter_completed' | 'job_state'>>(['chapter_completed']);
+    const Host = defineComponent({
+      setup: () => useBatchEventStream(jobId, { replay: true, eventTypes: filter }),
+      template: '<div />',
+    });
+    const wrapper = mount(Host);
+    await flushPromises();
+    expect(MockEventSource.instances.at(-1)!.url).toContain('event_types=chapter_completed');
+    filter.value = ['job_state'];
+    await nextTick();
+    expect(MockEventSource.instances.at(-1)!.url).toContain('event_types=job_state');
     wrapper.unmount();
   });
 });

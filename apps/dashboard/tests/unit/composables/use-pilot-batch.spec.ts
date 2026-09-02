@@ -137,6 +137,24 @@ describe('usePilotBatch', () => {
       await nextTick();
       const source = MockEventSource.instances.at(-1);
       expect(source?.url).toContain('replay=1');
+      expect(source?.url).not.toContain('event_types=');
+    });
+  });
+
+  it('exposes event-type options and reconnects the stream when filter toggles', async () => {
+    mockActive.mockResolvedValue({ job_id: 'j1', status: 'running', log_path: '/tmp/x' });
+    await withComposable(async (api) => {
+      expect(api.eventTypeOptions.length).toBeGreaterThan(0);
+      await api.refreshActive();
+      await nextTick();
+      api.toggleEventType('job_state');
+      await nextTick();
+      expect(api.selectedEventTypes.value).toEqual(['job_state']);
+      expect(MockEventSource.instances.at(-1)?.url).toContain('event_types=job_state');
+      api.toggleEventType('job_state');
+      await nextTick();
+      expect(api.selectedEventTypes.value).toEqual([]);
+      expect(MockEventSource.instances.at(-1)?.url).not.toContain('event_types=');
     });
   });
 });

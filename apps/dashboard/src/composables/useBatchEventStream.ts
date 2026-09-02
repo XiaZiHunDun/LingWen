@@ -14,7 +14,8 @@
  * auto-reconnects on transient network errors; the caller should treat a
  * persistent `isConnected === false` as a signal to fall back to polling.
  */
-import { onBeforeUnmount, ref, watch } from 'vue';
+import { onBeforeUnmount, ref, unref, watch } from 'vue';
+import type { Ref } from 'vue';
 
 const EVENT_TYPES = [
   'job_state',
@@ -25,7 +26,7 @@ const EVENT_TYPES = [
   'job_cancelled',
 ] as const;
 
-type BatchEventType = (typeof EVENT_TYPES)[number];
+export type BatchEventType = (typeof EVENT_TYPES)[number];
 
 /** Rolling event buffer cap (design: keep most recent 50 events). */
 export const BATCH_EVENT_BUFFER = 50;
@@ -43,21 +44,35 @@ export interface BatchEventStream {
   lastError: { value: string | null };
 }
 
+/**
+ * An event-types filter can be a static list or a reactive ref so the stream
+ * reconnects with the new `event_types` query as soon as the filter changes.
+ */
+type EventTypesSource = BatchEventType[] | Ref<BatchEventType[]>;
+
 export interface BatchEventStreamOptions {
   /** Replay deterministic history from the server on connect (Phase 25). */
   replay?: boolean;
   /** Server-side event-type whitelist applied to the stream (Phase 25). */
-  eventTypes?: BatchEventType[];
+  eventTypes?: EventTypesSource;
 }
 
-function buildUrl(jobId: string, options: BatchEventStreamOptions): string {
+function resolveEventTypes(source: EventTypesSource | undefined): BatchEventType[] {
+  return source ? unref(source) : [];
+}
+
+function buildUrl(
+  jobId: string,
+  options: BatchEventStreamOptions,
+  eventTypes: BatchEventType[],
+): string {
   const encoded = encodeURIComponent(jobId);
   const params = new URLSearchParams();
   if (options.replay) {
     params.set('replay', '1');
   }
-  if (options.eventTypes && options.eventTypes.length > 0) {
-    params.set('event_types', options.eventTypes.join(','));
+  if (eventTypes.length > 0) {
+    params.set('event_types', eventTypes.join(','));
   }
   const query = params.toString();
   return `/api/studio/batch/${encoded}/events${query ? `?${query}` : ''}`;
@@ -71,6 +86,7 @@ export function useBatchEventStream(
   const isConnected = ref(false);
   const lastError = ref<string | null>(null);
   let source: EventSource | null = null;
+  const eventTypesSource = options.eventTypes;
 
   function appendEvent(type: BatchEventType, rawData: string): void {
     let data: Record<string, unknown>;
@@ -99,7 +115,9 @@ export function useBatchEventStream(
       lastError.value = null;
       return;
     }
-    const sourceInstance = new EventSource(buildUrl(jobId.value, options));
+    const sourceInstance = new EventSource(
+      buildUrl(jobId.value, options, resolveEventTypes(eventTypesSource)),
+    );
     source = sourceInstance;
     for (const type of EVENT_TYPES) {
       sourceInstance.addEventListener(type, (event: MessageEvent) => {
@@ -116,7 +134,13 @@ export function useBatchEventStream(
     };
   }
 
-  watch(jobId, connect, { immediate: true });
+  // Reconnect when the job changes OR the event-type filter changes so the
+  // server-side `event_types` whitelist always matches the current selection.
+  watch(
+    () => `${jobId.value ?? ''}::${resolveEventTypes(eventTypesSource).join(',')}`,
+    connect,
+    { immediate: true },
+  );
 
   onBeforeUnmount(() => closeSource());
 

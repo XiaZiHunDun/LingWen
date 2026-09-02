@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
 import PilotLivePanel from '@/components/pilot/PilotLivePanel.vue';
+import type { BatchEventType } from '@/composables/useBatchEventStream';
 
 const runningJob = {
   job_id: 'j1', slug: 's1', status: 'running',
@@ -62,5 +63,28 @@ describe('PilotLivePanel', () => {
     expect(items).toHaveLength(5);
     expect(items[0].text()).toContain('ch003');
     expect(wrapper.text()).toContain('ch007');
+  });
+
+  it('renders event-type filter chips and emits toggle-event-type on click', async () => {
+    const options: Array<{ value: BatchEventType; label: string }> = [
+      { value: 'job_state', label: '状态' },
+      { value: 'chapter_completed', label: '章节完成' },
+    ];
+    const wrapper = mount(PilotLivePanel, {
+      props: {
+        activeJob: runningJob,
+        etaSeconds: null,
+        cancelLoading: false,
+        eventTypeOptions: options,
+        selectedEventTypes: ['job_state'],
+      },
+    });
+    const chips = wrapper.findAll('[data-testid="pilot-event-filter"] .pilot-event-filter-chip');
+    expect(chips).toHaveLength(2);
+    expect(chips[0].classes()).toContain('is-active');
+    expect(chips[1].classes()).not.toContain('is-active');
+    await chips[1].trigger('click');
+    expect(wrapper.emitted('toggle-event-type')).toBeTruthy();
+    expect(wrapper.emitted('toggle-event-type')?.[0]).toEqual(['chapter_completed']);
   });
 });

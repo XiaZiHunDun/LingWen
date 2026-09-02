@@ -13,6 +13,20 @@
         <span class="budget">${{ activeJob.budget_usd }}</span>
         <span v-if="activeJob.pid" class="pid">pid: {{ activeJob.pid }}</span>
       </div>
+      <div v-if="eventTypeOptions?.length" class="event-filter">
+        <span class="event-filter-label">事件过滤:</span>
+        <div class="event-filter-chips" data-testid="pilot-event-filter">
+          <button
+            v-for="opt in eventTypeOptions"
+            :key="opt.value"
+            type="button"
+            class="filter-chip pilot-event-filter-chip"
+            :class="{ 'is-active': selectedEventTypes?.includes(opt.value) }"
+            :data-event-type="opt.value"
+            @click="emit('toggle-event-type', opt.value)"
+          >{{ opt.label }}</button>
+        </div>
+      </div>
       <div class="eta-row">
         <span class="eta-label">预计剩余:</span>
         <span class="eta-value pilot-eta" data-testid="pilot-eta">{{ etaDisplay }}</span>
@@ -39,6 +53,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
+import type { BatchEventType } from '@/composables/useBatchEventStream';
+
 interface ActiveJob {
   job_id: string;
   status: 'running' | 'completed' | 'failed' | 'cancelled';
@@ -54,6 +70,11 @@ interface ActiveJob {
   error?: string | null;
 }
 
+interface EventTypeOption {
+  value: BatchEventType;
+  label: string;
+}
+
 const props = defineProps<{
   activeJob: ActiveJob | null;
   etaSeconds: number | null;
@@ -61,9 +82,14 @@ const props = defineProps<{
   chapterEvents?:
     | Array<{ chapter_num: number; receivedAt: string }>
     | null;
+  eventTypeOptions?: ReadonlyArray<EventTypeOption>;
+  selectedEventTypes?: BatchEventType[];
 }>();
 
-const emit = defineEmits<{ 'request-cancel': [jobId: string] }>();
+const emit = defineEmits<{
+  'request-cancel': [jobId: string];
+  'toggle-event-type': [value: BatchEventType];
+}>();
 
 /** Most recent 5 chapter_completed entries for a compact live list. */
 const recentChapters = computed(() => props.chapterEvents?.slice(-5) ?? []);
@@ -94,6 +120,11 @@ const chapterRange = computed(() => {
 .job-status-completed { color: var(--info, #2c6cb0); font-weight: 600; }
 .job-status-failed, .job-status-cancelled { color: var(--error, #c33); font-weight: 600; }
 .eta-row { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
+.event-filter { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-bottom: 0.5rem; }
+.event-filter-label { color: var(--muted, #888); font-size: 0.8rem; }
+.event-filter-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.filter-chip { font-size: 0.78rem; padding: 0.15rem 0.6rem; border-radius: 12px; cursor: pointer; background: transparent; color: var(--muted, #888); border: 1px solid var(--muted, #aaa); }
+.filter-chip.is-active { background: var(--info, #2c6cb0); color: #fff; border-color: var(--info, #2c6cb0); }
 .chapter-events { list-style: none; margin: 0 0 0.5rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .chapter-event-item { font-size: 0.8rem; background: var(--info-bg, #eef); color: var(--info, #2c6cb0); padding: 0.15rem 0.5rem; border-radius: 4px; }
 .log-tail { background: var(--code-bg, #1e1e1e); color: var(--code-f, #ddd); padding: 0.5rem; border-radius: 4px; max-height: 200px; overflow-y: auto; font-size: 0.85rem; }
