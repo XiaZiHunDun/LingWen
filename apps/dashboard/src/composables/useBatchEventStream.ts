@@ -71,6 +71,7 @@ export function useBatchEventStream(jobId: { value: string | null }): BatchEvent
 
   function connect(): void {
     closeSource();
+    events.value = [];
     if (!jobId.value) {
       lastError.value = null;
       return;

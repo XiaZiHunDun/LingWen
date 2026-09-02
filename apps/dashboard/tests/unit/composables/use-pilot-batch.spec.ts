@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { defineComponent, h } from 'vue';
+import { defineComponent, h, nextTick } from 'vue';
 import { mount } from '@vue/test-utils';
 
 const mockStartBatch = vi.fn();
@@ -15,7 +15,29 @@ vi.mock('@/api/studio', () => ({
   cancelStudioBatchJob: (...args: unknown[]) => mockCancel(...args),
 }));
 
-import { usePilotBatch } from '@/composables/usePilotBatch';
+/** Minimal EventSource stub (jsdom doesn't implement it) that records instances. */
+class MockEventSource {
+  static instances: MockEventSource[] = [];
+  url: string;
+  named: Record<string, (event: { data: string }) => void> = {};
+  onopen: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+  constructor(url: string) {
+    this.url = url;
+    MockEventSource.instances.push(this);
+  }
+  addEventListener(type: string, handler: (event: { data: string }) => void): void {
+    this.named[type] = handler;
+  }
+  close(): void {
+    // no-op
+  }
+}
+
+function fireNamed(type: string, data: string): void {
+  const source = MockEventSource.instances.at(-1);
+  source?.named[type]?.({ data });
+}
 
 function withComposable<T>(cb: (api: ReturnType<typeof usePilotBatch>) => Promise<T>) {
   let captured!: ReturnType<typeof usePilotBatch>;
@@ -29,8 +51,12 @@ function withComposable<T>(cb: (api: ReturnType<typeof usePilotBatch>) => Promis
   return cb(captured).finally(() => wrapper.unmount());
 }
 
+import { usePilotBatch } from '@/composables/usePilotBatch';
+
 beforeEach(() => {
   vi.useFakeTimers();
+  vi.stubGlobal('EventSource', MockEventSource as unknown as typeof EventSource);
+  MockEventSource.instances = [];
   mockStartBatch.mockReset();
   mockActive.mockReset();
   mockGetJob.mockReset();
@@ -40,6 +66,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.unstubAllGlobals();
 });
 
 describe('usePilotBatch', () => {
@@ -47,6 +74,7 @@ describe('usePilotBatch', () => {
     await withComposable(async (api) => {
       expect(api.activeJob.value).toBeNull();
       expect(api.history.value).toEqual([]);
+      expect(api.chapterEvents.value).toEqual([]);
     });
   });
 
@@ -84,6 +112,21 @@ describe('usePilotBatch', () => {
       await api.refreshHistory('s1', 20);
       expect(api.history.value).toHaveLength(1);
       expect(api.history.value[0].job_id).toBe('h1');
+    });
+  });
+
+  it('applies SSE chapter_completed and job_completed events to state', async () => {
+    const running = { job_id: 'j1', status: 'running', log_path: '/tmp/x' };
+    mockActive.mockResolvedValue(running);
+    await withComposable(async (api) => {
+      await api.refreshActive();
+      await nextTick();
+      fireNamed('chapter_completed', JSON.stringify({ chapter_num: 3 }));
+      fireNamed('job_completed', JSON.stringify({ exit_code: 0, finished_at: 't0' }));
+      await nextTick();
+      expect(api.chapterEvents.value).toHaveLength(1);
+      expect(api.chapterEvents.value[0].chapter_num).toBe(3);
+      expect(api.activeJob.value?.status).toBe('completed');
     });
   });
 });

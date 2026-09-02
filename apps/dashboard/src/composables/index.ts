@@ -71,6 +71,7 @@ export { useFilteredPageError } from './useFilteredPageError.js';
 export { useOverviewStore } from './useOverviewStore.js';
 export { usePageLeadDismiss } from './usePageLeadDismiss.js';
 export { usePilotBatch } from './usePilotBatch.js';
+export type { ChapterProgressEvent } from './usePilotBatch.js';
 export { useBatchEventStream, BATCH_EVENT_BUFFER } from './useBatchEventStream.js';
 export type { BatchEvent, BatchEventType, BatchEventStream } from './useBatchEventStream.js';
 export { useRippleSocket } from './useRippleSocket.js';

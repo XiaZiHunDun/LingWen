@@ -1,4 +1,4 @@
-import { computed, onBeforeUnmount, ref } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 
 import type {
   StudioBatchJobResponseDTO,
@@ -11,8 +11,14 @@ import {
   listStudioBatchJobs,
   studioProductionRun,
 } from '@/api/studio';
+import { useBatchEventStream } from '@/composables/useBatchEventStream';
+import type { BatchEvent } from '@/composables/useBatchEventStream';
 
-const POLL_INTERVAL_MS = 3000;
+/** Fallback REST polling interval used only while the SSE stream is disconnected. */
+const FALLBACK_POLL_INTERVAL_MS = 5000;
+/** Keep the most recent chapter_completed entries for the LivePanel list. */
+const CHAPTER_EVENTS_CAP = 20;
+const TERMINAL_STATUSES = new Set(['completed', 'failed', 'cancelled']);
 
 export interface PilotForm {
   slug: string;
@@ -22,9 +28,15 @@ export interface PilotForm {
   mode: 'canon' | 'pilot';
 }
 
+export interface ChapterProgressEvent {
+  chapter_num: number;
+  receivedAt: string;
+}
+
 export function usePilotBatch() {
   const activeJob = ref<StudioBatchJobResponseDTO | null>(null);
   const history = ref<StudioBatchJobSummaryDTO[]>([]);
+  const chapterEvents = ref<ChapterProgressEvent[]>([]);
   const preflightRows = ref<Array<{ chapter: number; ok: boolean; message: string }>>([]);
   const preflightLoading = ref(false);
   const preflightError = ref<string | null>(null);
@@ -33,30 +45,103 @@ export function usePilotBatch() {
   const cancelLoading = ref(false);
   const cancelError = ref<string | null>(null);
 
-  let pollHandle: ReturnType<typeof setInterval> | null = null;
+  const activeJobId = computed(() => activeJob.value?.job_id ?? null);
+  const { events, isConnected, lastError } = useBatchEventStream(activeJobId);
 
-  function stopPolling() {
-    if (pollHandle !== null) {
-      clearInterval(pollHandle);
-      pollHandle = null;
+  let fallbackPoll: ReturnType<typeof setInterval> | null = null;
+  let processedEventIndex = 0;
+
+  function isTerminal(status: string | null | undefined): boolean {
+    return status ? TERMINAL_STATUSES.has(status) : false;
+  }
+
+  function stopFallbackPolling() {
+    if (fallbackPoll !== null) {
+      clearInterval(fallbackPoll);
+      fallbackPoll = null;
     }
   }
 
-  function startPolling() {
-    stopPolling();
-    pollHandle = setInterval(() => {
+  function startFallbackPolling() {
+    stopFallbackPolling();
+    if (isTerminal(activeJob.value?.status) || !activeJobId.value) return;
+    fallbackPoll = setInterval(() => {
       void refreshActive();
-    }, POLL_INTERVAL_MS);
+    }, FALLBACK_POLL_INTERVAL_MS);
   }
+
+  function syncFallbackPolling() {
+    if (isConnected.value || isTerminal(activeJob.value?.status) || !activeJobId.value) {
+      stopFallbackPolling();
+    } else if (activeJobId.value) {
+      startFallbackPolling();
+    }
+  }
+
+  function applyEvent(event: BatchEvent): void {
+    const data = event.data;
+    switch (event.type) {
+      case 'job_state': {
+        if (typeof data.job_id === 'string') {
+          activeJob.value = data as unknown as StudioBatchJobResponseDTO;
+        }
+        break;
+      }
+      case 'chapter_completed': {
+        if (typeof data.chapter_num === 'number') {
+          chapterEvents.value = [
+            ...chapterEvents.value,
+            { chapter_num: data.chapter_num, receivedAt: event.receivedAt },
+          ].slice(-CHAPTER_EVENTS_CAP);
+        }
+        break;
+      }
+      case 'job_completed':
+      case 'job_failed':
+      case 'job_cancelled': {
+        if (!activeJob.value) break;
+        const newStatus: StudioBatchJobResponseDTO['status'] =
+          event.type === 'job_completed'
+            ? 'completed'
+            : event.type === 'job_failed'
+              ? 'failed'
+              : 'cancelled';
+        activeJob.value = {
+          ...activeJob.value,
+          status: newStatus,
+          finished_at:
+            typeof data.finished_at === 'string' ? data.finished_at : activeJob.value.finished_at,
+          exit_code:
+            typeof data.exit_code === 'number' ? data.exit_code : activeJob.value.exit_code,
+        };
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
+  // Reset stream-scoped state whenever the active job changes.
+  watch(activeJobId, () => {
+    processedEventIndex = 0;
+    chapterEvents.value = [];
+    stopFallbackPolling();
+  });
+
+  // Consume SSE events (each exactly once) and keep fallback polling in sync.
+  watch([events, () => activeJob.value?.status, isConnected], () => {
+    const list = events.value;
+    for (let i = processedEventIndex; i < list.length; i += 1) {
+      applyEvent(list[i]);
+    }
+    processedEventIndex = list.length;
+    syncFallbackPolling();
+  });
 
   async function refreshActive(): Promise<void> {
     try {
       activeJob.value = await fetchStudioActiveBatchJob();
-      if (activeJob.value?.status === 'running') {
-        startPolling();
-      } else {
-        stopPolling();
-      }
+      syncFallbackPolling();
     } catch (err) {
       console.warn('[usePilotBatch] refreshActive failed', err);
     }
@@ -76,7 +161,6 @@ export function usePilotBatch() {
     preflightError.value = null;
     try {
       // TODO Phase 24+: dedicated preflight wrapper; reuse studio preflight helper
-      // For now, surface form validation only
       preflightRows.value = [];
     } finally {
       preflightLoading.value = false;
@@ -90,7 +174,7 @@ export function usePilotBatch() {
       const { slug: _slug, ...rest } = form;
       const job = await studioProductionRun(rest);
       activeJob.value = job;
-      startPolling();
+      syncFallbackPolling();
     } catch (err) {
       startError.value = err instanceof Error ? err.message : String(err);
       throw err;
@@ -115,11 +199,12 @@ export function usePilotBatch() {
 
   const isJobActive = computed(() => activeJob.value?.status === 'running');
 
-  onBeforeUnmount(() => stopPolling());
+  onBeforeUnmount(() => stopFallbackPolling());
 
   return {
     activeJob,
     history,
+    chapterEvents,
     preflightRows,
     preflightLoading,
     preflightError,
@@ -127,6 +212,8 @@ export function usePilotBatch() {
     startError,
     cancelLoading,
     cancelError,
+    isConnected,
+    lastError,
     isJobActive,
     refreshActive,
     refreshHistory,
