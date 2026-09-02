@@ -1,8 +1,8 @@
 # 灵文项目状态看板
 
-> **最后更新**: 2026-09-02  
-> **更新者**: 会话-A（Track A 前端自治）  
-> **下一协作**: Track A 已交付前端 P2（DRAWER+INSIGHT）+ REQ-001 全部切片 A/B/C/D/E（模式单一来源/今日下一步卡/批改节奏带/模式引导条/差异收尾）；后续可配合后端 B 的 P2-QUEUE
+> **最后更新**: 2026-09-03  
+> **更新者**: 协调者（整合 Track A + Track B 双会话成果）  
+> **下一协作**: 前端 P2（DRAWER+INSIGHT）+ REQ-001 全部切片 + 后端 P2（QUEUE+RESTART+MULTI）已全部合入 master；后续可从 BACKLOG P2 候选继续认领
 
 ---
 
@@ -10,9 +10,9 @@
 
 | 项目 | 状态 |
 |------|------|
-| **版本** | v25.2（Phase 25.2 — 自治并发：自推进 + 自服务 BACKLOG + 门禁自合并） |
-| **git main** | master（最近 `dac678b3`）|
-| **当前阶段** | A=前端 P1-SHIM；B=后端 P2-QUEUE ✅ + P2-RESTART ✅ + P2-MULTI ✅（后端 P2 系列收尾） |
+| **版本** | v25.3（Phase 25.3 — 自治双会话合流：Track A REQ-001 + P2-QUEUE 前端；Track B P2-QUEUE/RESTART/MULTI 后端） |
+| **git main** | master `3d009514`（已推送 origin） |
+| **当前阶段** | Track A 前端 REQ-001 A/B/C/D/E ✅ + P2-QUEUE/DRAWER/INSIGHT ✅；Track B 后端 P2-QUEUE/RESTART/MULTI ✅（P2 系列收尾） |
 | **并行开发** | [COORDINATION.md](https://github.com) §3 自治契约：两会话自认领→全量门绿→自 ff-merge 到 master（常驻 worktree `track-a`/`track-b`）|
 | **阻塞项** | 无 |
 
