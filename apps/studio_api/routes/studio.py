@@ -287,12 +287,16 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
         )
 
     @app.post("/api/studio/production/run", response_model=StudioBatchJobResponse)
-    def studio_production_run(req: StudioBatchRunRequest) -> StudioBatchJobResponse:
+    def studio_production_run(
+        req: StudioBatchRunRequest,
+        priority: int = Query(default=0, ge=0, le=100),
+    ) -> StudioBatchJobResponse:
+        """Start a batch run, or enqueue it (priority-ordered) if already busy."""
         from infra.studio_batch_runner import (
             BatchAlreadyRunningError,
             BatchNotAllowedError,
             BatchPreflightError,
-            start_batch_job,
+            submit_batch_job,
         )
 
         project = _require_project(ctx)
@@ -300,13 +304,15 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
             raise HTTPException(400, "end_chapter must be >= start_chapter")
 
         try:
-            job = start_batch_job(
+            job = submit_batch_job(
                 project,
                 start_chapter=req.start_chapter,
                 end_chapter=req.end_chapter,
                 budget_usd=req.budget_usd,
                 mode=req.mode,
                 skip_preflight=req.skip_preflight,
+                priority=priority,
+                max_attempts=req.max_attempts,
             )
         except BatchAlreadyRunningError as exc:
             raise HTTPException(409, str(exc)) from exc
@@ -318,6 +324,16 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
             raise HTTPException(400, str(exc)) from exc
 
         return StudioBatchJobResponse(**job.to_dict())
+
+    @app.get("/api/studio/batch/queue", response_model=StudioBatchJobListResponse)
+    def studio_batch_queue_endpoint(
+        slug: str,
+    ) -> StudioBatchJobListResponse:
+        """List queued (not yet started) batch jobs for a slug, ordered by priority."""
+        from infra.studio_batch_runner import list_batch_queue
+
+        rows = list_batch_queue(slug)
+        return StudioBatchJobListResponse(jobs=[StudioBatchJobSummary.model_validate(r) for r in rows])
 
     @app.get("/api/studio/production/jobs/active", response_model=Optional[StudioBatchJobResponse])
     def studio_production_active_job() -> Optional[StudioBatchJobResponse]:

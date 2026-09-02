@@ -53,13 +53,17 @@ class BatchJob:
     end_chapter: int
     budget_usd: float
     mode: str
-    status: str  # running | completed | failed
+    status: str  # queued | running | completed | failed | cancelled
     pid: int | None
     log_path: str
     started_at: str
     finished_at: str | None = None
     exit_code: int | None = None
     error: str | None = None
+    priority: int = 0
+    skip_preflight: bool = False
+    attempt: int = 1
+    max_attempts: int = 1
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -133,6 +137,40 @@ def _publish_chapter_completions(job: BatchJob) -> None:
     _published_chapters[job.job_id] = len(completed)
 
 
+def _restart_failed_job(job: BatchJob) -> BatchJob | None:
+    """Re-launch a failed running job under the same ``job_id``, if attempts remain.
+
+    Used by :func:`_poll_job` for auto-restart. When ``job.attempt`` is still
+    below ``job.max_attempts`` the batch is restarted with the same ``job_id``
+    (so SSE subscribers retain continuity) and returns the re-spawned job;
+    otherwise returns ``None`` to signal the job is terminal.
+    """
+    if job.attempt >= job.max_attempts:
+        return None
+    project = get_project_by_slug(job.slug)
+    if project is None:
+        return None
+    pid, log_path = _open_process(
+        project,
+        job_id=job.job_id,
+        start_chapter=job.start_chapter,
+        end_chapter=job.end_chapter,
+        budget_usd=job.budget_usd,
+        mode=job.mode,
+    )
+    job.attempt += 1
+    job.status = "running"
+    job.pid = pid
+    job.log_path = log_path
+    job.started_at = _now_iso()
+    job.finished_at = None
+    job.exit_code = None
+    job.error = None
+    _save_job(job)
+    publish(job.job_id, EVENT_JOB_STATE, job.to_dict())
+    return job
+
+
 def _poll_job(job: BatchJob) -> BatchJob:
     if job.status != "running" or job.pid is None:
         return job
@@ -140,20 +178,42 @@ def _poll_job(job: BatchJob) -> BatchJob:
         _publish_chapter_completions(job)
         return job
     exit_code = _read_exit_code(job)
-    job.status = "completed" if exit_code == 0 else "failed"
+    if exit_code == 0:
+        job.status = "completed"
+        job.exit_code = exit_code
+        job.finished_at = _now_iso()
+        _save_job(job)
+        publish(
+            job.job_id,
+            EVENT_JOB_COMPLETED,
+            {
+                "status": job.status,
+                "exit_code": job.exit_code,
+                "finished_at": job.finished_at,
+            },
+        )
+        advance_batch_queue(job.slug)
+        return job
+
+    restarted = _restart_failed_job(job)
+    if restarted is not None:
+        return restarted
+
+    job.status = "failed"
     job.exit_code = exit_code
     job.finished_at = _now_iso()
     _save_job(job)
-    event_type = EVENT_JOB_COMPLETED if job.status == "completed" else EVENT_JOB_FAILED
     publish(
         job.job_id,
-        event_type,
+        EVENT_JOB_FAILED,
         {
             "status": job.status,
             "exit_code": job.exit_code,
             "finished_at": job.finished_at,
+            "attempt": job.attempt,
         },
     )
+    advance_batch_queue(job.slug)
     return job
 
 
@@ -220,45 +280,16 @@ def find_running_job(slug: str) -> BatchJob | None:
     return None
 
 
-def start_batch_job(
+def _open_process(
     project: StudioProject,
     *,
+    job_id: str,
     start_chapter: int,
     end_chapter: int,
     budget_usd: float,
-    mode: str = "canon",
-    skip_preflight: bool = False,
-) -> BatchJob:
-    if end_chapter < start_chapter:
-        raise ValueError("end_chapter must be >= start_chapter")
-    if budget_usd < 0 or budget_usd > 100:
-        raise ValueError("budget_usd must be 0..100")
-    if not dashboard_batch_allowed():
-        raise BatchNotAllowedError(
-            "Dashboard batch is disabled; set LINGWEN_ALLOW_DASHBOARD_BATCH=1 on the server",
-        )
-
-    running = find_running_job(project.slug)
-    if running is not None:
-        raise BatchAlreadyRunningError(
-            f"batch already running for {project.slug!r}: {running.job_id}",
-        )
-
-    if not skip_preflight and mode == "canon":
-        preflight = production_preflight(
-            project,
-            start_chapter=start_chapter,
-            end_chapter=end_chapter,
-            mode=mode,
-        )
-        if not preflight["all_ok"]:
-            failed = [c for c in preflight["chapters"] if not c["ok"]]
-            raise BatchPreflightError(
-                f"preflight failed for {len(failed)} chapter(s)",
-                chapters=failed,
-            )
-
-    job_id = uuid.uuid4().hex[:12]
+    mode: str,
+) -> tuple[int, str]:
+    """Popen the run-project-batch script; returns ``(pid, log_path)``."""
     log_path = Path(f"/tmp/studio-batch-{job_id}.log")
     max_chapters = end_chapter - start_chapter + 1
     script = factory_root() / "scripts" / "run-project-batch.sh"
@@ -289,7 +320,36 @@ def start_batch_job(
         start_new_session=True,
     )
     log_file.close()
+    return proc.pid, str(log_path)
 
+
+def _spawn_job(
+    project: StudioProject,
+    *,
+    start_chapter: int,
+    end_chapter: int,
+    budget_usd: float,
+    mode: str,
+    priority: int,
+    skip_preflight: bool,
+    max_attempts: int = 1,
+    job_id: str | None = None,
+) -> BatchJob:
+    """Launch the batch script and persist a running BatchJob.
+
+    When ``job_id`` is supplied (promoting a queued job) the record keeps the
+    same id, so SSE clients that already hold it keep receiving events.
+    """
+    if job_id is None:
+        job_id = uuid.uuid4().hex[:12]
+    pid, log_path = _open_process(
+        project,
+        job_id=job_id,
+        start_chapter=start_chapter,
+        end_chapter=end_chapter,
+        budget_usd=budget_usd,
+        mode=mode,
+    )
     job = BatchJob(
         job_id=job_id,
         slug=project.slug,
@@ -298,13 +358,198 @@ def start_batch_job(
         budget_usd=budget_usd,
         mode=mode,
         status="running",
-        pid=proc.pid,
-        log_path=str(log_path),
+        pid=pid,
+        log_path=log_path,
         started_at=_now_iso(),
+        priority=priority,
+        skip_preflight=skip_preflight,
+        attempt=1,
+        max_attempts=max_attempts,
     )
     _save_job(job)
     publish(job.job_id, EVENT_JOB_STATE, job.to_dict())
     return job
+
+
+def _validate_run_args(*, start_chapter: int, end_chapter: int, budget_usd: float) -> None:
+    if end_chapter < start_chapter:
+        raise ValueError("end_chapter must be >= start_chapter")
+    if budget_usd < 0 or budget_usd > 100:
+        raise ValueError("budget_usd must be 0..100")
+
+
+def start_batch_job(
+    project: StudioProject,
+    *,
+    start_chapter: int,
+    end_chapter: int,
+    budget_usd: float,
+    mode: str = "canon",
+    skip_preflight: bool = False,
+) -> BatchJob:
+    _validate_run_args(start_chapter=start_chapter, end_chapter=end_chapter, budget_usd=budget_usd)
+    if not dashboard_batch_allowed():
+        raise BatchNotAllowedError(
+            "Dashboard batch is disabled; set LINGWEN_ALLOW_DASHBOARD_BATCH=1 on the server",
+        )
+
+    running = find_running_job(project.slug)
+    if running is not None:
+        raise BatchAlreadyRunningError(
+            f"batch already running for {project.slug!r}: {running.job_id}",
+        )
+
+    if not skip_preflight and mode == "canon":
+        preflight = production_preflight(
+            project,
+            start_chapter=start_chapter,
+            end_chapter=end_chapter,
+            mode=mode,
+        )
+        if not preflight["all_ok"]:
+            failed = [c for c in preflight["chapters"] if not c["ok"]]
+            raise BatchPreflightError(
+                f"preflight failed for {len(failed)} chapter(s)",
+                chapters=failed,
+            )
+
+    return _spawn_job(
+        project,
+        start_chapter=start_chapter,
+        end_chapter=end_chapter,
+        budget_usd=budget_usd,
+        mode=mode,
+        priority=0,
+        skip_preflight=skip_preflight,
+    )
+
+
+def submit_batch_job(
+    project: StudioProject,
+    *,
+    start_chapter: int,
+    end_chapter: int,
+    budget_usd: float,
+    mode: str = "canon",
+    skip_preflight: bool = False,
+    priority: int = 0,
+    max_attempts: int = 1,
+) -> BatchJob:
+    """Enqueue or start a batch run, ordered by priority.
+
+    If a batch is already running for the project the new run is persisted as a
+    ``queued`` job and auto-promoted by :func:`advance_batch_queue` once the
+    current run reaches a terminal state. Otherwise it starts immediately.
+    """
+    _validate_run_args(start_chapter=start_chapter, end_chapter=end_chapter, budget_usd=budget_usd)
+    if not dashboard_batch_allowed():
+        raise BatchNotAllowedError(
+            "Dashboard batch is disabled; set LINGWEN_ALLOW_DASHBOARD_BATCH=1 on the server",
+        )
+
+    if not skip_preflight and mode == "canon":
+        preflight = production_preflight(
+            project,
+            start_chapter=start_chapter,
+            end_chapter=end_chapter,
+            mode=mode,
+        )
+        if not preflight["all_ok"]:
+            failed = [c for c in preflight["chapters"] if not c["ok"]]
+            raise BatchPreflightError(
+                f"preflight failed for {len(failed)} chapter(s)",
+                chapters=failed,
+            )
+
+    running = find_running_job(project.slug)
+    if running is not None:
+        job = BatchJob(
+            job_id=uuid.uuid4().hex[:12],
+            slug=project.slug,
+            start_chapter=start_chapter,
+            end_chapter=end_chapter,
+            budget_usd=budget_usd,
+            mode=mode,
+            status="queued",
+            pid=None,
+            log_path="",
+            started_at=_now_iso(),
+            priority=priority,
+            skip_preflight=skip_preflight,
+            max_attempts=max_attempts,
+        )
+        _save_job(job)
+        publish(job.job_id, EVENT_JOB_STATE, job.to_dict())
+        return job
+
+    return _spawn_job(
+        project,
+        start_chapter=start_chapter,
+        end_chapter=end_chapter,
+        budget_usd=budget_usd,
+        mode=mode,
+        priority=priority,
+        skip_preflight=skip_preflight,
+        max_attempts=max_attempts,
+    )
+
+
+def _queued_jobs(slug: str) -> list[BatchJob]:
+    """Queued jobs for ``slug``, highest priority first (FIFO tie-break)."""
+    rows: list[BatchJob] = []
+    for path in sorted(_jobs_dir().glob("*.json"), reverse=True):
+        job = BatchJob(**json.loads(path.read_text(encoding="utf-8")))
+        if job.slug == slug and job.status == "queued":
+            rows.append(job)
+    rows.sort(key=lambda j: (-j.priority, j.started_at))
+    return rows
+
+
+def _running_jobs(slug: str) -> list[BatchJob]:
+    """On-disk jobs for ``slug`` currently flagged ``running`` (no process poll).
+
+    Kept free of side effects so :func:`advance_batch_queue` can inspect the
+    queue without recursing through :func:`_poll_job`.
+    """
+    rows: list[BatchJob] = []
+    for path in _jobs_dir().glob("*.json"):
+        job = BatchJob(**json.loads(path.read_text(encoding="utf-8")))
+        if job.slug == slug and job.status == "running":
+            rows.append(job)
+    return rows
+
+
+def advance_batch_queue(slug: str) -> BatchJob | None:
+    """Promote the head of ``slug``'s queue to running when idle.
+
+    No-op when a job is already running or the queue is empty. The promoted job
+    keeps its ``job_id`` so SSE subscribers retain continuity.
+    """
+    if _running_jobs(slug):
+        return None
+    queued = _queued_jobs(slug)
+    if not queued:
+        return None
+    job = queued[0]
+    project = get_project_by_slug(slug)
+    if project is None:
+        return None
+    return _spawn_job(
+        project,
+        start_chapter=job.start_chapter,
+        end_chapter=job.end_chapter,
+        budget_usd=job.budget_usd,
+        mode=job.mode,
+        priority=job.priority,
+        skip_preflight=job.skip_preflight,
+        max_attempts=job.max_attempts,
+        job_id=job.job_id,
+    )
+
+
+def list_batch_queue(slug: str) -> list[dict[str, Any]]:
+    """Return queued jobs for ``slug`` as dicts (high priority first)."""
+    return [job.to_dict() for job in _queued_jobs(slug)]
 
 
 def list_batch_jobs_for_slug(slug: str, *, limit: int = 5) -> list[dict[str, Any]]:
@@ -372,6 +617,7 @@ def cancel_batch_job(job_id: str) -> BatchJob:
         job.error = "process already exited before cancel"
         _save_job(job)
         publish(job.job_id, EVENT_JOB_CANCELLED, job.to_dict())
+        advance_batch_queue(job.slug)
         return job
 
     os.kill(job.pid, signal.SIGTERM)
@@ -392,6 +638,7 @@ def cancel_batch_job(job_id: str) -> BatchJob:
     job.finished_at = _now_iso()
     _save_job(job)
     publish(job.job_id, EVENT_JOB_CANCELLED, job.to_dict())
+    advance_batch_queue(job.slug)
     return job
 
 

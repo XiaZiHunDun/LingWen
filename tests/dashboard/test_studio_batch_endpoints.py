@@ -61,3 +61,44 @@ class TestStudioBatchEndpoints:
         records = client.get("/api/production-records/rollup?limit=5")
         assert records.status_code == 200
         assert summary["pilot_records_dir"] in records.json()["records_dir"]
+
+    @patch("infra.studio_batch_runner._process_running", return_value=True)
+    @patch("infra.studio_batch_runner.subprocess.Popen")
+    def test_second_run_queues_and_is_listed(self, mock_popen, _running, client: TestClient) -> None:
+        mock_popen.return_value = MagicMock(pid=7001)
+
+        first = client.post(
+            "/api/studio/production/run",
+            json={
+                "start_chapter": 1,
+                "end_chapter": 1,
+                "mode": "canon",
+                "budget_usd": 0.12,
+                "skip_preflight": True,
+            },
+        )
+        assert first.status_code == 200
+        assert first.json()["status"] == "running"
+
+        second = client.post(
+            "/api/studio/production/run",
+            json={
+                "start_chapter": 2,
+                "end_chapter": 2,
+                "mode": "canon",
+                "budget_usd": 0.12,
+                "skip_preflight": True,
+            },
+            params={"priority": 3},
+        )
+        assert second.status_code == 200
+        assert second.json()["status"] == "queued"
+
+        queue = client.get(
+            "/api/studio/batch/queue",
+            params={"slug": "anye-xinbiao"},
+        )
+        assert queue.status_code == 200
+        jobs = queue.json()["jobs"]
+        assert len(jobs) == 1
+        assert jobs[0]["status"] == "queued"
