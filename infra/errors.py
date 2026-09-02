@@ -12,7 +12,7 @@
 
 import json
 import traceback
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Type, TypeVar, Union
 
