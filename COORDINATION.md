@@ -83,6 +83,9 @@ git worktree add -b track-b-backend   .worktrees/track-b-backend   master
 1. **约定方向**：后端 `lingwen_shared` 改 DTO → 跑 codegen → 写 `dashboard-contracts`/`shared-types` → 前端编译跟随。
 2. **改 API 前对齐** `/api/studio/*` 形态（参考 `apps/dashboard/src/api/request()` 惯例）。
 3. **提交纪律**：提交前 前端=ESLint+vue-tsc+vitest / 后端=pytest+ruff(+mypy)；未验证标 `WIP`；禁 `git add -A`（见 [constraints.yml](.lingwen/constraints.yml)）。
+4. **合并门教训（2026-09-02 双会话合流）**：会话自报"ZERO new"必须复核——Track A 自报 vue-tsc ZERO new 实际新增了 9 个测试文件类型错误（`pilot-live-panel.spec.ts` fixture `status: string` 放宽 + `use-batch-event-stream.spec.ts` 2 处错误 cast），由协调者在合并态 catch 并修复（master `1c1d3a82`）。**前端会话 commit 前必须在仓库根 `apps/dashboard` 下跑全量 `vue-tsc --noEmit`**——只跑受影响文件会漏报其余测试文件的类型错误。
+5. **editable-install 环境陷阱（后端 worktree）**：`lingwen_shared` 经 `.pth` 指向**主仓** `packages/lingwen-shared/src`（worktree 里 `_editable_impl_lingwen_shared.pth` 未指向当前 worktree）。在**后端 worktree** 里跑测试/codegen 必须前置 `export PYTHONPATH=$PWD/packages/lingwen-shared/src:$PYTHONPATH`，否则导入主仓旧实现——Track B 曾因未加前导而误报 `test_update_preserves_unspecified_fields` 失败（真实失败是环境的，合并到主仓后 32 passed）。
+6. **batch-templates 契约 shim 待办（Phase 26+，Track A 前端）**：后端已 codegen `packages/lingwen-shared/.../contracts/ts/studio.ts` 并新增 batch-templates DTO（`StudioBatchTemplate`/`Create|Update`/`ListResponse`），但**未 touch `apps/dashboard-contracts` 的 shim**。新 DTO 为加法、不破坏编译，但**前端暂消费不到 batch-templates 新类型**——下轮前端会话需补 `dashboard-contracts` 的 *DTO shim（属前端/协作者职责）。
 
 ---
 
