@@ -1,8 +1,8 @@
 # 灵文项目状态看板
 
 > **最后更新**: 2026-09-03
-> **更新者**: 协调者（整合 Track A + Track B 双会话成果 + v25.4 收尾完善）
-> **下一协作**: 前端 P2（DRAWER+INSIGHT）+ REQ-001 全部切片 + 后端 P2（QUEUE+RESTART+MULTI）已全部合入 master；v25.4 完成类型债清零 + batch templates 前端闭环 + 依赖修复 + 仓库清理
+> **更新者**: 协调者（整合 Track A + Track B 双会话成果 + v25.4 收尾 + v25.5 打磨完善）
+> **下一协作**: 前端 P2（DRAWER+INSIGHT）+ REQ-001 全部切片 + 后端 P2（QUEUE+RESTART+MULTI）已全部合入 master；v25.4 完成类型债清零 + batch templates 前端闭环 + 依赖修复；v25.5 完成首次启动引导 + 质量检查诚实标注 + 细节润色
 
 ---
 
@@ -10,9 +10,9 @@
 
 | 项目 | 状态 |
 |------|------|
-| **版本** | v25.4（Phase 25.4 — 收尾完善：前端类型债清零 + batch templates 前端闭环 + socksio 依赖修复 + stash 清理） |
-| **git main** | master `5bd0c2fc`（已推送 origin） |
-| **当前阶段** | 前端 vue-tsc 类型债 8→0 清零 + Pilot 批量模板保存/应用/删除 UI 闭环；Track A REQ-001 ✅ + P2 系列 ✅；Track B P2 系列 ✅ |
+| **版本** | v25.5（Phase 25.5 — 打磨完善：首次启动引导 + 质量检查诚实标注 + 细节润色） |
+| **git main** | master `18772e95`（已推送 origin） |
+| **当前阶段** | "可用/体验良好" 打磨完成：无项目首次引导 + 质量检查不可用诚实标注 + L1 标题省略号防护；此前 vue-tsc 类型债清零 + Pilot 批量模板闭环；Track A/B P2 系列 ✅ |
 | **并行开发** | [COORDINATION.md](https://github.com) §3 自治契约：两会话自认领→全量门绿→自 ff-merge 到 master（常驻 worktree `track-a`/`track-b`）|
 | **阻塞项** | 无 |
 
@@ -39,6 +39,9 @@
 
 | 项 | 内容 | 验证 |
 |----|------|------|
+| **v25.5 首次启动引导** | 新增 `NoProjectOnboarding.vue` + `useBootState.js`：无项目/404 → 全屏引导（本地 `init-project` 命令 + 刷新重试），后端离线走错误态不误判；`App.vue` 挂载期 boot 门控；`composables` 桶补导出通过架构守卫 | ✅ 前端 vitest 1861 passed + 1 skipped / ESLint 0 / knip 0 / vue-tsc 改动文件 0 error |
+| **v25.5 质量检查诚实标注** | `WriteWorkspacePage` 中 `/quality/run`（未接入端点）失败不静默：`WriteInlineAnnotationLayer` 显示「质量检查暂不可用」轻提示；附 2 条测试；并修复 `use-quality-typed-wrapper.spec.ts` 过时守卫(3→4) + 移除 `useWriteQualityCheck` 死 re-export(knip) | ✅ 全绿 |
+| **v25.5 细节润色** | 紧凑 human-first L1 头部页面标题补省略号防护（`nowrap+ellipsis+min-width:0`）；「>15 控件」全量核查无页面超限，最密的「进阶」模板库默认折叠不改 | ✅ 前端 vitest 全量绿 / ESLint 0 |
 | **v25.4 类型债清零** | vue-tsc typecheck:app 5 pre-existing + tests-relaxed 3 pre-existing 全部清零：`useStudioProject` JSDoc 返回类型 + `runPreflight` 参数类型 + 3 处 creator DTO cast 改具体契约类型（`CreatorMemoryQueryResult`/`CreatorPublishEntry`/`CreatorVolumeTemplateApproval`）+ pilot-history-list spec 补 `slug` | ✅ 前端 vitest 1850 passed + 1 skipped / ESLint 0 / knip 0 / vue-tsc **0 error** |
 | **v25.4 依赖修复** | pyproject.toml 增 `socksio>=1.0` + uv.lock（httpx SOCKS 代理访问 LLM provider 缺失，此前 4+ provider 测试失败） | ✅ lingwen-llm 11 passed |
 | **v25.4 仓库清理** | 清理 stash@{0} `trackb-baseline-check-residual`（确认无价值的基线对比残留） | ✅ |
@@ -65,7 +68,7 @@
 | 后端 pytest（studio_api + lingwen-shared） | ✅ 222 passed |
 | 后端 pytest（tests/ci/ + tests/dashboard） | ✅ 224 passed + 1 skipped |
 | 后端 ruff check / ruff format --check | ✅ 0 问题 |
-| 前端 vitest（全量） | ✅ 1850 passed + 1 skipped（含 batch templates 新 6 测试） |
+| 前端 vitest（全量） | ✅ 1861 passed + 1 skipped（含首启引导/标注 8+ 新测试） |
 | 前端 ESLint | ✅ 0 |
 | 前端 knip | ✅ 0 issues |
 | 前端 vue-tsc --noEmit | ✅ **0 error**（typecheck:app + tests-relaxed 均清零） |
@@ -112,5 +115,6 @@
 ### 最近变更记录
 | 时间 | 变更 |
 |------|------|
+| 2026-09-03 | v25.5 打磨完善：首次启动引导（NoProjectOnboarding + useBootState + App 门控）+ 质量检查不可用诚实标注（WriteInlineAnnotationLayer 提示 + 2 测试）+ L1 标题省略号防护；清 2 项存量门（quality wrapper 守卫 3→4、useWriteQualityCheck 死 re-export/knip）；前端 1861 全绿 + ESLint/knip/vue-tsc(改动文件) 0 |
 | 2026-09-03 | v25.4 收尾：前端类型债清零（vue-tsc 0 error）+ batch templates 前端闭环（PilotTemplatePanel）+ socksio 依赖修复 + stash@{0} 清理 |
 | 2026-09-02 | 黑板从 v12/Phase15 刷新至 v25.1 真实状态；废弃过期 P1/P2/P15 记录，接入 CLAUDE.md v25.1 + COORDINATION.md 事实来源 |
