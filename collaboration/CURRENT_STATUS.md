@@ -57,19 +57,20 @@
 
 ---
 
-## 🧪 测试状态（v25.4 收尾态，2026-09-03）
+## 🧪 测试状态（v25.4 收尾态 + 环境基线清零，2026-09-03）
 
 | 测试类型 | 结果 |
 |----------|------|
 | 后端 pytest（lingwen-llm 受影响） | ✅ 11 passed（socksio 依赖已修复） |
 | 后端 pytest（studio_api + lingwen-shared） | ✅ 222 passed |
+| 后端 pytest（tests/ci/ + tests/dashboard） | ✅ 224 passed + 1 skipped |
 | 后端 ruff check / ruff format --check | ✅ 0 问题 |
 | 前端 vitest（全量） | ✅ 1850 passed + 1 skipped（含 batch templates 新 6 测试） |
 | 前端 ESLint | ✅ 0 |
 | 前端 knip | ✅ 0 issues |
 | 前端 vue-tsc --noEmit | ✅ **0 error**（typecheck:app + tests-relaxed 均清零） |
 
-> ⚠️ 环境基线：`tests/ci/` 94 个失败为迁移路径陈旧（`dashboard/frontend/` 旧路径 + `lingwen_creator` 未装包）；`test_write_workspace_route::test_get_endpoint_registered` 因 starlette 1.6 `_IncludedRouter` 无 `path` 属性失败（master 基线一致）。均与本次改动无关。
+> ✅ **环境基线已清零（v25.4 修复）**：`tests/ci/` 迁移路径陈旧（旧 `dashboard/frontend/` / `infra/agent_system|memory_system|state/` → monorepo `apps/dashboard`、`packages/lingwen-core|lingwen-memory`）39 个契约测试已重新定位+校正断言；`test_get_endpoint_registered` 因 starlette 1.6 `_IncludedRouter` 回归改递归收集 `original_router.routes`；health 单测对齐现实（真实 DB + `status∈{healthy,degraded}`）。详见 `b7e2b6c9`。
 
 ---
 
