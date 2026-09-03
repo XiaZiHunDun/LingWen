@@ -16,7 +16,8 @@ class TestHumanReviewSmokeMc:
     """MC-level golden path (F59) still covers run → resume in-process."""
 
     @pytest.mark.skip(
-        reason="环境基线：lingwen_core agent 迁移后 infra.got.scheduler 已无 GotScheduler 符号，run_golden_path 导入即失败，需 agent 侧修复"
+        reason="预存在缺陷：MasterController 人审流水线整体陈旧（WorkflowMixin.run_workflow 仍按旧 GoTScheduler 签名调用、"
+        "build_router 缺失），run_workflow 实际以 500 失败；同因也致 tests/got、tests/agent_system 未通过，需整体重构该流水线"
     )
     def test_golden_path_covers_mc_resume(self, tmp_path: Path) -> None:
         result = run_golden_path(tmp_path, chapter_num=9, resolve_option="approve")
@@ -27,9 +28,7 @@ class TestHumanReviewSmokeMc:
 class TestHumanReviewSmokeDashboard:
     """Dashboard API smoke: POST run → GET pending → POST resume."""
 
-    @pytest.mark.skip(
-        reason="环境基线：Dashboard 后端迁移后无 dashboard 模块可导入，run_human_review_smoke 依赖的 agent 链异常，需 agent 侧修复"
-    )
+    @pytest.mark.skip(reason="预存在缺陷：同上，MasterController 人审流水线需整体重构")
     def test_full_resolve_resume_smoke(self, tmp_path: Path) -> None:
         state_dir = tmp_path / "state"
         db_path = tmp_path / "rp.db"
@@ -41,7 +40,7 @@ class TestHumanReviewSmokeDashboard:
         assert result.resume_paused is False
         assert result.decision_resolved is True
 
-    @pytest.mark.skip(reason="环境基线：同上，dashboard 模块迁移后不可导入")
+    @pytest.mark.skip(reason="预存在缺陷：同上，MasterController 人审流水线需整体重构")
     def test_smoke_repeatable_on_fresh_state(self, tmp_path: Path) -> None:
         for i in range(2):
             sub = tmp_path / f"run{i}"
@@ -49,7 +48,7 @@ class TestHumanReviewSmokeDashboard:
             assert result.decision_resolved is True
             assert result.pending_after_resume == 0
 
-    @pytest.mark.skip(reason="环境基线：同上，agent/Dashboard 迁移后依赖不可导入")
+    @pytest.mark.skip(reason="预存在缺陷：同上，MasterController 人审流水线需整体重构")
     def test_active_workflow_not_paused_after_resume(self, tmp_path: Path) -> None:
         from lingwen_core.agents.chapter_golden_path import create_golden_dashboard_client
 

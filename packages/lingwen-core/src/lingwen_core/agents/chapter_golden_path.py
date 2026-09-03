@@ -155,9 +155,10 @@ def run_golden_path(
 
 def create_golden_dashboard_client(state_dir: Path, db_path: Path) -> Any:
     """FastAPI TestClient wired to real MC + chapter_golden workflow (0 LLM)."""
-    from dashboard.app import create_app
-    from dashboard.protocols import MasterControllerAdapter
     from fastapi.testclient import TestClient
+
+    from apps.studio_api.app import create_app
+    from apps.studio_api.protocols import MasterControllerAdapter
 
     setup_golden_workflow_dir(state_dir)
     controller = build_stub_master_controller(state_dir)

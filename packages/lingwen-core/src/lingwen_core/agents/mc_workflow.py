@@ -45,13 +45,13 @@ class WorkflowMixin:
         base_dir: Optional[str] = None,
     ) -> Dict[str, Any]:
         """用 GoT 调度器运行工作流"""
-        from infra.got.scheduler import GotScheduler
+        from infra.got.scheduler import GoTScheduler
 
         try:
             self._current_budget_usd = cost_budget_usd
             self._current_run_id = uuid.uuid4().hex
 
-            scheduler = GotScheduler(
+            scheduler = GoTScheduler(
                 workflow_name=workflow_name,
                 start_nodes=start_nodes,
                 initial_inputs=initial_inputs,

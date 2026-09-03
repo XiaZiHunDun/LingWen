@@ -13,6 +13,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+import yaml
+from lingwen_shared.mode import normalize_creation_mode, normalize_quality_profile
+
 _STATE_VERSION = "1"
 _DEFAULT: dict[str, Any] = {
     "default_model": "minimax-abab6.5",
@@ -120,4 +123,24 @@ def creator_preferences_payload(project) -> dict[str, Any]:
     return {
         "slug": project.slug,
         **prefs,
+        **creation_settings_from_project(project.root),
     }
+
+
+def creation_settings_from_project(project_root: Path | str) -> dict[str, Any]:
+    """Resolve creation_mode / quality_profile from config/project.yaml.
+
+    CreatorPreferencesResponse（lingwen-shared 契约）强制要求这两个字段，
+    数据源为项目配置（/studio/active 切换的创作模式即写入此处），默认 studio / studio_full。
+    """
+    root = project_root if isinstance(project_root, Path) else Path(project_root)
+    creation_mode = normalize_creation_mode(None)
+    quality_profile = None
+    config_path = root / "config" / "project.yaml"
+    if config_path.is_file():
+        raw = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+        project_raw = raw.get("project") or {}
+        creation_mode = normalize_creation_mode(project_raw.get("creation_mode"))
+        quality_profile = project_raw.get("quality_profile")
+    quality_profile = normalize_quality_profile(quality_profile, creation_mode=creation_mode)
+    return {"creation_mode": creation_mode, "quality_profile": quality_profile}

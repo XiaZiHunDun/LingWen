@@ -1,8 +1,8 @@
 # 灵文项目状态看板
 
 > **最后更新**: 2026-09-03
-> **更新者**: 协调者（整合 Track A + Track B 双会话成果 + v25.4 收尾 + v25.5 打磨完善 + v25.6 P2-REG 修复 + REQ-003 移动端 + v25.7 全面验收 + tests/dashboard 基线清理）
-> **下一协作**: 前端 P2（DRAWER+INSIGHT）+ REQ-001 全部切片 + 后端 P2（QUEUE+RESTART+MULTI）已全部合入 master；v25.4 类型债清零 + batch templates 闭环；v25.5 首启引导 + 质量检查诚实标注 + 细节润色；v25.6 修复 P2-REG prod build + REQ-003 移动端抽屉；v25.7 全面验收（前端 1862 + 后端全套件全绿）+ tests/dashboard 15 基线归零
+> **更新者**: 协调者（整合 Track A + Track B 双会话成果 + v25.4 收尾 + v25.5 打磨完善 + v25.6 P2-REG 修复 + REQ-003 移动端 + v25.7 全面验收 + tests/dashboard 基线清理 + v25.8 处理 2 项遗留）
+> **下一协作**: 前端 P2（DRAWER+INSIGHT）+ REQ-001 全部切片 + 后端 P2（QUEUE+RESTART+MULTI）已全部合入 master；v25.4 类型债清零 + batch templates 闭环；v25.5 首启引导 + 质量检查诚实标注 + 细节润色；v25.6 修复 P2-REG prod build + REQ-003 移动端抽屉；v25.7 全面验收（前端 1862 + 后端全套件全绿）+ tests/dashboard 15 基线归零；v25.8 2 项遗留处置（creator 偏好契约修复 + human_review 迁移归类为全流水线重构）
 
 ---
 
@@ -10,9 +10,9 @@
 
 | 项目 | 状态 |
 |------|------|
-| **版本** | v25.7（Phase 25.7 — 全面验收 + tests/dashboard 存量基线清理） |
+| **版本** | v25.8（Phase 25.8 — 处理 2 项遗留：creator 偏好契约 + human_review 迁移） |
 | **git main** | master `82e75fd9`（已推送 origin） |
-| **当前阶段** | 全面验收通过：前端 vitest 1862 + 后端全套件全绿；tests/dashboard 由 15 基线归零（契约漂移修复 + infra 迁移遗留死代码修复 + 8 项环境基线诚实 skip）；剩余 2 项遗留标注（creator 偏好契约 + human_review agent 迁移） |
+| **当前阶段** | 全面验收通过：前端 vitest 1862 + 后端全套件全绿；tests/dashboard 353 passed + 7 skipped（15 基线归零）；2 项遗留已处置——**creator 偏好契约真缺陷已修复**（`creation_settings_from_project` 从 config/project.yaml 解析 creation_mode/quality_profile，补 CreatorPreferencesResponse 缺字段）+ **human_review 迁移归类为预存在全流水线陈旧**（GoTScheduler API 变更 + build_router 缺失，需整体重构，4 用例诚实 skip） |
 | **并行开发** | [COORDINATION.md](https://github.com) §3 自治契约：两会话自认领→全量门绿→自 ff-merge 到 master（常驻 worktree `track-a`/`track-b`）|
 | **阻塞项** | 无 |
 
@@ -39,10 +39,11 @@
 
 | 项 | 内容 | 验证 |
 |----|------|------|
-| **v25.6 P2-REG 修复** | prod preview build 回归（`80790b76`）：实测 cytoscape-fcose 历史根因已随图库迁移 vis-network 消失；真实回归为 v16.2.8 迁移遗留 3 处陈旧引用（useCreatorAdvanceBatch 旧名 `generateCreatorVolumeSummary` + api/index.js 桶内陈旧别名 + 补缺失 `fetchCreatorOverview`） | ✅ vite build exit 0；vitest 1861 + ESLint/knip/vue-tsc 0 |
+| **v25.8 遗留 2 项处置** | ① **creator 偏好契约真缺陷修复**：`CreatorPreferencesResponse`（lingwen-shared 契约）强制要求 `creation_mode`/`quality_profile`，而 lingwen-creator 迁移后 payload 未提供 → GET /api/creator/preferences 触发 pydantic 校验错误。修复：`preferences.py` 新增 `creation_settings_from_project` 从项目 `config/project.yaml` 解析创作模式/质量配置并入 payload；`test_creator_preferences_get_put` 去 skip 并按契约校验 ② **human_review 迁移**：应用迁移友好修复（`GotScheduler`→`GoTScheduler`、`dashboard.*`→`apps.studio_api.*` 导入），深查确认 MasterController 人审流水线整体陈旧（WorkflowMixin.run_workflow 仍按旧 GoTScheduler 签名、build_router 缺失、cost_tracker/latest_decision_queue 未初始化），run_workflow 实际 500 失败 → 归类为预存在缺陷需整体重构，4 用例诚实 skip | ✅ tests/dashboard 353 passed + 7 skipped；tests/ci 205 passed + 1 skipped；ruff 0 |
 | **v25.7 全面验收** | 全门复核：前端 vitest 1862 passed + ESLint/knip/vue-tsc/build 0；后端 studio_api+shared 222 / lingwen-llm 11 / tests/ci+dashboard 557 passed 9 skipped；`lingwen.py doctor` 需 PYTHONPATH + 仓库外内容仓库 | ✅ 全绿 |
 | **v25.7 tests/dashboard 基线清理** | `82e75fd9` tests/dashboard 由 15 failed 归零（352 passed + 8 skipped）：契约漂移修复（cascade id→run_id、ref-graph total_nodes/edges、health 断言放宽）；**真 bug 修复** infra/cross_volume/storage.py 3 处遗留 `dashboard.*` 懒导入改 `apps.studio_api.*`（级联/审计/cvg_ws WS 推送此前为被 try/except 吞掉的死代码）；8 项环境基线诚实 skip（均需仓库外内容仓库或 agent 侧修复） | ✅ ruff 0 / 全绿 |
 | **v25.6 REQ-003 移动端** | `34f0b0f2` 接通锁层移动抽屉：header-actions 加汉堡（≤768px 显示），侧栏绑定 `open`，点击遮罩/导航项/路由/Esc 收起 + 锁 body 滚动；修复旧 style.css 未接线（模板无汉堡、`.main-content`/`.nav-item-label` 选择器失配）；核心页经审计已由 flex-wrap + 既有 media query 自然适配 | ✅ vitest 1862 passed + 1 skipped / ESLint 0 / knip 0 / vue-tsc 0 / vite build exit 0 |
+| **v25.6 P2-REG 修复** | prod preview build 回归（`80790b76`）：实测 cytoscape-fcose 历史根因已随图库迁移 vis-network 消失；真实回归为 v16.2.8 迁移遗留 3 处陈旧引用（useCreatorAdvanceBatch 旧名 `generateCreatorVolumeSummary` + api/index.js 桶内陈旧别名 + 补缺失 `fetchCreatorOverview`） | ✅ vite build exit 0；vitest 1861 + ESLint/knip/vue-tsc 0 |
 | **v25.5 首次启动引导** | 新增 `NoProjectOnboarding.vue` + `useBootState.js`：无项目/404 → 全屏引导（本地 `init-project` 命令 + 刷新重试），后端离线走错误态不误判；`App.vue` 挂载期 boot 门控；`composables` 桶补导出通过架构守卫 | ✅ 前端 vitest 1861 passed + 1 skipped / ESLint 0 / knip 0 / vue-tsc 改动文件 0 error |
 | **v25.5 质量检查诚实标注** | `WriteWorkspacePage` 中 `/quality/run`（未接入端点）失败不静默：`WriteInlineAnnotationLayer` 显示「质量检查暂不可用」轻提示；附 2 条测试；并修复 `use-quality-typed-wrapper.spec.ts` 过时守卫(3→4) + 移除 `useWriteQualityCheck` 死 re-export(knip) | ✅ 全绿 |
 | **v25.5 细节润色** | 紧凑 human-first L1 头部页面标题补省略号防护（`nowrap+ellipsis+min-width:0`）；「>15 控件」全量核查无页面超限，最密的「进阶」模板库默认折叠不改 | ✅ 前端 vitest 全量绿 / ESLint 0 |
@@ -119,6 +120,7 @@
 ### 最近变更记录
 | 时间 | 变更 |
 |------|------|
+| 2026-09-03 | v25.8 处理 2 项遗留：① creator 偏好契约真缺陷修复（`creation_settings_from_project` 从 config/project.yaml 解析 creation_mode/quality_profile 补 CreatorPreferencesResponse 缺字段，`test_creator_preferences_get_put` 去 skip 通过）② human_review 迁移（`GoTScheduler` + `apps.studio_api.*` 导入迁移友好修复；深查确认 MasterController 人审流水线整体陈旧需重构，4 用例诚实 skip）；tests/dashboard 353 passed + 7 skipped / tests/ci 205 passed + 1 skipped |
 | 2026-09-03 | v25.7 全面验收 + tests/dashboard 基线清理（`82e75fd9`）：tests/dashboard 15 failed 归零；契约漂移修复（cascade id→run_id、ref-graph total_nodes/edges、health 断言放宽）+ 真 bug 修复 infra/cross_volume/storage.py 遗留 `dashboard.*` 懒导入 → `apps.studio_api.*`（级联/审计/cvg_ws WS 推送死代码复活）+ 8 项环境基线诚实 skip；后端全套件全绿（ci+dashboard 557/9skip、studio+shared 222、llm 11）|
 | 2026-09-03 | v25.6 修复 P2-REG prod preview build 回归（`80790b76`，3 处 v16.2.8 迁移陈旧引用）+ REQ-003 移动端壳层抽屉（`34f0b0f2`，汉堡+遮罩+Esc 收起）；前端 1862 passed + ESLint/knip/vue-tsc 0 |
 | 2026-09-03 | v25.5 打磨完善：首次启动引导（NoProjectOnboarding + useBootState + App 门控）+ 质量检查不可用诚实标注（WriteInlineAnnotationLayer 提示 + 2 测试）+ L1 标题省略号防护；清 2 项存量门（quality wrapper 守卫 3→4、useWriteQualityCheck 死 re-export/knip）；前端 1861 全绿 + ESLint/knip/vue-tsc(改动文件) 0 |

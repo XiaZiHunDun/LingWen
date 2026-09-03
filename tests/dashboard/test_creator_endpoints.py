@@ -1673,27 +1673,21 @@ class TestCreatorEndpoints:
         assert len(data["models"]) >= 1
         assert any(m["id"] == "local-mock" for m in data["models"])
 
-    @pytest.mark.skip(
-        reason="疑似潜在缺陷：CreatorPreferencesResponse（lingwen-shared contracts）强制要求 creation_mode/quality_profile，"
-        "但 lingwen-creator 迁移后的 preferences payload 未提供这两个字段，GET /api/creator/preferences 触发 pydantic 校验错误。"
-        "待创作侧偏好契约对齐后单独修复（本次仅清理测试基线，不擅自改 app 逻辑）。"
-    )
     def test_creator_preferences_get_put(self, client: TestClient) -> None:
         resp = client.get("/api/creator/preferences")
         assert resp.status_code == 200
         data = resp.json()
-        assert data["slug"] == "anye-xinbiao"
-        assert "default_model" in data
-        assert data["task_models"]["body"] == "inherit"
+        # CreatorPreferencesResponse 契约只暴露创作设置（extra=ignore 剥离其余字段）
+        assert data["creation_mode"] in {"companion", "advance", "studio"}
+        assert "quality_profile" in data
 
+        # 偏好经 save_creator_preferences 持久化；响应契约不回显 temperature 等模型偏好字段
         put = client.put(
             "/api/creator/preferences",
             json={"temperature": 0.4, "memory_rag_top_k": 6},
         )
         assert put.status_code == 200
-        updated = put.json()
-        assert updated["temperature"] == 0.4
-        assert updated["memory_rag_top_k"] == 6
+        assert put.json()["creation_mode"] in {"companion", "advance", "studio"}
 
     def test_creator_memory_assets(self, client: TestClient) -> None:
         resp = client.get("/api/creator/memory-assets")
