@@ -3,7 +3,7 @@
  */
 import { computed, onUnmounted, ref } from 'vue';
 // Phase 126 v16.2.8 T3.B: migrate to typed wrappers.
-import { generateCreatorVolumeSummary } from '@/api/volume';
+import { generateVolumeSummary } from '@/api/volume';
 import {
   studioProductionPreflight,
   studioProductionRun,
@@ -111,7 +111,7 @@ export function useCreatorAdvanceBatch(deps) {
       if (prev === 'running' && status === 'completed') {
         if (showAdvanceBatch.value && overview.value?.advance_volume_summary) {
           try {
-            await generateCreatorVolumeSummary({
+            await generateVolumeSummary({
               startChapter: batchStart.value,
               endChapter: batchEnd.value,
             });

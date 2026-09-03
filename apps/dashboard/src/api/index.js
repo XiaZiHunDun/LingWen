@@ -87,8 +87,9 @@ export {
   fetchCreatorChapterPreview,
   saveCreatorChapterBody,
   saveCreatorChapterOutline,
+  fetchCreatorOverview,
 } from './content.js';
-export { generateCreatorVolumeSummary } from './volume.js';
+export { generateVolumeSummary } from './volume.js';
 export {
   exportCreatorEpub,
   exportCreatorDocx,

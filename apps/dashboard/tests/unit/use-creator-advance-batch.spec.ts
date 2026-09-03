@@ -8,14 +8,14 @@ const batchMocks = vi.hoisted(() => ({
   studioProductionPreflight: vi.fn(),
   studioProductionRun: vi.fn(),
   fetchStudioActiveBatchJob: vi.fn(),
-  generateCreatorVolumeSummary: vi.fn(),
+  generateVolumeSummary: vi.fn(),
 }));
 
 vi.mock('../../src/api/index.js', () => ({
   studioProductionPreflight: (...args: unknown[]) => batchMocks.studioProductionPreflight(...args),
   studioProductionRun: (...args: unknown[]) => batchMocks.studioProductionRun(...args),
   fetchStudioActiveBatchJob: (...args: unknown[]) => batchMocks.fetchStudioActiveBatchJob(...args),
-  generateCreatorVolumeSummary: (...args: unknown[]) => batchMocks.generateCreatorVolumeSummary(...args),
+  generateVolumeSummary: (...args: unknown[]) => batchMocks.generateVolumeSummary(...args),
 }));
 
 // v16.2.8 T3.B: parallel typed wrapper mocks (per v16.2.7 §3 lesson 1)
@@ -25,7 +25,7 @@ vi.mock('../../src/api/studio.js', () => ({
   fetchStudioActiveBatchJob: (...args: unknown[]) => batchMocks.fetchStudioActiveBatchJob(...args),
 }));
 vi.mock('../../src/api/volume.js', () => ({
-  generateCreatorVolumeSummary: (...args: unknown[]) => batchMocks.generateCreatorVolumeSummary(...args),
+  generateVolumeSummary: (...args: unknown[]) => batchMocks.generateVolumeSummary(...args),
 }));
 
 import { useCreatorAdvanceBatch } from '../../src/composables/useCreatorAdvanceBatch.js';
@@ -96,7 +96,7 @@ describe('useCreatorAdvanceBatch', () => {
     });
     batchMocks.studioProductionRun.mockResolvedValue({ status: 'running', id: 'job-1' });
     batchMocks.fetchStudioActiveBatchJob.mockResolvedValue({ status: 'running', id: 'job-1' });
-    batchMocks.generateCreatorVolumeSummary.mockResolvedValue({});
+    batchMocks.generateVolumeSummary.mockResolvedValue({});
   });
 
   afterEach(() => {
