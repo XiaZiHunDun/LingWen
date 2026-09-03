@@ -355,8 +355,8 @@ class RippleStorage:
                 except Exception as e:
                     logger.warning("append_ripple: cascade broadcast log failed: %s", e)
             try:
-                from dashboard.cascade_notifier import notify_cascade_update
-                from dashboard.protocols import CascadeUpdatePayload
+                from apps.studio_api.cascade_notifier import notify_cascade_update
+                from apps.studio_api.protocols import CascadeUpdatePayload
 
                 notify_cascade_update(
                     CascadeUpdatePayload(
@@ -718,8 +718,8 @@ class RippleStorage:
             conn.commit()
             entry_id = int(cur.lastrowid)
         try:
-            from dashboard.cascade_notifier import notify_audit_created
-            from dashboard.protocols import AuditCreatedPayload
+            from apps.studio_api.cascade_notifier import notify_audit_created
+            from apps.studio_api.protocols import AuditCreatedPayload
 
             notify_audit_created(
                 AuditCreatedPayload(
@@ -1341,12 +1341,12 @@ _VALID_TRANSITION_STATUSES = ("applied", "rejected")
 def _broadcast_ripple_event(event_type: str, data: dict) -> None:
     """Phase 9.13: defensive 1-line broadcast hook.
 
-    Lazy import dashboard.cvg_ws to avoid hard dashboard dependency in CLI
+    Lazy import apps.studio_api.cvg_ws to avoid hard dashboard dependency in CLI
     environment. Wrapped in try/except — broadcast failure never affects
     main write path (跟 Phase 8.5 cost_tracker.record() 1:1 pattern).
     """
     try:
-        from dashboard.cvg_ws import broadcast as _cvg_broadcast
+        from apps.studio_api.cvg_ws import broadcast as _cvg_broadcast
 
         _cvg_broadcast({"type": event_type, "data": data})
     except Exception:  # noqa: BLE001

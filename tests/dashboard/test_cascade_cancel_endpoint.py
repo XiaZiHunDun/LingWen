@@ -52,7 +52,7 @@ class TestCascadeCancelEndpoint:
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "cancelled"
-        assert data["id"] == run_id
+        assert data["run_id"] == str(run_id)
 
     def test_post_cancel_endpoint_returns_404_for_missing_run(self, client_with_runs):
         """POST /cancel on unknown run_id → 404."""

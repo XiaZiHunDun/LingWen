@@ -79,7 +79,7 @@ class TestCascadeUpdatePayloadLatency:
 
     def test_notifier_logs_latency_ms(self, caplog):
         cascade_notifier.set_ws_manager(MagicMock())
-        with caplog.at_level(logging.INFO, logger="dashboard.cascade_notifier"):
+        with caplog.at_level(logging.INFO, logger="apps.studio_api.cascade_notifier"):
             cascade_notifier.notify_cascade_update(
                 CascadeUpdatePayload(
                     ripple_id="r-log",
@@ -94,7 +94,7 @@ class TestCascadeUpdatePayloadLatency:
 
     def test_notifier_skips_latency_log_when_none(self, caplog):
         cascade_notifier.set_ws_manager(MagicMock())
-        with caplog.at_level(logging.INFO, logger="dashboard.cascade_notifier"):
+        with caplog.at_level(logging.INFO, logger="apps.studio_api.cascade_notifier"):
             cascade_notifier.notify_cascade_update(
                 CascadeUpdatePayload(
                     ripple_id="r-none",
@@ -115,7 +115,7 @@ class TestAppendRippleLatency:
             captured.append(payload)
 
         monkeypatch.setattr(
-            "dashboard.cascade_notifier.notify_cascade_update",
+            "apps.studio_api.cascade_notifier.notify_cascade_update",
             _capture,
         )
         ripple = CrossVolumeRipple(

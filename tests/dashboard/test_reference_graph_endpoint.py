@@ -60,8 +60,8 @@ class TestReferenceGraphEndpoint:
         data = resp.json()
         assert len(data["nodes"]) == 2
         assert len(data["edges"]) == 1
-        assert data["total_node_count"] == 2
-        assert data["total_edge_count"] == 1
+        assert data["total_nodes"] == 2
+        assert data["total_edges"] == 1
         assert data["truncated"] is False
         assert data["nodes"][0]["dimension"] in ("character", "plot_point")
 
@@ -97,7 +97,7 @@ class TestReferenceGraphEndpoint:
         data = resp.json()
         assert len(data["nodes"]) == 3
         assert data["truncated"] is True
-        assert data["total_node_count"] >= 3
+        assert data["total_nodes"] >= 3
 
     def test_empty_graph(self, client, tmp_path, monkeypatch):
         from apps.studio_api import app as app_module
@@ -110,4 +110,4 @@ class TestReferenceGraphEndpoint:
         data = resp.json()
         assert data["nodes"] == []
         assert data["edges"] == []
-        assert data["total_node_count"] == 0
+        assert data["total_nodes"] == 0

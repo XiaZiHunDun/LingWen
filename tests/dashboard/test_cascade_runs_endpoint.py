@@ -70,7 +70,7 @@ class TestCascadeRunsEndpoint:
         resp = client.get("/api/ripples/cascade/rip-1?persist=true&max_depth=2")
         assert resp.status_code == 200
         data = resp.json()
-        assert "id" in data
+        assert "run_id" in data
         assert data["ripple_id"] == "rip-1"
         assert data["max_depth"] == 2
         assert data["status"] == "completed"
