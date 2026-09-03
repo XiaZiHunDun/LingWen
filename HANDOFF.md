@@ -442,17 +442,19 @@ cd apps/dashboard && pnpm dev --port 5173 --strictPort &
 
 | Agent | 路径 | 角色池 | 用例 |
 |-------|------|--------|------|
-| `outline_master` | `infra/agent_system/agents/outline_master/` | 无 (通用) | 大纲生成 |
-| `character_designer` | `infra/agent_system/agents/character_designer/` | 无 (通用) | 角色卡 |
-| `content_writer` | `infra/agent_system/agents/content_writer/` | 作家 A-J (10 个) | 写正文 |
-| `auditor` | `infra/agent_system/agents/auditor/` | 审核员 A-J (10 个) | S1-S8 审核 |
-| `polisher` | `infra/agent_system/agents/polisher/` | 读者 A-T (20 个) | 润色 |
+| `outline_master` | `packages/lingwen_core/src/lingwen_core/agents/` | 无 (通用) | 大纲生成 |
+| `character_designer` | `packages/lingwen_core/src/lingwen_core/agents/` | 无 (通用) | 角色卡 |
+| `content_writer` | `packages/lingwen_core/src/lingwen_core/agents/` | 作家 A-J (10 个) | 写正文 |
+| `auditor` | `packages/lingwen_core/src/lingwen_core/agents/` | 审核员 A-J (10 个) | S1-S8 审核 |
+| `polisher` | `packages/lingwen_core/src/lingwen_core/agents/` | 读者 A-T (20 个) | 润色 |
+
+> v16 已将 Agent 实现从 `infra/agent_system/` 迁移至 `packages/lingwen_core/src/lingwen_core/agents/`（原 `infra/agent_system/` 已删除）。
 
 每个 agent 通过 `switch_role("writer_b")` 切角色池, 角色池配置在 `.skills/writer-dept/writer-b/SKILL.md`。
 
 ### 4.2 12 SCENARIOS 路由
 
-`infra/agent_system/got_bridge.py:SCENARIO_HANDLERS` 路由表, 12 个 scenario 名称 (e.g. `chapter_writing`, `chapter_review`, `polish_emotional_pacing`, `cascade_preview` 等)。每个 scenario 对应 1 个 handler function, handler 调 MasterController 暴露的方法。
+`SCENARIO_HANDLERS` 路由表（原 `infra/agent_system/got_bridge.py`，v16 迁移至 `lingwen_core`；LLM scenario 转发），12 个 scenario 名称 (e.g. `chapter_writing`, `chapter_review`, `polish_emotional_pacing`, `cascade_preview` 等)。每个 scenario 对应 1 个 handler function, handler 调 MasterController 暴露的方法。
 
 ### 4.3 跨卷涟漪 (CVG, Cross-Volume Graph)
 
