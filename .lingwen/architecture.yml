@@ -24,7 +24,7 @@ invariants:
     rule: "infra/ 禁止 import apps/"
     severity: error
   - id: I002
-    rule: "检查器 = 纯函数规则引擎，禁止调用 LLM / AI 服务"
+    rule: "rule_engine 检查器 = 纯函数规则引擎，禁止调用 LLM / AI 服务；type: llm_enhanced 的检查器（llm_causal_reasoning_checker + llm_enhanced/ + llm_service/）为受控 LLM 增强类别，仅按 DP-02 经 lingwen_quality 抽象 / lingwen_llm provider 调用；cross_volume 禁止调用 LLM"
     severity: error
     scope: "packages/lingwen-quality/src/lingwen_quality/consistency/checkers/, infra/cross_volume/"
   - id: I003

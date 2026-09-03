@@ -202,8 +202,12 @@ async function retrySave() {
 }
 
 async function handleJumpToFix(annotation) {
-  const result = await quality.runCheck({ chapterId: store.chapterId, body: editorContent.value })
-  store.annotations = result.annotations
+  try {
+    const result = await quality.runCheck({ chapterId: store.chapterId, body: editorContent.value })
+    store.annotations = result.annotations
+  } catch (e) {
+    console.warn('[write-workspace] quality check failed', e)
+  }
 }
 
 vueWatch(() => store.mode, async (newMode) => {
