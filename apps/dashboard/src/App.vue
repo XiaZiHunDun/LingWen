@@ -626,6 +626,11 @@ function onNavClick(itemId) {
   font-weight: 700;
   color: var(--color-text);
   letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .header-titles {
