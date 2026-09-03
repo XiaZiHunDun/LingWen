@@ -43,6 +43,7 @@
     <WriteInlineAnnotationLayer
       v-if="store.mode === 'editor'"
       :annotations="store.annotations"
+      :unavailable="qualityUnavailable"
       @jump-to-fix="handleJumpToFix"
     />
 
@@ -102,6 +103,9 @@ const chatInput = ref('')
 const activeSceneId = ref(null)
 const conflictDialogOpen = ref(false)
 const conflictExternalMtime = ref(0)
+// 质量检查后端端点 `/quality/run` 尚未接入：调用会 404。诚实标注为「暂不可用」，
+// 不静默失败，也不误报未处理 rejection。
+const qualityUnavailable = ref(false)
 
 const persist = useWriteWorkspacePersistence({
   saveFn: api.saveChapter,
@@ -204,9 +208,12 @@ async function retrySave() {
 async function handleJumpToFix(annotation) {
   try {
     const result = await quality.runCheck({ chapterId: store.chapterId, body: editorContent.value })
+    qualityUnavailable.value = false
     store.annotations = result.annotations
   } catch (e) {
     console.warn('[write-workspace] quality check failed', e)
+    qualityUnavailable.value = true
+    store.annotations = []
   }
 }
 
@@ -214,9 +221,12 @@ vueWatch(() => store.mode, async (newMode) => {
   if (newMode === 'editor' && store.chapterId) {
     try {
       const result = await quality.runCheck({ chapterId: store.chapterId, body: editorContent.value })
+      qualityUnavailable.value = false
       store.annotations = result.annotations
     } catch (e) {
       console.warn('[write-workspace] quality check failed', e)
+      qualityUnavailable.value = true
+      store.annotations = []
     }
   }
 })

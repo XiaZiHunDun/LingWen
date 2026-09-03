@@ -25,7 +25,7 @@
  *   useTodayHub, useTierBudgetAlerts, useWorkflowListStore, useDashboardWidgets
  * - 事件总线: useEventBus
  * - 工作流 socket: useWorkflowSocket
- * - 业务工具: useAskPageTab, useStudioProject, useFilteredPageError,
+ * - 业务工具: useAskPageTab, useStudioProject, useBootState, useFilteredPageError,
  *   volumePlanDiffExportUtils
  *
  * 子模块（Phase 19-20 拆分）：
@@ -78,6 +78,7 @@ export type { BatchEvent, BatchEventStream } from './useBatchEventStream.js';
 export { useRippleSocket } from './useRippleSocket.js';
 export { useRippleStore } from './useRippleStore.js';
 export { useStudioProject } from './useStudioProject.js';
+export { useBootState } from './useBootState.js';
 export { useTierBudgetAlerts } from './useTierBudgetAlerts.js';
 // useTimeOptions 不导出 useTimeOptions，只有 TIME_OPTIONS
 export { useTodayHub } from './useTodayHub.js';

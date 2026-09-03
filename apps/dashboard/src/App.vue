@@ -2,6 +2,13 @@
   <NConfigProvider :theme-overrides="lingwenThemeConfig">
     <ErrorBoundary>
       <div class="dashboard app-root" data-testid="app-root">
+        <NoProjectOnboarding
+          v-if="showOnboarding"
+          :loading="bootBooting"
+          :error="bootError"
+          @refresh="refreshBoot"
+        />
+        <template v-else>
         <ToastNotification />
       <!-- Sidebar -->
     <aside class="sidebar" :class="{ 'sidebar--human': isHumanFirstShell }" role="navigation" aria-label="主导航">
@@ -111,6 +118,7 @@
         </router-view>
       </main>
     </div>
+        </template>
       </div>
     </ErrorBoundary>
   </NConfigProvider>
@@ -120,6 +128,7 @@
 import { NConfigProvider } from 'naive-ui'
 import { lingwenThemeConfig } from './config/naiveTheme.js'
 import AskPageTabs from './components/AskPageTabs.vue'
+import NoProjectOnboarding from './components/NoProjectOnboarding.vue'
 import ToastNotification from './components/ToastNotification.vue'
 import ErrorBoundary from './components/ErrorBoundary.vue'
 import ApiOfflineBanner from './components/ApiOfflineBanner.vue'
@@ -133,6 +142,7 @@ import { buildVisibleNavGroups, suggestNavFallback } from './config/dashboardNav
 import { isHumanNavItemActive } from './config/humanFirstNav.js'
 import { resolveDefaultLandingNavAsync } from './utils/resolveDefaultLanding.js'
 import { fetchCreatorOverview, fetchStudioSummary } from './api/index.js'
+import { useBootState } from './composables/useBootState.js'
 import { useWorkflowSocket } from './composables/index.js'
 import { useNavStore, useRoleStore, useStudioStore, useConnectivityStore } from './stores/index.js'
 import { computed, onMounted, provide, ref, watch } from 'vue'
@@ -159,6 +169,13 @@ const navStore = useNavStore()
 const roleStore = useRoleStore()
 const studioStore = useStudioStore()
 const connectivityStore = useConnectivityStore()
+const {
+  booting: bootBooting,
+  noProject: bootNoProject,
+  error: bootError,
+  refresh: refreshBoot,
+} = useBootState()
+const showOnboarding = computed(() => bootNoProject.value || !!bootError.value)
 
 const { status } = useWorkflowSocket()
 const navCreationMode = ref(null)
@@ -286,6 +303,8 @@ onMounted(async () => {
   roleStore?.checkUrlRole?.()
   await loadNavCreationMode()
   syncNavForCreationMode()
+  // 首次启动侦测：无项目（或 404）时门控到无项目引导；不阻塞其余 init。
+  refreshBoot()
 
   if (typeof window === 'undefined') return
   const params = new URLSearchParams(window.location.search)

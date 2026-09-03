@@ -1,8 +1,6 @@
 import type { QualityCheckResult } from '@/api/quality';
 import { runQualityCheck } from '@/api/quality';
 
-export type { QualityCheckResult } from '@/api/quality';
-
 export interface UseWriteQualityCheck {
   runCheck: (input: { chapterId: number; body: string }) => Promise<QualityCheckResult>;
 }

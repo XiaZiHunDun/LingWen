@@ -41,6 +41,18 @@ export type {
 } from '@lingwen/dashboard-contracts/shared';
 
 // ---------------------------------------------------------------------------
+// /studio/projects (list configured projects + active slug)
+// When no project is configured the backend returns 404 ("no studio projects
+// configured"), which core.js surfaces as NotFoundError (status === 404). Boot
+// detection uses that signal to show the first-run onboarding.
+// ---------------------------------------------------------------------------
+
+export async function fetchStudioProjects(): Promise<StudioProjectsResponseDTO> {
+  const data = await request('/studio/projects');
+  return data as StudioProjectsResponseDTO;
+}
+
+// ---------------------------------------------------------------------------
 // /studio/active (set the active studio project by slug)
 // ---------------------------------------------------------------------------
 

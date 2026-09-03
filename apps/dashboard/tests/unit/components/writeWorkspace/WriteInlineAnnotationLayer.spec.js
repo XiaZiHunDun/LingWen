@@ -25,4 +25,19 @@ describe('WriteInlineAnnotationLayer', () => {
     expect(wrapper.emitted('jumpToFix')).toBeTruthy()
     expect(wrapper.emitted('jumpToFix')[0]).toEqual([annotations[0]])
   })
+
+  it('shows unavailable notice when quality check is unavailable and no annotations', () => {
+    const wrapper = mount(WriteInlineAnnotationLayer, {
+      props: { annotations: [], unavailable: true },
+    })
+    expect(wrapper.find('[data-testid="annotation-unavailable"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('质量检查暂不可用')
+  })
+
+  it('hides unavailable notice once annotations exist', () => {
+    const wrapper = mount(WriteInlineAnnotationLayer, {
+      props: { annotations, unavailable: true },
+    })
+    expect(wrapper.find('[data-testid="annotation-unavailable"]').exists()).toBe(false)
+  })
 })

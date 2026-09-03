@@ -1,5 +1,12 @@
 <template>
   <div class="ws-annotation-layer annotation-layer" data-testid="annotation-layer">
+    <p
+      v-if="unavailable && !annotations.length"
+      class="ws-annotation-note annotation-unavailable"
+      data-testid="annotation-unavailable"
+    >
+      质量检查暂不可用（后端未接入），本章暂无法自动标注。
+    </p>
     <button
       v-for="(a, idx) in annotations"
       :key="idx"
@@ -25,6 +32,7 @@ import { ref } from 'vue'
 
 defineProps({
   annotations: { type: Array, required: true },
+  unavailable: { type: Boolean, default: false },
 })
 
 defineEmits(['jumpToFix'])
@@ -58,5 +66,14 @@ const hovered = ref(null)
   border-radius: 4px;
   font-size: 0.75rem;
   max-width: 240px;
+}
+
+.ws-annotation-note {
+  margin: 0;
+  padding: 0.5rem 0.625rem;
+  font-size: 0.75rem;
+  color: #fff;
+  background: var(--n-warning-color, #d97706);
+  border-radius: 4px;
 }
 </style>
