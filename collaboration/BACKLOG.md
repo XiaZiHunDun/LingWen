@@ -45,7 +45,7 @@
 | P2-RESTART | auto-restart on failure | 失败自动重启。**后端 B 自服务列表第二个** | 后端 B（自服务） | ✅ 完成 | 2026-09-02 |
 | P2-MULTI | multi-LLM 并发批次 | 并行吞吐能力（较大，后端 B 自服务列表收尾项） | 后端 B（自服务完成） | ✅ 完成 | 2026-09-02 |
 | P2-DTOMIGR | usePilotBatch DTO migration | 迁移至 `@/api/studio` re-export（技术债） | 会话-A（自服务完成） | ✅ 完成 | 2026-09-02 |
-| P2-REG | Phase 114 prod preview regression | 长期 accepted 债，低优先 | 待认领 | ⏳ 待规划 | 2026-09-02 |
+| P2-REG | Phase 114 prod preview regression | 2026-09-03 实测：cytoscape-fcose 历史根因已随图库迁移 vis-network 消失；真实回归为 v16.2.8 迁移遗留 3 处陈旧引用（useCreatorAdvanceBatch 旧名 generateCreatorVolumeSummary + api/index.js 桶内陈旧别名 + 补缺失 fetchCreatorOverview） | 协调者（本会话） | ✅ 修复 `80790b76` | 2026-09-03 |
 
 > **后端 B 自服务顺序**：P2-QUEUE → P2-RESTART → P2-MULTI。每任务：rebase origin/master → 实现 → 完整 `pytest` + `ruff check` + `ruff format --check` 全绿 → 自 ff-merge 到 master → 认领下一个。**common 前置**：worktree 内跑测试/codegen 需 `export PYTHONPATH=$PWD/packages/lingwen-shared/src:$PYTHONPATH`（见 COORDINATION.md §6.5）。
 
