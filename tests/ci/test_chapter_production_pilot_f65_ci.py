@@ -10,7 +10,15 @@ NOVEL_FACTORY = REPO_ROOT
 
 class TestChapterProductionPilotF65:
     def test_pilot_module_exists(self):
-        path = NOVEL_FACTORY / "infra" / "agent_system" / "chapter_production_pilot.py"
+        path = (
+            NOVEL_FACTORY
+            / "packages"
+            / "lingwen-core"
+            / "src"
+            / "lingwen_core"
+            / "agents"
+            / "chapter_production_pilot.py"
+        )
         assert path.is_file()
         text = path.read_text(encoding="utf-8")
         assert "LINGWEN_REAL_LLM" in text

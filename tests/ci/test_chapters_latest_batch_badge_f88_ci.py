@@ -6,12 +6,12 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 NOVEL_FACTORY = REPO_ROOT
-FRONTEND = NOVEL_FACTORY / "dashboard" / "frontend"
+FRONTEND = NOVEL_FACTORY / "apps" / "dashboard"
 
 
 class TestChaptersLatestBatchBadgeF88:
     def test_rollup_api_available(self):
-        app = NOVEL_FACTORY / "dashboard" / "routes" / "overview.py"
+        app = NOVEL_FACTORY / "apps" / "studio_api" / "routes" / "overview.py"
         assert "/api/production-records/rollup" in app.read_text(encoding="utf-8")
 
     def test_latest_batch_badge_util(self):

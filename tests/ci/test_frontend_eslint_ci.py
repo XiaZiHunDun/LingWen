@@ -11,7 +11,7 @@ import re
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-FRONTEND_DIR = REPO_ROOT / "dashboard" / "frontend"
+FRONTEND_DIR = REPO_ROOT / "apps" / "dashboard"
 WORKFLOWS_DIR = REPO_ROOT / ".github" / "workflows"
 
 

@@ -14,16 +14,29 @@ from apps.studio_api.app import ReadingPowerDB, create_app
 class TestHealthEndpoint:
     """Tests for the /api/health endpoint."""
 
-    def test_health_returns_healthy_status(self):
-        """Health endpoint should return healthy status."""
-        app = create_app(db_path=Path(tempfile.mktemp()))
-        client = TestClient(app)
-        response = client.get("/api/health")
+    def test_health_returns_running_status(self):
+        """Health endpoint should return 200, correct service, and a live status.
 
-        assert response.status_code == 200
-        data = response.json()
-        assert data["status"] == "healthy"
-        assert data["service"] == "reading-power-dashboard"
+        注意: 健康端点按设计对缺失的「关键」组件返回 unhealthy, 对不可用的
+        「非关键」组件(如 LLM)返回 degraded。无真实 LLM/DB 的 unit 环境里,
+        初始化一个真实 DB 后 endpoint 应返回 healthy 或 degraded, 不强制
+        == 'healthy'。详见 infra/health.py HealthManager.check_all。
+        """
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
+            db_path = Path(f.name)
+
+        try:
+            ReadingPowerDB(db_path)
+            app = create_app(db_path=db_path)
+            client = TestClient(app)
+            response = client.get("/api/health")
+
+            assert response.status_code == 200
+            data = response.json()
+            assert data["status"] in {"healthy", "degraded"}
+            assert data["service"] == "reading-power-dashboard"
+        finally:
+            db_path.unlink(missing_ok=True)
 
 
 class TestOverviewEndpoint:

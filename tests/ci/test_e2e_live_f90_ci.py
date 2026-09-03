@@ -11,7 +11,9 @@ NOVEL_FACTORY = REPO_ROOT
 
 class TestE2eLiveF90:
     def test_ci_records_module(self):
-        mod = NOVEL_FACTORY / "infra" / "agent_system" / "ci_records.py"
+        mod = (
+            NOVEL_FACTORY / "packages" / "lingwen-core" / "src" / "lingwen_core" / "agents" / "ci_records.py"
+        )
         text = mod.read_text(encoding="utf-8")
         assert "validate_e2e_live_first_green_record" in text
         assert "write_e2e_live_first_green_record" in text

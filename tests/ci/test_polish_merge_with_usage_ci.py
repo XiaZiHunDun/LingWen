@@ -13,10 +13,11 @@ from lingwen_core.agents.got_bridge import SCENARIO_HANDLERS, _handler_polish_me
 from lingwen_pipeline.master_controller import MasterController
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-GOT_BRIDGE_PATH = REPO_ROOT / "infra" / "agent_system" / "got_bridge.py"
-MASTER_CONTROLLER_PATH = REPO_ROOT / "infra" / "agent_system" / "master_controller.py"
+AGENTS = REPO_ROOT / "packages" / "lingwen-core" / "src" / "lingwen_core" / "agents"
+GOT_BRIDGE_PATH = AGENTS / "got_bridge.py"
+MASTER_CONTROLLER_PATH = AGENTS / "master_controller.py"
 # Phase 15.0 P3-SPLIT: _impl_polish_merge_synthesis 迁到 mc_editing.py (EditingMixin)
-MC_EDITING_PATH = REPO_ROOT / "infra" / "agent_system" / "mc_editing.py"
+MC_EDITING_PATH = AGENTS / "mc_editing.py"
 
 WITH_USAGE_VARIANTS = (
     "write_chapter_with_usage",

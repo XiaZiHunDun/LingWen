@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-FRONTEND_DIR = REPO_ROOT / "dashboard" / "frontend"
+FRONTEND_DIR = REPO_ROOT / "apps" / "dashboard"
 CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "dashboard-frontend-ci.yml"
 
 
@@ -33,7 +33,7 @@ class TestFrontendTypescriptStrict:
 
     def test_unit_spec_ts_files_at_least_thirty(self):
         unit = FRONTEND_DIR / "tests" / "unit"
-        ts_specs = list(unit.glob("*.spec.ts"))
+        ts_specs = list(unit.rglob("*.spec.ts"))
         assert len(ts_specs) >= 30
 
     def test_ci_workflow_runs_typecheck(self):

@@ -10,7 +10,15 @@ NOVEL_FACTORY = REPO_ROOT
 
 class TestStateFlockF69:
     def test_state_manager_reads_in_transaction(self):
-        path = NOVEL_FACTORY / "infra" / "state" / "state_manager.py"
+        path = (
+            NOVEL_FACTORY
+            / "packages"
+            / "lingwen-pipeline"
+            / "src"
+            / "lingwen_pipeline"
+            / "state"
+            / "state_manager.py"
+        )
         text = path.read_text(encoding="utf-8")
         assert "_fetch_current_step_from_conn" in text
         assert "self.get_current_step()" not in text.split("def advance_step")[1].split("def record_task")[0]

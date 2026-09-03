@@ -10,7 +10,15 @@ NOVEL_FACTORY = REPO_ROOT
 
 class TestChapterMemoryHookF62Contract:
     def test_hook_module_exists(self):
-        mod = NOVEL_FACTORY / "infra" / "agent_system" / "chapter_memory_hook.py"
+        mod = (
+            NOVEL_FACTORY
+            / "packages"
+            / "lingwen-core"
+            / "src"
+            / "lingwen_core"
+            / "agents"
+            / "chapter_memory_hook.py"
+        )
         assert mod.is_file()
 
     def test_runbook_documents_memory_rag(self):

@@ -6,16 +6,24 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 NOVEL_FACTORY = REPO_ROOT
-FRONTEND = NOVEL_FACTORY / "dashboard" / "frontend"
+FRONTEND = NOVEL_FACTORY / "apps" / "dashboard"
 
 
 class TestAnalyticsProductionCostTrendF87:
     def test_trend_module_and_api(self):
-        mod = NOVEL_FACTORY / "infra" / "agent_system" / "production_records.py"
+        mod = (
+            NOVEL_FACTORY
+            / "packages"
+            / "lingwen-core"
+            / "src"
+            / "lingwen_core"
+            / "agents"
+            / "production_records.py"
+        )
         text = mod.read_text(encoding="utf-8")
         assert "production_cost_trend" in text
         assert "_record_label" in text
-        app = NOVEL_FACTORY / "dashboard" / "routes" / "overview.py"
+        app = NOVEL_FACTORY / "apps" / "studio_api" / "routes" / "overview.py"
         assert "/api/production-records/trend" in app.read_text(encoding="utf-8")
 
     def test_analytics_trend_util_and_chart(self):

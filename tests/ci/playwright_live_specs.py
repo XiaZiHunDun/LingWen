@@ -6,8 +6,8 @@ import re
 from pathlib import Path
 
 NOVEL_FACTORY = Path(__file__).resolve().parents[2]
-PLAYWRIGHT_CONFIG = NOVEL_FACTORY / "dashboard" / "frontend" / "playwright.config.js"
-E2E_SMOKE_DIR = NOVEL_FACTORY / "dashboard" / "frontend" / "tests" / "e2e-smoke"
+PLAYWRIGHT_CONFIG = NOVEL_FACTORY / "apps" / "dashboard" / "playwright.config.js"
+E2E_SMOKE_DIR = NOVEL_FACTORY / "apps" / "dashboard" / "tests" / "e2e-smoke"
 
 _LIVE_BACKEND_PATTERN = re.compile(
     r"const liveBackendSpecPattern\s*=\s*/\(([^)]+)\)\\.spec\\.js/",

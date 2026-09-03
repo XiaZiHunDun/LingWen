@@ -17,7 +17,15 @@ class TestChapterProductionRunbook:
         assert "chapter_golden_path" in text
 
     def test_golden_path_module_exists(self):
-        mod = NOVEL_FACTORY / "infra" / "agent_system" / "chapter_golden_path.py"
+        mod = (
+            NOVEL_FACTORY
+            / "packages"
+            / "lingwen-core"
+            / "src"
+            / "lingwen_core"
+            / "agents"
+            / "chapter_golden_path.py"
+        )
         assert mod.is_file()
 
     def test_golden_path_tests_exist(self):

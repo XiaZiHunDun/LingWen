@@ -25,7 +25,15 @@ class TestChapterProductionBatchF79:
         assert "chapters_succeeded" in text
 
     def test_batch_save_summary_cli(self):
-        path = NOVEL_FACTORY / "infra" / "agent_system" / "chapter_production_batch.py"
+        path = (
+            NOVEL_FACTORY
+            / "packages"
+            / "lingwen-core"
+            / "src"
+            / "lingwen_core"
+            / "agents"
+            / "chapter_production_batch.py"
+        )
         text = path.read_text(encoding="utf-8")
         assert "--save-summary" in text
         assert "--save-chapter-records-dir" in text

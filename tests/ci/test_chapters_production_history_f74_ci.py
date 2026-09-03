@@ -6,17 +6,25 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 NOVEL_FACTORY = REPO_ROOT
-FRONTEND = NOVEL_FACTORY / "dashboard" / "frontend"
+FRONTEND = NOVEL_FACTORY / "apps" / "dashboard"
 
 
 class TestChaptersProductionHistoryF74:
     def test_production_records_module(self):
-        path = NOVEL_FACTORY / "infra" / "agent_system" / "production_records.py"
+        path = (
+            NOVEL_FACTORY
+            / "packages"
+            / "lingwen-core"
+            / "src"
+            / "lingwen_core"
+            / "agents"
+            / "production_records.py"
+        )
         assert path.is_file()
         assert "list_production_records" in path.read_text(encoding="utf-8")
 
     def test_api_endpoint(self):
-        app = NOVEL_FACTORY / "dashboard" / "routes" / "overview.py"
+        app = NOVEL_FACTORY / "apps" / "studio_api" / "routes" / "overview.py"
         assert "/api/production-records" in app.read_text(encoding="utf-8")
 
     def test_chapters_page_history_panel(self):

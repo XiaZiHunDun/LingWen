@@ -10,27 +10,59 @@ NOVEL_FACTORY = REPO_ROOT
 
 class TestEmbeddingProviderF89:
     def test_memory_config_provider_auto(self):
-        cfg = NOVEL_FACTORY / "infra" / "memory_system" / "config" / "memory_config.yaml"
+        cfg = (
+            NOVEL_FACTORY
+            / "packages"
+            / "lingwen-memory"
+            / "src"
+            / "lingwen_memory"
+            / "config"
+            / "memory_config.yaml"
+        )
         text = cfg.read_text(encoding="utf-8")
         assert "provider: auto" in text
         assert "minimax:" in text
 
     def test_factory_module(self):
-        factory = NOVEL_FACTORY / "infra" / "memory_system" / "embeddings" / "factory.py"
+        factory = (
+            NOVEL_FACTORY
+            / "packages"
+            / "lingwen-memory"
+            / "src"
+            / "lingwen_memory"
+            / "embeddings"
+            / "factory.py"
+        )
         text = factory.read_text(encoding="utf-8")
         assert "resolve_embedding_provider_name" in text
         assert "create_embedding_provider" in text
         assert "describe_embedding_requirements" in text
 
     def test_embedder_facade(self):
-        embedder = NOVEL_FACTORY / "infra" / "memory_system" / "vector" / "embedder.py"
+        embedder = (
+            NOVEL_FACTORY
+            / "packages"
+            / "lingwen-memory"
+            / "src"
+            / "lingwen_memory"
+            / "vector"
+            / "embedder.py"
+        )
         text = embedder.read_text(encoding="utf-8")
         assert "create_embedding_provider" in text
         assert "embed_query" in text
         assert "provider_name" in text
 
     def test_pilot_embedding_provider_keys_check(self):
-        pilot = NOVEL_FACTORY / "infra" / "agent_system" / "chapter_production_pilot.py"
+        pilot = (
+            NOVEL_FACTORY
+            / "packages"
+            / "lingwen-core"
+            / "src"
+            / "lingwen_core"
+            / "agents"
+            / "chapter_production_pilot.py"
+        )
         assert 'name="embedding_provider_keys"' in pilot.read_text(encoding="utf-8")
 
     def test_runbook_section_19_embedding_provider(self):

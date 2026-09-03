@@ -30,12 +30,28 @@ class TestChapterMemoryRagLiveF86:
         assert '"memory_context_source": "live"' in stub.read_text(encoding="utf-8")
 
     def test_pilot_live_gateway_required_check(self):
-        pilot = NOVEL_FACTORY / "infra" / "agent_system" / "chapter_production_pilot.py"
+        pilot = (
+            NOVEL_FACTORY
+            / "packages"
+            / "lingwen-core"
+            / "src"
+            / "lingwen_core"
+            / "agents"
+            / "chapter_production_pilot.py"
+        )
         text = pilot.read_text(encoding="utf-8")
         assert "memory_rag_live_gateway_check" in text
         assert 'name="memory_rag_live_gateway"' in text
         assert "required=True" in text
 
     def test_chapter_memory_hook_live_gateway_check(self):
-        hook = NOVEL_FACTORY / "infra" / "agent_system" / "chapter_memory_hook.py"
+        hook = (
+            NOVEL_FACTORY
+            / "packages"
+            / "lingwen-core"
+            / "src"
+            / "lingwen_core"
+            / "agents"
+            / "chapter_memory_hook.py"
+        )
         assert "def memory_rag_live_gateway_check" in hook.read_text(encoding="utf-8")

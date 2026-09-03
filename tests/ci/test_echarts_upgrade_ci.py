@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-FRONTEND_DIR = REPO_ROOT / "dashboard" / "frontend"
+FRONTEND_DIR = REPO_ROOT / "apps" / "dashboard"
 
 
 class TestEchartsUpgrade:
@@ -16,7 +16,7 @@ class TestEchartsUpgrade:
         assert version.startswith("^6."), version
 
     def test_lockfile_resolves_echarts_6(self):
-        lock = (FRONTEND_DIR / "pnpm-lock.yaml").read_text(encoding="utf-8")
+        lock = (REPO_ROOT / "pnpm-lock.yaml").read_text(encoding="utf-8")
         assert "echarts@6." in lock
 
     def test_chart_components_use_modular_or_full_import(self):

@@ -18,7 +18,8 @@ class TestLlmPathsFilter1210:
 
     def test_llm_golden_primary_conditional(self):
         wf = (REPO_ROOT / ".github" / "workflows" / "test.yml").read_text(encoding="utf-8")
-        assert "needs: llm-paths" in wf
+        # llm-golden-primary 依赖 llm-paths(列表写法) 输出作为条件
+        assert "needs: [llm-paths" in wf
         assert "needs.llm-paths.outputs.llm" in wf
         assert "llm-check" in wf
         assert "run_llm_golden_primary" in wf

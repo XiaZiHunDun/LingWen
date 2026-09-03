@@ -16,7 +16,7 @@ class TestE2eLiveF64Contract:
         assert "e2e:live" in text
 
     def test_playwright_live_project_configured(self):
-        cfg = REPO_ROOT / "dashboard" / "frontend" / "playwright.config.js"
+        cfg = REPO_ROOT / "apps" / "dashboard" / "playwright.config.js"
         text = cfg.read_text(encoding="utf-8")
         assert "live-backend" in text
         assert "LINGWEN_E2E_LIVE" in text

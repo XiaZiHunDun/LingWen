@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-FRONTEND_DIR = REPO_ROOT / "dashboard" / "frontend"
+FRONTEND_DIR = REPO_ROOT / "apps" / "dashboard"
 UTILS = FRONTEND_DIR / "src" / "utils" / "cascadeGraphUtils.js"
 COMPONENT = FRONTEND_DIR / "src" / "components" / "CascadeGraph.vue"
 

@@ -10,7 +10,15 @@ NOVEL_FACTORY = REPO_ROOT
 
 class TestChapterProductionBatchF80:
     def test_dry_run_cli_flag(self):
-        path = NOVEL_FACTORY / "infra" / "agent_system" / "chapter_production_batch.py"
+        path = (
+            NOVEL_FACTORY
+            / "packages"
+            / "lingwen-core"
+            / "src"
+            / "lingwen_core"
+            / "agents"
+            / "chapter_production_batch.py"
+        )
         text = path.read_text(encoding="utf-8")
         assert "--dry-run" in text
         assert "build_batch_plan" in text

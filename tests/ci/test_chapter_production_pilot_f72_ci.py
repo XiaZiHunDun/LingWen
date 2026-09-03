@@ -10,7 +10,15 @@ NOVEL_FACTORY = REPO_ROOT
 
 class TestChapterProductionPilotF72:
     def test_save_record_cli_flag(self):
-        path = NOVEL_FACTORY / "infra" / "agent_system" / "chapter_production_pilot.py"
+        path = (
+            NOVEL_FACTORY
+            / "packages"
+            / "lingwen-core"
+            / "src"
+            / "lingwen_core"
+            / "agents"
+            / "chapter_production_pilot.py"
+        )
         text = path.read_text(encoding="utf-8")
         assert "--save-record" in text
         assert "save_pilot_record" in text

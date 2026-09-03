@@ -64,8 +64,24 @@ def test_get_endpoint_registered(tmp_path, monkeypatch):
 
     app = FastAPI()
     register_write_workspace(app, _stub_ctx())
-    methods = {(r.path, tuple(sorted(r.methods or []))) for r in app.routes}
+    methods = {
+        (r.path, tuple(sorted(r.methods or []))) for r in app.routes if hasattr(r, "path")
+    } | _included_router_methods(app)
     assert ("/api/write/{chapter_id}", ("GET",)) in methods
+
+
+def _included_router_methods(app) -> set:
+    """starlette>=1.6 include_router 把子路由包进无 .path 的 _IncludedRouter,
+    但其 original_router.routes 保留真实 APIRoute。收集这些路由的 (path, methods)。"""
+    methods = set()
+    for r in app.routes:
+        router = getattr(r, "original_router", None)
+        if router is None:
+            continue
+        for rr in getattr(router, "routes", []):
+            if hasattr(rr, "path") and hasattr(rr, "methods"):
+                methods.add((rr.path, tuple(sorted(rr.methods or []))))
+    return methods
 
 
 def test_get_existing_chapter_returns_frontmatter_and_body(write_workspace_client):

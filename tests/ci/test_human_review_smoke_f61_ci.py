@@ -20,7 +20,15 @@ class TestHumanReviewSmokeF61Contract:
         assert spec.is_file()
 
     def test_golden_path_exports_smoke_helper(self):
-        mod = NOVEL_FACTORY / "infra" / "agent_system" / "chapter_golden_path.py"
+        mod = (
+            NOVEL_FACTORY
+            / "packages"
+            / "lingwen-core"
+            / "src"
+            / "lingwen_core"
+            / "agents"
+            / "chapter_golden_path.py"
+        )
         text = mod.read_text(encoding="utf-8")
         assert "HumanReviewSmokeResult" in text
         assert "create_golden_dashboard_client" in text

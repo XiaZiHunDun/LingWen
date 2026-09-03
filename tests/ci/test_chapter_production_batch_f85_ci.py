@@ -30,5 +30,13 @@ class TestChapterProductionBatchF85:
         assert "wave-ch367-376-stub" in stub.read_text(encoding="utf-8")
 
     def test_max_batch_chapters_ten(self):
-        batch = NOVEL_FACTORY / "infra" / "agent_system" / "chapter_production_batch.py"
+        batch = (
+            NOVEL_FACTORY
+            / "packages"
+            / "lingwen-core"
+            / "src"
+            / "lingwen_core"
+            / "agents"
+            / "chapter_production_batch.py"
+        )
         assert "MAX_BATCH_CHAPTERS = 10" in batch.read_text(encoding="utf-8")

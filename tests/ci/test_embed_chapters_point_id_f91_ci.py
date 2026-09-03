@@ -10,12 +10,28 @@ NOVEL_FACTORY = REPO_ROOT
 
 class TestEmbedChaptersPointId:
     def test_make_point_id_in_embed_script(self):
-        script = NOVEL_FACTORY / "infra" / "memory_system" / "scripts" / "embed_chapters.py"
+        script = (
+            NOVEL_FACTORY
+            / "packages"
+            / "lingwen-memory"
+            / "src"
+            / "lingwen_memory"
+            / "scripts"
+            / "embed_chapters.py"
+        )
         text = script.read_text(encoding="utf-8")
         assert "def make_point_id" in text
         assert "chapter_num * 1000 + segment_index" in text
 
     def test_push_engine_semantic_related_segments(self):
-        engine = NOVEL_FACTORY / "infra" / "memory_system" / "gateway" / "push_engine.py"
+        engine = (
+            NOVEL_FACTORY
+            / "packages"
+            / "lingwen-memory"
+            / "src"
+            / "lingwen_memory"
+            / "gateway"
+            / "push_engine.py"
+        )
         text = engine.read_text(encoding="utf-8")
         assert "filters=None" in text

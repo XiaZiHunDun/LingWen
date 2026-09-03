@@ -6,16 +6,24 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 NOVEL_FACTORY = REPO_ROOT
-FRONTEND = NOVEL_FACTORY / "dashboard" / "frontend"
+FRONTEND = NOVEL_FACTORY / "apps" / "dashboard"
 
 
 class TestAnalyticsProductionRollupF81:
     def test_rollup_module_and_api(self):
-        mod = NOVEL_FACTORY / "infra" / "agent_system" / "production_records.py"
+        mod = (
+            NOVEL_FACTORY
+            / "packages"
+            / "lingwen-core"
+            / "src"
+            / "lingwen_core"
+            / "agents"
+            / "production_records.py"
+        )
         text = mod.read_text(encoding="utf-8")
         assert "rollup_production_records" in text
         assert "compute_deduplicated_cost_usd" in text
-        app = NOVEL_FACTORY / "dashboard" / "routes" / "overview.py"
+        app = NOVEL_FACTORY / "apps" / "studio_api" / "routes" / "overview.py"
         assert "/api/production-records/rollup" in app.read_text(encoding="utf-8")
 
     def test_analytics_rollup_util(self):

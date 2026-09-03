@@ -10,7 +10,15 @@ NOVEL_FACTORY = REPO_ROOT
 
 class TestChapterProductionBatchF73:
     def test_batch_module_exists(self):
-        path = NOVEL_FACTORY / "infra" / "agent_system" / "chapter_production_batch.py"
+        path = (
+            NOVEL_FACTORY
+            / "packages"
+            / "lingwen-core"
+            / "src"
+            / "lingwen_core"
+            / "agents"
+            / "chapter_production_batch.py"
+        )
         assert path.is_file()
         text = path.read_text(encoding="utf-8")
         assert "run_production_batch" in text

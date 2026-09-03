@@ -20,7 +20,7 @@ class TestIncrementalBackfillF60Contract:
         assert spec.is_file()
 
     def test_workflow_status_vue_has_backfill_badge(self):
-        vue = NOVEL_FACTORY / "dashboard" / "frontend" / "src" / "components" / "WorkflowStatus.vue"
+        vue = NOVEL_FACTORY / "apps" / "dashboard" / "src" / "components" / "WorkflowStatus.vue"
         text = vue.read_text(encoding="utf-8")
         assert "incremental-backfill-badge" in text
         assert "incremental_backfill" in text

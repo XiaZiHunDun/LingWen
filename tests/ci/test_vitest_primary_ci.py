@@ -21,6 +21,6 @@ class TestVitestPrimaryCi:
         import json
 
         pkg = json.loads(
-            (NOVEL_FACTORY / "dashboard" / "frontend" / "package.json").read_text(encoding="utf-8"),
+            (NOVEL_FACTORY / "apps" / "dashboard" / "package.json").read_text(encoding="utf-8"),
         )
         assert pkg["scripts"]["test"] == "vitest run"

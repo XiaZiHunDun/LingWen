@@ -10,12 +10,28 @@ NOVEL_FACTORY = REPO_ROOT
 
 class TestQdrantQueryPointsCompat:
     def test_qdrant_wrapper_uses_query_points_path(self):
-        client = NOVEL_FACTORY / "infra" / "memory_system" / "vector" / "qdrant_client.py"
+        client = (
+            NOVEL_FACTORY
+            / "packages"
+            / "lingwen-memory"
+            / "src"
+            / "lingwen_memory"
+            / "vector"
+            / "qdrant_client.py"
+        )
         text = client.read_text(encoding="utf-8")
         assert "_raw_vector_search" in text
         assert "query_points" in text
         assert "_uses_query_points_api" in text
 
     def test_memory_config_check_compatibility(self):
-        cfg = NOVEL_FACTORY / "infra" / "memory_system" / "config" / "memory_config.yaml"
+        cfg = (
+            NOVEL_FACTORY
+            / "packages"
+            / "lingwen-memory"
+            / "src"
+            / "lingwen_memory"
+            / "config"
+            / "memory_config.yaml"
+        )
         assert "check_compatibility: false" in cfg.read_text(encoding="utf-8")
