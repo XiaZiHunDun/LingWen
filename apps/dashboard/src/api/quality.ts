@@ -26,3 +26,26 @@ export async function fetchProseDiff(): Promise<ProseDiffDTO> {
   const data = await request('/studio/prose-diff');
   return data as ProseDiffDTO;
 }
+
+// ---------------------------------------------------------------------------
+// /quality/run (POST) — 写作空间质量桥（章节正文行内 P0/P1 标注）
+// 注意：该端点目前在后端 `/api/quality/run` 尚未注册（计划 Task 23 未交付）。
+// 保留 typed wrapper 以维持调用约定一致；后端端点落地前调用会 404。
+// ---------------------------------------------------------------------------
+
+export interface QualityCheckAnnotation {
+  sceneId: string;
+  offset: number;
+  severity: 'P0' | 'P1' | 'P2';
+  rule: string;
+  msg: string;
+}
+
+export interface QualityCheckResult {
+  annotations: QualityCheckAnnotation[];
+}
+
+export async function runQualityCheck(req: { chapter_id: number; body: string }): Promise<QualityCheckResult> {
+  const data = await request('/quality/run', { method: 'POST', body: req });
+  return data as QualityCheckResult;
+}

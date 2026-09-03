@@ -1,24 +1,17 @@
-interface QualityAnnotation {  // Phase 125 v15.7.1: removed 'export' — truly internal type  sceneId: string
-  offset: number
-  severity: 'P0' | 'P1' | 'P2'
-  rule: string
-  msg: string
+import type { QualityCheckResult } from '@/api/quality';
+import { runQualityCheck } from '@/api/quality';
+
+export type { QualityCheckResult } from '@/api/quality';
+
+export interface UseWriteQualityCheck {
+  runCheck: (input: { chapterId: number; body: string }) => Promise<QualityCheckResult>;
 }
 
-export interface QualityCheckResult {
-  annotations: QualityAnnotation[]
-}
-
-export function useWriteQualityCheck() {
+export function useWriteQualityCheck(): UseWriteQualityCheck {
   async function runCheck({ chapterId, body }: { chapterId: number; body: string }): Promise<QualityCheckResult> {
-    const res = await fetch('/api/quality/run', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chapter_id: chapterId, body }),
-    })
-    if (!res.ok) throw new Error(`Quality check failed: ${res.statusText}`)
-    return res.json()
+    // 走 @/api/quality typed wrapper（相对路径由 core.js request() 拼 `/api` 前缀）
+    return runQualityCheck({ chapter_id: chapterId, body });
   }
 
-  return { runCheck }
+  return { runCheck };
 }

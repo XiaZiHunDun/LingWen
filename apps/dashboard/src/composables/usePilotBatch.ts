@@ -17,7 +17,7 @@ import type {
   StudioBatchTemplateDTO,
 } from '@/api/studio';
 import { fetchCreatorChapterPreview } from '@/api/content';
-import type { CreatorChapterPreview } from '@lingwen/dashboard-contracts/shared';
+import type { CreatorChapterPreview } from '@/api/content';
 import { useBatchEventStream } from '@/composables/useBatchEventStream';
 import type { BatchEvent, BatchEventType } from '@/composables/useBatchEventStream';
 

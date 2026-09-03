@@ -21,7 +21,7 @@ describe('useWriteQualityCheck', () => {
   })
 
   it('throws on error', async () => {
-    global.fetch = vi.fn().mockResolvedValue({ ok: false, statusText: 'Server Error' })
+    global.fetch = vi.fn().mockResolvedValue({ ok: false, statusText: 'Server Error', text: async () => '' })
     const qc = useWriteQualityCheck()
     await expect(qc.runCheck({ chapterId: 1, body: '' })).rejects.toThrowError('Server Error')
   })

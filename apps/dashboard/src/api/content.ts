@@ -39,6 +39,9 @@ import type {
   CreatorPreferencesResponse,
   CreatorPreferencesSaveRequest,
 } from '@lingwen/dashboard-contracts/shared';
+
+// Re-export type for consumers who should go through the facaded API layer.
+export type { CreatorChapterPreview } from '@lingwen/dashboard-contracts/shared';
 import { request } from './core.js';
 import { markApiOnline } from './connectivity.js';
 

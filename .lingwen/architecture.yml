@@ -26,7 +26,7 @@ invariants:
   - id: I002
     rule: "检查器 = 纯函数规则引擎，禁止调用 LLM / AI 服务"
     severity: error
-    scope: "infra/quality/checkers/, infra/cross_volume/"
+    scope: "packages/lingwen-quality/src/lingwen_quality/consistency/checkers/, infra/cross_volume/"
   - id: I003
     rule: "L3 (consistency / quality) 和 L4 (cross_volume) 禁止 import L2 (creator / agent)"
     severity: error
@@ -44,7 +44,7 @@ invariants:
 # 模块边界（明确每个模块的公共 API 和依赖）
 module_boundaries:
   quality:
-    path: infra/quality/
+    path: packages/lingwen-quality/src/lingwen_quality/  # 自 infra/quality/ 迁移（Phase 21）
     exports: [QualityChecker, QualityRepairer, Severity]
     allowed_imports: [infra/errors]
     forbidden_imports: [infra/creator, infra/ai_service]

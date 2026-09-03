@@ -22,7 +22,7 @@ antipatterns:
     rule: "禁止修改生成产物（codegen 输出，应修改生成器）"
   - id: A007
     rule: "禁止在检查器中调用 AI 生成内容"
-    scope: "infra/consistency/checkers/"
+    scope: "packages/lingwen-quality/src/lingwen_quality/consistency/checkers/"
   - id: A008
     rule: "禁止在生产代码中保留 console.log 调试输出"
     scope: "*.ts,*.vue"
@@ -58,14 +58,14 @@ commits:
 # 多文件修改链路
 change_links:
   - change: "新增检查器"
-    files: ["infra/consistency/checkers/", "engine/checker_inspector.py", "tests/"]
+    files: ["packages/lingwen-quality/src/lingwen_quality/consistency/checkers/", "tests/"]
   - change: "新增 API 端点"
-    files: ["dashboard/routes/", "dashboard/models/", "frontend/src/api/", "tests/"]
+    files: ["apps/studio_api/routes/", "apps/studio_api/models/", "apps/dashboard/src/api/", "tests/"]
   - change: "新增 Composable"
-    files: ["frontend/src/composables/", "tests/", "composables/index.js"]
+    files: ["apps/dashboard/src/composables/", "tests/"]
   - change: "改 DB Schema"
-    files: ["infra/persistence/schemas.py", "infra/state/database.py", "tests/"]
+    files: ["infra/persistence/schemas.py", "tests/"]
   - change: "新增异常类"
-    files: ["infra/errors.py", "infra/exports/core.py", "使用方 import"]
+    files: ["infra/errors.py", "使用方 import"]
   - change: "新增钩子动作"
-    files: ["infra/hooks/actions/", "infra/hooks/plugin_store.py", "tests/"]
+    files: ["infra/hooks/actions/", "tests/"]
