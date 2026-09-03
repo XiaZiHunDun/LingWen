@@ -390,7 +390,7 @@ LingWen/                                    # 本目录 (项目根, git root)
 - **80%+ 覆盖率** — `pytest --cov` + `vitest --coverage` (已 CI 化)
 - **测试 entry**: pytest `pytest -q` (~90s), vitest `pnpm test` (~5s), coverage `pnpm test:coverage`, lint `pnpm lint`, e2e `pnpm e2e:smoke`
 - **0 ceremonial e2e** — Playwright spec 已 Phase 9.31 F15 全删, 契约走 vitest jsdom (Phase 8.30b pattern)
-- **0 改 baseline 0 测试代码** — 2512 pytest + 192 vitest 全部不动, 只加新
+- **0 改 baseline 0 测试代码** — 存量 pytest/vitest 全部不动, 只加新
 
 ### 2.4 文档规则
 
