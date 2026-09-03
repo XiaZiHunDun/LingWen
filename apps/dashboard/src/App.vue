@@ -11,7 +11,7 @@
         <template v-else>
         <ToastNotification />
       <!-- Sidebar -->
-    <aside class="sidebar" :class="{ 'sidebar--human': isHumanFirstShell }" role="navigation" aria-label="主导航">
+    <aside class="sidebar app-sidebar" data-testid="app-sidebar" :class="{ 'sidebar--human': isHumanFirstShell, open: mobileMenuOpen }" role="navigation" aria-label="主导航">
       <div class="sidebar-header" :class="{ 'sidebar-header--human': isHumanFirstShell }">
         <div class="sidebar-brand">
           <img src="/assets/brand/moling-logo.jpg" alt="墨灵Logo" class="sidebar-logo" aria-hidden="true" />
@@ -79,6 +79,18 @@
             </span>
           </div>
           <div class="header-actions">
+            <button
+              type="button"
+              class="mobile-menu-toggle"
+              data-testid="mobile-menu-toggle"
+              aria-label="打开导航菜单"
+              :aria-expanded="mobileMenuOpen"
+              @click="mobileMenuOpen = !mobileMenuOpen"
+            >
+              <svg class="mobile-menu-btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none" />
+              </svg>
+            </button>
             <span
               v-if="isReviewer"
               class="reviewer-badge reviewer-mode-badge"
@@ -117,6 +129,12 @@
           </transition>
         </router-view>
       </main>
+      <div
+        v-if="mobileMenuOpen"
+        class="sidebar-backdrop"
+        data-testid="sidebar-backdrop"
+        @click="closeMobileMenu"
+      />
     </div>
         </template>
       </div>
@@ -145,7 +163,7 @@ import { fetchCreatorOverview, fetchStudioSummary } from './api/index.js'
 import { useBootState } from './composables/useBootState.js'
 import { useWorkflowSocket } from './composables/index.js'
 import { useNavStore, useRoleStore, useStudioStore, useConnectivityStore } from './stores/index.js'
-import { computed, onMounted, provide, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { BRAND } from './config/brand.js'
 import { resolveEffectiveCreationMode } from './utils/effectiveCreationMode.js'
@@ -164,6 +182,25 @@ function toggleTheme() {
 }
 
 const router = useRouter()
+
+// --- 移动端抽屉（REQ-003）：汉堡唤出 off-canvas 侧栏 ---
+const mobileMenuOpen = ref(false);
+function closeMobileMenu() {
+  mobileMenuOpen.value = false;
+}
+// 路由切换时自动收起抽屉
+watch(() => router.currentRoute.value.fullPath, closeMobileMenu);
+// 抽屉打开时锁 body 滚动，避免背景滚动
+watch(mobileMenuOpen, (open) => {
+  document.body.style.overflow = open ? 'hidden' : '';
+});
+function onMobileKeydown(event) {
+  if (event.key === 'Escape') closeMobileMenu();
+}
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onMobileKeydown);
+  document.body.style.overflow = '';
+});
 
 const navStore = useNavStore()
 const roleStore = useRoleStore()
@@ -294,6 +331,7 @@ watch(
 )
 
 onMounted(async () => {
+  window.addEventListener('keydown', onMobileKeydown);
   const savedTheme = localStorage.getItem('lingwen-theme');
   if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
     isDarkMode.value = true;
@@ -355,6 +393,7 @@ function isNavItemActive(itemId) {
 function onNavClick(itemId) {
   navigateTo?.(itemId, { clearFocus: true })
   router.push(`/${itemId}`)
+  closeMobileMenu()
 }
 </script>
 
@@ -693,6 +732,46 @@ function onNavClick(itemId) {
   border: var(--border-width) solid var(--border-color);
   border-radius: var(--radius-sm);
   color: var(--color-text-dim);
+}
+
+/* 移动端抽屉（REQ-003）：桌面隐藏汉堡，<=768px 显示并唤出侧栏 */
+.mobile-menu-toggle {
+  display: none;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-muted);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.mobile-menu-btn-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 99;
+}
+
+@media (max-width: 768px) {
+  .mobile-menu-toggle {
+    display: inline-flex;
+  }
+  .sidebar-backdrop {
+    display: block;
+  }
+  .sidebar {
+    z-index: 100;
+    transition: transform var(--transition-normal);
+  }
 }
 
 .theme-toggle {

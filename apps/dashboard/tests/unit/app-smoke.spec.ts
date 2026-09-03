@@ -280,6 +280,34 @@ describe('App smoke (Phase 9.31 F15)', () => {
     expect(wrapper.find(byTestid('ask-tab-chat')).exists()).toBe(true)
   })
 
+  test('mobile drawer: hamburger opens off-canvas sidebar, backdrop closes it', async () => {
+    const { wrapper } = await mountApp()
+    const sidebar = wrapper.find(byTestid('app-sidebar'))
+    const toggle = wrapper.find(byTestid('mobile-menu-toggle'))
+    expect(toggle.exists()).toBe(true)
+    expect(sidebar.classes('open')).toBe(false)
+
+    // 点击汉堡唤起抽屉 + 遮罩
+    await toggle.trigger('click')
+    await flushPromises()
+    expect(sidebar.classes('open')).toBe(true)
+    expect(wrapper.find(byTestid('sidebar-backdrop')).exists()).toBe(true)
+
+    // 点击遮罩关闭
+    await wrapper.find(byTestid('sidebar-backdrop')).trigger('click')
+    await flushPromises()
+    expect(sidebar.classes('open')).toBe(false)
+    expect(wrapper.find(byTestid('sidebar-backdrop')).exists()).toBe(false)
+
+    // 再次唤起后，点击导航项关闭抽屉
+    await toggle.trigger('click')
+    await flushPromises()
+    expect(sidebar.classes('open')).toBe(true)
+    await wrapper.find(byTestid('nav-ask')).trigger('click')
+    await flushPromises()
+    expect(sidebar.classes('open')).toBe(false)
+  })
+
   test('app-root smart lands on write when project has chapters', async () => {
     const { wrapper } = await mountApp()
     expect(wrapper.find(byTestid('app-root')).exists()).toBe(true)
