@@ -1,6 +1,6 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v25.4 (Phase 25.4 收尾) · 更新: 2026-09-03
+> **版本**: v25.9 (Phase 25.9 收尾) · 更新: 2026-09-03
 > 当前状态: `collaboration/CURRENT_STATUS.md` · 待办: `collaboration/BACKLOG.md` · 版本史: `docs/superpowers/archive/PHASE_HISTORY.md`
 > 最高优先级参考: `.lingwen/architecture.yml`
 
@@ -110,8 +110,12 @@ python lingwen.py doctor
 
 ## 已知遗留
 
+- ✅ **v25.9 human_review 流水线修复**（2026-09-03 ff-merge `0a6f4346`）：mc_workflow.py 自仓库迁移后是 hallucinated stub；从 git history `5c4259e5:novel-factory/infra/agent_system/master_controller.py` 还原真实实现，对齐新 GoTScheduler API，解 4 个 dashboard smoke skip + 顺带 +15 cascade fixed。0 改范围（got_bridge.py / chapter_golden_path.py / apps.studio_api/* / infra/got/* / architecture.yml / HANDOFF*.md）。
 - **Prod preview regression** (Phase 114 accepted)：cytoscape-fcose CJS 与 rollup commonjs 插件不兼容，5 个 phase 投入失败。dev baseline 仍是 authoritative measurement。E2E Playwright runtime 暂时阻塞。
 - **vis-network install on fresh clone** (Phase 118 发现)：fresh checkout 下 `apps/dashboard/node_modules/` 缺 vis-network, 跑 frontend test 全失败。必须 `cd apps/dashboard && pnpm install`。
+- **84 pre-existing cascade failures**（v25.9 发现）：`tests/got` + `tests/agent_system` 共 84 failing，pre-existing（推测 `mc_writing.py` 类似 gutted）。worktree 内 `git stash` 后同一组测试仍 fail 同根因。后续 Phase 排查。
+- **架构债（v25.9 推后）**：`infra.got.*` 迁至 `packages/lingwen-got/`；`chapter_golden_path.py` 反向 import `apps.studio_api.*` 整改；HANDOFF 文档 `latest_decision_queue` 措辞修订。
+- **code review nits（v25.9 Phase 26+ carryover）**：`run_workflow` orchestration sprawl → 拆 `WorkflowRunner` service；`self._last_*` 散点 → 整合 `WorkflowState` dataclass；`start_nodes=None` 时 `resume_workflow` 重跑行为需 E2E 验证。
 
 ---
 

@@ -1,9 +1,9 @@
 # 待办事项列表
 
 > **最后更新**: 2026-09-02  
-> **更新者**: 协调者（已从 v12/Phase15 刷新至 v25.1）  
+> **更新者**: 协调者（v25.9 收尾；已从 v12/Phase15 刷新至 v25.9）  
 > **优先级**: P0 > P1 > P2 > P3  
-> **事实来源**: 本仓库当前版本在 `CLAUDE.md` v25.1；并行开发入口见根 `COORDINATION.md`
+> **事实来源**: 本仓库当前版本在 `CLAUDE.md` v25.9；并行开发入口见根 `COORDINATION.md`
 
 ---
 
@@ -46,6 +46,11 @@
 | P2-MULTI | multi-LLM 并发批次 | 并行吞吐能力（较大，后端 B 自服务列表收尾项） | 后端 B（自服务完成） | ✅ 完成 | 2026-09-02 |
 | P2-DTOMIGR | usePilotBatch DTO migration | 迁移至 `@/api/studio` re-export（技术债） | 会话-A（自服务完成） | ✅ 完成 | 2026-09-02 |
 | P2-REG | Phase 114 prod preview regression | 2026-09-03 实测：cytoscape-fcose 历史根因已随图库迁移 vis-network 消失；真实回归为 v16.2.8 迁移遗留 3 处陈旧引用（useCreatorAdvanceBatch 旧名 generateCreatorVolumeSummary + api/index.js 桶内陈旧别名 + 补缺失 fetchCreatorOverview） | 协调者（本会话） | ✅ 修复 `80790b76` | 2026-09-03 |
+| P2-WFSTATE | _last_* 散点 → WorkflowState dataclass | mc_workflow.py 5 个 self._last_* (不同默认值) 易半初始化。整合 dataclass 更类型安全、易测 | 后端 B（自服务） | 📋 待开始 | 2026-09-03 |
+| P2-WFRUNNER | WorkflowRunner service 拆分 | run_workflow orchestration 90+ 行偏多。拆 service 后 run_workflow 仅做编排、helper 收口 | 后端 B（自服务） | 📋 待开始 | 2026-09-03 |
+| P2-RESUME-VERIFY | start_nodes=None 时 resume_workflow 重跑 E2E 验证 | 代码 review 列为 important。scheduler 对已完成节点是否幂等无测试覆盖 | 后端 B（自服务） | 📋 待开始 | 2026-09-03 |
+| P2-MC-WRITING | 84 pre-existing cascade failures 根因 | tests/got + tests/agent_system 共 84 failing，pre-existing（推测 mc_writing.py 类似 gutted）。需独立 phase | 后端 B（自服务） | 📋 待开始 | 2026-09-03 |
+| P2-ARCHDEBT | 架构债（infra.got 迁移 + chapter_golden_path 反向 import + HANDOFF 措辞） | v25.9 显式 carryover：infra.got.* 迁 packages/lingwen-got/ 补 allowed_imports；chapter_golden_path.py 反向 import 整改；HANDOFF 文档 latest_decision_queue 措辞修订 | 后端 B（自服务） | 📋 待开始 | 2026-09-03 |
 
 > **后端 B 自服务顺序**：P2-QUEUE → P2-RESTART → P2-MULTI。每任务：rebase origin/master → 实现 → 完整 `pytest` + `ruff check` + `ruff format --check` 全绿 → 自 ff-merge 到 master → 认领下一个。**common 前置**：worktree 内跑测试/codegen 需 `export PYTHONPATH=$PWD/packages/lingwen-shared/src:$PYTHONPATH`（见 COORDINATION.md §6.5）。
 
@@ -55,6 +60,7 @@
 
 | 版本/阶段 | 内容 | 状态 |
 |------|------|------|
+| v25.9 (Phase 25.9) | human_review 流水线修复：mc_workflow.py 还原（git history 5c4259e5）+ 新 GoTScheduler API 对齐 + 4 dashboard smoke 解 skip + cascade +15 fixed / 0 new。master `0a6f4346` 4 commit | ✅ |
 | v25.1 (Phase 25.1) | 双会话并行开发合流：Track A event_types 过滤开关 + Track B batch templates，0 冲突 ff-merge 至 `a1826b33` | ✅ |
 | v25.0 (Phase 25) | SSE batch 增强 Filter/Replay/Auth（服务端 event_types 过滤 + 连接重放 + 读取门控） | ✅ |
 | v24.0 (Phase 24) | SSE 实时 batch 进度（`studio_batch_streamer.py` + `/events` 路由）替代 3s 轮询 | ✅ |
@@ -113,6 +119,7 @@
 
 | 时间 | 更新者 | 变更 |
 |------|--------|------|
+| 2026-09-03 | 协调者 | v25.9 human_review 流水线修复闭环：mc_workflow.py 还原（105→376 行）+ 4 dashboard smoke 解 skip + cascade +15 fixed / 0 new failures；master `0a6f4346` 4 commit ff-merge；carryover 5 项 Phase 26+ 候选 |
 | 2026-09-03 | 协调者 | v25.4 收尾：前端类型债清零（vue-tsc 0 error）+ batch templates 前端闭环（PilotTemplatePanel）+ socksio 依赖修复 + stash@{0} 清理。P2-DTOMIGR 由会话-A 完成，P2 候选全部完成 |
 | 2026-09-02 | Track A | REQ-001 切片 E「差异收尾」：`CreatorDeviationFinalize.vue` 可操作收尾清单，复用 `utils/batchDeviation.ts`（与节奏带共享批次偏差推导）+ 按批次持久化复核状态。至此 REQ-001 全部切片完成 |
 | 2026-09-02 | 协调者 | 黑板从 v12/Phase15 刷新至 v25.1：废弃过期 P1/P2/P15 记录，改为 P1-SHIM + Phase 26+ 候选 backlog |
