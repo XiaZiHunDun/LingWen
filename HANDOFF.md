@@ -35,7 +35,7 @@
 
 - **产品**：灵文工作室 — 可复用的小说生产 pipeline（init → preflight → batch → full-check → 试读包）
 - **非目标**：无止尽续写《星陨纪元》（星陨 = testbed，正史 ch001–360）
-- **仓库根**：`/home/ailearn/projects/AI-Incursion/domains/IP创作/projects/LingWen`（git root）
+- **仓库根**：当前 clone 目录（git root；本文不硬编码机器绝对路径）
 - **主代码**：项目根目录（~95%）
 
 ### 当前阶段
