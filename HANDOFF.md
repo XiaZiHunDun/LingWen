@@ -448,13 +448,13 @@ cd apps/dashboard && pnpm dev --port 5173 --strictPort &
 | `auditor` | `packages/lingwen_core/src/lingwen_core/agents/` | 审核员 A-J (10 个) | S1-S8 审核 |
 | `polisher` | `packages/lingwen_core/src/lingwen_core/agents/` | 读者 A-T (20 个) | 润色 |
 
-> v16 已将 Agent 实现从 `infra/agent_system/` 迁移至 `packages/lingwen_core/src/lingwen_core/agents/`（原 `infra/agent_system/` 已删除）。
+> v16 已将 Agent 实现从旧 `agent_system` 目录迁移至 `packages/lingwen_core/src/lingwen_core/agents/`（旧目录已删除）。
 
 每个 agent 通过 `switch_role("writer_b")` 切角色池, 角色池配置在 `.skills/writer-dept/writer-b/SKILL.md`。
 
 ### 4.2 12 SCENARIOS 路由
 
-`SCENARIO_HANDLERS` 路由表（原 `infra/agent_system/got_bridge.py`，v16 迁移至 `lingwen_core`；LLM scenario 转发），12 个 scenario 名称 (e.g. `chapter_writing`, `chapter_review`, `polish_emotional_pacing`, `cascade_preview` 等)。每个 scenario 对应 1 个 handler function, handler 调 MasterController 暴露的方法。
+`SCENARIO_HANDLERS` 路由表（v16 迁移自旧 `agent_system/got_bridge.py`，现归 `lingwen_core`；LLM scenario 转发），12 个 scenario 名称 (e.g. `chapter_writing`, `chapter_review`, `polish_emotional_pacing`, `cascade_preview` 等)。每个 scenario 对应 1 个 handler function, handler 调 MasterController 暴露的方法。
 
 ### 4.3 跨卷涟漪 (CVG, Cross-Volume Graph)
 
