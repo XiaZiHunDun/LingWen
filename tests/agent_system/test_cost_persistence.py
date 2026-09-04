@@ -120,7 +120,7 @@ class TestCostTrackerDB:
         assert _DB_PATH.name == "cost_tracker.db"
         # 父目录 = infra/.state (跟 reading_power.db / workflow.db 错开)
         assert _DB_PATH.parent.name == ".state"
-        assert _DB_PATH.parent.parent.name == "infra"
+        assert _DB_PATH.parent.parent.name == "lingwen_core"
 
 
 class TestCostTrackerDBSinceFilter:
