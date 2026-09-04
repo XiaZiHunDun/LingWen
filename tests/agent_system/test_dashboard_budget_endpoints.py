@@ -34,7 +34,9 @@ def _make_test_client(tmp_path: Path) -> tuple[TestClient, Any]:
     # Inject into adapter singleton (class-level _controller)
     MasterControllerAdapter._controller = controller
 
-    # 使用 create_app() 工厂 (apps/studio_api/app.py 用 lazy app 模式)
+    # create_app(master_controller=controller) is required: decisions/workflows routes
+    # read from this closure-injected controller, while /api/budgets reads from
+    # MasterControllerAdapter._controller (set above). Both must be set.
     app = create_app(master_controller=controller)
     return TestClient(app), service
 
