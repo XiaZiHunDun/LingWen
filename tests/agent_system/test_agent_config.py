@@ -29,11 +29,13 @@ def test_default_state_dir_is_absolute():
 
 
 def test_default_state_dir_under_project_root():
-    """DEFAULT_STATE_DIR 应指向 canonical infra/agent_system/ 目录
+    """DEFAULT_STATE_DIR 应指向 canonical packages/lingwen-core/src/lingwen_core/agents/ 目录
 
     Lockdown: 防止 parent counting bug 把 state_dir 写到错误的
-    novel-factory/agent_system/ 位置（之前的 bug：relationship_tracker
-    把 parent.parent.parent.parent 算成项目根，丢了 'infra/' 这一层）。
+    lingwen_core/ 位置（之前的 bug：relationship_tracker
+    把 parent.parent.parent.parent 算成项目根，丢了 'packages/' 这一层，
+    导致 state_dir 落到 packages/lingwen-core/src/ 而不是
+    packages/lingwen-core/src/lingwen_core/agents/）。
     """
     parts = Path(DEFAULT_STATE_DIR).parts
     assert "agents" in parts

@@ -7,7 +7,7 @@ Doc 4 §11 Phase 8.5: SQLite 持久化 CostRecord (mirror ReadingPowerDB pattern
 - record / records / total_cost / cost_by_scenario / cost_by_tier 行为
 - persistence: close conn 后重新 open DB 还能读到 (DB file on disk)
 - 幂等性: init_db 调多次不报错
-- 路径: 默认 db_path 在 infra/.state/cost_tracker.db
+- 路径: 默认 db_path 在 packages/lingwen-core/src/lingwen_core/.state/cost_tracker.db
 """
 
 from __future__ import annotations
@@ -113,12 +113,12 @@ class TestCostTrackerDB:
         assert len(db.records()) == 1
 
     def test_db_path_under_state_dir(self) -> None:
-        """默认 db_path 在 infra/.state/cost_tracker.db (gitignored)"""
+        """默认 db_path 在 packages/lingwen-core/src/lingwen_core/.state/cost_tracker.db (gitignored)"""
         # 不传 db_path — 用默认 _DB_PATH
         from lingwen_core.agents.cost_persistence import _DB_PATH
 
         assert _DB_PATH.name == "cost_tracker.db"
-        # 父目录 = infra/.state (跟 reading_power.db / workflow.db 错开)
+        # 父目录 = lingwen_core/.state (跟 reading_power.db / workflow.db 错开)
         assert _DB_PATH.parent.name == ".state"
         assert _DB_PATH.parent.parent.name == "lingwen_core"
 
