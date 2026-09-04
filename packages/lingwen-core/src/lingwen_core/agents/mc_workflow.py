@@ -12,17 +12,41 @@ run_workflow / resume_workflow / resolve_decision / list_pending_decisions
 - scheduler.resume(decision_node_id, option, resolved_by) 返 NodeExecution,
   需再 run() 一次才会推进下游节点
 - HumanDecisionQueue 的方法是 pending() / resolve(id, option, resolved_by=...)
+
+Phase 27 P2-WFRUNNER: run / resume / 4 internal helpers 拆到 WorkflowRunner service,
+Mixin 仅保留 5 薄代理 + 3 决策队列委托 + 1 懒 runner accessor.
 """
 
 import logging
 import uuid
-from typing import Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+
+if TYPE_CHECKING:
+    from lingwen_core.agents.workflow_runner import WorkflowRunner
 
 logger = logging.getLogger(__name__)
 
 
 class WorkflowMixin:
-    """工作流相关方法"""
+    """工作流相关方法 (Phase 27 拆 Runner 后).
+
+    Mixin 只留 5 薄代理 + 3 决策队列委托 + _get_runner() 懒加载.
+    run_workflow / resume_workflow 是 1 行 delegate → WorkflowRunner.
+    """
+
+    def _get_runner(self) -> "WorkflowRunner":
+        """懒加载 WorkflowRunner, 缓存到 self._workflow_runner.
+
+        首个 run_workflow / resume_workflow 调用触发 init, 后续复用同 instance.
+        __new__ 测试 stub 不走 __init__, 懒加载保证 stub 无 _workflow_runner
+        属性时也能正常调用.
+        """
+        runner = getattr(self, "_workflow_runner", None)
+        if runner is None:
+            from lingwen_core.agents.workflow_runner import WorkflowRunner
+            runner = WorkflowRunner(self)
+            self._workflow_runner = runner
+        return runner
 
     def advance_step(self, target_step: str, context: Optional[Dict] = None) -> Tuple[bool, str]:
         """推进工作流步骤"""
