@@ -766,3 +766,49 @@ class TestResumeE2EWithRealScheduler:
         assert summary2.paused is False
         # call_log: n1 (第一次), n3, n4 (第二次 — n2 DECISION 不调 compute_fn)
         assert scheduler._test_call_log == ["n1", "n3", "n4"]
+
+
+class TestRunWithNoneStartNodesDerivation:
+    """E2E 验证 start_nodes=None 推导 + 持久化 + resume 复用 (Phase 28)."""
+
+    def test_run_with_none_start_nodes_persists_derived_list_to_state(self) -> None:
+        """run(workflow_name, start_nodes=None) 后 state.start_nodes == derived list.
+
+        用真实 GoTScheduler + ThoughtGraph (3 节点: n1 root, n2 DECISION, n3 dependent).
+        """
+        from infra.got.data_structures import NodeType, ThoughtNode
+        from infra.got.graph import ThoughtGraph
+        from infra.got.scheduler import ComputeResult, GoTScheduler
+
+        # Setup real graph
+        graph = ThoughtGraph()
+        graph.add_node(ThoughtNode(node_id="n1", type=NodeType.GENERATION, name="gen1", description="gen1", depends_on=()))
+        graph.add_node(ThoughtNode(node_id="n2", type=NodeType.DECISION, name="dec", description="dec", depends_on=("n1",)))
+        graph.add_node(ThoughtNode(node_id="n3", type=NodeType.GENERATION, name="gen3", description="gen3", depends_on=("n2",)))
+
+        scheduler = GoTScheduler(graph, compute_fn=lambda n, i: ComputeResult(output={"x": 1}, cost_tokens=1), max_backtracks=0)
+
+        # Setup WorkflowRunner via master stub
+        master = MasterController.__new__(MasterController)
+        from lingwen_core.agents.workflow_state import WorkflowState
+        master._state = WorkflowState.empty()
+        master.budget_service = None
+        master._decision_queue = MagicMock(pending=MagicMock(return_value=[]), add=MagicMock())
+
+        # Monkeypatch build_got_scheduler to return real scheduler/graph
+        from lingwen_core.agents import got_bridge
+        original = got_bridge.build_got_scheduler
+        got_bridge.build_got_scheduler = MagicMock(return_value=(scheduler, graph))
+        try:
+            runner = WorkflowRunner(master)
+            runner._maybe_memory_context = MagicMock(return_value=None)
+            runner._maybe_incremental_backfill = MagicMock(return_value=None)
+            runner._harvest_decision_specs = MagicMock(return_value=[])
+
+            # run(start_nodes=None) — 应推导 ["n1"] (n1 是 root, n2 依赖 n1)
+            runner.run(workflow_name="test", start_nodes=None)
+
+            # 验证 state.start_nodes 缓存 derived list
+            assert list(master._state.start_nodes) == ["n1"]
+        finally:
+            got_bridge.build_got_scheduler = original
