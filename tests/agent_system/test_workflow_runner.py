@@ -5,8 +5,6 @@
 """
 from __future__ import annotations
 
-from unittest.mock import MagicMock
-
 from lingwen_core.agents.workflow_runner import WorkflowRunner
 from lingwen_pipeline.master_controller import MasterController
 
