@@ -1,8 +1,8 @@
 # 灵文项目状态看板
 
-> **最后更新**: 2026-09-03
-> **更新者**: 协调者（整合 Track A + Track B 双会话成果 + v25.4 收尾 + v25.5 打磨完善 + v25.6 P2-REG 修复 + REQ-003 移动端 + v25.7 全面验收 + tests/dashboard 基线清理 + v25.8 处理 2 项遗留）
-> **下一协作**: 前端 P2（DRAWER+INSIGHT）+ REQ-001 全部切片 + 后端 P2（QUEUE+RESTART+MULTI）已全部合入 master；v25.4 类型债清零 + batch templates 闭环；v25.5 首启引导 + 质量检查诚实标注 + 细节润色；v25.6 修复 P2-REG prod build + REQ-003 移动端抽屉；v25.7 全面验收（前端 1862 + 后端全套件全绿）+ tests/dashboard 15 基线归零；v25.8 2 项遗留处置（creator 偏好契约修复 + human_review 迁移归类为全流水线重构）
+> **最后更新**: 2026-09-04
+> **更新者**: 协调者（v25.9 收尾 + v26.0 P2-WFSTATE 完成；carryover 4 项 → Phase 27+）
+> **下一协作**: v26.0 P2-WFSTATE 已闭环：7 个 `self._last_*` 散点整合为单个 `self._state: WorkflowState` frozen dataclass；TDD 8 unit + 3 refactor guard；9 src + 16 test 文件迁移；zero behavior change；carryover 剩 P2-WFRUNNER / P2-RESUME-VERIFY / P2-MC-WRITING / P2-ARCHDEBT 4 项。Phase 27+ 顺位：WFRUNNER 紧接（建议）/ RESUME-VERIFY（小）/ MC-WRITING（独立大 phase 调查 84+ pre-existing cascade）/ ARCHDEBT（战术分散）
 
 ---
 
@@ -10,9 +10,9 @@
 
 | 项目 | 状态 |
 |------|------|
-| **版本** | v25.9（Phase 25.9 — human_review 流水线修复，闭环 v25.8 归类的 P0 技术债） |
-| **git main** | master `0a6f4346`（已推送 origin，4 commit） |
-| **当前阶段** | v25.8 归类的 P0 技术债已闭环：mc_workflow.py 还原（git history 5c4259e5）+ 新 GoTScheduler API 对齐 + 4 dashboard smoke 解 skip + cascade +15 fixed；tests/dashboard 357 passed + 3 skipped；ruff clean；cascade +15 / 0 new failures；carryover 84 pre-existing + 架构债 + code review nits 推到下阶段 |
+| **版本** | v26.0（Phase 26 — P2-WFSTATE `_last_*` 散点整合 `WorkflowState` dataclass） |
+| **git main** | master `0a6f4346` + Phase 26 6 commits 待 ff-merge（待本次合入；master ff 后为 `ee3396ae` 顶） |
+| **当前阶段** | v25.9 后第一 refactor 完成：7 散点 → 1 frozen dataclass；spec 99bed427 + plan 14f40bd6 + feat 01c504cf + refactor src 1409663b + refactor tests 6ec11b1b + guard ee3396ae = 6 commits。tests/dashboard 357+3 / cross_volume 15 / test_workflow_state 11 全过；grep 7 fields 0 hits；ruff clean；0 new failure（stash 验证：commit 1409663b 上 test_phase7_1 + test_master_controller_workflow 已 pre-existing fail 与本 refactor 无关） |
 | **并行开发** | [COORDINATION.md](https://github.com) §3 自治契约：两会话自认领→全量门绿→自 ff-merge 到 master（常驻 worktree `track-a`/`track-b`）|
 | **阻塞项** | 无 |
 
@@ -40,6 +40,7 @@
 | 项 | 内容 | 验证 |
 |----|------|------|
 | **v25.9 human_review 流水线修复** | master 4 commit ff-merge `0a6f4346`：mc_workflow.py 自仓库迁移后是 hallucinated stub，从 git history `5c4259e5:novel-factory/infra/agent_system/master_controller.py` 还原真实实现，对齐新 GoTScheduler API。`run_workflow` 改调 `got_bridge.build_got_scheduler(master, ...)` + 返回 wrapper dict；`resume_workflow` 改签名 `(decision_id, option, resolved_by='human')` 三步走（resolve queue → scheduler.resume → re-harvest → re-run scheduler）；`list_pending_decisions` 改调 `queue.pending()`；`resolve_decision` 签名修正。恢复 4 个未迁移 helper（`_collect_executions` / `_maybe_memory_context` / `_maybe_incremental_backfill` / `_harvest_decision_specs`）。Phase 8.12 `budget_service.set(scope="run", ...)` 恢复。tests/dashboard/test_human_review_smoke.py 4 处 `@pytest.mark.skip` 移除。**0 改范围**：got_bridge.py / chapter_golden_path.py / apps.studio_api/* / infra/got/* / architecture.yml / HANDOFF*.md | ✅ tests/dashboard 357 passed + 3 skipped（+4 -4skip）；cascade +15 fixed / 0 new failures；ruff clean |
+| **v26.0 P2-WFSTATE 散点整合** | master Phase 26 6 commits 待 ff-merge `ee3396ae`：`99bed427` spec + `14f40bd6` plan + `01c504cf` feat WorkflowState dataclass (TDD 8 unit) + `1409663b` refactor src (7 files 7 散点 → 1 dataclass + 2 atomic with_updates) + `6ec11b1b` refactor tests (9 files Pattern A/B/C) + `ee3396ae` refactor guard (3 守护测试防回潮)。`_last_scheduler` / `_last_graph` / `_last_workflow_name` / `_last_start_nodes` / `_last_initial_inputs` / `_last_incremental_backfill` / `_last_memory_context` → `self._state: WorkflowState` (frozen dataclass with `with_updates(**kwargs)` + `empty()` classmethod + `default_factory` list/dict 独立)。0 行为变更；外部 API 不动 | ✅ tests/dashboard 357 + 3（UNCHANGED）；tests/cross_volume/test_incremental_backfill.py 15（UNCHANGED）；tests/got/test_decision_pause_resume.py 17（UNCHANGED）；tests/agent_system/test_workflow_state.py 11 NEW（8 unit + 3 guard）；grep 7 fields 0 hits (down from 15 baseline)；ruff clean；0 new failure 验证（stash 回退到 src commit 上同样 9 fail pre-existing） |
 | **v25.8 遗留 2 项处置** | ① **creator 偏好契约真缺陷修复**：`CreatorPreferencesResponse`（lingwen-shared 契约）强制要求 `creation_mode`/`quality_profile`，而 lingwen-creator 迁移后 payload 未提供 → GET /api/creator/preferences 触发 pydantic 校验错误。修复：`preferences.py` 新增 `creation_settings_from_project` 从项目 `config/project.yaml` 解析创作模式/质量配置并入 payload；`test_creator_preferences_get_put` 去 skip 并按契约校验 ② **human_review 迁移**：应用迁移友好修复（`GotScheduler`→`GoTScheduler`、`dashboard.*`→`apps.studio_api.*` 导入），深查确认 MasterController 人审流水线整体陈旧（WorkflowMixin.run_workflow 仍按旧 GoTScheduler 签名、build_router 缺失、cost_tracker/latest_decision_queue 未初始化），run_workflow 实际 500 失败 → 归类为预存在缺陷需整体重构，4 用例诚实 skip | ✅ tests/dashboard 353 passed + 7 skipped；tests/ci 205 passed + 1 skipped；ruff 0 |
 | **v25.7 全面验收** | 全门复核：前端 vitest 1862 passed + ESLint/knip/vue-tsc/build 0；后端 studio_api+shared 222 / lingwen-llm 11 / tests/ci+dashboard 557 passed 9 skipped；`lingwen.py doctor` 需 PYTHONPATH + 仓库外内容仓库 | ✅ 全绿 |
 | **v25.7 tests/dashboard 基线清理** | `82e75fd9` tests/dashboard 由 15 failed 归零（352 passed + 8 skipped）：契约漂移修复（cascade id→run_id、ref-graph total_nodes/edges、health 断言放宽）；**真 bug 修复** infra/cross_volume/storage.py 3 处遗留 `dashboard.*` 懒导入改 `apps.studio_api.*`（级联/审计/cvg_ws WS 推送此前为被 try/except 吞掉的死代码）；8 项环境基线诚实 skip（均需仓库外内容仓库或 agent 侧修复） | ✅ ruff 0 / 全绿 |

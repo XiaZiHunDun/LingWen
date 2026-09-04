@@ -46,7 +46,7 @@
 | P2-MULTI | multi-LLM 并发批次 | 并行吞吐能力（较大，后端 B 自服务列表收尾项） | 后端 B（自服务完成） | ✅ 完成 | 2026-09-02 |
 | P2-DTOMIGR | usePilotBatch DTO migration | 迁移至 `@/api/studio` re-export（技术债） | 会话-A（自服务完成） | ✅ 完成 | 2026-09-02 |
 | P2-REG | Phase 114 prod preview regression | 2026-09-03 实测：cytoscape-fcose 历史根因已随图库迁移 vis-network 消失；真实回归为 v16.2.8 迁移遗留 3 处陈旧引用（useCreatorAdvanceBatch 旧名 generateCreatorVolumeSummary + api/index.js 桶内陈旧别名 + 补缺失 fetchCreatorOverview） | 协调者（本会话） | ✅ 修复 `80790b76` | 2026-09-03 |
-| P2-WFSTATE | _last_* 散点 → WorkflowState dataclass | mc_workflow.py 5 个 self._last_* (不同默认值) 易半初始化。整合 dataclass 更类型安全、易测 | 后端 B（自服务） | 📋 待开始 | 2026-09-03 |
+| P2-WFSTATE | _last_* 散点 → WorkflowState dataclass | mc_workflow.py 5 个 self._last_* (不同默认值) 易半初始化。整合 dataclass 更类型安全、易测 | 后端 B（自服务） | ✅ 完成（Phase 26 commit `ee3396ae`） | 2026-09-03 |
 | P2-WFRUNNER | WorkflowRunner service 拆分 | run_workflow orchestration 90+ 行偏多。拆 service 后 run_workflow 仅做编排、helper 收口 | 后端 B（自服务） | 📋 待开始 | 2026-09-03 |
 | P2-RESUME-VERIFY | start_nodes=None 时 resume_workflow 重跑 E2E 验证 | 代码 review 列为 important。scheduler 对已完成节点是否幂等无测试覆盖 | 后端 B（自服务） | 📋 待开始 | 2026-09-03 |
 | P2-MC-WRITING | 84 pre-existing cascade failures 根因 | tests/got + tests/agent_system 共 84 failing，pre-existing（推测 mc_writing.py 类似 gutted）。需独立 phase | 后端 B（自服务） | 📋 待开始 | 2026-09-03 |
