@@ -738,3 +738,31 @@ class TestResumeE2EWithRealScheduler:
         assert scheduler._test_call_log == ["n1"]
         # n2 仍是 WAITING (状态跨 run 保留 — graph._executions 不被 reset)
         assert scheduler._graph.get_execution("n2").status == NodeStatus.WAITING
+
+    def test_resume_after_decision_pause_continues_from_cached_start_nodes(self) -> None:
+        """DECISION pause → scheduler.resume → scheduler.run(start_nodes): 下游执行, 已执行节点跳过.
+
+        验证: scheduler.resume 把 n2 改 COMPLETED → 下次 run 时 n2 不进 ready_nodes
+        → n3 ready → execute → n4 ready → execute.
+        """
+        from infra.got.data_structures import NodeStatus
+
+        scheduler, _ = self._build_graph_with_decision()
+
+        # 1) 第一次 run: n1 → n2 (pause)
+        summary1 = scheduler.run(start_nodes=["n1"])
+        assert summary1.completed == 1
+        assert summary1.paused_nodes == ("n2",)
+
+        # 2) Resume DECISION (Phase 5 API — infra/got/scheduler.py:256-298)
+        decision_exec = scheduler.resume(decision_node_id="n2", option="approve")
+        assert decision_exec.status == NodeStatus.COMPLETED
+        assert decision_exec.output == {"option": "approve", "resolved_by": "human"}
+
+        # 3) 第二次 run (resume 后继续) — 用 cached start_nodes ["n1"]
+        summary2 = scheduler.run(start_nodes=["n1"])
+        # n1 COMPLETED → skip; n2 COMPLETED → skip; n3 now ready → execute; n4 ready → execute
+        assert summary2.completed == 2  # n3 + n4
+        assert summary2.paused is False
+        # call_log: n1 (第一次), n3, n4 (第二次 — n2 DECISION 不调 compute_fn)
+        assert scheduler._test_call_log == ["n1", "n3", "n4"]
