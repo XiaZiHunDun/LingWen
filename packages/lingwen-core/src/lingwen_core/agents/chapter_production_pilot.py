@@ -437,7 +437,7 @@ def run_production_pilot(
     executions = run_out.get("executions") or {}
     emit_exec = executions.get("emit_chapter")
     emit_ok = emit_exec is not None and emit_exec.status == NodeStatus.COMPLETED
-    mem_ctx = run_out.get("memory_context") or master._last_initial_inputs.get(
+    mem_ctx = run_out.get("memory_context") or master._state.initial_inputs.get(
         "memory_context",
         {},
     )

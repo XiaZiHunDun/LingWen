@@ -83,6 +83,7 @@ def setup_golden_workflow_dir(state_dir: Path) -> Path:
 def build_stub_master_controller(state_dir: Path) -> Any:
     """Minimal MasterController for golden path (skips __init__, 0 LLM)."""
     from lingwen_core.agents.decision_queue import HumanDecisionQueue
+    from lingwen_core.agents.workflow_state import WorkflowState
     from lingwen_pipeline.master_controller import MasterController
 
     controller = MasterController.__new__(MasterController)
@@ -92,11 +93,7 @@ def build_stub_master_controller(state_dir: Path) -> Any:
     controller._orchestrator = None
     controller._skill_registry = None
     controller._state_manager = None
-    controller._last_scheduler = None
-    controller._last_graph = None
-    controller._last_workflow_name = None
-    controller._last_start_nodes = []
-    controller._last_initial_inputs = {}
+    controller._state = WorkflowState.empty()
     controller._incremental_backfill_enabled = None
     controller._memory_rag_mode = "stub"
     return controller
@@ -135,7 +132,7 @@ def run_golden_path(
     finalize_exec = graph.get_execution("finalize")
     finalize_ok = finalize_exec is not None and finalize_exec.status == NodeStatus.COMPLETED
     decisions_path = state_dir / "decisions.json"
-    memory_ctx = controller._last_initial_inputs.get("memory_context") or {}
+    memory_ctx = controller._state.initial_inputs.get("memory_context") or {}
     memory_attached = bool(memory_ctx)
     memory_source = memory_ctx.get("source") if memory_ctx else None
 

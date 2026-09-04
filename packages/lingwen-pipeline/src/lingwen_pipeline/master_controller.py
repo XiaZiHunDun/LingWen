@@ -42,6 +42,7 @@ from lingwen_core.agents.mc_workflow import WorkflowMixin
 from lingwen_core.agents.mc_writing import WritingMixin
 from lingwen_core.agents.orchestration.task_orchestrator import TaskOrchestrator
 from lingwen_core.agents.registry.skill_registry import SkillRegistry
+from lingwen_core.agents.workflow_state import WorkflowState
 
 logger = logging.getLogger(__name__)
 
@@ -107,13 +108,7 @@ class MasterController(WorkflowMixin, WritingMixin, EditingMixin, SocialEngineMi
 
         self._decision_queue = HumanDecisionQueue(state_dir=self._config.state_dir)
 
-        self._last_scheduler: Optional[Any] = None
-        self._last_graph: Optional[Any] = None
-        self._last_workflow_name: Optional[str] = None
-        self._last_start_nodes: List[str] = []
-        self._last_initial_inputs: Dict[str, Any] = {}
-        self._last_incremental_backfill: Any = None
-        self._last_memory_context: Optional[Dict[str, Any]] = None
+        self._state = WorkflowState.empty()
 
     def get_router(self) -> AIRouter:
         """获取AIRouter实例"""

@@ -58,8 +58,9 @@ def build_production_summary(
 
 
 def build_production_summary_from_controller(controller: Any) -> dict[str, Any] | None:
-    """Read MC._last_* cache after run_workflow / resume_workflow."""
-    graph = getattr(controller, "_last_graph", None)
+    """Read controller._state cache after run_workflow / resume_workflow."""
+    state = controller._state
+    graph = state.graph
     if graph is None:
         return None
 
@@ -69,9 +70,9 @@ def build_production_summary_from_controller(controller: Any) -> dict[str, Any] 
             executions[nid] = graph.get_execution(nid)
 
     return build_production_summary(
-        workflow_name=getattr(controller, "_last_workflow_name", None),
-        initial_inputs=getattr(controller, "_last_initial_inputs", None),
+        workflow_name=state.workflow_name,
+        initial_inputs=state.initial_inputs,
         executions=executions,
-        incremental_backfill=getattr(controller, "_last_incremental_backfill", None),
-        memory_context=getattr(controller, "_last_memory_context", None),
+        incremental_backfill=state.incremental_backfill,
+        memory_context=state.memory_context,
     )

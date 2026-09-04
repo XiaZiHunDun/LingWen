@@ -116,7 +116,7 @@ class MasterControllerAdapter:
        resolve_decision / run_workflow / resume_workflow)
     2. 补全 MC 没暴露的方法:
        - defer_decision / cancel_decision → queue.defer/cancel
-       - get_active_workflow_status → 读 MC._last_* 缓存
+       - get_active_workflow_status → 读 MC._state 缓存
     3. 转换 run_workflow/resume_workflow 的返回值
        (ExecutionSummary/NodeExecution 含 datetime/Enum,
        FastAPI 不能自动序列化 → 转 dict)
@@ -228,22 +228,23 @@ class MasterControllerAdapter:
             resolved = result["resolved_decision"]
             if hasattr(resolved, "to_dict"):
                 d["resolved_decision"] = resolved.to_dict()
-        d["workflow_name"] = getattr(self._controller, "_last_workflow_name", None)
+        d["workflow_name"] = self._controller._state.workflow_name
         d["memory_context"] = result.get("memory_context")
         d["production_summary"] = _build_production_summary_for_result(
             workflow_name=d["workflow_name"],
             result=result,
-            initial_inputs=getattr(self._controller, "_last_initial_inputs", None),
+            initial_inputs=self._controller._state.initial_inputs,
         )
         return d
 
     def get_active_workflow_status(self, since: Optional[datetime] = None) -> dict[str, Any]:
-        """读 MC._last_* 缓存(Phase 5 run_workflow 写入).
+        """读 MC._state 缓存(Phase 5 run_workflow 写入).
         Phase 8.16: since 透传到 3 _extract_cost_* helper (additive kwarg).
         """
-        scheduler = getattr(self._controller, "_last_scheduler", None)
-        graph = getattr(self._controller, "_last_graph", None)
-        workflow_name = getattr(self._controller, "_last_workflow_name", None)
+        state = self._controller._state
+        scheduler = state.scheduler
+        graph = state.graph
+        workflow_name = state.workflow_name
         if scheduler is None or graph is None:
             return {
                 "is_active": False,
@@ -304,7 +305,7 @@ class MasterControllerAdapter:
 
         production_summary = build_production_summary_from_controller(self._controller)
         incremental_backfill = backfill_stats_to_dict(
-            getattr(self._controller, "_last_incremental_backfill", None)
+            self._controller._state.incremental_backfill
         )
 
         return {

@@ -116,26 +116,29 @@ class WorkflowMixin:
             pending_decisions = self._harvest_decision_specs(graph, initial_inputs=seed_inputs)
 
             # emit_chapter 等节点在 scheduler.run 期间读 chapter_num — 须先于 run 写入
-            self._last_initial_inputs = dict(seed_inputs)
-            self._last_workflow_name = workflow_name
-            self._last_start_nodes = list(start_nodes)
+            self._state = self._state.with_updates(
+                initial_inputs=dict(seed_inputs),
+                workflow_name=workflow_name,
+                start_nodes=list(start_nodes),
+            )
 
             summary = scheduler.run(start_nodes=start_nodes, initial_inputs=seed_inputs)
 
             executions = self._collect_executions(graph)
 
             # 缓存活跃工作流状态 (Phase 5) — resume_workflow() / dashboard 用它
-            self._last_scheduler = scheduler
-            self._last_graph = graph
-
             incremental_backfill = self._maybe_incremental_backfill(
                 workflow_name=workflow_name,
                 initial_inputs=seed_inputs,
                 executions=executions,
                 summary=summary,
             )
-            self._last_incremental_backfill = incremental_backfill
-            self._last_memory_context = memory_context
+            self._state = self._state.with_updates(
+                scheduler=scheduler,
+                graph=graph,
+                incremental_backfill=incremental_backfill,
+                memory_context=memory_context,
+            )
 
             return {
                 "summary": summary,
@@ -195,8 +198,8 @@ class WorkflowMixin:
             ValueError: 决策已 RESOLVED / option 不在 options / node 非 WAITING
         """
         # 1. 检查有活跃工作流
-        scheduler = getattr(self, "_last_scheduler", None)
-        graph = getattr(self, "_last_graph", None)
+        scheduler = self._state.scheduler
+        graph = self._state.graph
         if scheduler is None or graph is None:
             raise RuntimeError("no active workflow; call run_workflow() first before resume_workflow()")
 
@@ -219,11 +222,11 @@ class WorkflowMixin:
         # 5. 扫描新 DECISION 节点 (下游可能有)
         pending_decisions = self._harvest_decision_specs(
             graph,
-            initial_inputs=getattr(self, "_last_initial_inputs", None) or {},
+            initial_inputs=self._state.initial_inputs,
         )
 
         # 6. 继续执行 — 用上次缓存的 start_nodes
-        start_nodes = list(getattr(self, "_last_start_nodes", None) or [])
+        start_nodes = list(self._state.start_nodes)
         if not start_nodes:
             start_nodes = [nid for nid in graph.node_ids() if not graph.get_node(nid).depends_on]
 
@@ -233,12 +236,12 @@ class WorkflowMixin:
         executions = self._collect_executions(graph)
 
         incremental_backfill = self._maybe_incremental_backfill(
-            workflow_name=getattr(self, "_last_workflow_name", "") or "",
-            initial_inputs=getattr(self, "_last_initial_inputs", None),
+            workflow_name=self._state.workflow_name,
+            initial_inputs=self._state.initial_inputs,
             executions=executions,
             summary=summary,
         )
-        self._last_incremental_backfill = incremental_backfill
+        self._state = self._state.with_updates(incremental_backfill=incremental_backfill)
 
         return {
             "summary": summary,
@@ -247,7 +250,7 @@ class WorkflowMixin:
             "pending_decisions": pending_decisions,
             "resolved_decision": resolved,
             "incremental_backfill": incremental_backfill,
-            "memory_context": getattr(self, "_last_memory_context", None),
+            "memory_context": self._state.memory_context,
         }
 
     def list_pending_decisions(self) -> list[dict[str, Any]]:
@@ -344,7 +347,7 @@ class WorkflowMixin:
         pending_node_ids = {d.node_id for d in queue.pending()}
         seed = initial_inputs
         if seed is None:
-            seed = getattr(self, "_last_initial_inputs", None) or {}
+            seed = self._state.initial_inputs
 
         harvested: List[Dict[str, Any]] = []
         for nid in graph.node_ids():

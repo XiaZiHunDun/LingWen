@@ -299,7 +299,7 @@ class AgentComputeFn:
 
         chapter_num = int(_resolve_field(inputs, "chapter_num", 0) or 0)
         if not chapter_num:
-            last_inputs = getattr(self._master, "_last_initial_inputs", None) or {}
+            last_inputs = self._master._state.initial_inputs
             chapter_num = int(last_inputs.get("chapter_num") or 0)
         if not chapter_num:
             return ComputeResult(
