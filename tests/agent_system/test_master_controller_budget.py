@@ -42,6 +42,10 @@ def _make_stub_master(state_dir: Path) -> MasterController:
     master._router = MagicMock()
     master.cost_tracker = MagicMock()
     master._current_budget_usd = None
+    # Phase 26: WorkflowState dataclass on MasterController (consumed by WorkflowRunner)
+    from lingwen_core.agents.workflow_state import WorkflowState
+
+    master._state = WorkflowState.empty()
     return master
 
 
@@ -76,7 +80,7 @@ class TestMasterControllerBudget:
         # Stub budget_service
         master.budget_service = MagicMock()
         # Stub run_workflow 内部依赖 (避免真实 GoT 调度)
-        master._harvest_decision_specs = MagicMock(return_value=[])
+        master._get_runner()._harvest_decision_specs = MagicMock(return_value=[])
         original = _patch_got_bridge()
         try:
             master.run_workflow(workflow_name="test", cost_budget_usd=0.1)
@@ -95,7 +99,7 @@ class TestMasterControllerBudget:
         """run_workflow 调 budget_service.set(scope='run', usd=X, run_id=...)"""
         master = _make_stub_master(tmp_state_dir)
         master.budget_service = MagicMock()
-        master._harvest_decision_specs = MagicMock(return_value=[])
+        master._get_runner()._harvest_decision_specs = MagicMock(return_value=[])
         original = _patch_got_bridge()
         try:
             master.run_workflow(workflow_name="test", cost_budget_usd=0.1)
@@ -113,7 +117,7 @@ class TestMasterControllerBudget:
         """budget_service=None → 不 set (backward compat)"""
         master = _make_stub_master(tmp_state_dir)
         master.budget_service = None
-        master._harvest_decision_specs = MagicMock(return_value=[])
+        master._get_runner()._harvest_decision_specs = MagicMock(return_value=[])
         original = _patch_got_bridge()
         try:
             # 不 raise 即 pass
@@ -127,7 +131,7 @@ class TestMasterControllerBudget:
         """run 结束后 _current_budget_usd = None (防 leak 跨 run)"""
         master = _make_stub_master(tmp_state_dir)
         master.budget_service = MagicMock()
-        master._harvest_decision_specs = MagicMock(return_value=[])
+        master._get_runner()._harvest_decision_specs = MagicMock(return_value=[])
         original = _patch_got_bridge()
         try:
             master.run_workflow(workflow_name="test", cost_budget_usd=0.1)
@@ -141,7 +145,7 @@ class TestMasterControllerBudget:
         """旧 signature (cost_budget_usd=None) 0 budget_service 不破"""
         master = _make_stub_master(tmp_state_dir)
         master.budget_service = None
-        master._harvest_decision_specs = MagicMock(return_value=[])
+        master._get_runner()._harvest_decision_specs = MagicMock(return_value=[])
         original = _patch_got_bridge()
         try:
             master.run_workflow(workflow_name="test", cost_budget_usd=None)
@@ -218,7 +222,7 @@ class TestMasterControllerByTier:
         master = _make_stub_master(tmp_state_dir)
         master.budget_service = None
         master.budget_service_by_tier = svc  # Phase 8.15
-        master._harvest_decision_specs = MagicMock(return_value=[])
+        master._get_runner()._harvest_decision_specs = MagicMock(return_value=[])
         original = _patch_got_bridge()
         try:
             master.run_workflow(workflow_name="test", cost_budget_usd=None)
