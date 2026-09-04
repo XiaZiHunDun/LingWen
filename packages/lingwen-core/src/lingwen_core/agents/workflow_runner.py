@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
     from lingwen_pipeline.master_controller import MasterController
@@ -196,8 +196,12 @@ class WorkflowRunner:
         workflow_name: str,
         initial_inputs: Optional[Dict[str, Any]],
     ) -> Any:
-        """Stub — Phase 27 Task 9 implements real version (chapter_memory_hook)."""
-        return None
+        """Phase 9.70 F62: optional MemoryGateway RAG context for chapter workflows."""
+        mode = getattr(self._controller, "_memory_rag_mode", None)
+        if mode is None:
+            return None  # early return when disabled (避免调 real hook with None mode)
+        from lingwen_core.agents.chapter_memory_hook import maybe_attach_memory_context
+        return maybe_attach_memory_context(workflow_name, initial_inputs, mode=mode)
 
     def _maybe_incremental_backfill(
         self,
@@ -206,8 +210,15 @@ class WorkflowRunner:
         executions: Dict[str, Any],
         summary: Any,
     ) -> Any:
-        """Stub — Phase 27 Task 9 implements real version (CVG backfill)."""
-        return None
+        """Phase 9.63 F54: optional incremental CVG backfill after emit_chapter."""
+        from infra.cross_volume.incremental_backfill import maybe_after_workflow
+        return maybe_after_workflow(
+            workflow_name,
+            initial_inputs,
+            executions,
+            summary,
+            enabled=getattr(self._controller, "_incremental_backfill_enabled", None),
+        )
 
     def _harvest_decision_specs(
         self,
@@ -215,8 +226,59 @@ class WorkflowRunner:
         *,
         initial_inputs: Optional[Dict[str, Any]] = None,
     ) -> list:
-        """Stub — Phase 27 Task 9 implements real version (DECISION node scan)."""
-        return []
+        """扫描 DECISION 节点 → 创建 HumanDecision → 返回序列化列表.
+
+        Phase 4.3: run_workflow 自动识别 NodeType.DECISION 节点, 包装为
+        HumanDecision 放进决策队列, 供人工介入.
+        Phase 9.69 F61: skip 已有 execution 且非 WAITING 的节点 (resume 后不重复 harvest).
+        Phase 9.83 F75: context 带上 chapter_num (dashboard 决策卡片展示用).
+        """
+        from lingwen_core.agents.decision_queue import create_decision
+        from lingwen_pipeline.master_controller import (
+            _DEFAULT_DECISION_OPTIONS,
+            _DEFAULT_DECISION_PRIORITY,
+            _infer_decision_kind,
+        )
+
+        from infra.got.data_structures import NodeStatus, NodeType
+
+        controller = self._controller
+        queue = getattr(controller, "_decision_queue", None)
+        if queue is None:
+            return []
+
+        pending_node_ids = {d.node_id for d in queue.pending()}
+        seed = initial_inputs
+        if seed is None:
+            seed = controller._state.initial_inputs
+
+        harvested: List[Dict[str, Any]] = []
+        for nid in graph.node_ids():
+            node = graph.get_node(nid)
+            if node.type != NodeType.DECISION:
+                continue
+            if graph.has_execution(nid):
+                if graph.get_execution(nid).status != NodeStatus.WAITING:
+                    continue
+            elif nid in pending_node_ids:
+                continue
+            kind = _infer_decision_kind(nid)
+            ctx: Dict[str, Any] = {}
+            chapter_num = seed.get("chapter_num")
+            if chapter_num is not None:
+                ctx["chapter_num"] = chapter_num
+            decision = create_decision(
+                decision_kind=kind,
+                node_id=nid,
+                prompt=node.description or f"决策点: {node.name or nid}",
+                options=_DEFAULT_DECISION_OPTIONS.get(kind.value, ("approve", "reject")),
+                priority=_DEFAULT_DECISION_PRIORITY.get(kind.value, 5),
+                context=ctx,
+            )
+            with queue.with_lock():
+                queue.add(decision)
+            harvested.append(decision.to_dict())
+        return harvested
 
     def _resolve_decision_locked(
         self,
@@ -224,14 +286,22 @@ class WorkflowRunner:
         option: str,
         resolved_by: str,
     ) -> Any:
-        """Stub — Phase 27 Task 9 implements real version with fcntl lock (Phase 6.5)."""
+        """标 RESOLVED + fcntl 排他锁 (Phase 6.5 with_lock pattern).
+
+        From WorkflowMixin.resolve_decision extracted body, 仅供 resume() step 3 调用.
+        """
         controller = self._controller
         queue = getattr(controller, "_decision_queue", None)
         if queue is None:
             raise RuntimeError("decision queue not initialized")
-        return queue.resolve(decision_id, option, resolved_by=resolved_by)
+        with queue.with_lock():
+            return queue.resolve(decision_id, option, resolved_by=resolved_by)
 
     @staticmethod
     def _collect_executions(graph: Any) -> Dict[str, Any]:
-        """Stub — Phase 27 Task 9 implements real version."""
-        return {}
+        """收集图中全部 NodeExecution (node_id → NodeExecution)."""
+        executions: Dict[str, Any] = {}
+        for nid in graph.node_ids():
+            if graph.has_execution(nid):
+                executions[nid] = graph.get_execution(nid)
+        return executions

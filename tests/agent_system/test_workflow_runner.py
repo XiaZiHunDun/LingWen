@@ -575,3 +575,95 @@ class TestResumeContinueAndReturn:
         assert "executions" in result
         assert "incremental_backfill" in result
         assert "memory_context" in result
+
+
+class TestInternalHelpers:
+    """5 internal helpers 实现 (从 WorkflowMixin 迁移).
+
+    Task 4 + Task 7 加了 5 stub methods. Task 9 替换为真实实现 + fcntl lock.
+    """
+
+    def test_collect_executions_returns_node_id_to_execution_mapping(self) -> None:
+        """_collect_executions(graph) 返 {node_id: NodeExecution} dict."""
+        exec_n1 = MagicMock()
+        stub_graph = MagicMock(
+            node_ids=lambda: ["n1", "n2"],
+            has_execution=lambda nid: nid == "n1",
+            get_execution=lambda nid: exec_n1 if nid == "n1" else None,
+        )
+        result = WorkflowRunner._collect_executions(stub_graph)
+        assert result == {"n1": exec_n1}
+        assert "n2" not in result
+
+    def test_maybe_memory_context_returns_none_when_mode_unset(self, monkeypatch) -> None:
+        """_memory_rag_mode 未设时返 None, 不调 chapter_memory_hook."""
+        import lingwen_core.agents.chapter_memory_hook as cmh
+        called = []
+        def fake_attach(workflow_name, initial_inputs, mode=None):
+            called.append((workflow_name, initial_inputs, mode))
+            return {"should": "not appear"}
+        monkeypatch.setattr(cmh, "maybe_attach_memory_context", fake_attach)
+
+        master = MasterController.__new__(MasterController)
+        # No _memory_rag_mode attribute → getattr default None
+        runner = WorkflowRunner(master)
+        result = runner._maybe_memory_context("novel_writing", {"chapter_num": 1})
+        assert result is None  # getattr default None → early return
+        assert called == []  # real impl never called
+
+    def test_maybe_incremental_backfill_returns_none_when_enabled_unset(self, monkeypatch) -> None:
+        """_incremental_backfill_enabled 未设时返 None, 传 enabled=None 到 maybe_after_workflow."""
+        import infra.cross_volume.incremental_backfill as cv_backfill
+        captured = []
+        def fake_after(workflow_name, initial_inputs, executions, summary, *, enabled=None):
+            captured.append({
+                "workflow_name": workflow_name,
+                "initial_inputs": initial_inputs,
+                "executions": executions,
+                "summary": summary,
+                "enabled": enabled,
+            })
+            return None
+        monkeypatch.setattr(cv_backfill, "maybe_after_workflow", fake_after)
+
+        master = MasterController.__new__(MasterController)
+        runner = WorkflowRunner(master)
+        summary = MagicMock()
+        result = runner._maybe_incremental_backfill("novel_writing", {"k": 1}, {"n1": "exec"}, summary)
+        assert result is None
+        assert len(captured) == 1
+        assert captured[0]["workflow_name"] == "novel_writing"
+        assert captured[0]["enabled"] is None
+        assert captured[0]["summary"] is summary
+
+    def test_harvest_decision_specs_skips_already_pending_nodes(self) -> None:
+        """queue 中已有 pending 的 node 不重复 harvest."""
+        master = MasterController.__new__(MasterController)
+        from lingwen_core.agents.workflow_state import WorkflowState
+        master._state = WorkflowState.empty()
+
+        # Stub _decision_queue: 已有 pending d1
+        pending_decision = MagicMock(node_id="n1")
+        master._decision_queue = MagicMock(
+            pending=MagicMock(return_value=[pending_decision]),
+            add=MagicMock(),
+        )
+
+        # Stub graph: n1 (DECISION) + n2 (DECISION) + n3 (non-DECISION)
+        from infra.got.data_structures import NodeType
+        stub_n1 = MagicMock(type=NodeType.DECISION, description="d1", name="d1")
+        stub_n2 = MagicMock(type=NodeType.DECISION, description="d2", name="d2")
+        # non-DECISION node uses any non-DECISION type
+        stub_n3 = MagicMock(type=MagicMock(), description="n3", name="n3")
+        stub_graph = MagicMock(
+            node_ids=lambda: ["n1", "n2", "n3"],
+            get_node=lambda nid: {"n1": stub_n1, "n2": stub_n2, "n3": stub_n3}[nid],
+            has_execution=lambda _: False,
+            get_execution=lambda _: None,
+        )
+
+        runner = WorkflowRunner(master)
+        result = runner._harvest_decision_specs(stub_graph, initial_inputs={})
+        # n1 已有 pending → skip; n2 新建 → 1 entry; n3 不是 DECISION → skip
+        assert len(result) == 1
+        master._decision_queue.add.assert_called_once()

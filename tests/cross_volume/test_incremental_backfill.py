@@ -223,9 +223,9 @@ class TestIncrementalBackfillWorkflowHook:
 
     def test_master_controller_run_workflow_triggers_hook(self, monkeypatch, tmp_path):
         mock_hook = MagicMock(return_value={"nodes_written": 2})
+        # Phase 27 P2-WFRUNNER: helper moved to WorkflowRunner service.
         monkeypatch.setattr(
-            MasterController,
-            "_maybe_incremental_backfill",
+            "lingwen_core.agents.workflow_runner.WorkflowRunner._maybe_incremental_backfill",
             mock_hook,
         )
         controller = MasterController.__new__(MasterController)
