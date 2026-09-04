@@ -36,11 +36,14 @@ def test_default_state_dir_under_project_root():
     把 parent.parent.parent.parent 算成项目根，丢了 'infra/' 这一层）。
     """
     parts = Path(DEFAULT_STATE_DIR).parts
-    assert "agent_system" in parts
-    # canonical 位置：.../novel-factory/infra/agent_system/
-    # buggy 位置：  .../novel-factory/agent_system/
-    assert parts[-2:] == ("infra", "agent_system"), (
-        f"DEFAULT_STATE_DIR 应在 .../infra/agent_system/ 下，实际: {DEFAULT_STATE_DIR}"
+    assert "agents" in parts
+    # canonical 位置：.../packages/lingwen-core/src/lingwen_core/agents/
+    # buggy 位置：  .../packages/lingwen-core/src/lingwen_core/
+    assert parts[-5:-3] == ("packages", "lingwen-core"), (
+        f"DEFAULT_STATE_DIR 应在 .../packages/lingwen-core/src/lingwen_core/agents/ 下，实际: {DEFAULT_STATE_DIR}"
+    )
+    assert parts[-2:] == ("lingwen_core", "agents"), (
+        f"DEFAULT_STATE_DIR 应在 .../packages/lingwen-core/src/lingwen_core/agents/ 下，实际: {DEFAULT_STATE_DIR}"
     )
 
 
