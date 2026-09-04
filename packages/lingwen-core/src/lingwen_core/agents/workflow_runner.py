@@ -112,6 +112,41 @@ class WorkflowRunner:
             controller._current_budget_usd = None
             controller._current_run_id = None
 
+    def resume(
+        self,
+        decision_id: str,
+        option: str,
+        resolved_by: str = "human",
+    ) -> Dict[str, Any]:
+        """恢复 DECISION 暂停的工作流 (Phase 27 P2-WFRUNNER).
+
+        Returns:
+            同 run() 结构 + resolved_decision (HumanDecision 对象)
+
+        Raises:
+            RuntimeError: 无活跃工作流 (从未 run_workflow) / queue 未初始化
+            KeyError: decision_id 不存在
+            ValueError: 决策已 RESOLVED / option 不在 options / node 非 WAITING
+        """
+        controller = self._controller
+
+        # 1. 检查有活跃工作流
+        scheduler = controller._state.scheduler
+        graph = controller._state.graph
+        if scheduler is None or graph is None:
+            raise RuntimeError(
+                "no active workflow; call run_workflow() first before resume_workflow()"
+            )
+
+        # 2. 查决策 → 拿 node_id (KeyError if missing)
+        queue = getattr(controller, "_decision_queue", None)
+        if queue is None:
+            raise RuntimeError("decision queue not initialized")
+
+        raise NotImplementedError(
+            "Phase 27 Task 7-8: resolve + scheduler.resume + harvest + state in progress"
+        )
+
     def _maybe_memory_context(
         self,
         workflow_name: str,

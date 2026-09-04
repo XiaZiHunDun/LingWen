@@ -428,3 +428,37 @@ class TestRunStateWrites:
             assert "memory_context" in result
         finally:
             got_bridge.build_got_scheduler = original
+
+
+class TestResumeGuards:
+    """resume() step 1-2: RuntimeError on 无活跃工作流 / queue 未初始化."""
+
+    def test_resume_raises_runtime_error_when_no_active_workflow(self) -> None:
+        """scheduler / graph 为 None 时 raise RuntimeError('no active workflow')."""
+        import pytest
+
+        master = MasterController.__new__(MasterController)
+        from lingwen_core.agents.workflow_state import WorkflowState
+        master._state = WorkflowState.empty()  # scheduler=None, graph=None
+        master._decision_queue = MagicMock()  # queue 存在但 state 无 active workflow
+
+        runner = WorkflowRunner(master)
+        with pytest.raises(RuntimeError, match="(?i)no active workflow"):
+            runner.resume(decision_id="d1", option="approve")
+
+    def test_resume_raises_runtime_error_when_queue_not_initialized(self) -> None:
+        """queue is None 时 raise RuntimeError('decision queue not initialized')."""
+        import pytest
+
+        master = MasterController.__new__(MasterController)
+        from lingwen_core.agents.workflow_state import WorkflowState
+        # state has active workflow (scheduler + graph not None)
+        master._state = WorkflowState.empty().with_updates(
+            scheduler=MagicMock(),
+            graph=MagicMock(),
+        )
+        master._decision_queue = None  # queue is None
+
+        runner = WorkflowRunner(master)
+        with pytest.raises(RuntimeError, match="decision queue not initialized"):
+            runner.resume(decision_id="d1", option="approve")
