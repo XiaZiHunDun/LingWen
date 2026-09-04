@@ -47,6 +47,22 @@ _PROVIDER_ENV_KEYS: tuple[tuple[str, str], ...] = (
 )
 _NOVEL_WRITING_YAML = Path(__file__).resolve().parents[1] / "got" / "workflows" / "novel_writing.yaml"
 
+
+def _resolve_novel_writing_yaml() -> Path:
+    """Locate novel_writing.yaml (package path first, then repo infra/got/workflows)."""
+    candidates: list[Path] = [_NOVEL_WRITING_YAML]
+    for ancestor in Path(__file__).resolve().parents:
+        candidate = ancestor / "infra" / "got" / "workflows" / "novel_writing.yaml"
+        if candidate.exists():
+            candidates.append(candidate)
+    for path in candidates:
+        if path.exists():
+            return path
+    raise FileNotFoundError(
+        "novel_writing.yaml not found in any of: "
+        + ", ".join(str(p) for p in candidates)
+    )
+
 PRODUCTION_PILOT_BEHAVIOR: tuple[dict[str, str], ...] = (
     {
         "trigger": "env LINGWEN_REAL_LLM",
@@ -226,12 +242,13 @@ def preflight_checklist(
         dir_ok, dir_msg = False, f"state_dir not writable: {resolved_dir} ({exc})"
     checks.append(PreflightCheck(name="state_dir", passed=dir_ok, message=dir_msg))
 
-    wf_ok = _NOVEL_WRITING_YAML.is_file()
+    workflow_yaml = _resolve_novel_writing_yaml()
+    wf_ok = workflow_yaml.is_file()
     checks.append(
         PreflightCheck(
             name="workflow_yaml",
             passed=wf_ok,
-            message=(f"found {_NOVEL_WRITING_YAML.name}" if wf_ok else f"missing {_NOVEL_WRITING_YAML}"),
+            message=(f"found {workflow_yaml.name}" if wf_ok else f"missing {workflow_yaml}"),
         )
     )
 

@@ -248,3 +248,12 @@ class TestProductionPilotRealLlmOptIn:
             preflight_only=True,
         )
         assert result.preflight_ok is True
+
+
+def test_pilot_yaml_resolves_from_repo_workflows(monkeypatch):
+    """preflight workflow_yaml 应从仓库 infra/got/workflows 找到 novel_writing.yaml."""
+    from lingwen_core.agents import chapter_production_pilot as pilot
+
+    resolved = pilot._resolve_novel_writing_yaml()
+    assert resolved.name == "novel_writing.yaml"
+    assert "infra/got/workflows" in str(resolved)
