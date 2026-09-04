@@ -199,7 +199,7 @@ class EditingMixin:
         labels: Tuple[str, str],
         record_usage: bool,
     ):
-        from mc_utils import _coerce_score, _safe_label
+        from lingwen_core.agents.mc_utils import _coerce_score, _safe_label
 
         try:
             user_prompt = f"""
