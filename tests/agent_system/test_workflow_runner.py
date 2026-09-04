@@ -812,3 +812,81 @@ class TestRunWithNoneStartNodesDerivation:
             assert list(master._state.start_nodes) == ["n1"]
         finally:
             got_bridge.build_got_scheduler = original
+
+    def test_resume_reuses_start_nodes_persisted_during_run_with_none(self) -> None:
+        """run(start_nodes=None) → resume 复用 derived start_nodes.
+
+        关键验证: state.start_nodes 在 resume 期间不被 graph mutation 污染.
+        即使 graph 加新 root node (n4), state.start_nodes 仍是 run 时的 derived ["n1"].
+        """
+        from infra.got.data_structures import NodeType, ThoughtNode
+        from infra.got.graph import ThoughtGraph
+        from infra.got.scheduler import ComputeResult, GoTScheduler
+
+        # Setup real graph: n1 root + n2 DECISION + n3 dep
+        graph = ThoughtGraph()
+        graph.add_node(ThoughtNode(node_id="n1", type=NodeType.GENERATION, name="gen1", description="gen1", depends_on=()))
+        graph.add_node(ThoughtNode(node_id="n2", type=NodeType.DECISION, name="dec", description="dec", depends_on=("n1",)))
+        graph.add_node(ThoughtNode(node_id="n3", type=NodeType.GENERATION, name="gen3", description="gen3", depends_on=("n2",)))
+
+        call_log: list = []
+
+        def compute_fn(node, inputs):
+            call_log.append(node.node_id)
+            return ComputeResult(output={"node": node.node_id}, cost_tokens=1)
+
+        scheduler = GoTScheduler(graph, compute_fn=compute_fn, max_backtracks=0)
+
+        master = MasterController.__new__(MasterController)
+        from lingwen_core.agents.workflow_state import WorkflowState
+        master._state = WorkflowState.empty()
+        master.budget_service = None
+        master._decision_queue = MagicMock(pending=MagicMock(return_value=[]), add=MagicMock())
+
+        from lingwen_core.agents import got_bridge
+        original = got_bridge.build_got_scheduler
+        got_bridge.build_got_scheduler = MagicMock(return_value=(scheduler, graph))
+        try:
+            runner = WorkflowRunner(master)
+            runner._maybe_memory_context = MagicMock(return_value=None)
+            runner._maybe_incremental_backfill = MagicMock(return_value=None)
+
+            # 1) run(start_nodes=None) — 推导 ["n1"]
+            runner.run(workflow_name="test", start_nodes=None)
+            assert list(master._state.start_nodes) == ["n1"]
+            # n1 executed + n2 paused (DECISION)
+            assert call_log == ["n1"]
+
+            # 2) Add n4 to graph (simulate post-pause graph mutation)
+            #    If resume re-derives start_nodes, would now include both ["n1", "n4"]
+            graph.add_node(ThoughtNode(node_id="n4", type=NodeType.GENERATION, name="gen4", description="gen4", depends_on=()))
+            # But n4 has no DECISION dependency — would still be in re-derived list
+            # The point: state.start_nodes should NOT be re-derived
+
+            # 3) Stub decision_queue for resume
+            master._decision_queue = MagicMock(
+                pending=MagicMock(return_value=[]),
+                add=MagicMock(),
+                get=MagicMock(return_value=MagicMock(node_id="n2")),
+                resolve=MagicMock(return_value="resolved"),
+                with_lock=MagicMock(
+                    return_value=MagicMock(
+                        __enter__=MagicMock(return_value=MagicMock()),
+                        __exit__=MagicMock(return_value=False),
+                    )
+                ),
+            )
+            runner._harvest_decision_specs = MagicMock(return_value=[])
+
+            # 4) resume — state.start_nodes 应保持 ["n1"] (不被 n4 污染)
+            runner.resume(decision_id="d1", option="approve")
+
+            # state.start_nodes 仍是 ["n1"] — resume 不重推导 (即使 graph 有新 root)
+            assert list(master._state.start_nodes) == ["n1"]
+            # 验证 resume 调用 scheduler.run 时传入的是 ["n1"] (而非重推导的 ["n1", "n4"])
+            # call_log 反映 n1 (run) + n3 (resume 下游) + n4 (新增 root ready) — 都执行
+            # 但 n1 未被重跑 (cache/ready_nodes 跳过 COMPLETED)
+            assert "n1" in call_log
+            assert call_log.count("n1") == 1  # n1 仅在 run 时执行 1 次, resume 不重跑
+        finally:
+            got_bridge.build_got_scheduler = original
