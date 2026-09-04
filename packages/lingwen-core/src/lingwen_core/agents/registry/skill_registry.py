@@ -55,17 +55,28 @@ class SkillRegistry:
         self._load_registry()
 
     def _find_config_path(self) -> Path:
-        """Find skill_registry.yaml in standard locations."""
-        possible_paths = [
-            Path(__file__).parent.parent.parent / "config" / "skill_registry.yaml",
-            Path(__file__).parent.parent.parent.parent / "config" / "skill_registry.yaml",
-        ]
+        """Find skill_registry.yaml in standard locations.
 
-        for path in possible_paths:
+        Search order:
+            1. Package-local historical candidate.
+            2. Any ancestor directory containing a `config/skill_registry.yaml`.
+        """
+        candidates: list[Path] = [
+            Path(__file__).resolve().parent.parent.parent / "config" / "skill_registry.yaml",
+        ]
+        for ancestor in Path(__file__).resolve().parents:
+            candidate = ancestor / "config" / "skill_registry.yaml"
+            if candidate.exists():
+                candidates.append(candidate)
+
+        for path in candidates:
             if path.exists():
                 return path
 
-        raise FileNotFoundError(f"skill_registry.yaml not found in any of: {possible_paths}")
+        raise FileNotFoundError(
+            "skill_registry.yaml not found in any of: "
+            + ", ".join(str(p) for p in candidates)
+        )
 
     def _find_base_path(self) -> Path:
         """Find the novel-factory base path."""

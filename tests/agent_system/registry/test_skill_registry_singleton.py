@@ -105,3 +105,27 @@ class TestSkillRegistrySingleton(TestCase):
         # 之后 get_registry 仍能正常工作
         r = get_registry()
         self.assertIsInstance(r, SkillRegistry)
+
+
+def test_skill_registry_finds_repo_root_config():
+    """SkillRegistry 缺省 config_path 应能发现仓库根目录的 skill_registry.yaml.
+
+    Tightened (Task 1 review): require resolved path to live under the
+    repository root, NOT the historical package-internal candidate
+    ``packages/lingwen-core/src/lingwen_core/config/skill_registry.yaml``.
+    """
+    from pathlib import Path
+
+    from lingwen_core.agents.registry.skill_registry import SkillRegistry
+
+    # Test file: tests/agent_system/registry/test_skill_registry_singleton.py
+    # parents[3] -> <repo-root>
+    repo_root = Path(__file__).resolve().parents[3]
+    expected = repo_root / "config" / "skill_registry.yaml"
+
+    registry = SkillRegistry()
+    assert registry.config_path == expected
+    # Defense in depth: must not resolve to the historical package-internal
+    # candidate (<...>/lingwen_core/config/skill_registry.yaml).
+    assert "lingwen_core" not in registry.config_path.parts
+    assert registry.config_path.parts[-3:] == (repo_root.name, "config", "skill_registry.yaml")
