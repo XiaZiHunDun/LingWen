@@ -1,8 +1,8 @@
 # 灵文项目状态看板
 
 > **最后更新**: 2026-09-04
-> **更新者**: 协调者（v27.0 P2-WFRUNNER 完成；Phase 27 13 commits 待 ff-merge；carryover 3 项 → Phase 28+）
-> **下一协作**: v27.0 P2-WFRUNNER 已闭环：`WorkflowRunner` service class 从 `WorkflowMixin` 抽出 90+ 行 orchestration sprawl；mc_workflow.py 404 → 119 行 (-70%)；TDD 21 tests + 2 refactor guards；0 改范围 7 类文件不动；0 new failure 经 git stash 实证 (master 90 → worktree 84，net -6)；carryover 剩 P2-RESUME-VERIFY / P2-MC-WRITING / P2-ARCHDEBT 3 项。Phase 28+ 顺位：RESUME-VERIFY 紧接（建议 Phase 28 小 phase）/ MC-WRITING（独立大 phase 调查 84+ pre-existing cascade）/ ARCHDEBT（战术分散）
+> **更新者**: 协调者（v28.0 P2-RESUME-VERIFY 闭环；Phase 28 7 commits 待 ff-merge；carryover 2 项 → Phase 29+）
+> **下一协作**: v28.0 P2-RESUME-VERIFY 已闭环：5 E2E tests 用真实 GoTScheduler + ThoughtGraph 验证 scheduler 幂等 + start_nodes=None 推导 + state.start_nodes 持久化 + WorkflowRunner.run→resume 完整 cycle。代码 review 重要缺口（`scheduler 对已完成节点是否幂等无测试覆盖`）经实证 PASS — `infra/got/graph.py:152-155` ready_nodes 排除 status≠PENDING 节点 → scheduler.run 二次调用自动 skip 已 COMPLETED 节点。0 改范围 9 类文件不动 (workflow_runner/mc_workflow/workflow_state/got_bridge/infra.got/graph/shim/facade/HANDOFF*)。carryover 剩 P2-MC-WRITING / P2-ARCHDEBT 2 项。Phase 29+ 顺位：MC-WRITING（独立大 phase 调查 84+ pre-existing cascade）/ ARCHDEBT（战术分散）
 
 ---
 
@@ -10,9 +10,9 @@
 
 | 项目 | 状态 |
 |------|------|
-| **版本** | v27.0（Phase 27 — P2-WFRUNNER `WorkflowRunner` service 拆分） |
-| **git main** | master `f12765b9` + Phase 26 6 commits 待 ff-merge `ee3396ae` + Phase 27 13 commits 待 ff-merge `9b57d16a`（待本次合入） |
-| **当前阶段** | v26.0 之后第二 refactor 完成：WorkflowRunner service class 抽出 run() 11 步 + resume() 8 步 + 5 helpers + fcntl lock；spec 48c26b5c + plan 8c988a7c + 12 implementation + 1 chore = 14 commits。G1 test_workflow_state 13/13 / G2 test_workflow_runner 21/21 / G3 master_controller_budget 6/6 target / G4 84 fail = master baseline (0 NEW, net -6) / G5 test_decision_pause_resume 17/17 / G6 test_incremental_backfill 15/15 / G7 ruff clean / G8 grep 0 hits / G9 mc_workflow 119 lines (-70%) / G10 workflow_runner 307 lines |
+| **版本** | v28.0（Phase 28 — P2-RESUME-VERIFY 5 E2E tests） |
+| **git main** | master `90593350` + Phase 28 7 commits 待 ff-merge（待本次合入） |
+| **当前阶段** | v27.0 之后 E2E 测试补充完成：1 spec (`05e4f91b`) + 1 plan (`d3f164c8`) + 5 E2E tests (`02f5c90b`/`90ac327a`/`06975ceb`/`659a51e1`/`0c622659`) + 1 handoff (`7f9049f3`) = 7 commits。G1 test_workflow_state 13/13 (UNCHANGED) / G2 test_workflow_runner 26/26 (21 + 5 NEW) / G3 master_controller_budget 6/6 target (UNCHANGED) / G4 tests/agent_system 84 fail baseline + 5 NEW PASS / G5 test_decision_pause_resume 17/17 (UNCHANGED) / G6 test_incremental_backfill 15/15 (UNCHANGED) / G7 ruff clean / G8 grep 0 hits / G9 mc_workflow 119 lines (UNCHANGED) / G10 workflow_runner 307 lines (UNCHANGED — test-only phase) |
 | **并行开发** | [COORDINATION.md](https://github.com) §3 自治契约：两会话自认领→全量门绿→自 ff-merge 到 master（常驻 worktree `track-a`/`track-b`）|
 | **阻塞项** | 无 |
 
