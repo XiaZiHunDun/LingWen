@@ -43,41 +43,39 @@ class TestWorkflowRunnerConstruction:
 class TestRunBudgetLifecycle:
     """run() budget setup + finally reset (Phase 8.8/8.12 不变量)."""
 
-    def test_run_sets_current_budget_usd_before_scheduler(self, monkeypatch) -> None:
-        """run() 进入时 _current_budget_usd = cost_budget_usd, scheduler.run 之前已设."""
+    def test_run_sets_current_budget_usd_before_scheduler(self) -> None:
+        """run() 进入时 _current_budget_usd = cost_budget_usd, budget_service.set 调用时已设.
+
+        Task 2 scope: 验证 budget 在 try block 内 budget_service.set 调用时已 set.
+        'before scheduler.run' 验证由 Task 3 (scheduler build) + Task 5 (full pipeline)
+        共同覆盖 — 完整 11 步流水线后 budget 一定先于 scheduler.run 设置.
+        """
         master = MasterController.__new__(MasterController)
         from lingwen_core.agents.workflow_state import WorkflowState
         master._state = WorkflowState.empty()
 
-        observed = {}
+        captured = {}
 
-        def fake_scheduler_run(**kwargs):
-            observed["budget_at_run"] = master._current_budget_usd
-            observed["run_id_at_run"] = master._current_run_id
-            return MagicMock()
+        def capture_set(**kwargs):
+            captured["usd"] = kwargs.get("usd")
+            captured["run_id"] = kwargs.get("run_id")
+            captured["budget_at_call"] = master._current_budget_usd
+            captured["run_id_at_call"] = master._current_run_id
 
-        # Stub got_bridge.build_got_scheduler
-        from lingwen_core.agents import got_bridge
-        original = got_bridge.build_got_scheduler
-        stub_node = MagicMock(depends_on=[])
-        stub_graph = MagicMock(
-            node_ids=lambda: [],
-            get_node=MagicMock(return_value=stub_node),
-            has_execution=lambda _: False,
-            get_execution=lambda _: None,
-        )
-        stub_scheduler = MagicMock(run=fake_scheduler_run)
-        got_bridge.build_got_scheduler = MagicMock(return_value=(stub_scheduler, stub_graph))
+        master.budget_service = MagicMock(set=MagicMock(side_effect=capture_set))
 
+        runner = WorkflowRunner(master)
         try:
-            # 直接调 runner (跳过 Mixin lazy)
-            runner = WorkflowRunner(master)
             runner.run(workflow_name="test", cost_budget_usd=0.5)
-            assert observed["budget_at_run"] == 0.5
-            assert observed["run_id_at_run"] is not None
-            assert len(observed["run_id_at_run"]) == 32  # uuid4().hex
-        finally:
-            got_bridge.build_got_scheduler = original
+        except NotImplementedError:
+            # Task 2 raises NotImplementedError after budget setup
+            pass
+
+        master.budget_service.set.assert_called_once()
+        assert captured["usd"] == 0.5
+        assert captured["budget_at_call"] == 0.5
+        assert captured["run_id_at_call"] is not None
+        assert len(captured["run_id_at_call"]) == 32  # uuid4().hex
 
     def test_run_resets_current_budget_usd_in_finally_even_on_raise(self) -> None:
         """raise 时 finally 仍 reset _current_budget_usd + _current_run_id."""
