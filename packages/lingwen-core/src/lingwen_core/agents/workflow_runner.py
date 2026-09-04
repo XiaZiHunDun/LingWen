@@ -145,8 +145,8 @@ class WorkflowRunner:
 
         decision = queue.get(decision_id)
 
-        # 3. 标 RESOLVED (lock + write) — Task 8 consumes `resolved` in return dict
-        resolved = self._resolve_decision_locked(decision_id, option, resolved_by)  # noqa: F841
+        # 3. 标 RESOLVED (lock + write)
+        resolved = self._resolve_decision_locked(decision_id, option, resolved_by)
 
         # 4. 标 DECISION 节点 WAITING → COMPLETED, 写入 option
         scheduler.resume(
@@ -155,13 +155,41 @@ class WorkflowRunner:
             resolved_by=resolved_by,
         )
 
-        # 5. 扫描新 DECISION 节点 (下游可能有) — Task 8 consumes `pending_decisions` in return dict
-        pending_decisions = self._harvest_decision_specs(  # noqa: F841
+        # 5. 扫描新 DECISION 节点 (下游可能有)
+        pending_decisions = self._harvest_decision_specs(
             graph,
             initial_inputs=controller._state.initial_inputs,
         )
 
-        raise NotImplementedError("Phase 27 Task 8: continue + collect + backfill + state in progress")
+        # 6. 继续执行 — 用上次缓存的 start_nodes
+        start_nodes = list(controller._state.start_nodes)
+        if not start_nodes:
+            start_nodes = [nid for nid in graph.node_ids() if not graph.get_node(nid).depends_on]
+
+        summary = scheduler.run(start_nodes=start_nodes)
+
+        # 7. 收集 executions
+        executions = self._collect_executions(graph)
+
+        incremental_backfill = self._maybe_incremental_backfill(
+            workflow_name=controller._state.workflow_name,
+            initial_inputs=controller._state.initial_inputs,
+            executions=executions,
+            summary=summary,
+        )
+        controller._state = controller._state.with_updates(
+            incremental_backfill=incremental_backfill,
+        )
+
+        return {
+            "summary": summary,
+            "graph": graph,
+            "executions": executions,
+            "pending_decisions": pending_decisions,
+            "resolved_decision": resolved,
+            "incremental_backfill": incremental_backfill,
+            "memory_context": controller._state.memory_context,
+        }
 
     def _maybe_memory_context(
         self,

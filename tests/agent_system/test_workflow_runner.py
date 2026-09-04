@@ -500,3 +500,78 @@ class TestResumeResolveAndGoT:
             option="approve",
             resolved_by="human",
         )
+
+
+class TestResumeContinueAndReturn:
+    """resume() step 6-8: continue scheduler + collect + backfill + state write + return."""
+
+    def test_resume_reuses_cached_start_nodes_from_state(self) -> None:
+        """resume 用 cached start_nodes, 不用 graph 默认无依赖节点."""
+        master = MasterController.__new__(MasterController)
+        from lingwen_core.agents.workflow_state import WorkflowState
+        stub_scheduler = MagicMock()
+        stub_graph = MagicMock(
+            node_ids=lambda: ["n1", "n2", "n3"],
+            get_node=MagicMock(return_value=MagicMock(depends_on=[])),
+        )
+        # cached start_nodes = ["n_special"] (与 graph node_ids 不重叠)
+        master._state = WorkflowState.empty().with_updates(
+            scheduler=stub_scheduler,
+            graph=stub_graph,
+            workflow_name="test",
+            start_nodes=["n_special"],
+            initial_inputs={},
+        )
+
+        stub_decision = MagicMock(node_id="d_node")
+        master._decision_queue = MagicMock(get=MagicMock(return_value=stub_decision))
+        observed = {}
+        stub_scheduler.run = MagicMock(
+            side_effect=lambda **kw: (observed.update(kw), MagicMock())[1])
+        stub_scheduler.resume = MagicMock()
+
+        runner = WorkflowRunner(master)
+        runner._resolve_decision_locked = MagicMock(return_value="resolved")
+        runner._harvest_decision_specs = MagicMock(return_value=[])
+        runner._collect_executions = MagicMock(return_value={})
+        runner._maybe_incremental_backfill = MagicMock(return_value=None)
+
+        runner.resume(decision_id="d1", option="approve")
+        assert observed["start_nodes"] == ["n_special"]
+
+    def test_resume_returns_resolved_decision_in_payload(self) -> None:
+        """return dict 含 resolved_decision 字段 (HumanDecision 对象)."""
+        master = MasterController.__new__(MasterController)
+        from lingwen_core.agents.workflow_state import WorkflowState
+        stub_scheduler = MagicMock()
+        stub_graph = MagicMock(
+            node_ids=lambda: [],
+            get_node=MagicMock(return_value=MagicMock(depends_on=[])),
+        )
+        master._state = WorkflowState.empty().with_updates(
+            scheduler=stub_scheduler,
+            graph=stub_graph,
+            workflow_name="test",
+            start_nodes=[],
+            initial_inputs={},
+        )
+
+        stub_decision = MagicMock(node_id="d_node")
+        master._decision_queue = MagicMock(get=MagicMock(return_value=stub_decision))
+        stub_scheduler.run = MagicMock(return_value=MagicMock())
+        stub_scheduler.resume = MagicMock()
+
+        runner = WorkflowRunner(master)
+        runner._resolve_decision_locked = MagicMock(return_value="RESOLVED_OBJ")
+        runner._harvest_decision_specs = MagicMock(return_value=[{"p": 1}])
+        runner._collect_executions = MagicMock(return_value={})
+        runner._maybe_incremental_backfill = MagicMock(return_value=None)
+
+        result = runner.resume(decision_id="d1", option="approve")
+        assert result["resolved_decision"] == "RESOLVED_OBJ"
+        assert result["pending_decisions"] == [{"p": 1}]
+        assert "summary" in result
+        assert "graph" in result
+        assert "executions" in result
+        assert "incremental_backfill" in result
+        assert "memory_context" in result
