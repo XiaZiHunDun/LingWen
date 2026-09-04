@@ -31,11 +31,11 @@ def _make_controller_with_stubs(monkeypatch) -> tuple[Any, Any]:
     """构造 MasterController 但 stub 掉 init 中的重操作,只保留 run_workflow 链路"""
     from lingwen_core.agents import master_controller as mc_mod
 
-    monkeypatch.setattr(mc_mod, "build_router", lambda config: None)
-    monkeypatch.setattr(mc_mod, "build_orchestrator", lambda **kwargs: None)
-    monkeypatch.setattr(mc_mod, "build_skill_registry", lambda: None)
-    monkeypatch.setattr(mc_mod, "build_agent_tools", lambda router: None)
-    monkeypatch.setattr(mc_mod, "build_social_engine", lambda state_dir: None)
+    monkeypatch.setattr("lingwen_core.agents.agent_factory.build_router", lambda config: None)
+    monkeypatch.setattr("lingwen_core.agents.agent_factory.build_orchestrator", lambda **kwargs: None)
+    monkeypatch.setattr("lingwen_core.agents.agent_factory.build_skill_registry", lambda: None)
+    monkeypatch.setattr("lingwen_core.agents.agent_factory.build_agent_tools", lambda router: None)
+    monkeypatch.setattr("lingwen_core.agents.agent_factory.build_social_engine", lambda state_dir: None)
 
     import lingwen_pipeline.state.state_manager as sm_mod
 

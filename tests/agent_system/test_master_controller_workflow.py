@@ -244,11 +244,11 @@ def _make_controller_with_stubs(monkeypatch) -> tuple[Any, _StubAgents]:
     from lingwen_core.agents import master_controller as mc_mod
 
     # 阻止 __init__ 中调 build_router (需要 API key)
-    monkeypatch.setattr(mc_mod, "build_router", lambda config: None)
-    monkeypatch.setattr(mc_mod, "build_orchestrator", lambda **kwargs: None)
-    monkeypatch.setattr(mc_mod, "build_skill_registry", lambda: None)
-    monkeypatch.setattr(mc_mod, "build_agent_tools", lambda router: None)
-    monkeypatch.setattr(mc_mod, "build_social_engine", lambda state_dir: None)
+    monkeypatch.setattr("lingwen_core.agents.agent_factory.build_router", lambda config: None)
+    monkeypatch.setattr("lingwen_core.agents.agent_factory.build_orchestrator", lambda **kwargs: None)
+    monkeypatch.setattr("lingwen_core.agents.agent_factory.build_skill_registry", lambda: None)
+    monkeypatch.setattr("lingwen_core.agents.agent_factory.build_agent_tools", lambda router: None)
+    monkeypatch.setattr("lingwen_core.agents.agent_factory.build_social_engine", lambda state_dir: None)
     # StateManager 在 __init__ 内部用 `from ..state.state_manager import StateManager` 导入
     # 需要 patch 它在原模块中的位置
     import lingwen_pipeline.state.state_manager as sm_mod

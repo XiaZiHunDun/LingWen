@@ -10,8 +10,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
 def test_master_controller_init():
     """测试主控调度器初始化"""
-    with patch("lingwen_pipeline.master_controller.RelationshipTracker"):
-        with patch("lingwen_pipeline.master_controller.ContextBuilder"):
+    with patch("lingwen_core.agents.social_engine.relationship_tracker.RelationshipTracker"):
+        with patch("lingwen_core.agents.core.context_builder.ContextBuilder"):
             from lingwen_pipeline.master_controller import MasterController
 
             controller = MasterController()
@@ -25,8 +25,8 @@ def test_master_controller_init():
 
 def test_master_controller_generate_outline():
     """测试生成大纲"""
-    with patch("lingwen_pipeline.master_controller.RelationshipTracker"):
-        with patch("lingwen_pipeline.master_controller.ContextBuilder"):
+    with patch("lingwen_core.agents.social_engine.relationship_tracker.RelationshipTracker"):
+        with patch("lingwen_core.agents.core.context_builder.ContextBuilder"):
             from lingwen_pipeline.master_controller import MasterController
 
             controller = MasterController()
@@ -39,8 +39,8 @@ def test_master_controller_generate_outline():
 
 def test_master_controller_generate_characters():
     """测试生成角色"""
-    with patch("lingwen_pipeline.master_controller.RelationshipTracker"):
-        with patch("lingwen_pipeline.master_controller.ContextBuilder"):
+    with patch("lingwen_core.agents.social_engine.relationship_tracker.RelationshipTracker"):
+        with patch("lingwen_core.agents.core.context_builder.ContextBuilder"):
             from lingwen_pipeline.master_controller import MasterController
 
             controller = MasterController()
@@ -54,8 +54,8 @@ def test_master_controller_generate_characters():
 
 def test_master_controller_write_chapter():
     """测试写章节流程"""
-    with patch("lingwen_pipeline.master_controller.RelationshipTracker") as mock_rt:
-        with patch("lingwen_pipeline.master_controller.ContextBuilder") as mock_cb:
+    with patch("lingwen_core.agents.social_engine.relationship_tracker.RelationshipTracker") as mock_rt:
+        with patch("lingwen_core.agents.core.context_builder.ContextBuilder") as mock_cb:
             mock_network = {"characters": [], "relationships": [], "events": []}
             mock_rt_instance = Mock()
             mock_rt_instance.get_network.return_value = mock_network
@@ -88,8 +88,8 @@ def test_master_controller_write_chapter():
 
 def test_master_controller_audit_chapter():
     """测试审核章节"""
-    with patch("lingwen_pipeline.master_controller.RelationshipTracker"):
-        with patch("lingwen_pipeline.master_controller.ContextBuilder"):
+    with patch("lingwen_core.agents.social_engine.relationship_tracker.RelationshipTracker"):
+        with patch("lingwen_core.agents.core.context_builder.ContextBuilder"):
             from lingwen_pipeline.master_controller import MasterController
 
             controller = MasterController()
@@ -106,8 +106,8 @@ def test_master_controller_audit_chapter():
 
 def test_master_controller_polish_chapter():
     """测试润色章节"""
-    with patch("lingwen_pipeline.master_controller.RelationshipTracker"):
-        with patch("lingwen_pipeline.master_controller.ContextBuilder"):
+    with patch("lingwen_core.agents.social_engine.relationship_tracker.RelationshipTracker"):
+        with patch("lingwen_core.agents.core.context_builder.ContextBuilder"):
             from lingwen_pipeline.master_controller import MasterController
 
             controller = MasterController()
