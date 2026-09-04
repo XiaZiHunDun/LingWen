@@ -105,30 +105,30 @@ class TestChapterMemoryHookHelpers:
         assert ctx["source"] == "live"
         gateway.auto_push_context.assert_called_once_with(5)
 
-    def test_memory_rag_live_gateway_check(self, monkeypatch):
-        mock_embedder = MagicMock()
-        mock_embedder.provider_name = "openai"
-        mock_embedder.model = "text-embedding-3-small"
-        mock_embedder.dimension = 1536
-        mock_embedder.health_check.return_value = (True, "openai/text-embedding-3-small ok")
-
-        mock_gateway = MagicMock(is_noop=False, embedder=mock_embedder)
-
-        monkeypatch.setattr(
-            "infra.memory_service.get_memory_gateway",
-            lambda: mock_gateway,
-        )
-        monkeypatch.setattr(
-            "infra.memory_service.is_memory_gateway_available",
-            lambda: True,
-        )
-        monkeypatch.setattr(
-            "infra.memory_service.get_initialization_error",
-            lambda: None,
-        )
+    def test_memory_rag_live_gateway_check(self):
+        # The live check is now an import probe against
+        # ``lingwen_memory.gateway.memory_gateway.MemoryGateway``; runtime
+        # health probes belong to the gateway itself, not the preflight.
         ok, msg = memory_rag_live_gateway_check()
         assert ok is True
-        assert "provider=openai" in msg
+        assert "MemoryGateway" in msg
+
+    def test_memory_rag_live_gateway_check_unavailable(self, monkeypatch):
+        # When the canonical symbol cannot be imported, the preflight must
+        # surface a degraded (False, reason) result rather than crashing.
+        import builtins
+
+        real_import = builtins.__import__
+
+        def _blocked(name, *args, **kwargs):
+            if name == "lingwen_memory.gateway.memory_gateway":
+                raise ModuleNotFoundError("simulated missing gateway")
+            return real_import(name, *args, **kwargs)
+
+        monkeypatch.setattr(builtins, "__import__", _blocked)
+        ok, msg = memory_rag_live_gateway_check()
+        assert ok is False
+        assert "MemoryGateway unavailable" in msg
 
 
 class TestChapterMemoryHookGoldenPath:
