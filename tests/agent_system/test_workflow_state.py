@@ -129,3 +129,48 @@ class TestRefactorGuard:
         assert controller._state.initial_inputs == {}
         assert controller._state.incremental_backfill is None
         assert controller._state.memory_context is None
+
+
+class TestWorkflowRunnerRefactorGuard:
+    """防 WorkflowRunner 散点回潮 (Phase 27 P2-WFRUNNER).
+
+    与 TestRefactorGuard (WorkflowState 字段) 对偶 — 守 Runner 内部不引入
+    _last_* 散点属性 / 不持独立 state.
+    """
+
+    def test_workflow_runner_has_no_last_underscore_attrs(self) -> None:
+        """WorkflowRunner 实例不应有 _last_* 私有字段."""
+        from lingwen_core.agents.workflow_runner import WorkflowRunner
+        from lingwen_pipeline.master_controller import MasterController
+
+        controller = MasterController.__new__(MasterController)
+        runner = WorkflowRunner(controller)
+
+        forbidden_prefixes = (
+            "_last_controller",
+            "_last_scheduler",
+            "_last_graph",
+            "_last_state",
+            "_last_workflow_name",
+            "_last_run_id",
+            "_last_budget",
+        )
+        for name in forbidden_prefixes:
+            assert not hasattr(runner, name), (
+                f"WorkflowRunner 不应有 {name}; 引用 controller 而非 cache"
+            )
+
+    def test_workflow_runner_does_not_mutate_state_directly(self) -> None:
+        """Runner 不持独立 state — 所有 state 操作走 controller._state."""
+        from lingwen_core.agents.workflow_runner import WorkflowRunner
+        from lingwen_pipeline.master_controller import MasterController
+
+        controller = MasterController.__new__(MasterController)
+        runner = WorkflowRunner(controller)
+
+        # Runner 不应有 _state 属性 — state 全部归 controller
+        assert not hasattr(runner, "_state"), (
+            "WorkflowRunner 不应持独立 state; 走 controller._state.with_updates()"
+        )
+        # Runner 必有 _controller 引用
+        assert runner._controller is controller
