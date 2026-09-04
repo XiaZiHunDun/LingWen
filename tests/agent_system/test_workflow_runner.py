@@ -462,3 +462,41 @@ class TestResumeGuards:
         runner = WorkflowRunner(master)
         with pytest.raises(RuntimeError, match="decision queue not initialized"):
             runner.resume(decision_id="d1", option="approve")
+
+
+class TestResumeResolveAndGoT:
+    """resume() step 3-5: resolve_decision + scheduler.resume + harvest."""
+
+    def test_resume_resolves_decision_then_resumes_scheduler(self) -> None:
+        """resolve_decision_locked → scheduler.resume 顺序调用, 错误时抛对应异常."""
+        master = MasterController.__new__(MasterController)
+        from lingwen_core.agents.workflow_state import WorkflowState
+        stub_scheduler = MagicMock()
+        stub_graph = MagicMock()
+        master._state = WorkflowState.empty().with_updates(
+            scheduler=stub_scheduler,
+            graph=stub_graph,
+            workflow_name="test",
+            start_nodes=["n1"],
+            initial_inputs={},
+        )
+
+        stub_decision = MagicMock(node_id="decision_node_1")
+        master._decision_queue = MagicMock(get=MagicMock(return_value=stub_decision))
+
+        runner = WorkflowRunner(master)
+        runner._resolve_decision_locked = MagicMock(return_value="resolved_obj")
+        runner._harvest_decision_specs = MagicMock(return_value=[])
+
+        try:
+            runner.resume(decision_id="d1", option="approve")
+        except NotImplementedError:
+            # Task 7 raises NotImplementedError after step 3-5
+            pass
+
+        runner._resolve_decision_locked.assert_called_once_with("d1", "approve", "human")
+        stub_scheduler.resume.assert_called_once_with(
+            decision_node_id="decision_node_1",
+            option="approve",
+            resolved_by="human",
+        )

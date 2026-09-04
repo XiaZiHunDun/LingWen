@@ -143,9 +143,25 @@ class WorkflowRunner:
         if queue is None:
             raise RuntimeError("decision queue not initialized")
 
-        raise NotImplementedError(
-            "Phase 27 Task 7-8: resolve + scheduler.resume + harvest + state in progress"
+        decision = queue.get(decision_id)
+
+        # 3. 标 RESOLVED (lock + write) — Task 8 consumes `resolved` in return dict
+        resolved = self._resolve_decision_locked(decision_id, option, resolved_by)  # noqa: F841
+
+        # 4. 标 DECISION 节点 WAITING → COMPLETED, 写入 option
+        scheduler.resume(
+            decision_node_id=decision.node_id,
+            option=option,
+            resolved_by=resolved_by,
         )
+
+        # 5. 扫描新 DECISION 节点 (下游可能有) — Task 8 consumes `pending_decisions` in return dict
+        pending_decisions = self._harvest_decision_specs(  # noqa: F841
+            graph,
+            initial_inputs=controller._state.initial_inputs,
+        )
+
+        raise NotImplementedError("Phase 27 Task 8: continue + collect + backfill + state in progress")
 
     def _maybe_memory_context(
         self,
@@ -173,6 +189,19 @@ class WorkflowRunner:
     ) -> list:
         """Stub — Phase 27 Task 9 implements real version (DECISION node scan)."""
         return []
+
+    def _resolve_decision_locked(
+        self,
+        decision_id: str,
+        option: str,
+        resolved_by: str,
+    ) -> Any:
+        """Stub — Phase 27 Task 9 implements real version with fcntl lock (Phase 6.5)."""
+        controller = self._controller
+        queue = getattr(controller, "_decision_queue", None)
+        if queue is None:
+            raise RuntimeError("decision queue not initialized")
+        return queue.resolve(decision_id, option, resolved_by=resolved_by)
 
     @staticmethod
     def _collect_executions(graph: Any) -> Dict[str, Any]:
