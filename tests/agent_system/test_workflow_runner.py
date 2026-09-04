@@ -667,3 +667,74 @@ class TestInternalHelpers:
         # n1 已有 pending → skip; n2 新建 → 1 entry; n3 不是 DECISION → skip
         assert len(result) == 1
         master._decision_queue.add.assert_called_once()
+
+
+# === Phase 28 P2-RESUME-VERIFY: E2E tests with real GoTScheduler ===
+
+class TestResumeE2EWithRealScheduler:
+    """E2E 测试 — 真实 GoTScheduler + ThoughtGraph (非 MagicMock).
+
+    Phase 28 P2-RESUME-VERIFY: 验证 scheduler 对已 COMPLETED 节点幂等
+    + start_nodes=None resume cycle (代码 review 列 important).
+    """
+
+    def _build_graph_with_decision(self) -> tuple:
+        """构建 4 节点图: n1 (GENERATION) → n2 (DECISION) → n3 (GENERATION) → n4 (OUTPUT).
+
+        compute_fn 简单递增计数器记录执行次数.
+        """
+        from infra.got.data_structures import NodeType, ThoughtNode
+        from infra.got.graph import ThoughtGraph
+        from infra.got.scheduler import ComputeResult, GoTScheduler
+
+        graph = ThoughtGraph()
+        graph.add_node(ThoughtNode(node_id="n1", type=NodeType.GENERATION, name="gen1", description="gen1", depends_on=()))
+        graph.add_node(ThoughtNode(node_id="n2", type=NodeType.DECISION, name="decision", description="decision", depends_on=("n1",)))
+        graph.add_node(ThoughtNode(node_id="n3", type=NodeType.GENERATION, name="gen2", description="gen2", depends_on=("n2",)))
+        graph.add_node(ThoughtNode(node_id="n4", type=NodeType.OUTPUT, name="out", description="out", depends_on=("n3",)))
+
+        call_log: list = []
+
+        def compute_fn(node, inputs):
+            call_log.append(node.node_id)
+            return ComputeResult(
+                output={"node": node.node_id, "input_keys": list(inputs.keys())},
+                cost_tokens=1,
+            )
+
+        scheduler = GoTScheduler(graph, compute_fn=compute_fn, max_backtracks=0)
+        scheduler._test_call_log = call_log  # type: ignore[attr-defined]
+        return scheduler, graph
+
+    def test_scheduler_run_is_idempotent_on_completed_nodes(self) -> None:
+        """scheduler.run(start_nodes) 二次调用不重跑已 COMPLETED 节点.
+
+        验证: graph.ready_nodes() (infra/got/graph.py:152-155) 排除 status≠PENDING
+        → 已 COMPLETED n1 不进 ready_nodes → 不重跑.
+
+        注: 第二次 run 时 n2 仍是 WAITING, n3/n4 被它阻塞 → ready_nodes 为空
+        → scheduler 直接退出 (paused=False, paused_nodes=()). 这是正确行为 —
+        scheduler.run 只报告 NEW pauses, 不报告之前已 paused 的节点.
+        """
+        from infra.got.data_structures import NodeStatus
+
+        scheduler, _ = self._build_graph_with_decision()
+
+        # 第一次 run: n1 执行 → n2 DECISION pause → n3/n4 未执行
+        summary1 = scheduler.run(start_nodes=["n1"])
+        assert summary1.completed == 1  # 仅 n1
+        assert summary1.paused is True
+        assert summary1.paused_nodes == ("n2",)
+
+        # 验证 n2 已 WAITING (record_execution by scheduler)
+        assert scheduler._graph.has_execution("n2")
+        assert scheduler._graph.get_execution("n2").status == NodeStatus.WAITING
+
+        # 第二次 run: ready_nodes 为空 (n1 COMPLETED, n2 WAITING, n3/n4 阻塞) → 立即退出
+        summary2 = scheduler.run(start_nodes=["n1"])
+        assert summary2.completed == 0  # 无新执行
+        assert summary2.steps == 0  # compute_fn 未被调
+        # call_log 不变 (n1 未重跑)
+        assert scheduler._test_call_log == ["n1"]
+        # n2 仍是 WAITING (状态跨 run 保留 — graph._executions 不被 reset)
+        assert scheduler._graph.get_execution("n2").status == NodeStatus.WAITING
