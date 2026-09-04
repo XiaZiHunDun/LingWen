@@ -17,8 +17,8 @@ from fastapi.testclient import TestClient
 
 def _make_test_client(tmp_path: Path) -> tuple[TestClient, Any]:
     """构造 TestClient + budget_service 注入"""
-    from dashboard.app import create_app
-    from dashboard.protocols import MasterControllerAdapter
+    from apps.studio_api.app import create_app
+    from apps.studio_api.protocols import MasterControllerAdapter
     from lingwen_core.agents.budget_persistence import BudgetService
 
     service = BudgetService(db_path=tmp_path / "test.db")
@@ -29,12 +29,13 @@ def _make_test_client(tmp_path: Path) -> tuple[TestClient, Any]:
     controller.cost_tracker = None
     controller._current_budget_usd = None
     controller._current_run_id = None
+    controller.budget_service_by_tier = None
 
     # Inject into adapter singleton (class-level _controller)
     MasterControllerAdapter._controller = controller
 
-    # 使用 create_app() 工厂 (dashboard/app.py 用 lazy app 模式)
-    app = create_app()
+    # 使用 create_app() 工厂 (apps/studio_api/app.py 用 lazy app 模式)
+    app = create_app(master_controller=controller)
     return TestClient(app), service
 
 
