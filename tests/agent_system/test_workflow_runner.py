@@ -767,6 +767,83 @@ class TestResumeE2EWithRealScheduler:
         # call_log: n1 (第一次), n3, n4 (第二次 — n2 DECISION 不调 compute_fn)
         assert scheduler._test_call_log == ["n1", "n3", "n4"]
 
+    def test_workflow_runner_resume_e2e_full_cycle(self) -> None:
+        """完整 WorkflowRunner.run(start_nodes=None) → DECISION pause → resume 验证 4 不变量:
+
+        1. start_nodes=None → derived list ["n1"]
+        2. state.start_nodes caches derived list
+        3. resume_workflow uses cached start_nodes (not re-derive)
+        4. scheduler.run idempotent on completed nodes (n1 skipped on second call)
+        """
+        from infra.got.data_structures import NodeType, ThoughtNode
+        from infra.got.graph import ThoughtGraph
+        from infra.got.scheduler import ComputeResult, GoTScheduler
+
+        graph = ThoughtGraph()
+        graph.add_node(ThoughtNode(node_id="n1", type=NodeType.GENERATION, name="gen1", description="gen1", depends_on=()))
+        graph.add_node(ThoughtNode(node_id="n2", type=NodeType.DECISION, name="dec", description="dec", depends_on=("n1",)))
+        graph.add_node(ThoughtNode(node_id="n3", type=NodeType.GENERATION, name="gen3", description="gen3", depends_on=("n2",)))
+
+        call_log: list = []
+
+        def compute_fn(node, inputs):
+            call_log.append(node.node_id)
+            return ComputeResult(output={"node": node.node_id}, cost_tokens=1)
+
+        scheduler = GoTScheduler(graph, compute_fn=compute_fn, max_backtracks=0)
+
+        master = MasterController.__new__(MasterController)
+        from lingwen_core.agents.workflow_state import WorkflowState
+        master._state = WorkflowState.empty()
+        master.budget_service = None
+        master._decision_queue = MagicMock(pending=MagicMock(return_value=[]), add=MagicMock())
+
+        from lingwen_core.agents import got_bridge
+        original = got_bridge.build_got_scheduler
+        got_bridge.build_got_scheduler = MagicMock(return_value=(scheduler, graph))
+        try:
+            runner = WorkflowRunner(master)
+            runner._maybe_memory_context = MagicMock(return_value=None)
+            runner._maybe_incremental_backfill = MagicMock(return_value=None)
+            runner._harvest_decision_specs = MagicMock(return_value=[])
+
+            # === Phase A: run(start_nodes=None) — DECISION pause ===
+            result1 = runner.run(workflow_name="test", start_nodes=None)
+            # 不变量 1: start_nodes=None → derived ["n1"]
+            assert list(master._state.start_nodes) == ["n1"]
+            # 不变量 2: summary 显示 n2 paused
+            assert result1["summary"].paused_nodes == ("n2",)
+            # call_log: n1 执行 (n2 DECISION pause 不调 compute)
+            assert call_log == ["n1"]
+
+            # === Phase B: setup decision_queue for resume ===
+            master._decision_queue = MagicMock(
+                pending=MagicMock(return_value=[]),
+                add=MagicMock(),
+                get=MagicMock(return_value=MagicMock(node_id="n2")),
+                resolve=MagicMock(return_value="RESOLVED_OBJ"),
+                with_lock=MagicMock(
+                    return_value=MagicMock(
+                        __enter__=MagicMock(return_value=MagicMock()),
+                        __exit__=MagicMock(return_value=False),
+                    )
+                ),
+            )
+            runner._harvest_decision_specs = MagicMock(return_value=[])
+
+            # === Phase C: resume — 复用 cached start_nodes + 跳过已执行节点 ===
+            result2 = runner.resume(decision_id="d1", option="approve")
+            # 不变量 3: resume 使用 cached start_nodes ["n1"]
+            assert list(master._state.start_nodes) == ["n1"]
+            # 不变量 4: scheduler 跳过 n1, 跑 n3 (n2 DECISION 不调 compute)
+            assert result2["summary"].completed == 1
+            assert result2["resolved_decision"] == "RESOLVED_OBJ"
+            # call_log: n1 + n3 (n1 不重跑 — ready_nodes 排除 COMPLETED 节点)
+            assert call_log == ["n1", "n3"]
+            assert result2["summary"].paused is False
+        finally:
+            got_bridge.build_got_scheduler = original
+
 
 class TestRunWithNoneStartNodesDerivation:
     """E2E 验证 start_nodes=None 推导 + 持久化 + resume 复用 (Phase 28)."""
