@@ -27,6 +27,10 @@ def test_master_audit_chapter_calls_auditor_audit_chapter(monkeypatch, tmp_path)
     修复前: master.audit_chapter 调 self.auditor.llm_audit(...) → AttributeError,
             被 try/except 吞,master.audit_chapter 仍返回,但 called 列表为空。
     修复后: master.audit_chapter 调 self.auditor.audit_chapter(...) → called 列表非空。
+
+    Phase 15.0 P3-SPLIT 后, master.audit_chapter 直接把 timeline 透传给
+    auditor.audit_chapter (4th 位置参数, auditor 端命名 "context").
+    所以 fake 的 4th 参数名沿用 auditor 签名 (context), 实际收到 timeline 列表.
     """
     router, providers = make_stub_router()
     master = make_master_with_router(tmp_path, router)
@@ -58,7 +62,9 @@ def test_master_audit_chapter_calls_auditor_audit_chapter(monkeypatch, tmp_path)
     assert called[0]["chapter_num"] == 1
     assert called[0]["content"] == "第一章正文 100 字"
     assert called[0]["reviewer_id"] is None  # 默认 None
-    assert "timeline" in called[0]["context"]
+    # Phase 15.0 P3-SPLIT: master 把 timeline 直接透传给 auditor (位置参数 4),
+    # 所以 fake 的 context 收到 timeline 列表本身. 验证数据内容而非 key.
+    assert called[0]["context"] == ["事件 A", "事件 B"]
 
 
 def test_review_handler_propagates_content_to_downstream():
