@@ -52,31 +52,7 @@ class WorkflowRunner:
         if budget_service is not None and cost_budget_usd is not None:
             budget_service.set(scope="run", usd=cost_budget_usd, run_id=run_id)
         try:
-            # 延迟 import: 避免 got ↔ agent_system 循环, 且让测试可 monkeypatch
-            from lingwen_core.agents.got_bridge import build_got_scheduler
-
-            from infra.got.workflow_loader import WorkflowNotFoundError
-
-            try:
-                scheduler, graph = build_got_scheduler(
-                    master=controller,
-                    workflow_name=workflow_name,
-                    base_dir=base_dir,
-                    max_backtracks=max_backtracks,
-                )
-            except WorkflowNotFoundError:
-                # 后续任务接入完整错误传播前，保持占位 run() 的契约。
-                raise NotImplementedError("Phase 27 Task 4-5: implementation in progress") from None
-
-            # 默认起点: 无依赖的节点
-            if start_nodes is None:
-                start_nodes = [nid for nid in graph.node_ids() if not graph.get_node(nid).depends_on]
-
-            # Task 3 仅验证调度器输入；实际结果编排留给后续任务。
-            if start_nodes:
-                scheduler.run(start_nodes=start_nodes, initial_inputs=initial_inputs)
-
-            raise NotImplementedError("Phase 27 Task 4-5: memory + harvest + state + scheduler.run in progress")
+            raise NotImplementedError("Phase 27 Task 2-5: implementation in progress")
         finally:
             # Phase 8.8 / 8.12: reset 防跨 run leak
             controller._current_budget_usd = None
