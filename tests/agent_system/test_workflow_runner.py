@@ -216,3 +216,93 @@ class TestRunSchedulerBuild:
             # Task 3 verifies call sequence; final start_nodes == {n2, n3} validated in Task 5
         finally:
             got_bridge.build_got_scheduler = original
+
+
+class TestRunMemoryAndHarvest:
+    """run() step 4-5: memory RAG context + harvest DECISION specs."""
+
+    def test_run_attaches_memory_context_to_seed_inputs(self) -> None:
+        """memory_context 不为 None 时写入 seed_inputs['memory_context'].
+
+        Observation: 通过 _harvest_decision_specs side_effect 捕获 seed_inputs
+        (Task 4 calls harvest AFTER memory attachment). 不依赖 scheduler.run.
+        """
+        master = MasterController.__new__(MasterController)
+        from lingwen_core.agents.workflow_state import WorkflowState
+        master._state = WorkflowState.empty()
+        master._memory_rag_mode = "summary"
+        master.budget_service = None
+
+        from lingwen_core.agents import got_bridge
+        original_build = got_bridge.build_got_scheduler
+        stub_node = MagicMock(depends_on=[])
+        stub_graph = MagicMock(
+            node_ids=lambda: [],
+            get_node=MagicMock(return_value=stub_node),
+            has_execution=lambda _: False,
+            get_execution=lambda _: None,
+        )
+        stub_scheduler = MagicMock(run=MagicMock(return_value=MagicMock()))
+        got_bridge.build_got_scheduler = MagicMock(return_value=(stub_scheduler, stub_graph))
+
+        captured_seed_inputs = {}
+
+        def capture_harvest(graph, *, initial_inputs=None):
+            captured_seed_inputs.update(dict(initial_inputs or {}))
+            return []
+
+        # Bypass real chapter_memory_hook — stub _maybe_memory_context directly on runner
+        # (Phase 4.3 + 9.70 logic tested via _maybe_memory_context unit in Task 9)
+        runner = WorkflowRunner(master)
+        runner._maybe_memory_context = MagicMock(return_value={"rag": "ctx"})
+        runner._harvest_decision_specs = MagicMock(side_effect=capture_harvest)
+
+        try:
+            try:
+                runner.run(workflow_name="novel_writing", initial_inputs={"chapter_num": 1})
+            except NotImplementedError:
+                pass
+            assert captured_seed_inputs.get("memory_context") == {"rag": "ctx"}
+            assert captured_seed_inputs.get("chapter_num") == 1
+            runner._maybe_memory_context.assert_called_once()
+        finally:
+            got_bridge.build_got_scheduler = original_build
+
+    def test_run_harvest_decisions_before_placeholder(self) -> None:
+        """harvest 在 raise NotImplementedError 之前被调用.
+
+        Observation: 通过 runner._harvest_decision_specs call_count + 'before scheduler.run'
+        验证由 Task 5 full pipeline 覆盖 (Task 4 不调 scheduler.run).
+        """
+        master = MasterController.__new__(MasterController)
+        from lingwen_core.agents.workflow_state import WorkflowState
+        master._state = WorkflowState.empty()
+        master.budget_service = None
+
+        from lingwen_core.agents import got_bridge
+        original_build = got_bridge.build_got_scheduler
+        stub_node = MagicMock(depends_on=[])
+        stub_graph = MagicMock(
+            node_ids=lambda: [],
+            get_node=MagicMock(return_value=stub_node),
+            has_execution=lambda _: False,
+            get_execution=lambda _: None,
+        )
+        stub_scheduler = MagicMock(run=MagicMock(return_value=MagicMock()))
+        got_bridge.build_got_scheduler = MagicMock(return_value=(stub_scheduler, stub_graph))
+
+        runner = WorkflowRunner(master)
+        runner._maybe_memory_context = MagicMock(return_value=None)
+        runner._harvest_decision_specs = MagicMock(return_value=[{"p": 1}])
+
+        try:
+            try:
+                runner.run(workflow_name="test")
+            except NotImplementedError:
+                pass
+            runner._harvest_decision_specs.assert_called_once()
+            # 验证 graph + seed_inputs (这里 None) 传入
+            call_args = runner._harvest_decision_specs.call_args
+            assert call_args.args[0] is stub_graph  # graph passed positionally
+        finally:
+            got_bridge.build_got_scheduler = original_build

@@ -66,8 +66,49 @@ class WorkflowRunner:
             if start_nodes is None:
                 start_nodes = [nid for nid in graph.node_ids() if not graph.get_node(nid).depends_on]
 
-            raise NotImplementedError("Phase 27 Task 4-5: memory + harvest + state + scheduler.run in progress")
+            # Phase 9.70 F62: 可选 MemoryGateway RAG context
+            seed_inputs: Dict[str, Any] = dict(initial_inputs or {})
+            memory_context = self._maybe_memory_context(workflow_name, seed_inputs)
+            if memory_context is not None:
+                seed_inputs.setdefault("memory_context", memory_context)
+
+            # Phase 4.3: 扫描 DECISION 节点 → 创建 HumanDecision (须先于 run)
+            pending_decisions = self._harvest_decision_specs(graph, initial_inputs=seed_inputs)  # noqa: F841 — Task 5 consumes
+
+            raise NotImplementedError("Phase 27 Task 5: state write + scheduler.run + return in progress")
         finally:
             # Phase 8.8 / 8.12: reset 防跨 run leak
             controller._current_budget_usd = None
             controller._current_run_id = None
+
+    def _maybe_memory_context(
+        self,
+        workflow_name: str,
+        initial_inputs: Optional[Dict[str, Any]],
+    ) -> Any:
+        """Stub — Phase 27 Task 9 implements real version (chapter_memory_hook)."""
+        return None
+
+    def _maybe_incremental_backfill(
+        self,
+        workflow_name: str,
+        initial_inputs: Optional[Dict[str, Any]],
+        executions: Dict[str, Any],
+        summary: Any,
+    ) -> Any:
+        """Stub — Phase 27 Task 9 implements real version (CVG backfill)."""
+        return None
+
+    def _harvest_decision_specs(
+        self,
+        graph: Any,
+        *,
+        initial_inputs: Optional[Dict[str, Any]] = None,
+    ) -> list:
+        """Stub — Phase 27 Task 9 implements real version (DECISION node scan)."""
+        return []
+
+    @staticmethod
+    def _collect_executions(graph: Any) -> Dict[str, Any]:
+        """Stub — Phase 27 Task 9 implements real version."""
+        return {}
