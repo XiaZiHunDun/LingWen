@@ -7,6 +7,7 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 from lingwen_core.agents import master_controller as mc_mod
+from lingwen_core.agents.workflow_state import WorkflowState
 
 from apps.studio_api.app import create_app
 from apps.studio_api.protocols import MasterControllerAdapter
@@ -42,12 +43,14 @@ def _make_master_with_production_cache(tmp_path: Path):
     class _StubScheduler:
         _summary = _StubSummary()
 
-    master._last_scheduler = _StubScheduler()
-    master._last_graph = _StubGraph()
-    master._last_workflow_name = "novel_writing"
-    master._last_initial_inputs = {"chapter_num": 360}
-    master._last_memory_context = {"source": "stub"}
-    master._last_incremental_backfill = {"nodes_written": 2, "total_count": 2, "elapsed_s": 0.1}
+    master._state = WorkflowState(
+        scheduler=_StubScheduler(),
+        graph=_StubGraph(),
+        workflow_name="novel_writing",
+        initial_inputs={"chapter_num": 360},
+        memory_context={"source": "stub"},
+        incremental_backfill={"nodes_written": 2, "total_count": 2, "elapsed_s": 0.1},
+    )
     return master
 
 

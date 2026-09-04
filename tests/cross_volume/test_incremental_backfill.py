@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from unittest.mock import MagicMock
 
 import pytest
+from lingwen_core.agents.workflow_state import WorkflowState
 from lingwen_pipeline.master_controller import MasterController
 
 from infra.cross_volume.backfill import Backfiller, BackfillStats
@@ -228,6 +229,7 @@ class TestIncrementalBackfillWorkflowHook:
             mock_hook,
         )
         controller = MasterController.__new__(MasterController)
+        controller._state = WorkflowState.empty()
         controller._incremental_backfill_enabled = True
         controller._decision_queue = MagicMock()
         controller._decision_queue.create = MagicMock()

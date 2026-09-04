@@ -21,6 +21,7 @@ Doc 4 §10 Phase 5: 决策节点真正暂停工作流,等待 resolve_decision �
 from __future__ import annotations
 
 import pytest
+from lingwen_core.agents.workflow_state import WorkflowState
 
 from infra.got.data_structures import (
     NodeStatus,
@@ -343,10 +344,7 @@ class TestControllerResumeWorkflow:
         controller._orchestrator = None
         controller._skill_registry = None
         # Phase 5: 活跃工作流缓存初始 None
-        controller._last_scheduler = None
-        controller._last_graph = None
-        controller._last_workflow_name = None
-        controller._last_start_nodes = []
+        controller._state = WorkflowState.empty()
 
         wf = tmp_path / "wf_resume.yaml"
         wf.write_text(workflow_body, encoding="utf-8")
@@ -391,10 +389,12 @@ class TestControllerResumeWorkflow:
         controller, scheduler, graph = self._build_controller_with_workflow(monkeypatch, tmp_path, wf_body)
 
         # 缓存活跃工作流 (模拟 run_workflow() 的行为)
-        controller._last_scheduler = scheduler
-        controller._last_graph = graph
-        controller._last_workflow_name = "wf_resume"
-        controller._last_start_nodes = ["a"]
+        controller._state = controller._state.with_updates(
+            scheduler=scheduler,
+            graph=graph,
+            workflow_name="wf_resume",
+            start_nodes=["a"],
+        )
 
         # 手动跑第一次,pause 在 judge
         summary1 = scheduler.run(start_nodes=["a"])
@@ -459,10 +459,7 @@ class TestControllerResumeWorkflow:
         controller._router = None
         controller._orchestrator = None
         controller._skill_registry = None
-        controller._last_scheduler = None  # 关键:无活跃工作流
-        controller._last_graph = None
-        controller._last_workflow_name = None
-        controller._last_start_nodes = []
+        controller._state = WorkflowState.empty()  # 关键:无活跃工作流
 
         d = create_decision(
             decision_kind=DecisionKind.OUTLINE_JUDGMENT,
@@ -493,9 +490,11 @@ class TestControllerResumeWorkflow:
             "    depends_on: [a]\n"
         )
         controller, scheduler, graph = self._build_controller_with_workflow(monkeypatch, tmp_path, wf_body)
-        controller._last_scheduler = scheduler
-        controller._last_graph = graph
-        controller._last_start_nodes = ["a"]
+        controller._state = controller._state.with_updates(
+            scheduler=scheduler,
+            graph=graph,
+            start_nodes=["a"],
+        )
 
         with pytest.raises(KeyError, match="nonexistent"):
             controller.resume_workflow("nonexistent", "approve")
@@ -518,9 +517,11 @@ class TestControllerResumeWorkflow:
             "    depends_on: []\n"
         )
         controller, scheduler, graph = self._build_controller_with_workflow(monkeypatch, tmp_path, wf_body)
-        controller._last_scheduler = scheduler
-        controller._last_graph = graph
-        controller._last_start_nodes = ["judge"]
+        controller._state = controller._state.with_updates(
+            scheduler=scheduler,
+            graph=graph,
+            start_nodes=["judge"],
+        )
 
         # 跑 → pause
         scheduler.run(start_nodes=["judge"])
@@ -572,9 +573,11 @@ class TestControllerResumeWorkflow:
             "    depends_on: [d2]\n"
         )
         controller, scheduler, graph = self._build_controller_with_workflow(monkeypatch, tmp_path, wf_body)
-        controller._last_scheduler = scheduler
-        controller._last_graph = graph
-        controller._last_start_nodes = ["a"]
+        controller._state = controller._state.with_updates(
+            scheduler=scheduler,
+            graph=graph,
+            start_nodes=["a"],
+        )
 
         # 跑 → pause 在 d1
         summary1 = scheduler.run(start_nodes=["a"])

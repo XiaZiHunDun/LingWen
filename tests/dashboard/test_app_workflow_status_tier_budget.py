@@ -20,6 +20,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
+from lingwen_core.agents.workflow_state import WorkflowState
 
 
 def _make_test_client(tmp_path: Path) -> tuple[TestClient, Any]:
@@ -155,9 +156,11 @@ class TestBudgetByTierEndpoints:
         master.cost_tracker = None
         master._current_budget_usd = None
         master._current_run_id = None
-        master._last_scheduler = _StubScheduler()
-        master._last_graph = _StubGraph()
-        master._last_workflow_name = "novel_writing"
+        master._state = WorkflowState(
+            scheduler=_StubScheduler(),
+            graph=_StubGraph(),
+            workflow_name="novel_writing",
+        )
 
         adapter = MasterControllerAdapter(master)
         app = create_app(db_path=tmp_path / "rp.db", master_controller=adapter)

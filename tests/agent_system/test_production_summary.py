@@ -8,6 +8,7 @@ from lingwen_core.agents.production_summary import (
     build_production_summary,
     build_production_summary_from_controller,
 )
+from lingwen_core.agents.workflow_state import WorkflowState
 
 from infra.got.data_structures import NodeExecution, NodeStatus
 
@@ -80,11 +81,13 @@ class TestBuildProductionSummaryFromController:
                 )
 
         class _Controller:
-            _last_graph = _Graph()
-            _last_workflow_name = "novel_writing"
-            _last_initial_inputs = {"chapter_num": 12}
-            _last_incremental_backfill = None
-            _last_memory_context = {"source": "live"}
+            _state = WorkflowState(
+                graph=_Graph(),
+                workflow_name="novel_writing",
+                initial_inputs={"chapter_num": 12},
+                incremental_backfill=None,
+                memory_context={"source": "live"},
+            )
 
         result = build_production_summary_from_controller(_Controller())
         assert result is not None

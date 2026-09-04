@@ -16,6 +16,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 from lingwen_core.agents import master_controller as mc_mod
+from lingwen_core.agents.workflow_state import WorkflowState
 from lingwen_llm.providers.cost_tracker import CostTracker
 from lingwen_llm.providers.model_tiers import ModelTier
 
@@ -36,7 +37,7 @@ class TestWorkflowStatusResponseCostByTier:
         cost_tracker.record("review", ModelTier.OPUS, 50, 25)
         master.cost_tracker = cost_tracker
 
-        # 注入 _last_* 缓存 (get_active_workflow_status 需要)
+        # 注入 _state 缓存 (get_active_workflow_status 需要)
         class _StubGraph:
             def node_ids(self):
                 return []
@@ -56,9 +57,11 @@ class TestWorkflowStatusResponseCostByTier:
         class _StubScheduler:
             _summary = _StubSummary()
 
-        master._last_scheduler = _StubScheduler()
-        master._last_graph = _StubGraph()
-        master._last_workflow_name = "novel_writing"
+        master._state = WorkflowState(
+            scheduler=_StubScheduler(),
+            graph=_StubGraph(),
+            workflow_name="novel_writing",
+        )
 
         adapter = MasterControllerAdapter(master)
         app = create_app(db_path=tmp_path / "rp.db", master_controller=adapter)
@@ -115,9 +118,11 @@ class TestWorkflowStatusTimeWindow:
         class _StubScheduler:
             _summary = _StubSummary()
 
-        master._last_scheduler = _StubScheduler()
-        master._last_graph = _StubGraph()
-        master._last_workflow_name = "novel_writing"
+        master._state = WorkflowState(
+            scheduler=_StubScheduler(),
+            graph=_StubGraph(),
+            workflow_name="novel_writing",
+        )
 
         adapter = MasterControllerAdapter(master)
         from apps.studio_api.app import create_app
@@ -209,9 +214,11 @@ class TestWorkflowStatusResponseCostByDay:
         class _StubScheduler:
             _summary = _StubSummary()
 
-        master._last_scheduler = _StubScheduler()
-        master._last_graph = _StubGraph()
-        master._last_workflow_name = "novel_writing"
+        master._state = WorkflowState(
+            scheduler=_StubScheduler(),
+            graph=_StubGraph(),
+            workflow_name="novel_writing",
+        )
 
         adapter = MasterControllerAdapter(master)
         app = create_app(db_path=tmp_path / "rp.db", master_controller=adapter)
@@ -303,9 +310,11 @@ class TestWorkflowStatusResponseCostByDayPerTier:
         class _StubScheduler:
             _summary = _StubSummary()
 
-        master._last_scheduler = _StubScheduler()
-        master._last_graph = _StubGraph()
-        master._last_workflow_name = "novel_writing"
+        master._state = WorkflowState(
+            scheduler=_StubScheduler(),
+            graph=_StubGraph(),
+            workflow_name="novel_writing",
+        )
 
         adapter = MasterControllerAdapter(master)
         app = create_app(db_path=tmp_path / "rp.db", master_controller=adapter)

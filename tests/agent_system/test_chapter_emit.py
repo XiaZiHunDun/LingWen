@@ -11,6 +11,7 @@ from lingwen_core.agents.chapter_emit import (
     emit_chapter_to_repo,
 )
 from lingwen_core.agents.got_bridge import AgentComputeFn
+from lingwen_core.agents.workflow_state import WorkflowState
 
 from infra.got.data_structures import NodeType, ThoughtNode
 from infra.paths import ProjectPaths
@@ -79,7 +80,7 @@ class TestAgentComputeFnEmitChapter:
         monkeypatch.setenv("LINGWEN_EMIT_CHAPTER", "1")
 
         class _Master:
-            _last_initial_inputs = {"chapter_num": 368}
+            _state = WorkflowState(initial_inputs={"chapter_num": 368})
 
         compute = AgentComputeFn(_Master())
         node = ThoughtNode(
@@ -103,7 +104,7 @@ class TestAgentComputeFnEmitChapter:
         monkeypatch.delenv("LINGWEN_REAL_LLM", raising=False)
 
         class _Master:
-            _last_initial_inputs = {"chapter_num": 369}
+            _state = WorkflowState(initial_inputs={"chapter_num": 369})
 
         compute = AgentComputeFn(_Master())
         node = ThoughtNode(
@@ -121,7 +122,7 @@ class TestAgentComputeFnEmitChapter:
 
     def test_emit_fails_without_content(self, monkeypatch):
         monkeypatch.setenv("LINGWEN_EMIT_CHAPTER", "1")
-        compute = AgentComputeFn(type("_M", (), {"_last_initial_inputs": {"chapter_num": 1}})())
+        compute = AgentComputeFn(type("_M", (), {"_state": WorkflowState(initial_inputs={"chapter_num": 1})})())
         node = ThoughtNode(
             node_id="emit_chapter",
             type=NodeType.OUTPUT,

@@ -31,6 +31,7 @@ from lingwen_core.agents.decision_queue import (
     HumanDecisionQueue,
     create_decision,
 )
+from lingwen_core.agents.workflow_state import WorkflowState
 from lingwen_llm.providers.cost_tracker import CostTracker
 from lingwen_llm.providers.model_tiers import ModelTier
 
@@ -690,9 +691,12 @@ def _make_fake_master_with_polish_merge_scores(
         _summary = _FakeSummary()
 
     controller = mc_mod.MasterController.__new__(mc_mod.MasterController)
-    controller._last_scheduler = _FakeScheduler()
-    controller._last_graph = _FakeGraph()
-    controller._last_workflow_name = "novel_writing"
+    controller._state = WorkflowState.empty()
+    controller._state = controller._state.with_updates(
+        scheduler=_FakeScheduler(),
+        graph=_FakeGraph(),
+        workflow_name="novel_writing",
+    )
     return controller
 
 
@@ -785,6 +789,7 @@ class TestCostByScenarioExtraction:
 
         # 用 MasterController.__new__ bypass __init__ 注入 cost_tracker
         master = mc_mod.MasterController.__new__(mc_mod.MasterController)
+        master._state = WorkflowState.empty()
         master.cost_tracker = tracker
 
         result = _extract_cost_by_scenario(master)
@@ -800,6 +805,7 @@ class TestCostByScenarioExtraction:
         from apps.studio_api.protocols import _extract_cost_by_scenario
 
         master = mc_mod.MasterController.__new__(mc_mod.MasterController)
+        master._state = WorkflowState.empty()
         # 故意不设 cost_tracker
         result = _extract_cost_by_scenario(master)
         assert result == {}
@@ -809,6 +815,7 @@ class TestCostByScenarioExtraction:
         from apps.studio_api.protocols import MasterControllerAdapter
 
         master = mc_mod.MasterController.__new__(mc_mod.MasterController)
+        master._state = WorkflowState.empty()
         cost_tracker = CostTracker()
         cost_tracker.record("chapter_writing", ModelTier.SONNET, 100, 50)
         master.cost_tracker = cost_tracker
@@ -833,9 +840,11 @@ class TestCostByScenarioExtraction:
         class _StubScheduler:
             _summary = _StubSummary()
 
-        master._last_scheduler = _StubScheduler()
-        master._last_graph = _StubGraph()
-        master._last_workflow_name = "novel_writing"
+        master._state = master._state.with_updates(
+            scheduler=_StubScheduler(),
+            graph=_StubGraph(),
+            workflow_name="novel_writing",
+        )
 
         adapter = MasterControllerAdapter(master)
         app = create_app(db_path=tmp_path / "rp.db", master_controller=adapter)
@@ -935,6 +944,7 @@ class TestCostByScenarioExtraction:
         cost_tracker = CostTracker()
         cost_tracker.record("chapter_writing", ModelTier.SONNET, 100, 50)
         master = MasterController.__new__(MasterController)
+        master._state = WorkflowState.empty()
         master.cost_tracker = cost_tracker
 
         # 注入 _last_* 缓存 (get_active_workflow_status 需要)
@@ -957,9 +967,11 @@ class TestCostByScenarioExtraction:
         class _StubScheduler:
             _summary = _StubSummary()
 
-        master._last_scheduler = _StubScheduler()
-        master._last_graph = _StubGraph()
-        master._last_workflow_name = "novel_writing"
+        master._state = master._state.with_updates(
+            scheduler=_StubScheduler(),
+            graph=_StubGraph(),
+            workflow_name="novel_writing",
+        )
 
         adapter = MasterControllerAdapter(master)
         # 触发 get_active_workflow_status (跟 WebSocket 推送路径同源)
@@ -987,6 +999,7 @@ class TestTotalCostUsdField:
         """Phase 8.5: 注入 cost_tracker + 跑 1 笔 → active workflow total_cost_usd > 0"""
         # 构造 fake master, _last_* 缓存指向有 polish_merge 节点
         master = mc_mod.MasterController.__new__(mc_mod.MasterController)
+        master._state = WorkflowState.empty()
         master.cost_tracker = CostTracker()
         # 1 笔 SONNET 1000/500 = 0.0105 USD
         master.cost_tracker.record("chapter_writing", ModelTier.SONNET, 1000, 500)
@@ -1010,9 +1023,11 @@ class TestTotalCostUsdField:
         class _StubScheduler:
             _summary = _StubSummary()
 
-        master._last_scheduler = _StubScheduler()
-        master._last_graph = _StubGraph()
-        master._last_workflow_name = "novel_writing"
+        master._state = master._state.with_updates(
+            scheduler=_StubScheduler(),
+            graph=_StubGraph(),
+            workflow_name="novel_writing",
+        )
 
         adapter = MasterControllerAdapter(master)
         app = create_app(db_path=tmp_path / "rp.db", master_controller=adapter)
@@ -1048,6 +1063,7 @@ class TestBudgetStatusExtraction:
         from lingwen_pipeline.master_controller import MasterController
 
         ctrl = MasterController.__new__(MasterController)
+        ctrl._state = WorkflowState.empty()
         ctrl.cost_tracker = CostTracker() if has_tracker else None
         if has_tracker and cost_usd > 0:
             # SONNET 1000 in / 0 out = 0.003 USD → record 1 笔 SONNET 1M tokens ≈ $3
@@ -1102,6 +1118,7 @@ class TestBudgetStatusExtraction:
         from apps.studio_api.protocols import MasterControllerAdapter
 
         master = mc_mod.MasterController.__new__(mc_mod.MasterController)
+        master._state = WorkflowState.empty()
         master.cost_tracker = CostTracker()
         master.cost_tracker.record("chapter_writing", ModelTier.SONNET, 100, 50)
         master._current_budget_usd = 1.0  # under budget
@@ -1125,9 +1142,11 @@ class TestBudgetStatusExtraction:
         class _StubScheduler:
             _summary = _StubSummary()
 
-        master._last_scheduler = _StubScheduler()
-        master._last_graph = _StubGraph()
-        master._last_workflow_name = "novel_writing"
+        master._state = master._state.with_updates(
+            scheduler=_StubScheduler(),
+            graph=_StubGraph(),
+            workflow_name="novel_writing",
+        )
 
         adapter = MasterControllerAdapter(master)
         app = create_app(db_path=tmp_path / "rp.db", master_controller=adapter)

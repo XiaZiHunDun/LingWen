@@ -19,6 +19,7 @@ from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
+from lingwen_core.agents.workflow_state import WorkflowState
 
 from apps.studio_api.protocols import (
     _extract_budget_by_tier,
@@ -137,7 +138,7 @@ class TestExtractBudgetByTier:
     def test_extract_budget_by_tier_appears_in_workflow_status_response(self, tmp_path: Path) -> None:
         """Phase 8.15: get_active_workflow_status 返 dict 含 budget_by_tier 3 tier dict.
 
-        Mock _last_scheduler/_last_graph 触发 active workflow path (Phase 5+
+        Mock scheduler/graph → WorkflowState 触发 active workflow path (Phase 5+
         run_workflow 写入缓存). Pattern 跟 test_app_workflow_status.py 1:1.
         """
         from lingwen_core.agents.budget_persistence import BudgetService
@@ -172,9 +173,11 @@ class TestExtractBudgetByTier:
         class _StubMaster:
             def __init__(self) -> None:
                 self.budget_service_by_tier = svc
-                self._last_scheduler = _StubScheduler()
-                self._last_graph = _StubGraph()
-                self._last_workflow_name = "novel_writing"
+                self._state = WorkflowState(
+                    scheduler=_StubScheduler(),
+                    graph=_StubGraph(),
+                    workflow_name="novel_writing",
+                )
 
         stub = _StubMaster()
         MasterControllerAdapter._controller = stub
