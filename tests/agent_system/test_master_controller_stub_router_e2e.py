@@ -127,13 +127,17 @@ class TestMinimalWorkflowE2E:
         )
 
     def test_sanity_master_methods_not_replaced(self, tmp_path: Path):
-        """Sanity check: master.write_chapter/audit_chapter/polish_chapter 仍是原方法"""
+        """Sanity check: master.write_chapter/audit_chapter/polish_chapter 仍是原方法.
+
+        Phase 15.0 P3-SPLIT 后,MasterController 由 mixin 组合,方法来自
+        WritingMixin / EditingMixin. 验证这些方法未被 stub 替换即可.
+        """
         router, _ = make_stub_router()
         master = make_master_with_router(tmp_path, router)
 
-        assert master.write_chapter.__qualname__ == "MasterController.write_chapter"
-        assert master.audit_chapter.__qualname__ == "MasterController.audit_chapter"
-        assert master.polish_chapter.__qualname__ == "MasterController.polish_chapter"
+        assert master.write_chapter.__qualname__ == "WritingMixin.write_chapter"
+        assert master.audit_chapter.__qualname__ == "WritingMixin.audit_chapter"
+        assert master.polish_chapter.__qualname__ == "EditingMixin.polish_chapter"
 
     def test_each_node_has_output_dict(self, tmp_path: Path):
         router, _ = make_stub_router()
