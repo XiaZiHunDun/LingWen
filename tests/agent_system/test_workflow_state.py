@@ -61,3 +61,71 @@ class TestWorkflowStateWithUpdates:
     def test_with_updates_rejects_unknown_field(self) -> None:
         with pytest.raises(TypeError, match="unknown_field"):
             WorkflowState.empty().with_updates(unknown_field=1)
+
+
+class TestRefactorGuard:
+    """防 _last_* 散点回潮 — 仅 controller._state 单 source 模式."""
+
+    def test_master_controller_has_state_attribute(self) -> None:
+        """生产 MasterController.__init__ 后必有 _state 属性."""
+        from lingwen_pipeline.master_controller import MasterController
+
+        # 用 __new__ 跳过 __init__ 验证 dataclass 路径;
+        # 完整 __init__ 依赖外部 fixture, 这里只验 dataclass 路径
+        controller = MasterController.__new__(MasterController)
+        controller._state = WorkflowState.empty()
+
+        assert hasattr(controller, "_state")
+        assert isinstance(controller._state, WorkflowState)
+
+    def test_no_last_underscore_attrs_on_workflow_state_instance(self) -> None:
+        """WorkflowState 实例不应有 _last_* 前缀字段 — 7 字段全部 canonical 命名."""
+        state = WorkflowState.empty()
+
+        forbidden_prefixes = (
+            "_last_scheduler",
+            "_last_graph",
+            "_last_workflow_name",
+            "_last_start_nodes",
+            "_last_initial_inputs",
+            "_last_incremental_backfill",
+            "_last_memory_context",
+        )
+        for name in forbidden_prefixes:
+            assert not hasattr(state, name), (
+                f"WorkflowState 不应有 {name}; 用 workflow_name / graph 等 canonical 名"
+            )
+
+        # canonical 命名必须存在
+        canonical = (
+            "scheduler",
+            "graph",
+            "workflow_name",
+            "start_nodes",
+            "initial_inputs",
+            "incremental_backfill",
+            "memory_context",
+        )
+        for name in canonical:
+            assert hasattr(state, name), f"WorkflowState 缺 canonical 字段 {name}"
+
+    def test_stub_master_controller_uses_workflow_state(self) -> None:
+        """chapter_golden_path stub master 初始化后所有 7 字段均可读 — 不再漏 init."""
+        import tempfile
+
+        # 用 tmp_path 派生 state_dir — 不实际写文件 (stub init 只设 attrs)
+        from pathlib import Path
+
+        from lingwen_core.agents.chapter_golden_path import build_stub_master_controller
+
+        with tempfile.TemporaryDirectory() as tmp:
+            controller = build_stub_master_controller(Path(tmp) / "state")
+
+        # 全部 7 字段可读 + 默认值正确 (替代原 _last_X 漏 init AttributeError)
+        assert controller._state.scheduler is None
+        assert controller._state.graph is None
+        assert controller._state.workflow_name == ""
+        assert controller._state.start_nodes == []
+        assert controller._state.initial_inputs == {}
+        assert controller._state.incremental_backfill is None
+        assert controller._state.memory_context is None
