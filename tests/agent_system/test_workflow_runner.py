@@ -306,3 +306,125 @@ class TestRunMemoryAndHarvest:
             assert call_args.args[0] is stub_graph  # graph passed positionally
         finally:
             got_bridge.build_got_scheduler = original_build
+
+
+class TestRunStateWrites:
+    """run() step 6-11: state writes (pre + post) + scheduler.run + return."""
+
+    def test_run_writes_state_workflow_name_and_start_nodes_before_scheduler(self) -> None:
+        """scheduler.run 之前写 state: initial_inputs, workflow_name, start_nodes.
+
+        Observation: scheduler.run fake_run 捕获 state_at_run dict — Task 5 调 scheduler.run
+        后, state 已写入.
+        """
+        master = MasterController.__new__(MasterController)
+        from lingwen_core.agents.workflow_state import WorkflowState
+        master._state = WorkflowState.empty()
+        master.budget_service = None
+
+        from lingwen_core.agents import got_bridge
+        original = got_bridge.build_got_scheduler
+        stub_node = MagicMock(depends_on=[])
+        stub_graph = MagicMock(
+            node_ids=lambda: [],
+            get_node=MagicMock(return_value=stub_node),
+            has_execution=lambda _: False,
+            get_execution=lambda _: None,
+        )
+        state_at_run = {}
+
+        def fake_run(**kwargs):
+            state_at_run.update({
+                "workflow_name": master._state.workflow_name,
+                "start_nodes": list(master._state.start_nodes),
+                "initial_inputs": dict(master._state.initial_inputs),
+            })
+            return MagicMock()
+
+        stub_scheduler = MagicMock(run=fake_run)
+        got_bridge.build_got_scheduler = MagicMock(return_value=(stub_scheduler, stub_graph))
+
+        try:
+            runner = WorkflowRunner(master)
+            runner._harvest_decision_specs = MagicMock(return_value=[])
+            runner._maybe_memory_context = MagicMock(return_value=None)
+            runner._maybe_incremental_backfill = MagicMock(return_value=None)
+            runner._collect_executions = MagicMock(return_value={"n1": MagicMock()})
+
+            runner.run(workflow_name="novel_writing", initial_inputs={"chapter_num": 5})
+            assert state_at_run["workflow_name"] == "novel_writing"
+            assert state_at_run["initial_inputs"]["chapter_num"] == 5
+        finally:
+            got_bridge.build_got_scheduler = original
+
+    def test_run_writes_state_scheduler_graph_backfill_after_scheduler(self) -> None:
+        """scheduler.run 之后写 state: scheduler, graph, incremental_backfill, memory_context."""
+        master = MasterController.__new__(MasterController)
+        from lingwen_core.agents.workflow_state import WorkflowState
+        master._state = WorkflowState.empty()
+        master.budget_service = None
+
+        from lingwen_core.agents import got_bridge
+        original = got_bridge.build_got_scheduler
+        stub_node = MagicMock(depends_on=[])
+        stub_graph = MagicMock(
+            node_ids=lambda: [],
+            get_node=MagicMock(return_value=stub_node),
+            has_execution=lambda _: False,
+            get_execution=lambda _: None,
+        )
+        stub_summary = MagicMock()
+        stub_scheduler = MagicMock(run=MagicMock(return_value=stub_summary))
+        got_bridge.build_got_scheduler = MagicMock(return_value=(stub_scheduler, stub_graph))
+
+        try:
+            runner = WorkflowRunner(master)
+            runner._harvest_decision_specs = MagicMock(return_value=[])
+            runner._maybe_memory_context = MagicMock(return_value={"mem": "ctx"})
+            runner._maybe_incremental_backfill = MagicMock(return_value={"backfill": "stats"})
+            runner._collect_executions = MagicMock(return_value={})
+
+            runner.run(workflow_name="test")
+            assert master._state.scheduler is stub_scheduler
+            assert master._state.graph is stub_graph
+            assert master._state.incremental_backfill == {"backfill": "stats"}
+            assert master._state.memory_context == {"mem": "ctx"}
+        finally:
+            got_bridge.build_got_scheduler = original
+
+    def test_run_returns_summary_executions_pending_decisions(self) -> None:
+        """return dict 含 summary, graph, executions, pending_decisions, backfill, memory_context."""
+        master = MasterController.__new__(MasterController)
+        from lingwen_core.agents.workflow_state import WorkflowState
+        master._state = WorkflowState.empty()
+        master.budget_service = None
+
+        from lingwen_core.agents import got_bridge
+        original = got_bridge.build_got_scheduler
+        stub_node = MagicMock(depends_on=[])
+        stub_graph = MagicMock(
+            node_ids=lambda: [],
+            get_node=MagicMock(return_value=stub_node),
+            has_execution=lambda _: False,
+            get_execution=lambda _: None,
+        )
+        stub_summary = MagicMock()
+        stub_scheduler = MagicMock(run=MagicMock(return_value=stub_summary))
+        got_bridge.build_got_scheduler = MagicMock(return_value=(stub_scheduler, stub_graph))
+
+        try:
+            runner = WorkflowRunner(master)
+            runner._harvest_decision_specs = MagicMock(return_value=[{"p": 1}])
+            runner._maybe_memory_context = MagicMock(return_value=None)
+            runner._maybe_incremental_backfill = MagicMock(return_value=None)
+            runner._collect_executions = MagicMock(return_value={"n1": "exec"})
+
+            result = runner.run(workflow_name="test")
+            assert result["summary"] is stub_summary
+            assert result["graph"] is stub_graph
+            assert result["executions"] == {"n1": "exec"}
+            assert result["pending_decisions"] == [{"p": 1}]
+            assert "incremental_backfill" in result
+            assert "memory_context" in result
+        finally:
+            got_bridge.build_got_scheduler = original

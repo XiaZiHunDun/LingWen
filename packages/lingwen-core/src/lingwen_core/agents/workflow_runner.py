@@ -73,9 +73,40 @@ class WorkflowRunner:
                 seed_inputs.setdefault("memory_context", memory_context)
 
             # Phase 4.3: 扫描 DECISION 节点 → 创建 HumanDecision (须先于 run)
-            pending_decisions = self._harvest_decision_specs(graph, initial_inputs=seed_inputs)  # noqa: F841 — Task 5 consumes
+            pending_decisions = self._harvest_decision_specs(graph, initial_inputs=seed_inputs)
 
-            raise NotImplementedError("Phase 27 Task 5: state write + scheduler.run + return in progress")
+            # emit_chapter 等节点在 scheduler.run 期间读 chapter_num — 须先于 run 写入
+            controller._state = controller._state.with_updates(
+                initial_inputs=dict(seed_inputs),
+                workflow_name=workflow_name,
+                start_nodes=list(start_nodes),
+            )
+
+            summary = scheduler.run(start_nodes=start_nodes, initial_inputs=seed_inputs)
+            executions = self._collect_executions(graph)
+
+            # 缓存活跃工作流状态 (Phase 5) — resume_workflow() / dashboard 用它
+            incremental_backfill = self._maybe_incremental_backfill(
+                workflow_name=workflow_name,
+                initial_inputs=seed_inputs,
+                executions=executions,
+                summary=summary,
+            )
+            controller._state = controller._state.with_updates(
+                scheduler=scheduler,
+                graph=graph,
+                incremental_backfill=incremental_backfill,
+                memory_context=memory_context,
+            )
+
+            return {
+                "summary": summary,
+                "graph": graph,
+                "executions": executions,
+                "pending_decisions": pending_decisions,
+                "incremental_backfill": incremental_backfill,
+                "memory_context": memory_context,
+            }
         finally:
             # Phase 8.8 / 8.12: reset 防跨 run leak
             controller._current_budget_usd = None
