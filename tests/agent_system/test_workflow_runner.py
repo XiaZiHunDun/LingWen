@@ -49,10 +49,25 @@ class TestRunBudgetLifecycle:
         Task 2 scope: 验证 budget 在 try block 内 budget_service.set 调用时已 set.
         'before scheduler.run' 验证由 Task 3 (scheduler build) + Task 5 (full pipeline)
         共同覆盖 — 完整 11 步流水线后 budget 一定先于 scheduler.run 设置.
+
+        Note: stub got_bridge.build_got_scheduler 避免真实 YAML load (workflow_name="test"
+        不存在), 否则 WorkflowNotFoundError 会替换 NotImplementedError 传出.
         """
         master = MasterController.__new__(MasterController)
         from lingwen_core.agents.workflow_state import WorkflowState
         master._state = WorkflowState.empty()
+
+        from lingwen_core.agents import got_bridge
+        original_build = got_bridge.build_got_scheduler
+        stub_node = MagicMock(depends_on=[])
+        stub_graph = MagicMock(
+            node_ids=lambda: [],
+            get_node=MagicMock(return_value=stub_node),
+            has_execution=lambda _: False,
+            get_execution=lambda _: None,
+        )
+        stub_scheduler = MagicMock(run=MagicMock(return_value=MagicMock()))
+        got_bridge.build_got_scheduler = MagicMock(return_value=(stub_scheduler, stub_graph))
 
         captured = {}
 
@@ -68,8 +83,10 @@ class TestRunBudgetLifecycle:
         try:
             runner.run(workflow_name="test", cost_budget_usd=0.5)
         except NotImplementedError:
-            # Task 2 raises NotImplementedError after budget setup
+            # Task 3 raises NotImplementedError after scheduler build + start_nodes
             pass
+        finally:
+            got_bridge.build_got_scheduler = original_build
 
         master.budget_service.set.assert_called_once()
         assert captured["usd"] == 0.5
@@ -108,5 +125,94 @@ class TestRunBudgetLifecycle:
             # finally 仍 reset
             assert master._current_budget_usd is None
             assert master._current_run_id is None
+        finally:
+            got_bridge.build_got_scheduler = original
+
+
+class TestRunSchedulerBuild:
+    """run() step 2-3: build scheduler + default start_nodes."""
+
+    def test_run_calls_build_got_scheduler_with_controller(self) -> None:
+        """build_got_scheduler(master=controller, workflow_name=..., max_backtracks=...) 被调用."""
+        master = MasterController.__new__(MasterController)
+        from lingwen_core.agents.workflow_state import WorkflowState
+        master._state = WorkflowState.empty()
+        master.budget_service = None
+
+        from lingwen_core.agents import got_bridge
+        original = got_bridge.build_got_scheduler
+        called_kwargs = {}
+        stub_node = MagicMock(depends_on=[])
+        stub_graph = MagicMock(
+            node_ids=lambda: [],
+            get_node=MagicMock(return_value=stub_node),
+            has_execution=lambda _: False,
+            get_execution=lambda _: None,
+        )
+        stub_scheduler = MagicMock(run=MagicMock(return_value=MagicMock()))
+
+        def fake_build(**kwargs):
+            called_kwargs.update(kwargs)
+            return stub_scheduler, stub_graph
+
+        got_bridge.build_got_scheduler = fake_build
+
+        try:
+            runner = WorkflowRunner(master)
+            try:
+                runner.run(workflow_name="novel_writing", max_backtracks=3)
+            except NotImplementedError:
+                pass
+            assert called_kwargs["master"] is master
+            assert called_kwargs["workflow_name"] == "novel_writing"
+            assert called_kwargs["max_backtracks"] == 3
+        finally:
+            got_bridge.build_got_scheduler = original
+
+    def test_run_uses_default_start_nodes_when_none(self) -> None:
+        """start_nodes=None → derivation 走 graph.node_ids() + graph.get_node().depends_on.
+
+        Task 3 scope 仅验证 derivation 调用序列；最终 start_nodes list 由 Task 5 通过
+        state.write + scheduler.run 时刻 state.start_nodes 验证.
+        """
+        master = MasterController.__new__(MasterController)
+        from lingwen_core.agents.workflow_state import WorkflowState
+        master._state = WorkflowState.empty()
+        master.budget_service = None
+
+        from lingwen_core.agents import got_bridge
+        original = got_bridge.build_got_scheduler
+
+        # 3 nodes: n1 has deps, n2/n3 no deps
+        nodes_map = {
+            "n1": MagicMock(depends_on=["n2"]),
+            "n2": MagicMock(depends_on=[]),
+            "n3": MagicMock(depends_on=[]),
+        }
+        # track get_node access for derivation verification
+        accessed = []
+
+        def track_get_node(nid):
+            accessed.append((nid, nodes_map[nid].depends_on))
+            return nodes_map[nid]
+
+        stub_graph = MagicMock(
+            node_ids=lambda: list(nodes_map.keys()),
+            get_node=track_get_node,
+            has_execution=lambda _: False,
+            get_execution=lambda _: None,
+        )
+        stub_scheduler = MagicMock(run=MagicMock(return_value=MagicMock()))
+        got_bridge.build_got_scheduler = MagicMock(return_value=(stub_scheduler, stub_graph))
+
+        try:
+            runner = WorkflowRunner(master)
+            try:
+                runner.run(workflow_name="test")
+            except NotImplementedError:
+                pass
+            # derivation logic: graph.node_ids() iterated, get_node().depends_on checked for all 3
+            assert set(nid for nid, _ in accessed) == {"n1", "n2", "n3"}
+            # Task 3 verifies call sequence; final start_nodes == {n2, n3} validated in Task 5
         finally:
             got_bridge.build_got_scheduler = original
