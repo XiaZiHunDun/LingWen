@@ -23,7 +23,7 @@
 - ❌ `apps/studio_api/routes/workflows.py` (FastAPI route)
 - ❌ `apps/studio_api/helpers/workflow.py` (response helper)
 - ❌ `packages/lingwen-core/src/lingwen_core/agents/workflow_state.py` (Phase 26 dataclass)
-- ❌ `packages/lingwen-core/src/lingwen_core/agents/master_controller.py` (PHASE-COMPAT shim, 留 P2-ARCHDEBT)
+- ❌ `packages/lingwen-core/src/lingwen_core/agents/master_controller.py` (PHASE-COMPAT shim — **deleted Phase 32**; canonical path lingwen_pipeline.master_controller)
 - ❌ `infra/got/*`, `.lingwen/architecture.yml`, `HANDOFF.md`
 
 ## Verification Gates (实测)

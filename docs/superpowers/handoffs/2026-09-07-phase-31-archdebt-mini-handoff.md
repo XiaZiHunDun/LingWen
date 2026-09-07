@@ -36,7 +36,7 @@ Phase 31 ARCHDEBT-MINI completes 2 of 4 P2-ARCHDEBT sub-tasks (A: `chapter_golde
 
 **DEFERRED to Phase 32+:**
 - `infra.got.*` → `packages/lingwen-got/` migration (1 phase, 20–30 commits, ~199 tests, multi-day)
-- `infra/subplot/data_structures.py` + `infra/world_model/data_structures.py` deletion (Phase 33 candidate A; 0 consumers, high confidence)
+- `infra/subplot/data_structures.py` + `infra/world_model/data_structures.py` deletion (Phase 33 candidate A; 0 consumers, high confidence) — **CLOSED by Phase 32** (both deleted)
 - `MasterController` shim deletion (Phase 33 candidate B; 11 lines + 6 test consumers, needs migration commit + deletion)
 - `infra/world_model/__init__.py` split into root API + behavior services (Phase 34+; multi-phase)
 
@@ -162,11 +162,13 @@ docs/superpowers/specs/2026-09-07-phase-30-tackle-14-failures-design.md 2 +/-
 2. **`infra/subplot/data_structures.py` + `infra/world_model/data_structures.py` deletion** (Phase 33 candidate A):
    - 0 consumers per grep audit (high confidence)
    - Mechanical deletion + ruff + import-linter sweep
+   - **CLOSED by Phase 32** (both deleted; +1 fixup migrated 4 missed relative imports in infra/subplot/__init__.py, infra/world_model/__init__.py, infra/world_model/key_point_graph.py, infra/world_model/snapshot_store.py)
 3. **`MasterController` shim deletion** (Phase 33 candidate B):
    - 11-line `master_controller.py` shim in `packages/lingwen-pipeline/`
    - 6 test consumers need migration
    - Requires migration commit + deletion commit
-4. **`infra/world_model/__init__.py` split** (Phase 34+):
+   - **CLOSED by Phase 32** (deleted; +1 fixup migrated 1 missed relative import in packages/lingwen-core/src/lingwen_core/agents/got_bridge.py:32)
+4. **`infra/world_model/__init__.py` split** (Phase 33+):
    - Split root API surface from behavior services
    - Multi-phase, needs careful API stability review
 5. **Phase 114 prod preview regression** (still accepted debt — do NOT attempt fix).

@@ -666,7 +666,7 @@ class TieredRouter:
 | SubplotRegistry | `infra/subplot/registry.py` | 剧情子图注册 |
 | SubplotQueries | `infra/subplot/queries.py` | 剧情查询 |
 | SubplotLifecycle | `infra/subplot/lifecycle.py` | 剧情生命周期 |
-| SubplotDataStructures | `infra/subplot/data_structures.py` | 剧情数据结构 |
+| (DELETED Phase 32) SubplotDataStructures | `infra/subplot/data_structures.py` | 剧情数据结构 — 已迁至 `packages/lingwen-core/src/lingwen_core/domain/subplot.py` (canonical) |
 
 ---
 
