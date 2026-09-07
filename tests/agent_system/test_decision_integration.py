@@ -330,10 +330,13 @@ class TestRunWorkflowDecisionDiscovery:
 
         sched = GoTScheduler(graph, compute_fn=AgentComputeFn(controller), max_backtracks=0)
         del sched  # 仅构造验证 compute_fn 可注入
-        # 把图 注入 decision discovery 流程
-        from lingwen_pipeline.master_controller import _collect_decision_specs_from_graph
+        # Phase 30 T2: v25.9 P2-HUMAN-REVIEW refactor 把 _collect_decision_specs_from_graph
+        # inline 进 WorkflowRunner._harvest_decision_specs (instance method, 用 self._controller
+        # + self._decision_queue). 直接构造 runner, 复用测试已注入的 controller + queue。
+        from lingwen_core.agents.workflow_runner import WorkflowRunner
 
-        specs = _collect_decision_specs_from_graph(graph)
+        runner = WorkflowRunner(controller)
+        specs = runner._harvest_decision_specs(graph)
         assert len(specs) == 1
         spec = specs[0]
         assert spec["node_id"] == "outline_judgment"
