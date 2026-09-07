@@ -1,9 +1,9 @@
 # 待办事项列表
 
 > **最后更新**: 2026-09-07
-> **更新者**: 协调者（v30.0 TACKLE-14-FAILURES 闭环；9 commits ff-merge `38b854e7`；carryover 1 项 → Phase 31+）
+> **更新者**: 协调者（v31.0 ARCHDEBT-MINI 闭环；6 commits ff-merge `4dbe8939`；carryover 1 项 → Phase 32+）
 > **优先级**: P0 > P1 > P2 > P3
-> **事实来源**: 本仓库当前版本在 `CLAUDE.md` v30.0；并行开发入口见根 `COORDINATION.md`
+> **事实来源**: 本仓库当前版本在 `CLAUDE.md` v31.0；并行开发入口见根 `COORDINATION.md`
 
 ---
 
@@ -50,8 +50,9 @@
 | ~~P2-WFRUNNER~~ | ✅ Phase 27 DONE (2026-09-04) — see handoff | ~~run_workflow orchestration 90+ 行偏多。拆 service 后 run_workflow 仅做编排、helper 收口~~ | 后端 B（自服务） | ✅ Phase 27 完成（commit `9b57d16a` 待 ff-merge） | 2026-09-04 |
 | ~~P2-RESUME-VERIFY~~ | ✅ Phase 28 DONE (2026-09-04) — see handoff | ~~start_nodes=None 时 resume_workflow 重跑 E2E 验证。代码 review 列为 important。scheduler 对已完成节点是否幂等无测试覆盖~~ | 后端 B（自服务） | ✅ Phase 28 完成（7 commits 待 ff-merge） | 2026-09-04 |
 | P2-MC-WRITING | 84 pre-existing cascade failures 根因 | tests/got + tests/agent_system 共 84 failing，pre-existing（推测 mc_writing.py 类似 gutted）。需独立 phase | 后端 B（自服务） | ✅ Phase 29 完成（17 commits ff-merge `b1b748ad`，84→14 failed (-70)，1 prod 改动 `mc_editing.py:202`，11 测试文件调整） | 2026-09-04 |
-| P2-ARCHDEBT | 架构债（infra.got 迁移 + chapter_golden_path 反向 import + HANDOFF 措辞 + 4 薄代理 → OrchestratorProxyMixin） | v25.9 显式 carryover + Phase 27 增量：infra.got.* 迁 packages/lingwen-got/ 补 allowed_imports；chapter_golden_path.py 反向 import 整改；HANDOFF 文档 latest_decision_queue 措辞修订；mc_workflow.py 4 薄代理 → OrchestratorProxyMixin | 后端 B（自服务） | 📋 待开始 | 2026-09-04 |
+| P2-ARCHDEBT (剩余) | infra.got.* → packages/lingwen-got/ 迁移 + shim cleanup | v31.0 已清 chapter_golden_path + OrchestratorProxyMixin (4 薄代理)；Phase 32+ 候选剩余：infra.got.* 迁 packages/lingwen-got/ + data_structures (subplot/world_model) 删除 + MasterController shim 删 + world_model/__init__ split | 后端 B（自服务） | 📋 待开始 | 2026-09-07 |
 | **P2-30-FAILURES** | ~~Phase 29 剩余 14 failed 一次性清零~~ | ~~5 类根因：① 7 stub `_state` 注入（一行修复）② 1 `_collect_decision_specs_from_graph` re-export 或 test 迁移 ③ 2 `_impl_audit_chapter` 韧性契约（真 prod 改动，需 design 确认边界）④ 2 `CostTrackerDB._connect()` API 迁移 ⑤ 2 env-var tests 重写 → `make_master_with_router()`~~ | 后端 B（自服务） | ✅ Phase 30 完成（9 commits ff-merge `38b854e7`，14→0 failed (-14)，2 prod 改动 mc_writing.py + cost_persistence.py + 5 test 文件调整） | 2026-09-07 |
+| **P2-ARCHDEBT-MINI** | ~~P2-ARCHDEBT 子集 2/4 清理~~ | ~~**Sub-task A**：chapter_golden_path 反向 import 修复（迁 apps/studio_api/tests/golden_path_smoke.py）；**Sub-task B**：4 薄代理 → OrchestratorProxyMixin（mc_orchestrator_proxy.py new + MasterController MRO）；**12 文件 doc 同步** 修 stale "5 薄代理" → "4 薄代理"~~ | 后端 B（自服务） | ✅ Phase 31 完成（6 commits ff-merge `4dbe8939`，sub-task A -87/+106 行 + sub-task B mc_workflow 119→99 行 + 5 refactor-guard tests + 12 文件 doc 同步） | 2026-09-07 |
 
 > **后端 B 自服务顺序**：P2-QUEUE → P2-RESTART → P2-MULTI。每任务：rebase origin/master → 实现 → 完整 `pytest` + `ruff check` + `ruff format --check` 全绿 → 自 ff-merge 到 master → 认领下一个。**common 前置**：worktree 内跑测试/codegen 需 `export PYTHONPATH=$PWD/packages/lingwen-shared/src:$PYTHONPATH`（见 COORDINATION.md §6.5）。
 
@@ -120,6 +121,7 @@
 
 | 时间 | 更新者 | 变更 |
 |------|--------|------|
+| 2026-09-07 | 协调者 | v31.0 ARCHDEBT-MINI 闭环：P2-ARCHDEBT 子集 2/4 清理。6 commits `8f8c3e1a..4dbe8939` ff-merge：Sub-task A chapter_golden_path 反向 import 修复（create_golden_dashboard_client + run_human_review_smoke + HumanReviewSmokeResult 从 lingwen-core 迁 apps/studio_api/tests/golden_path_smoke.py；-87 行 / +106 行；fixes I001 spirit violation）+ Sub-task B 4 薄代理 (advance_step/dispatch_task/verify_task/get_workflow_status) 从 WorkflowMixin 抽到 mc_orchestrator_proxy.py（MasterController MRO 加 OrchestratorProxyMixin + +5 refactor-guard tests + mc_workflow.py 119→99 行）+ 12 文件 doc 同步（"5 薄代理" → "4 薄代理"，Phase 27 拆 WorkflowRunner 后 stale）+ handoff。carryover 1 项：P2-ARCHDEBT (剩余 infra.got 迁移 + shim cleanup) |
 | 2026-09-07 | 协调者 | v30.0 TACKLE-14-FAILURES 闭环：tests/agent_system 14→0 failed (-14)，tests/got 156 / lingwen-core 68 / ruff 不变。9 commits `2de95a80..38b854e7` ff-merge：1 spec + 1 plan + 5 atomic tasks (T1 stub `_state` 注入 / T5 env-var rewrite / T4 cost record_at + migration / T2 WorkflowRunner 迁移 / T3 audit try/except) + 1 handoff。**2 真 prod 改动**（mc_writing.py 韧性契约 broad except + log warning + 空 audit report 兜底 / cost_persistence.py `record_at()` public helper）+ 5 test 文件调整 + 2 处 stale assertion 修正。carryover 1 项：P2-ARCHDEBT |
 | 2026-09-07 | 协调者 | v29.0 P2-MC-WRITING 闭环：tests/agent_system 84→14 failed (-70)，tests/got 156 / lingwen-core 68 / ruff 不变。17 commits `106dd21d..b1b748ad` ff-merge：1 spec + 1 plan + 5 production-fix (skill-registry pilot memory-hook budget-endpoints master-controller) + 1 真 prod 改动 (`mc_editing.py:202` 修 Phase 15.0 P3-SPLIT 迁移遗留 `from mc_utils import ...`) + 8 test-only (master-controller-e2e phase7-1 master-controller-with-usage agent-config cost-persistence path-asserts) + 1 handoff。剩余 14 failed 按 5 类根因归档（7 stub `_state` / 1 export / 2 audit 韧性 / 2 `_connect()` API / 2 env-var）→ P2-30-FAILURES Phase 候选。carryover 2 项：P2-30-FAILURES / P2-ARCHDEBT |
 | 2026-09-04 | 协调者 | v28.0 P2-RESUME-VERIFY 闭环：5 E2E tests 用真实 GoTScheduler + ThoughtGraph（非 MagicMock）验证 scheduler 对已 COMPLETED 节点幂等 + DECISION resume continuation + start_nodes=None derivation + state.start_nodes 持久化 + WorkflowRunner.run→resume 完整 cycle。0 改范围 9 类文件不动 (workflow_runner / mc_workflow / workflow_state / got_bridge / infra.got / graph / shim / facade / HANDOFF*)；0 new failure (master 84 baseline = worktree 84, +5 NEW PASS)；2 RED 学习点（scheduler.run 二次调用 paused=False 不报告旧 paused；scheduler.run(start_nodes) 不限制执行范围到 start_nodes chain）。7 commits `05e4f91b` spec + `d3f164c8` plan + 5 tests + `7f9049f3` handoff 待 ff-merge。carryover 2 项：P2-MC-WRITING（独立大 phase 调查 84 pre-existing cascade）/ P2-ARCHDEBT（战术分散 + 删 PHASE-COMPAT shim） |

@@ -1,6 +1,6 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v30.0 (Phase 30 TACKLE-14-FAILURES 收尾) · 更新: 2026-09-07
+> **版本**: v31.0 (Phase 31 ARCHDEBT-MINI 收尾) · 更新: 2026-09-07
 > 当前状态: `collaboration/CURRENT_STATUS.md` · 待办: `collaboration/BACKLOG.md` · 版本史: `docs/superpowers/archive/PHASE_HISTORY.md`
 > 最高优先级参考: `.lingwen/architecture.yml`
 
@@ -110,6 +110,7 @@ python lingwen.py doctor
 
 ## 已知遗留
 
+- ✅ **v31.0 ARCHDEBT-MINI**（2026-09-07 ff-merge `4dbe8939`，6 commit `8f8c3e1a..4dbe8939`）：P2-ARCHDEBT 子集 2/4 清理。**Sub-task A**：chapter_golden_path 反向 import 修复（create_golden_dashboard_client + run_human_review_smoke + HumanReviewSmokeResult 从 lingwen-core 迁 apps/studio_api/tests/golden_path_smoke.py；-87 行 / +106 行；fixes I001 spirit violation）。**Sub-task B**：4 薄代理 (advance_step/dispatch_task/verify_task/get_workflow_status) 从 WorkflowMixin 抽到 mc_orchestrator_proxy.py；MasterController MRO 加 OrchestratorProxyMixin；+5 refactor-guard tests（test_workflow_state.py）；mc_workflow.py 119→99 行。**12 文件 doc 同步**："5 薄代理" → "4 薄代理"（实际 4 不是 5，Phase 27 拆 WorkflowRunner 后 stale）。详见 `docs/superpowers/handoffs/2026-09-07-phase-31-archdebt-mini-handoff.md`。
 - ✅ **v30.0 TACKLE-14-FAILURES**（2026-09-07 ff-merge `38b854e7`，9 commit `2de95a80..38b854e7`）：Phase 29 剩余 14 failed 按 5 类根因一次性清零（ 0 failed / 480 passed / 20 skipped）。**2 真 prod 改动**：`mc_writing.py:155` 加 try/except 韧性契约（broad except + logger.warning + 空 audit report 兜底）+ `cost_persistence.py` 加 `record_at()` public helper（历史数据 seeding / migration / test fixture 用）。**3 test-only 清理**：stub factory `WorkflowState.empty()` 注入（-7）、`make_master_with_router` 替代 bare `MasterController()`（-2）、`WorkflowRunner._harvest_decision_specs` 迁移（-1）+ 2 处 stale assertion 修正。详见 `docs/superpowers/handoffs/2026-09-07-phase-30-tackle-14-handoff.md`。
 - ✅ **v29.0 P2-MC-WRITING**（2026-09-07 ff-merge `b1b748ad`，17 commit `106dd21d..b1b748ad`）：恢复 `tests/agent_system` 路径发现 / memory gateway import / dashboard test entry point / stale test patches。84 → 14 failed (-70)，tests/got 156 / lingwen-core 68 / ruff clean 不变；11 测试文件 + **1 真 prod 改动** `packages/lingwen-core/src/lingwen_core/agents/mc_editing.py:202`（Phase 15.0 P3-SPLIT 迁移遗留 `from mc_utils import ...` 旧路径）。详见 `docs/superpowers/handoffs/2026-09-04-phase-29-mc-writing-handoff.md`。
 - ✅ **v28.0 P2-RESUME-VERIFY**（2026-09-04 ff-merge）：5 E2E tests 用真实 GoTScheduler + ThoughtGraph 验证 scheduler 幂等 + start_nodes=None derivation + state.start_nodes 持久化 + WorkflowRunner.run→resume 完整 cycle；0 改范围 9 类文件不动。
@@ -118,7 +119,7 @@ python lingwen.py doctor
 - ✅ **v25.9 human_review 流水线修复**（2026-09-03 ff-merge `0a6f4346`）：mc_workflow.py 自仓库迁移后是 hallucinated stub；从 git history `5c4259e5:novel-factory/infra/agent_system/master_controller.py` 还原真实实现，对齐新 GoTScheduler API，解 4 个 dashboard smoke skip + 顺带 +15 cascade fixed。0 改范围（got_bridge.py / chapter_golden_path.py / apps.studio_api/* / infra/got/* / architecture.yml / HANDOFF*.md）。
 - **Prod preview regression** (Phase 114 accepted)：cytoscape-fcose CJS 与 rollup commonjs 插件不兼容，5 个 phase 投入失败。dev baseline 仍是 authoritative measurement。E2E Playwright runtime 暂时阻塞。
 - **vis-network install on fresh clone** (Phase 118 发现)：fresh checkout 下 `apps/dashboard/node_modules/` 缺 vis-network, 跑 frontend test 全失败。必须 `cd apps/dashboard && pnpm install`。
-- **架构债（v25.9/v27 推后，Phase 30+ 候选）**：`infra.got.*` 迁至 `packages/lingwen-got/`；`chapter_golden_path.py` 反向 import `apps.studio_api.*` 整改；HANDOFF 文档 `latest_decision_queue` 措辞修订；4 薄代理 → `OrchestratorProxyMixin`；PHASE-COMPAT shim 删除。
+- **架构债（v25.9/v27/v31 推后，Phase 32+ 候选）**：`infra.got.*` 迁至 `packages/lingwen-got/`；HANDOFF 文档 `latest_decision_queue` 措辞修订；PHASE-COMPAT shim 删除。v31.0 ARCHDEBT-MINI 已清 chapter_golden_path 反向 import + OrchestratorProxyMixin (4 薄代理) 提取。
 
 ---
 
