@@ -588,7 +588,7 @@ class TestPolishVariantResilience:
         通过 MasterController.__new__ 绕过 __init__ (避免 build_router 等重操作),
         只塞 self.polisher 即可 — polish_xxx methods 只读 self.polisher.
         """
-        from lingwen_core.agents import master_controller as mc_mod
+        from lingwen_pipeline import master_controller as mc_mod
 
         controller = mc_mod.MasterController.__new__(mc_mod.MasterController)
 
@@ -810,8 +810,8 @@ class TestCostTrackerWiring:
 
     def test_polish_merge_handler_returns_tuple(self) -> None:
         """Phase 8.7: _handler_polish_merge 调 MC variant, 返 (dict, usage) tuple."""
-        from lingwen_core.agents import master_controller as mc_mod
         from lingwen_core.agents.got_bridge import _handler_polish_merge
+        from lingwen_pipeline import master_controller as mc_mod
 
         master = mc_mod.MasterController.__new__(mc_mod.MasterController)
         # Phase 8.7: handler 调 polish_merge_synthesis_with_usage, 返 tuple
@@ -844,7 +844,7 @@ class TestCostTrackerWiring:
 
     def test_agent_compute_fn_records_polish_merge_real_usage(self) -> None:
         """Phase 8.7: _handler_polish_merge 返 tuple → AgentComputeFn 喂 cost_tracker 真实 usage."""
-        from lingwen_core.agents import master_controller as mc_mod
+        from lingwen_pipeline import master_controller as mc_mod
 
         cost_tracker = CostTracker()
         master = mc_mod.MasterController.__new__(mc_mod.MasterController)

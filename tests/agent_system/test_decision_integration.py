@@ -30,7 +30,7 @@ from infra.got.data_structures import NodeType, ThoughtNode
 
 def _make_controller_with_stubs(monkeypatch) -> tuple[Any, Any]:
     """构造 MasterController 但 stub 掉 init 中的重操作,只保留 run_workflow 链路"""
-    from lingwen_core.agents import master_controller as mc_mod
+    from lingwen_pipeline import master_controller as mc_mod
 
     monkeypatch.setattr("lingwen_core.agents.agent_factory.build_router", lambda config: None)
     monkeypatch.setattr("lingwen_core.agents.agent_factory.build_orchestrator", lambda **kwargs: None)

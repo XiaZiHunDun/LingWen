@@ -6,8 +6,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi.testclient import TestClient
-from lingwen_core.agents import master_controller as mc_mod
 from lingwen_core.agents.workflow_state import WorkflowState
+from lingwen_pipeline import master_controller as mc_mod
 
 from apps.studio_api.app import create_app
 from apps.studio_api.protocols import MasterControllerAdapter

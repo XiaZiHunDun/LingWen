@@ -24,7 +24,6 @@ from typing import Any, Optional
 
 import pytest
 from fastapi.testclient import TestClient
-from lingwen_core.agents import master_controller as mc_mod
 from lingwen_core.agents.decision_queue import (
     DecisionKind,
     HumanDecision,
@@ -34,6 +33,7 @@ from lingwen_core.agents.decision_queue import (
 from lingwen_core.agents.workflow_state import WorkflowState
 from lingwen_llm.providers.cost_tracker import CostTracker
 from lingwen_llm.providers.model_tiers import ModelTier
+from lingwen_pipeline import master_controller as mc_mod
 
 from apps.studio_api.app import create_app
 from apps.studio_api.protocols import MasterControllerAdapter
@@ -630,7 +630,7 @@ def _make_fake_master_with_polish_merge_scores(
     """
     from datetime import datetime, timezone
 
-    from lingwen_core.agents import master_controller as mc_mod
+    from lingwen_pipeline import master_controller as mc_mod
 
     from infra.got.data_structures import NodeExecution, NodeStatus, NodeType, ThoughtNode
 

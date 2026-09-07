@@ -15,10 +15,10 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from lingwen_core.agents import master_controller as mc_mod
 from lingwen_core.agents.workflow_state import WorkflowState
 from lingwen_llm.providers.cost_tracker import CostTracker
 from lingwen_llm.providers.model_tiers import ModelTier
+from lingwen_pipeline import master_controller as mc_mod
 
 from apps.studio_api.app import create_app
 from apps.studio_api.protocols import MasterControllerAdapter
@@ -88,9 +88,9 @@ class TestWorkflowStatusTimeWindow:
 
     def _make_master_with_cost_tracker(self, tmp_path: Path):
         """复用 TestWorkflowStatusResponseCostByTier 的 _make_master pattern."""
-        from lingwen_core.agents import master_controller as mc_mod
         from lingwen_llm.providers.cost_tracker import CostTracker
         from lingwen_llm.providers.model_tiers import ModelTier
+        from lingwen_pipeline import master_controller as mc_mod
 
         from apps.studio_api.protocols import MasterControllerAdapter
 
@@ -184,9 +184,9 @@ class TestWorkflowStatusResponseCostByDay:
 
     def _make_master_with_cost_tracker(self, tmp_path: Path):
         """复用 TestWorkflowStatusTimeWindow pattern."""
-        from lingwen_core.agents import master_controller as mc_mod
         from lingwen_llm.providers.cost_tracker import CostTracker
         from lingwen_llm.providers.model_tiers import ModelTier
+        from lingwen_pipeline import master_controller as mc_mod
 
         from apps.studio_api.protocols import MasterControllerAdapter
 
@@ -279,9 +279,9 @@ class TestWorkflowStatusResponseCostByDayPerTier:
     """Phase 9.28 F12: GET /api/workflows/active 暴露 cost_by_day_per_tier 字段."""
 
     def _make_master_with_cost_tracker(self, tmp_path: Path):
-        from lingwen_core.agents import master_controller as mc_mod
         from lingwen_llm.providers.cost_tracker import CostTracker
         from lingwen_llm.providers.model_tiers import ModelTier
+        from lingwen_pipeline import master_controller as mc_mod
 
         from apps.studio_api.protocols import MasterControllerAdapter
 

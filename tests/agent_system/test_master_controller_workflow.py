@@ -14,7 +14,6 @@ from __future__ import annotations
 from typing import Any, Optional
 
 import pytest
-
 from lingwen_core.agents.workflow_state import WorkflowState
 
 # === Stub MasterController (避免连真实 API) ===
@@ -243,7 +242,7 @@ class _StubAgents:
 
 def _make_controller_with_stubs(monkeypatch) -> tuple[Any, _StubAgents]:
     """构造 MasterController 但 stub 掉 init 中的重操作,只保留 run_workflow 链路"""
-    from lingwen_core.agents import master_controller as mc_mod
+    from lingwen_pipeline import master_controller as mc_mod
 
     # 阻止 __init__ 中调 build_router (需要 API key)
     monkeypatch.setattr("lingwen_core.agents.agent_factory.build_router", lambda config: None)
