@@ -1,6 +1,6 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v29.0 (Phase 29 P2-MC-WRITING 收尾) · 更新: 2026-09-07
+> **版本**: v30.0 (Phase 30 TACKLE-14-FAILURES 收尾) · 更新: 2026-09-07
 > 当前状态: `collaboration/CURRENT_STATUS.md` · 待办: `collaboration/BACKLOG.md` · 版本史: `docs/superpowers/archive/PHASE_HISTORY.md`
 > 最高优先级参考: `.lingwen/architecture.yml`
 
@@ -110,7 +110,8 @@ python lingwen.py doctor
 
 ## 已知遗留
 
-- ✅ **v29.0 P2-MC-WRITING**（2026-09-07 ff-merge `b1b748ad`，17 commit `106dd21d..b1b748ad`）：恢复 `tests/agent_system` 路径发现 / memory gateway import / dashboard test entry point / stale test patches。84 → 14 failed (-70)，tests/got 156 / lingwen-core 68 / ruff clean 不变；11 测试文件 + **1 真 prod 改动** `packages/lingwen-core/src/lingwen_core/agents/mc_editing.py:202`（Phase 15.0 P3-SPLIT 迁移遗留 `from mc_utils import ...` 旧路径）。剩余 14 失败按类归档：7 stub `_state` + 1 `_collect_decision_specs_from_graph` export + 2 `_impl_audit_chapter` 韧性契约 + 2 `CostTrackerDB._connect()` API + 2 env-var 依赖，留作 Phase 30+ 候选。详见 `docs/superpowers/handoffs/2026-09-04-phase-29-mc-writing-handoff.md`。
+- ✅ **v30.0 TACKLE-14-FAILURES**（2026-09-07 ff-merge `38b854e7`，9 commit `2de95a80..38b854e7`）：Phase 29 剩余 14 failed 按 5 类根因一次性清零（ 0 failed / 480 passed / 20 skipped）。**2 真 prod 改动**：`mc_writing.py:155` 加 try/except 韧性契约（broad except + logger.warning + 空 audit report 兜底）+ `cost_persistence.py` 加 `record_at()` public helper（历史数据 seeding / migration / test fixture 用）。**3 test-only 清理**：stub factory `WorkflowState.empty()` 注入（-7）、`make_master_with_router` 替代 bare `MasterController()`（-2）、`WorkflowRunner._harvest_decision_specs` 迁移（-1）+ 2 处 stale assertion 修正。详见 `docs/superpowers/handoffs/2026-09-07-phase-30-tackle-14-handoff.md`。
+- ✅ **v29.0 P2-MC-WRITING**（2026-09-07 ff-merge `b1b748ad`，17 commit `106dd21d..b1b748ad`）：恢复 `tests/agent_system` 路径发现 / memory gateway import / dashboard test entry point / stale test patches。84 → 14 failed (-70)，tests/got 156 / lingwen-core 68 / ruff clean 不变；11 测试文件 + **1 真 prod 改动** `packages/lingwen-core/src/lingwen_core/agents/mc_editing.py:202`（Phase 15.0 P3-SPLIT 迁移遗留 `from mc_utils import ...` 旧路径）。详见 `docs/superpowers/handoffs/2026-09-04-phase-29-mc-writing-handoff.md`。
 - ✅ **v28.0 P2-RESUME-VERIFY**（2026-09-04 ff-merge）：5 E2E tests 用真实 GoTScheduler + ThoughtGraph 验证 scheduler 幂等 + start_nodes=None derivation + state.start_nodes 持久化 + WorkflowRunner.run→resume 完整 cycle；0 改范围 9 类文件不动。
 - ✅ **v27.0 P2-WFRUNNER**（2026-09-04）：`WorkflowRunner` service 从 WorkflowMixin 抽出（workflow_runner.py 307 行 new + mc_workflow.py 404→119 行 -70%）；TDD 21 tests + 2 refactor guards；0 new failure。
 - ✅ **v26.0 P2-WFSTATE**（2026-09-04）：`_last_*` 散点 → `WorkflowState` dataclass（with_updates + empty classmethod + 7 字段整合）；0 行为变更；3 refactor guards 防回潮。

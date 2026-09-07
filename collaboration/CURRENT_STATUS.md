@@ -1,8 +1,8 @@
 # 灵文项目状态看板
 
 > **最后更新**: 2026-09-07
-> **更新者**: 协调者（v29.0 P2-MC-WRITING 闭环；17 commits ff-merge `b1b748ad`；carryover 7 项 → Phase 30+）
-> **下一协作**: v29.0 P2-MC-WRITING 已闭环：恢复 tests/agent_system 路径发现 / memory gateway / dashboard test entry / stale test patches。84 → 14 failed (-70)，tests/got 156 / lingwen-core 68 / ruff clean 不变。**1 真 prod 改动** `mc_editing.py:202`（Phase 15.0 P3-SPLIT 迁移遗留）。剩余 14 失败按根因分 5 类（7 stub _state / 1 export / 2 audit 韧性 / 2 _connect API / 2 env-var），留作 Phase 30 候选。Phase 30+ 顺位：TACKLE-14-FAILURES（独立小 phase 按 5 类根因一次性清零）/ P2-ARCHDEBT（战术分散 4 子项）/ Prod preview regression（accepted debt 不动）
+> **更新者**: 协调者（v30.0 TACKLE-14-FAILURES 闭环；9 commits ff-merge `38b854e7`；carryover 2 项 → Phase 31+）
+> **下一协作**: v30.0 TACKLE-14-FAILURES 已闭环：14 → 0 failed（-14），tests/agent_system 480 passed / 0 failed / 20 skipped；tests/got 156 / lingwen-core 68 / ruff clean 不变。**2 真 prod 改动**（mc_writing.py 韧性契约 + cost_persistence.py record_at helper）+ 5 test 文件调整。剩余 carryover：P2-ARCHDEBT（infra.got 迁移 + chapter_golden_path 反向 import + 5 薄代理 → OrchestratorProxyMixin + PHASE-COMPAT shim 删）/ Prod preview regression（accepted debt 不动）
 
 ---
 
@@ -10,9 +10,9 @@
 
 | 项目 | 状态 |
 |------|------|
-| **版本** | v29.0（Phase 29 — P2-MC-WRITING 84→14 failed (-70)） |
-| **git main** | master `b1b748ad`（v29.0 ff-merge 完成，17 commit `106dd21d..b1b748ad`） |
-| **当前阶段** | v29.0 P2-MC-WRITING 收尾：1 spec (`a1b5dc69`) + 1 plan (`1807c88e`) + 14 commits (5 production-fix + 8 test-only + 1 prod-path fix) + 1 handoff (`b1b748ad`) = 17 commits。G1 tests/agent_system 466 passed / 14 failed（-70）/ 20 skipped / G2 tests/got 156 passed / G3a lingwen-core 68 passed / G3b ruff clean。**1 真 prod 改动** `mc_editing.py:202` 修 Phase 15.0 P3-SPLIT 迁移遗留 `from mc_utils import ...` 旧路径；其余 11 测试文件调整。剩余 14 failed 按 5 类根因归档，留 Phase 30+ |
+| **版本** | v30.0（Phase 30 — TACKLE-14-FAILURES 14→0 failed (-14)） |
+| **git main** | master `38b854e7`（v30.0 ff-merge 完成，9 commit `2de95a80..38b854e7`） |
+| **当前阶段** | v30.0 TACKLE-14-FAILURES 收尾：1 spec (`3f07c532`) + 1 plan (`910d3454`) + 5 atomic commits (`4d298d6a` stub _state / `4030a43c` env-var rewrite / `9f2322ad` record_at + migration / `04906367` WorkflowRunner 迁移 / `acd8e013` audit try/except) + 1 handoff (`38b854e7`) = 8 commits + 1 state sync = 9。G1 tests/agent_system 480 passed / 0 failed / 20 skipped / G2 tests/got 156 passed / G3a lingwen-core 68 passed / G3b ruff clean。**2 真 prod 改动**（mc_writing.py 韧性契约 + cost_persistence.py record_at helper）+ 5 test 文件调整 |
 | **并行开发** | [COORDINATION.md](https://github.com) §3 自治契约：两会话自认领→全量门绿→自 ff-merge 到 master（常驻 worktree `track-a`/`track-b`）|
 | **阻塞项** | 无 |
 
@@ -123,6 +123,7 @@
 ### 最近变更记录
 | 时间 | 变更 |
 |------|------|
+| 2026-09-07 | v30.0 TACKLE-14-FAILURES 闭环：tests/agent_system 14→0 failed (-14)，tests/got 156 / lingwen-core 68 / ruff 不变。9 commits `2de95a80..38b854e7` ff-merge：1 spec + 1 plan + 5 atomic tasks (T1 stub `_state` 注入 / T5 env-var rewrite / T4 cost record_at + migration / T2 WorkflowRunner 迁移 / T3 audit try/except) + 1 handoff。**2 真 prod 改动**（mc_writing.py 韧性契约 broad except + log warning + 空 audit report 兜底 / cost_persistence.py `record_at()` public helper）+ 5 test 文件调整 + 2 处 stale assertion 修正。carryover 2 项：P2-ARCHDEBT（infra.got 迁移 + chapter_golden_path 反向 import + 5 薄代理 → OrchestratorProxyMixin + PHASE-COMPAT shim 删）/ Prod preview regression（accepted debt） |
 | 2026-09-07 | v29.0 P2-MC-WRITING 闭环：tests/agent_system 84→14 failed (-70)，11 测试文件 + 1 prod-path 修复（`mc_editing.py:202` 修 Phase 15.0 P3-SPLIT 迁移遗留）；tests/got 156 / lingwen-core 68 / ruff 不变；剩余 14 失败按 5 类根因归档（7 stub `_state` / 1 export / 2 audit 韧性 / 2 `_connect()` API / 2 env-var）→ Phase 30 候选。master `b1b748ad`，carryover 2 项：TACKLE-14-FAILURES / P2-ARCHDEBT |
 | 2026-09-03 | v25.8 处理 2 项遗留：① creator 偏好契约真缺陷修复（`creation_settings_from_project` 从 config/project.yaml 解析 creation_mode/quality_profile 补 CreatorPreferencesResponse 缺字段，`test_creator_preferences_get_put` 去 skip 通过）② human_review 迁移（`GoTScheduler` + `apps.studio_api.*` 导入迁移友好修复；深查确认 MasterController 人审流水线整体陈旧需重构，4 用例诚实 skip）；tests/dashboard 353 passed + 7 skipped / tests/ci 205 passed + 1 skipped |
 | 2026-09-03 | v25.7 全面验收 + tests/dashboard 基线清理（`82e75fd9`）：tests/dashboard 15 failed 归零；契约漂移修复（cascade id→run_id、ref-graph total_nodes/edges、health 断言放宽）+ 真 bug 修复 infra/cross_volume/storage.py 遗留 `dashboard.*` 懒导入 → `apps.studio_api.*`（级联/审计/cvg_ws WS 推送死代码复活）+ 8 项环境基线诚实 skip；后端全套件全绿（ci+dashboard 557/9skip、studio+shared 222、llm 11）|
