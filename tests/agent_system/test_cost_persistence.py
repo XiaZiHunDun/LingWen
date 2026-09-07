@@ -205,18 +205,20 @@ class TestCostTrackerDBCostByDay:
 
         db = CostTrackerDB(db_path=tmp_path / "test.db")
         db.init_db()
-        # 直接 insert 预制 timestamp (绕开 record() 的 datetime.now)
-        with db._connect() as conn:
-            conn.executemany(
-                """INSERT INTO cost_records
-                   (scenario, tier, input_tokens, output_tokens, cost_usd, timestamp)
-                   VALUES (?, ?, ?, ?, ?, ?)""",
-                [
-                    ("chapter_writing", "sonnet", 1000, 500, 0.0105, "2026-06-01T10:00:00+00:00"),
-                    ("hook_extraction", "haiku", 100, 50, 0.00035, "2026-06-01T14:00:00+00:00"),
-                    ("chapter_review", "sonnet", 500, 250, 0.00525, "2026-06-02T09:00:00+00:00"),
-                ],
-            )
+        # Phase 30 T4: 用 public record_at() 而非旧的 db._connect() 私有方法
+        # (v16.5 #N.3 migration to SqliteStorageAdapter 后 _connect 已删除)
+        db.record_at(
+            datetime.fromisoformat("2026-06-01T10:00:00+00:00"),
+            "chapter_writing", ModelTier.SONNET, 1000, 500,
+        )
+        db.record_at(
+            datetime.fromisoformat("2026-06-01T14:00:00+00:00"),
+            "hook_extraction", ModelTier.HAIKU, 100, 50,
+        )
+        db.record_at(
+            datetime.fromisoformat("2026-06-02T09:00:00+00:00"),
+            "chapter_review", ModelTier.SONNET, 500, 250,
+        )
         by_day = db.cost_by_day()
         assert list(by_day.keys()) == ["2026-06-01", "2026-06-02"]  # 升序
         assert by_day["2026-06-01"] == pytest.approx(0.0105 + 0.00035, abs=1e-9)
@@ -244,19 +246,23 @@ class TestCostTrackerDBCostByDayPerTier:
     """Phase 9.28 F12: cost_by_day_per_tier day × tier cross-dim aggregation."""
 
     def test_cost_by_day_per_tier_groups_by_day_and_tier(self, tmp_path: Path) -> None:
+        from datetime import datetime
+
         db = CostTrackerDB(db_path=tmp_path / "test.db")
         db.init_db()
-        with db._connect() as conn:
-            conn.executemany(
-                """INSERT INTO cost_records
-                   (scenario, tier, input_tokens, output_tokens, cost_usd, timestamp)
-                   VALUES (?, ?, ?, ?, ?, ?)""",
-                [
-                    ("chapter_writing", "sonnet", 1000, 500, 0.0105, "2026-06-01T10:00:00+00:00"),
-                    ("hook_extraction", "haiku", 100, 50, 0.00035, "2026-06-01T14:00:00+00:00"),
-                    ("chapter_review", "sonnet", 500, 250, 0.00525, "2026-06-02T09:00:00+00:00"),
-                ],
-            )
+        # Phase 30 T4: 用 public record_at() (见 test_cost_by_day_groups_by_utc_date)
+        db.record_at(
+            datetime.fromisoformat("2026-06-01T10:00:00+00:00"),
+            "chapter_writing", ModelTier.SONNET, 1000, 500,
+        )
+        db.record_at(
+            datetime.fromisoformat("2026-06-01T14:00:00+00:00"),
+            "hook_extraction", ModelTier.HAIKU, 100, 50,
+        )
+        db.record_at(
+            datetime.fromisoformat("2026-06-02T09:00:00+00:00"),
+            "chapter_review", ModelTier.SONNET, 500, 250,
+        )
         by_day_tier = db.cost_by_day_per_tier()
         assert list(by_day_tier.keys()) == ["2026-06-01", "2026-06-02"]
         assert by_day_tier["2026-06-01"]["sonnet"] == pytest.approx(0.0105, abs=1e-9)

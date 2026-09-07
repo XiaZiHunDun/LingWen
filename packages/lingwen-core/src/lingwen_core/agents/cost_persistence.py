@@ -136,6 +136,49 @@ class CostTrackerDB:
         self._storage.with_transaction(_do)
         return rec
 
+    def record_at(
+        self,
+        timestamp: datetime,
+        scenario: str,
+        tier: ModelTier,
+        input_tokens: int,
+        output_tokens: int,
+    ) -> CostRecord:
+        """记录一次 LLM 调用 with explicit timestamp (test/admin seeding).
+
+        Phase 30 T4: 同 record() 但允许调用方指定 timestamp 而非 datetime.now().
+        用途: 历史数据 seeding / DB migration / test fixture 准备。
+        Public API — 不是 test-only shim。
+        """
+        self.init_db()
+        cost = compute_cost(input_tokens, output_tokens, tier)
+        rec = CostRecord(
+            scenario=scenario,
+            tier=tier,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            cost_usd=cost,
+            timestamp=timestamp,
+        )
+
+        def _do(conn) -> None:
+            conn.execute(
+                """INSERT INTO cost_records
+                   (scenario, tier, input_tokens, output_tokens, cost_usd, timestamp)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                (
+                    rec.scenario,
+                    rec.tier.value,
+                    rec.input_tokens,
+                    rec.output_tokens,
+                    rec.cost_usd,
+                    rec.timestamp.isoformat(),
+                ),
+            )
+
+        self._storage.with_transaction(_do)
+        return rec
+
     def records(self) -> list[CostRecord]:
         """全部记录 (按 id 升序 = 时间顺序)"""
         self.init_db()
