@@ -2,12 +2,13 @@
 
 Phase 15.0 P3-SPLIT: 从 master_controller.py 拆分的工作流相关方法.
 Phase 25.9 (human_review 全流水线重构): run_workflow / resume_workflow 重写对齐 GoT API。
-Phase 27 P2-WFRUNNER: run / resume / 5 internal helpers 拆到 WorkflowRunner service,
-Mixin 仅保留 5 薄代理 + 3 决策委托 + 1 懒 runner accessor + run_workflow/resume_workflow 1-line delegate.
+Phase 27 P2-WFRUNNER: run / resume / 5 internal helpers 拆到 WorkflowRunner service.
+Phase 31 ARCHDEBT-MINI: 4 薄代理 → OrchestratorProxyMixin（独立文件 mc_orchestrator_proxy.py）。
+Mixin 仅保留 3 决策委托 + 1 懒 runner accessor + run_workflow/resume_workflow 1-line delegate.
 """
 
 import logging
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 if TYPE_CHECKING:
     from lingwen_core.agents.workflow_runner import WorkflowRunner
@@ -16,10 +17,11 @@ logger = logging.getLogger(__name__)
 
 
 class WorkflowMixin:
-    """工作流相关方法 (Phase 27 拆 Runner 后).
+    """工作流相关方法 (Phase 27 拆 Runner + Phase 31 拆 OrchestratorProxy 后).
 
-    Mixin 只留 5 薄代理 + 3 决策队列委托 + _get_runner() 懒加载.
+    Mixin 只留 3 决策委托 + _get_runner() 懒加载.
     run_workflow / resume_workflow 是 1 行 delegate → WorkflowRunner.
+    4 薄代理 (advance_step/dispatch_task/verify_task/get_workflow_status) 已搬到 mc_orchestrator_proxy.py.
     """
 
     def _get_runner(self) -> "WorkflowRunner":
@@ -35,28 +37,6 @@ class WorkflowMixin:
             runner = WorkflowRunner(self)
             self._workflow_runner = runner
         return runner
-
-    def advance_step(self, target_step: str, context: Optional[Dict] = None) -> Tuple[bool, str]:
-        """推进工作流步骤"""
-        return self._orchestrator.advance_step(target_step, context)
-
-    def dispatch_task(
-        self,
-        task_name: str,
-        agent: str,
-        context: Dict[str, Any],
-        priority: int = 0,
-    ) -> str:
-        """分发任务"""
-        return self._orchestrator.dispatch_task(task_name, agent, context, priority)
-
-    def verify_task(self, task_id: str, result: Dict[str, Any]) -> Tuple[bool, str]:
-        """验证任务完成"""
-        return self._orchestrator.verify_task(task_id, result)
-
-    def get_workflow_status(self) -> Dict[str, Any]:
-        """获取工作流状态"""
-        return self._orchestrator.get_workflow_status()
 
     def run_workflow(
         self,

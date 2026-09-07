@@ -37,6 +37,7 @@ from lingwen_core.agents.decision_queue import (
     create_decision,
 )
 from lingwen_core.agents.mc_editing import EditingMixin
+from lingwen_core.agents.mc_orchestrator_proxy import OrchestratorProxyMixin
 from lingwen_core.agents.mc_social import SocialEngineMixin
 from lingwen_core.agents.mc_workflow import WorkflowMixin
 from lingwen_core.agents.mc_writing import WritingMixin
@@ -47,7 +48,9 @@ from lingwen_core.agents.workflow_state import WorkflowState
 logger = logging.getLogger(__name__)
 
 
-class MasterController(WorkflowMixin, WritingMixin, EditingMixin, SocialEngineMixin):
+class MasterController(
+    OrchestratorProxyMixin, WorkflowMixin, WritingMixin, EditingMixin, SocialEngineMixin
+):
     """主控调度器（Facade模式）
 
     只负责协调，不做具体逻辑。
