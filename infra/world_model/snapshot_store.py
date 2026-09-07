@@ -21,7 +21,7 @@ import json
 from pathlib import Path
 from typing import Optional
 
-from .data_structures import WorldSnapshot
+from lingwen_core.domain.ripple import WorldSnapshot
 
 
 class SnapshotNotFoundError(LookupError):

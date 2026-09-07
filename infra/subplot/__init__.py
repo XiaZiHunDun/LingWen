@@ -16,7 +16,7 @@ Doc 3 (主线/支线模型 v1.0) 实施层第一期。
 - 5-limit 紧急豁免 (climax periods may allow 6)
 """
 
-from .data_structures import (
+from lingwen_core.domain.subplot import (
     MAX_ACTIVE_SUBPLOTS,
     Plot,
     PlotPurpose,

@@ -57,7 +57,7 @@ from infra.subplot.helpers import (  # noqa: E402, F401
 )
 
 # PlotStatus (lightweight enum, infra-local — not part of DDD aggregate)
-from .data_structures import PlotStatus
+from lingwen_core.domain.subplot import PlotStatus
 
 # Behavior services (NOT in PHASE-COMPAT shim scope)
 from .engine import RippleEngine

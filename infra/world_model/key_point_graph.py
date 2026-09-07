@@ -21,7 +21,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Iterator, Optional
 
-from .data_structures import KeyPoint, NodeId, Relation, WorldSnapshot
+from lingwen_core.domain.common import KeyPoint, NodeId, Relation
+from lingwen_core.domain.ripple import WorldSnapshot
 
 
 class ContradictionKind(str, Enum):

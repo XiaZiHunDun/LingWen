@@ -29,7 +29,8 @@ from infra.got.data_structures import ThoughtNode
 from infra.got.scheduler import ComputeResult
 
 from .chapter_emit import emit_chapter_enabled, emit_chapter_to_repo
-from .master_controller import MasterController
+# Phase 32: MasterController lives in lingwen_pipeline (canonical).
+from lingwen_pipeline.master_controller import MasterController
 
 EMIT_CHAPTER_NODE_ID = "emit_chapter"
 
