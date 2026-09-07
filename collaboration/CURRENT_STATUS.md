@@ -1,8 +1,8 @@
 # 灵文项目状态看板
 
 > **最后更新**: 2026-09-07
-> **更新者**: 协调者（v31.0 ARCHDEBT-MINI 闭环；6 commits ff-merge `4dbe8939`；carryover 1 项 → Phase 32+）
-> **下一协作**: v31.0 ARCHDEBT-MINI 已闭环：P2-ARCHDEBT 子集 2/4 清理。Sub-task A：chapter_golden_path 反向 import 修复（create_golden_dashboard_client + run_human_review_smoke + HumanReviewSmokeResult 从 lingwen-core 迁 apps/studio_api/tests/golden_path_smoke.py；-87 行 / +106 行；fixes I001 spirit violation）。Sub-task B：4 薄代理 (advance_step/dispatch_task/verify_task/get_workflow_status) 从 WorkflowMixin 抽到 mc_orchestrator_proxy.py；MasterController MRO 加 OrchestratorProxyMixin；+5 refactor-guard tests（test_workflow_state.py）；mc_workflow.py 119→99 行。12 文件 doc 同步："5 薄代理" → "4 薄代理"（Phase 27 拆 WorkflowRunner 后 stale）。剩余 carryover：P2-ARCHDEBT 剩余（infra.got.* → packages/lingwen-got/ 迁移 + shim cleanup）/ Prod preview regression（accepted debt 不动）
+> **更新者**: 协调者（v32.0 SHIM-CLEANUP 闭环；8 commits `3570a86f..9980e393`；P2-ARCHDEBT 3/4 done, infra.got.* 仍 pending）
+> **下一协作**: v32.0 SHIM-CLEANUP 已闭环：P2-ARCHDEBT PHASE-COMPAT shim 删除 3/4 完成。**Sub-task 1**：`infra/subplot/data_structures.py`（32 行, 0 消费者）删除。**Sub-task 2**：`infra/world_model/data_structures.py`（69 行, 0 消费者）删除 + `infra/world_model/links.py:28-31` stale 注释清理。**Sub-task 3**：`packages/lingwen-core/src/lingwen_core/agents/master_controller.py`（11 行）删除 + 6 test consumers (12 import sites) 迁移到 canonical `lingwen_pipeline.master_controller`。**+1 fixup commit** 修 5 处漏检的 relative import (`from .data_structures` / `from .master_controller`): `infra/subplot/__init__.py:19` / `infra/world_model/__init__.py:60` / `infra/world_model/key_point_graph.py:24` / `infra/world_model/snapshot_store.py:24` / `packages/lingwen-core/src/lingwen_core/agents/got_bridge.py:32`。**+10 regression guard tests** in `tests/test_phase32_shim_cleanup.py` (3 path-deleted + 6 consumer-migrated + 1 canonical-symbol)。**Validation gates**: G1 ruff clean (on modified files) / G2 guard 10/10 GREEN / G3 6 consumer tests baseline 116+1 skip / G4 critical paths 201 (world_model) + 68 (5 broken) passed post-fixup / G8 grep audit 0 hits. 剩余 P2-ARCHDEBT 1 项: `infra.got.*` 迁 `packages/lingwen-got/` (multi-day)。Carryover 新增: `infra/world_model/__init__.py` split (Phase 33+ 候选), `polisher/prompts.py:132` `_safe_label` latent broken import (Explore agent flag).
 
 ---
 
@@ -10,9 +10,9 @@
 
 | 项目 | 状态 |
 |------|------|
-| **版本** | v31.0（Phase 31 — ARCHDEBT-MINI P2-ARCHDEBT 子集 2/4 清理） |
-| **git main** | master `4dbe8939`（v31.0 ff-merge 完成，6 commit `8f8c3e1a..4dbe8939`） |
-| **当前阶段** | v31.0 ARCHDEBT-MINI 收尾：Sub-task A chapter_golden_path 反向 import 修复（`ff3ad52b` 中间 + `353a9891` 拆分 apps-side golden path smoke helper，apps/studio_api/tests/golden_path_smoke.py new；fixes I001 spirit violation）+ Sub-task B 4 薄代理 → OrchestratorProxyMixin（`2f8a4863` RED tests + `8f8c3e1a` GREEN `mc_orchestrator_proxy.py` new + MasterController MRO）+ `ec130269` 12 文件 doc 同步 ("5 薄代理" → "4 薄代理") + `4dbe8939` handoff = 5 phase commits + 1 state sync = 6 commits。G1 ruff clean / G2 grep `_last_*` 0 hits / G3 mc_workflow 99 lines / G4 mc_orchestrator_proxy new / G5 refactor-guard 5/5 / G6 tests/agent_system 0 new failure。**0 真 prod 改动**（纯重构 + doc sync + 测试新增）|
+| **版本** | v32.0（Phase 32 — SHIM-CLEANUP P2-ARCHDEBT PHASE-COMPAT shim 删除 3/4） |
+| **git main** | master `9980e393`（v32.0 ff-merge 完成，8 commit `3570a86f..9980e393`） |
+| **当前阶段** | v32.0 SHIM-CLEANUP 收尾：8 atomic commits = C0 spec/plan docs + C1 RED guard (10 tests) + C2 subplot shim deletion (32 lines) + C3 world_model shim deletion (69 lines) + C4 6 test consumer migration (12 sites → canonical lingwen_pipeline) + C5 master_controller shim deletion (11 lines) + C2.5 fixup (5 missed relative imports) + C6 docs sync (CLAUDE.md v32.0 + architecture.yml 32.0 + 5 doc flips)。G1 ruff clean on modified / G2 guard 10/10 GREEN / G3 6 consumer tests baseline preserved / G4 critical paths 201+68 PASS post-fixup / G8 grep audit 0 hits. **1 NEW architecture invariant #48** (NO PHASE-COMPAT shim files). **Pre-existing 40 fails** confirmed unrelated to Phase 32 via stash baseline (9 fails in 5 representative files on master HEAD) |
 | **并行开发** | [COORDINATION.md](https://github.com) §3 自治契约：两会话自认领→全量门绿→自 ff-merge 到 master（常驻 worktree `track-a`/`track-b`）|
 | **阻塞项** | 无 |
 
