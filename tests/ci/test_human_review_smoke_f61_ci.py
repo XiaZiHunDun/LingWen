@@ -22,12 +22,10 @@ class TestHumanReviewSmokeF61Contract:
     def test_golden_path_exports_smoke_helper(self):
         mod = (
             NOVEL_FACTORY
-            / "packages"
-            / "lingwen-core"
-            / "src"
-            / "lingwen_core"
-            / "agents"
-            / "chapter_golden_path.py"
+            / "apps"
+            / "studio_api"
+            / "tests"
+            / "golden_path_smoke.py"
         )
         text = mod.read_text(encoding="utf-8")
         assert "HumanReviewSmokeResult" in text
