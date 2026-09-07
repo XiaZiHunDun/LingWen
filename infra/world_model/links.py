@@ -26,9 +26,7 @@ from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, Any, Optional, Protocol
 
 # Note: 不导入 infra.subplot.lifecycle at module level — 保留 lazy pattern
-# (historical cycle risk via infra.subplot.data_structures → infra.world_model
-# 已在 Phase 19+ Sub1 canonicalization 后消失,canonical lingwen_core.domain.*
-# 无 cross-deps;defensive lazy pattern 保留以减少 module-load 副作用)
+# (defensive: 减少 module-load 副作用,避免与 subplot package 的 import 时序耦合)
 
 if TYPE_CHECKING:
     from lingwen_core.domain.ripple import Ripple
