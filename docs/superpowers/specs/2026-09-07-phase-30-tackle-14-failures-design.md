@@ -78,7 +78,7 @@ Test `test_phase7_1_production_fixes.py:112` asserts the same contract for `reco
 
 ## What is NOT in scope
 
-- **P2-ARCHDEBT** (`infra.got.*` migration, `chapter_golden_path.py` reverse-import fix, 5 thin proxies → `OrchestratorProxyMixin`, PHASE-COMPAT shim deletion). Deferred to Phase 31+.
+- **P2-ARCHDEBT** (`infra.got.*` migration, `chapter_golden_path.py` reverse-import fix, 4 thin proxies → `OrchestratorProxyMixin`, PHASE-COMPAT shim deletion). Deferred to Phase 31+.
 - **Phase 114 prod preview regression** (accepted debt, do NOT attempt).
 - **Re-exposing `_connect` on `CostTrackerDB`** (rejected in T4).
 - **Re-exporting `_collect_decision_specs_from_graph` from `lingwen_pipeline.master_controller`** (rejected in T2).

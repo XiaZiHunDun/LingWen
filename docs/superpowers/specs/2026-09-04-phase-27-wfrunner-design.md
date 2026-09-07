@@ -19,7 +19,7 @@ Phase 26 carryover **P2-WFRUNNER**（BACKLOG.md）：把 `run_workflow` 90+ 行 
 | ID | 目标 |
 |----|------|
 | G1 | 新建 `WorkflowRunner` service 类，自含 `run()` + `resume()` + 4 internal helpers |
-| G2 | `WorkflowMixin` 拆后只剩 5 薄代理 + 3 决策委托 + 1 懒 runner accessor |
+| G2 | `WorkflowMixin` 拆后只剩 4 薄代理 + 3 决策委托 + 1 懒 runner accessor |
 | G3 | `master.run_workflow()` / `master.resume_workflow()` 调用签名 100% 保持不变 |
 | G4 | 所有 `master._state.X` 读路径零修改（production_summary / protocols / chapter_golden_path） |
 | G5 | TDD RED→GREEN，新增 17-20 unit tests + 2 refactor guards |
@@ -30,7 +30,7 @@ Phase 26 carryover **P2-WFRUNNER**（BACKLOG.md）：把 `run_workflow` 90+ 行 
 
 | ID | 不做 | 去向 |
 |----|------|------|
-| N1 | 5 薄 orchestrator 代理（advance_step / dispatch_task / verify_task / get_workflow_status）拆分 | 留 P2-ARCHDEBT 或独立 phase |
+| N1 | 4 薄 orchestrator 代理（advance_step / dispatch_task / verify_task / get_workflow_status）拆分 | 留 P2-ARCHDEBT 或独立 phase |
 | N2 | 删 stale PHASE-COMPAT shim (`master_controller.py` 530B, 标 "DELETE after v16.x" 但 v25.9 仍在) | 留 P2-ARCHDEBT |
 | N3 | `start_nodes=None` 时 resume_workflow 重跑行为 E2E 验证 | 独立 P2-RESUME-VERIFY phase (建议 Phase 28) |
 | N4 | `infra.got.*` 迁移 + `chapter_golden_path.py` 反向 import 整改 | 留 P2-ARCHDEBT |
@@ -133,14 +133,14 @@ class WorkflowMixin:
 
 ```python
 class WorkflowMixin:
-    """工作流相关 — Phase 27 后只剩 5 薄代理 + 3 决策委托 + 1 懒 runner accessor."""
+    """工作流相关 — Phase 27 后只剩 4 薄代理 + 3 决策委托 + 1 懒 runner accessor."""
 
     # === Runner 入口 (lazy) ===
     def _get_runner(self) -> WorkflowRunner: ...
     def run_workflow(self, **kwargs) -> Dict[str, Any]: ...
     def resume_workflow(self, **kwargs) -> Dict[str, Any]: ...
 
-    # === 5 薄 orchestrator 代理 (out of scope) ===
+    # === 4 薄 orchestrator 代理 (out of scope) ===
     def advance_step(self, target_step, context=None): ...
     def dispatch_task(self, task_name, agent, context, priority=0): ...
     def verify_task(self, task_id, result): ...
@@ -345,7 +345,7 @@ run() 进入
 | `__new__` 测试 stub 无 `_state` | Phase 26 refactor guard 3 测试覆盖（`WorkflowState.empty()` 默认值） | ✓ 行为不变 |
 | `__new__` 测试 stub 无 `_decision_queue` | `_harvest_decision_specs` 已有 `getattr(..., None)` 兜底返 `[]` | ✓ Runner 内同样保留 |
 | `start_nodes=None` 时 resume 重跑行为 | carryover **P2-RESUME-VERIFY** 标记 | ⚠️ 不在本 phase（独立 Phase 28）；Phase 27 仅保证行为不变 |
-| 5 薄 orchestrator 代理 | out of scope per (b) | ✓ 保留 Mixin |
+| 4 薄 orchestrator 代理 | out of scope per (b) | ✓ 保留 Mixin |
 
 ## 7. Testing Strategy (Section 4.B-D)
 
@@ -430,7 +430,7 @@ merge 前必跑：
 | P2-RESUME-VERIFY | `start_nodes=None` resume_workflow 重跑行为 E2E 验证 | 独立 Phase 28（小） |
 | P2-MC-WRITING | 84+ pre-existing cascade failures 根因 | 独立 phase（大） |
 | P2-ARCHDEBT | `infra.got.*` 迁移 + `chapter_golden_path.py` 反向 import 整改 + HANDOFF 措辞修订 + 删 stale PHASE-COMPAT shim | 战术分散 |
-| Thin proxies 拆分 | 5 薄 orchestrator 代理 → OrchestratorProxyMixin | 留 P2-ARCHDEBT |
+| Thin proxies 拆分 | 4 薄 orchestrator 代理 → OrchestratorProxyMixin | 留 P2-ARCHDEBT |
 | Protocol 解耦 | Runner 与 MC 接口化 | YAGNI，紧耦合可接受 |
 
 ## 10. References

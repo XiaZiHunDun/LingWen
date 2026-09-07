@@ -118,7 +118,7 @@ python lingwen.py doctor
 - ✅ **v25.9 human_review 流水线修复**（2026-09-03 ff-merge `0a6f4346`）：mc_workflow.py 自仓库迁移后是 hallucinated stub；从 git history `5c4259e5:novel-factory/infra/agent_system/master_controller.py` 还原真实实现，对齐新 GoTScheduler API，解 4 个 dashboard smoke skip + 顺带 +15 cascade fixed。0 改范围（got_bridge.py / chapter_golden_path.py / apps.studio_api/* / infra/got/* / architecture.yml / HANDOFF*.md）。
 - **Prod preview regression** (Phase 114 accepted)：cytoscape-fcose CJS 与 rollup commonjs 插件不兼容，5 个 phase 投入失败。dev baseline 仍是 authoritative measurement。E2E Playwright runtime 暂时阻塞。
 - **vis-network install on fresh clone** (Phase 118 发现)：fresh checkout 下 `apps/dashboard/node_modules/` 缺 vis-network, 跑 frontend test 全失败。必须 `cd apps/dashboard && pnpm install`。
-- **架构债（v25.9/v27 推后，Phase 30+ 候选）**：`infra.got.*` 迁至 `packages/lingwen-got/`；`chapter_golden_path.py` 反向 import `apps.studio_api.*` 整改；HANDOFF 文档 `latest_decision_queue` 措辞修订；5 薄代理 → `OrchestratorProxyMixin`；PHASE-COMPAT shim 删除。
+- **架构债（v25.9/v27 推后，Phase 30+ 候选）**：`infra.got.*` 迁至 `packages/lingwen-got/`；`chapter_golden_path.py` 反向 import `apps.studio_api.*` 整改；HANDOFF 文档 `latest_decision_queue` 措辞修订；4 薄代理 → `OrchestratorProxyMixin`；PHASE-COMPAT shim 删除。
 
 ---
 

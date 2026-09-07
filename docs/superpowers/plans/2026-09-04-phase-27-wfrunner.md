@@ -127,7 +127,7 @@ Modify `packages/lingwen-core/src/lingwen_core/agents/mc_workflow.py` — replac
 Phase 15.0 P3-SPLIT: 从 master_controller.py 拆分的工作流相关方法。
 Phase 25.9 (human_review 全流水线重构): run_workflow / resume_workflow 重写对齐 GoT API。
 Phase 27 P2-WFRUNNER: run / resume / 4 internal helpers 拆到 WorkflowRunner service,
-Mixin 仅保留 5 薄代理 + 3 决策委托 + 1 懒 runner accessor.
+Mixin 仅保留 4 薄代理 + 3 决策委托 + 1 懒 runner accessor.
 """
 
 import logging
@@ -142,7 +142,7 @@ logger = logging.getLogger(__name__)
 class WorkflowMixin:
     """工作流相关方法 (Phase 27 拆 Runner 后).
 
-    Mixin 只留 5 薄代理 + 3 决策队列委托 + _get_runner() 懒加载.
+    Mixin 只留 4 薄代理 + 3 决策队列委托 + _get_runner() 懒加载.
     run_workflow / resume_workflow 是 1 行 delegate → WorkflowRunner.
     """
 
@@ -1347,7 +1347,7 @@ Now DELETE the 4 helpers + run_workflow + resume_workflow from `mc_workflow.py`.
 Phase 15.0 P3-SPLIT: 从 master_controller.py 拆分的工作流相关方法。
 Phase 25.9 (human_review 全流水线重构): run_workflow / resume_workflow 重写对齐 GoT API。
 Phase 27 P2-WFRUNNER: run / resume / 5 internal helpers 拆到 WorkflowRunner service,
-Mixin 仅保留 5 薄代理 + 3 决策委托 + 1 懒 runner accessor + run_workflow/resume_workflow 1-line delegate.
+Mixin 仅保留 4 薄代理 + 3 决策委托 + 1 懒 runner accessor + run_workflow/resume_workflow 1-line delegate.
 """
 
 import logging
@@ -1362,7 +1362,7 @@ logger = logging.getLogger(__name__)
 class WorkflowMixin:
     """工作流相关方法 (Phase 27 拆 Runner 后).
 
-    Mixin 只留 5 薄代理 + 3 决策队列委托 + _get_runner() 懒加载.
+    Mixin 只留 4 薄代理 + 3 决策队列委托 + _get_runner() 懒加载.
     run_workflow / resume_workflow 是 1 行 delegate → WorkflowRunner.
     """
 
@@ -1645,7 +1645,7 @@ Create `docs/superpowers/handoffs/2026-09-04-phase-27-wfrunner-handoff.md`:
 - `packages/lingwen-core/src/lingwen_core/agents/workflow_runner.py` — WorkflowRunner service class (~340 行)
 
 ### 修改源 (1)
-- `packages/lingwen-core/src/lingwen_core/agents/mc_workflow.py` — 从 380 行 → 130 行 (5 薄代理 + 3 决策委托 + 1 懒 runner accessor + 2 thin delegates)
+- `packages/lingwen-core/src/lingwen_core/agents/mc_workflow.py` — 从 380 行 → 130 行 (4 薄代理 + 3 决策委托 + 1 懒 runner accessor + 2 thin delegates)
 
 ### 新测试 (1)
 - `tests/agent_system/test_workflow_runner.py` — 16 unit tests (构造/run/resume/4 helpers)
@@ -1776,6 +1776,6 @@ Expected:
 
 ❌ Do NOT touch: `apps/studio_api/protocols.py`, `routes/workflows.py`, `helpers/workflow.py`, `workflow_state.py`, `master_controller.py` shim, `infra/got/*`, `.lingwen/architecture.yml`, `HANDOFF.md`
 ❌ Do NOT add Protocol abstraction for WorkflowRunner (YAGNI per spec §2 N7)
-❌ Do NOT split 5 薄 orchestrator 代理 (留 P2-ARCHDEBT)
+❌ Do NOT split 4 薄 orchestrator 代理 (留 P2-ARCHDEBT)
 ❌ Do NOT delete PHASE-COMPAT shim (留 P2-ARCHDEBT)
 ❌ Do NOT introduce `_last_*` attributes anywhere

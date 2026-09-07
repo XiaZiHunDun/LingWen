@@ -638,7 +638,7 @@ Do not proceed to Task 8 with failing tests.
 | ID | 标题 | 顺位 |
 |----|------|------|
 | P2-MC-WRITING | 84+ pre-existing cascade failures 根因 | 独立大 phase |
-| P2-ARCHDEBT | infra.got 迁移 + chapter_golden_path 反向 import + 5 薄代理 → OrchestratorProxyMixin + 删 PHASE-COMPAT shim | 战术分散 |
+| P2-ARCHDEBT | infra.got 迁移 + chapter_golden_path 反向 import + 4 薄代理 → OrchestratorProxyMixin + 删 PHASE-COMPAT shim | 战术分散 |
 
 ## Branch / Worktree
 

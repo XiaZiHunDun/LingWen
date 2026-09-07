@@ -56,7 +56,7 @@ BACKLOG.md 复述：
 | N3 | 改 `mc_workflow.py` / `WorkflowMixin` | 同上 |
 | N4 | 修 84 pre-existing cascade failures | 留 P2-MC-WRITING |
 | N5 | 迁 `infra.got.*` 到 `packages/lingwen-got/` | 留 P2-ARCHDEBT |
-| N6 | 5 薄 orchestrator 代理拆分 | 留 P2-ARCHDEBT |
+| N6 | 4 薄 orchestrator 代理拆分 | 留 P2-ARCHDEBT |
 | N7 | 删 stale PHASE-COMPAT shim (`master_controller.py`) | 留 P2-ARCHDEBT |
 | N8 | 重构现有 MagicMock-based unit tests 为真实 scheduler | YAGNI —— 现有 unit tests 已足够测单步行为；E2E 仅补缺口 |
 
@@ -285,7 +285,7 @@ def test_workflow_runner_resume_e2e_full_cycle(self) -> None:
 | ID | 内容 | 去向 |
 |----|------|------|
 | P2-MC-WRITING | 84+ pre-existing cascade failures 根因 | 独立 phase (大) |
-| P2-ARCHDEBT | infra.got 迁移 + chapter_golden_path 反向 import + 5 薄代理 → OrchestratorProxyMixin + 删 PHASE-COMPAT shim | 战术分散 |
+| P2-ARCHDEBT | infra.got 迁移 + chapter_golden_path 反向 import + 4 薄代理 → OrchestratorProxyMixin + 删 PHASE-COMPAT shim | 战术分散 |
 | 真实 workflow YAML 跑 E2E | 需要真实 infra/got/workflows/*.yaml + DB | YAGNI —— unit-level E2E 已够验证幂等 + continuation |
 
 ## 6. References

@@ -47,7 +47,7 @@
 |----|------|------|
 | **P2-RESUME-VERIFY** | `start_nodes=None` 时 resume_workflow 重跑行为 E2E 验证 | 紧接（建议 Phase 28） |
 | P2-MC-WRITING | 84+ pre-existing cascade failures 根因（推测 `mc_writing.py` 类似 gutted） | 独立大 phase |
-| P2-ARCHDEBT | `infra.got.*` 迁至 `packages/lingwen-got/` + `chapter_golden_path.py` 反向 import 整改 + 删 stale PHASE-COMPAT shim + 5 薄代理 → OrchestratorProxyMixin | 战术分散 |
+| P2-ARCHDEBT | `infra.got.*` 迁至 `packages/lingwen-got/` + `chapter_golden_path.py` 反向 import 整改 + 删 stale PHASE-COMPAT shim + 4 薄代理 → OrchestratorProxyMixin | 战术分散 |
 
 ## 关键纪律亮点
 

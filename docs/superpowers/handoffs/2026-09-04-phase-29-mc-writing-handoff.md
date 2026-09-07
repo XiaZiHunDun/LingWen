@@ -104,7 +104,7 @@ None of the 14 remaining failures fall into this category — they all pre-date 
 3. **`_collect_decision_specs_from_graph` export** — Re-export from `lingwen_pipeline.master_controller` so `test_decision_integration.py:330` can import it, or migrate the test to call `mc_workflow._harvest_decision_specs` directly.
 4. **`CostTrackerDB._connect()` API** — Either re-expose `_connect` (and the 3 sibling context-manager tests) or rewrite the two `_connect`-using tests (`test_cost_persistence.py:209,249`) to use the `SqliteStorageAdapter` interface.
 5. **`test_master_controller.py` env-dependent tests** — Rewrite `test_master_controller_write_chapter` (line 55) and `test_master_controller_audit_chapter` (line 89) to use `make_master_with_router()` instead of `MasterController()` so they don't need API key env vars.
-6. **P2-ARCHDEBT** (deferred from v25.9): `infra.got.*` → `packages/lingwen-got/` migration; `chapter_golden_path.py` reverse-import fix; 5 thin proxies → `OrchestratorProxyMixin`; PHASE-COMPAT shim deletion.
+6. **P2-ARCHDEBT** (deferred from v25.9): `infra.got.*` → `packages/lingwen-got/` migration; `chapter_golden_path.py` reverse-import fix; 4 thin proxies → `OrchestratorProxyMixin`; PHASE-COMPAT shim deletion.
 7. **Phase 114 prod preview regression** (accepted debt — do NOT attempt fix).
 
 ---

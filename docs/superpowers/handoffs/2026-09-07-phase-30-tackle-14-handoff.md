@@ -80,7 +80,7 @@ Also fixed stale assertion in `test_master_controller_with_usage.py`: `assert "c
    - `infra.got.*` migrate to ` packages/lingwen-got/` + `allowed_imports`
    - `chapter_golden_path.py` reverse-import `apps.studio_api.*` fix
    - HANDOFF docs `latest_decision_queue` wording
-   - 5 thin proxies → `OrchestratorProxyMixin`
+   - 4 thin proxies → `OrchestratorProxyMixin`
    - PHASE-COMPAT shim deletion
 2. **Phase 114 prod preview regression** (accepted debt — do NOT attempt).
 
