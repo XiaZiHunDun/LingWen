@@ -1,8 +1,8 @@
 # 灵文项目状态看板
 
-> **最后更新**: 2026-09-04
-> **更新者**: 协调者（v28.0 P2-RESUME-VERIFY 闭环；Phase 28 7 commits 待 ff-merge；carryover 2 项 → Phase 29+）
-> **下一协作**: v28.0 P2-RESUME-VERIFY 已闭环：5 E2E tests 用真实 GoTScheduler + ThoughtGraph 验证 scheduler 幂等 + start_nodes=None 推导 + state.start_nodes 持久化 + WorkflowRunner.run→resume 完整 cycle。代码 review 重要缺口（`scheduler 对已完成节点是否幂等无测试覆盖`）经实证 PASS — `infra/got/graph.py:152-155` ready_nodes 排除 status≠PENDING 节点 → scheduler.run 二次调用自动 skip 已 COMPLETED 节点。0 改范围 9 类文件不动 (workflow_runner/mc_workflow/workflow_state/got_bridge/infra.got/graph/shim/facade/HANDOFF*)。carryover 剩 P2-MC-WRITING / P2-ARCHDEBT 2 项。Phase 29+ 顺位：MC-WRITING（独立大 phase 调查 84+ pre-existing cascade）/ ARCHDEBT（战术分散）
+> **最后更新**: 2026-09-07
+> **更新者**: 协调者（v29.0 P2-MC-WRITING 闭环；17 commits ff-merge `b1b748ad`；carryover 7 项 → Phase 30+）
+> **下一协作**: v29.0 P2-MC-WRITING 已闭环：恢复 tests/agent_system 路径发现 / memory gateway / dashboard test entry / stale test patches。84 → 14 failed (-70)，tests/got 156 / lingwen-core 68 / ruff clean 不变。**1 真 prod 改动** `mc_editing.py:202`（Phase 15.0 P3-SPLIT 迁移遗留）。剩余 14 失败按根因分 5 类（7 stub _state / 1 export / 2 audit 韧性 / 2 _connect API / 2 env-var），留作 Phase 30 候选。Phase 30+ 顺位：TACKLE-14-FAILURES（独立小 phase 按 5 类根因一次性清零）/ P2-ARCHDEBT（战术分散 4 子项）/ Prod preview regression（accepted debt 不动）
 
 ---
 
@@ -10,9 +10,9 @@
 
 | 项目 | 状态 |
 |------|------|
-| **版本** | v28.0（Phase 28 — P2-RESUME-VERIFY 5 E2E tests） |
-| **git main** | master `90593350` + Phase 28 7 commits 待 ff-merge（待本次合入） |
-| **当前阶段** | v27.0 之后 E2E 测试补充完成：1 spec (`05e4f91b`) + 1 plan (`d3f164c8`) + 5 E2E tests (`02f5c90b`/`90ac327a`/`06975ceb`/`659a51e1`/`0c622659`) + 1 handoff (`7f9049f3`) = 7 commits。G1 test_workflow_state 13/13 (UNCHANGED) / G2 test_workflow_runner 26/26 (21 + 5 NEW) / G3 master_controller_budget 6/6 target (UNCHANGED) / G4 tests/agent_system 84 fail baseline + 5 NEW PASS / G5 test_decision_pause_resume 17/17 (UNCHANGED) / G6 test_incremental_backfill 15/15 (UNCHANGED) / G7 ruff clean / G8 grep 0 hits / G9 mc_workflow 119 lines (UNCHANGED) / G10 workflow_runner 307 lines (UNCHANGED — test-only phase) |
+| **版本** | v29.0（Phase 29 — P2-MC-WRITING 84→14 failed (-70)） |
+| **git main** | master `b1b748ad`（v29.0 ff-merge 完成，17 commit `106dd21d..b1b748ad`） |
+| **当前阶段** | v29.0 P2-MC-WRITING 收尾：1 spec (`a1b5dc69`) + 1 plan (`1807c88e`) + 14 commits (5 production-fix + 8 test-only + 1 prod-path fix) + 1 handoff (`b1b748ad`) = 17 commits。G1 tests/agent_system 466 passed / 14 failed（-70）/ 20 skipped / G2 tests/got 156 passed / G3a lingwen-core 68 passed / G3b ruff clean。**1 真 prod 改动** `mc_editing.py:202` 修 Phase 15.0 P3-SPLIT 迁移遗留 `from mc_utils import ...` 旧路径；其余 11 测试文件调整。剩余 14 failed 按 5 类根因归档，留 Phase 30+ |
 | **并行开发** | [COORDINATION.md](https://github.com) §3 自治契约：两会话自认领→全量门绿→自 ff-merge 到 master（常驻 worktree `track-a`/`track-b`）|
 | **阻塞项** | 无 |
 
@@ -123,6 +123,7 @@
 ### 最近变更记录
 | 时间 | 变更 |
 |------|------|
+| 2026-09-07 | v29.0 P2-MC-WRITING 闭环：tests/agent_system 84→14 failed (-70)，11 测试文件 + 1 prod-path 修复（`mc_editing.py:202` 修 Phase 15.0 P3-SPLIT 迁移遗留）；tests/got 156 / lingwen-core 68 / ruff 不变；剩余 14 失败按 5 类根因归档（7 stub `_state` / 1 export / 2 audit 韧性 / 2 `_connect()` API / 2 env-var）→ Phase 30 候选。master `b1b748ad`，carryover 2 项：TACKLE-14-FAILURES / P2-ARCHDEBT |
 | 2026-09-03 | v25.8 处理 2 项遗留：① creator 偏好契约真缺陷修复（`creation_settings_from_project` 从 config/project.yaml 解析 creation_mode/quality_profile 补 CreatorPreferencesResponse 缺字段，`test_creator_preferences_get_put` 去 skip 通过）② human_review 迁移（`GoTScheduler` + `apps.studio_api.*` 导入迁移友好修复；深查确认 MasterController 人审流水线整体陈旧需重构，4 用例诚实 skip）；tests/dashboard 353 passed + 7 skipped / tests/ci 205 passed + 1 skipped |
 | 2026-09-03 | v25.7 全面验收 + tests/dashboard 基线清理（`82e75fd9`）：tests/dashboard 15 failed 归零；契约漂移修复（cascade id→run_id、ref-graph total_nodes/edges、health 断言放宽）+ 真 bug 修复 infra/cross_volume/storage.py 遗留 `dashboard.*` 懒导入 → `apps.studio_api.*`（级联/审计/cvg_ws WS 推送死代码复活）+ 8 项环境基线诚实 skip；后端全套件全绿（ci+dashboard 557/9skip、studio+shared 222、llm 11）|
 | 2026-09-03 | v25.6 修复 P2-REG prod preview build 回归（`80790b76`，3 处 v16.2.8 迁移陈旧引用）+ REQ-003 移动端壳层抽屉（`34f0b0f2`，汉堡+遮罩+Esc 收起）；前端 1862 passed + ESLint/knip/vue-tsc 0 |

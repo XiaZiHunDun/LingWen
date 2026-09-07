@@ -1,9 +1,9 @@
 # 待办事项列表
 
-> **最后更新**: 2026-09-04
-> **更新者**: 协调者（v27.0 P2-WFRUNNER 闭环；13 commits 待 ff-merge；carryover 3 项 → Phase 28+）
+> **最后更新**: 2026-09-07
+> **更新者**: 协调者（v29.0 P2-MC-WRITING 闭环；17 commits ff-merge `b1b748ad`；carryover 2 项 → Phase 30+）
 > **优先级**: P0 > P1 > P2 > P3
-> **事实来源**: 本仓库当前版本在 `CLAUDE.md` v27.0；并行开发入口见根 `COORDINATION.md`
+> **事实来源**: 本仓库当前版本在 `CLAUDE.md` v29.0；并行开发入口见根 `COORDINATION.md`
 
 ---
 
@@ -49,8 +49,9 @@
 | P2-WFSTATE | _last_* 散点 → WorkflowState dataclass | mc_workflow.py 5 个 self._last_* (不同默认值) 易半初始化。整合 dataclass 更类型安全、易测 | 后端 B（自服务） | ✅ 完成（Phase 26 commit `ee3396ae`） | 2026-09-03 |
 | ~~P2-WFRUNNER~~ | ✅ Phase 27 DONE (2026-09-04) — see handoff | ~~run_workflow orchestration 90+ 行偏多。拆 service 后 run_workflow 仅做编排、helper 收口~~ | 后端 B（自服务） | ✅ Phase 27 完成（commit `9b57d16a` 待 ff-merge） | 2026-09-04 |
 | ~~P2-RESUME-VERIFY~~ | ✅ Phase 28 DONE (2026-09-04) — see handoff | ~~start_nodes=None 时 resume_workflow 重跑 E2E 验证。代码 review 列为 important。scheduler 对已完成节点是否幂等无测试覆盖~~ | 后端 B（自服务） | ✅ Phase 28 完成（7 commits 待 ff-merge） | 2026-09-04 |
-| P2-MC-WRITING | 84 pre-existing cascade failures 根因 | tests/got + tests/agent_system 共 84 failing，pre-existing（推测 mc_writing.py 类似 gutted）。需独立 phase | 后端 B（自服务） | 📋 待开始 | 2026-09-04 |
+| P2-MC-WRITING | 84 pre-existing cascade failures 根因 | tests/got + tests/agent_system 共 84 failing，pre-existing（推测 mc_writing.py 类似 gutted）。需独立 phase | 后端 B（自服务） | ✅ Phase 29 完成（17 commits ff-merge `b1b748ad`，84→14 failed (-70)，1 prod 改动 `mc_editing.py:202`，11 测试文件调整） | 2026-09-04 |
 | P2-ARCHDEBT | 架构债（infra.got 迁移 + chapter_golden_path 反向 import + HANDOFF 措辞 + 5 薄代理 → OrchestratorProxyMixin） | v25.9 显式 carryover + Phase 27 增量：infra.got.* 迁 packages/lingwen-got/ 补 allowed_imports；chapter_golden_path.py 反向 import 整改；HANDOFF 文档 latest_decision_queue 措辞修订；mc_workflow.py 5 薄代理 → OrchestratorProxyMixin | 后端 B（自服务） | 📋 待开始 | 2026-09-04 |
+| **P2-30-FAILURES** | **Phase 29 剩余 14 failed 一次性清零** | **5 类根因：① 7 stub `_state` 注入（一行修复）② 1 `_collect_decision_specs_from_graph` re-export 或 test 迁移 ③ 2 `_impl_audit_chapter` 韧性契约（真 prod 改动，需 design 确认边界）④ 2 `CostTrackerDB._connect()` API 迁移 ⑤ 2 env-var tests 重写 → `make_master_with_router()`** | 后端 B（自服务） | 📋 待开始 | 2026-09-07 |
 
 > **后端 B 自服务顺序**：P2-QUEUE → P2-RESTART → P2-MULTI。每任务：rebase origin/master → 实现 → 完整 `pytest` + `ruff check` + `ruff format --check` 全绿 → 自 ff-merge 到 master → 认领下一个。**common 前置**：worktree 内跑测试/codegen 需 `export PYTHONPATH=$PWD/packages/lingwen-shared/src:$PYTHONPATH`（见 COORDINATION.md §6.5）。
 
@@ -119,6 +120,7 @@
 
 | 时间 | 更新者 | 变更 |
 |------|--------|------|
+| 2026-09-07 | 协调者 | v29.0 P2-MC-WRITING 闭环：tests/agent_system 84→14 failed (-70)，tests/got 156 / lingwen-core 68 / ruff 不变。17 commits `106dd21d..b1b748ad` ff-merge：1 spec + 1 plan + 5 production-fix (skill-registry pilot memory-hook budget-endpoints master-controller) + 1 真 prod 改动 (`mc_editing.py:202` 修 Phase 15.0 P3-SPLIT 迁移遗留 `from mc_utils import ...`) + 8 test-only (master-controller-e2e phase7-1 master-controller-with-usage agent-config cost-persistence path-asserts) + 1 handoff。剩余 14 failed 按 5 类根因归档（7 stub `_state` / 1 export / 2 audit 韧性 / 2 `_connect()` API / 2 env-var）→ P2-30-FAILURES Phase 候选。carryover 2 项：P2-30-FAILURES / P2-ARCHDEBT |
 | 2026-09-04 | 协调者 | v28.0 P2-RESUME-VERIFY 闭环：5 E2E tests 用真实 GoTScheduler + ThoughtGraph（非 MagicMock）验证 scheduler 对已 COMPLETED 节点幂等 + DECISION resume continuation + start_nodes=None derivation + state.start_nodes 持久化 + WorkflowRunner.run→resume 完整 cycle。0 改范围 9 类文件不动 (workflow_runner / mc_workflow / workflow_state / got_bridge / infra.got / graph / shim / facade / HANDOFF*)；0 new failure (master 84 baseline = worktree 84, +5 NEW PASS)；2 RED 学习点（scheduler.run 二次调用 paused=False 不报告旧 paused；scheduler.run(start_nodes) 不限制执行范围到 start_nodes chain）。7 commits `05e4f91b` spec + `d3f164c8` plan + 5 tests + `7f9049f3` handoff 待 ff-merge。carryover 2 项：P2-MC-WRITING（独立大 phase 调查 84 pre-existing cascade）/ P2-ARCHDEBT（战术分散 + 删 PHASE-COMPAT shim） |
 | 2026-09-04 | 协调者 | v27.0 P2-WFRUNNER 闭环：`WorkflowRunner` service class 从 WorkflowMixin 抽出（workflow_runner.py 307 行 new）+ mc_workflow.py 404 → 119 行 (-70%)；TDD 21 tests + 2 refactor guards；0 改范围 7 类文件不动；0 new failure (master 90 → worktree 84, net -6)。13 commits `9b57d16a` 待 ff-merge。carryover 3 项：P2-RESUME-VERIFY（紧接 Phase 28 建议）/ P2-MC-WRITING（独立大 phase）/ P2-ARCHDEBT（战术分散 + 5 薄代理 → OrchestratorProxyMixin） |
 | 2026-09-03 | 协调者 | v25.9 human_review 流水线修复闭环：mc_workflow.py 还原（105→376 行）+ 4 dashboard smoke 解 skip + cascade +15 fixed / 0 new failures；master `0a6f4346` 4 commit ff-merge；carryover 5 项 Phase 26+ 候选 |
