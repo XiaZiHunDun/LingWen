@@ -174,3 +174,76 @@ class TestWorkflowRunnerRefactorGuard:
         )
         # Runner 必有 _controller 引用
         assert runner._controller is controller
+
+
+class TestOrchestratorProxyMixin:
+    """Phase 31 ARCHDEBT-MINI: refactor-guard — 4 thin proxies still forward to _orchestrator.
+
+    Verifies the new OrchestratorProxyMixin correctly forwards each method to
+    self._orchestrator (TaskOrchestrator) with identical signature/return value.
+    """
+
+    def _make_host(self, mock_orchestrator):
+        """Build host with mock orchestrator (bypass MasterController.__init__)."""
+        from lingwen_core.agents.mc_orchestrator_proxy import OrchestratorProxyMixin
+        from lingwen_pipeline.master_controller import MasterController
+        # MasterController composition includes OrchestratorProxyMixin
+        # (asserted in test_mixin_is_in_master_controller_mro)
+        host = MasterController.__new__(MasterController)
+        host._orchestrator = mock_orchestrator
+        return host
+
+    def test_advance_step_forwards_to_orchestrator(self):
+        from unittest.mock import MagicMock
+
+        from lingwen_core.agents.mc_orchestrator_proxy import OrchestratorProxyMixin
+
+        mock_orch = MagicMock()
+        mock_orch.advance_step.return_value = (True, "")
+        host = self._make_host(mock_orch)
+        result = host.advance_step("STEP_X", {"k": "v"})
+        mock_orch.advance_step.assert_called_once_with("STEP_X", {"k": "v"})
+        assert result == (True, "")
+
+    def test_dispatch_task_forwards_to_orchestrator(self):
+        from unittest.mock import MagicMock
+
+        from lingwen_core.agents.mc_orchestrator_proxy import OrchestratorProxyMixin
+
+        mock_orch = MagicMock()
+        mock_orch.dispatch_task.return_value = "tid-123"
+        host = self._make_host(mock_orch)
+        result = host.dispatch_task("task_a", "agent_a", {"x": 1}, priority=5)
+        mock_orch.dispatch_task.assert_called_once_with("task_a", "agent_a", {"x": 1}, 5)
+        assert result == "tid-123"
+
+    def test_verify_task_forwards_to_orchestrator(self):
+        from unittest.mock import MagicMock
+
+        from lingwen_core.agents.mc_orchestrator_proxy import OrchestratorProxyMixin
+
+        mock_orch = MagicMock()
+        mock_orch.verify_task.return_value = (False, "bad")
+        host = self._make_host(mock_orch)
+        result = host.verify_task("tid-1", {"ok": False})
+        mock_orch.verify_task.assert_called_once_with("tid-1", {"ok": False})
+        assert result == (False, "bad")
+
+    def test_get_workflow_status_forwards_to_orchestrator(self):
+        from unittest.mock import MagicMock
+
+        from lingwen_core.agents.mc_orchestrator_proxy import OrchestratorProxyMixin
+
+        mock_orch = MagicMock()
+        mock_orch.get_workflow_status.return_value = {"current_step": "S2"}
+        host = self._make_host(mock_orch)
+        result = host.get_workflow_status()
+        mock_orch.get_workflow_status.assert_called_once_with()
+        assert result == {"current_step": "S2"}
+
+    def test_mixin_is_in_master_controller_mro(self):
+        """MasterController must include OrchestratorProxyMixin (regression guard)."""
+        from lingwen_core.agents.mc_orchestrator_proxy import OrchestratorProxyMixin
+        from lingwen_pipeline.master_controller import MasterController
+
+        assert OrchestratorProxyMixin in MasterController.__mro__
