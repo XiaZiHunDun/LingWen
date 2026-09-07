@@ -21,6 +21,7 @@ from lingwen_core.agents.decision_queue import (
     HumanDecisionQueue,
     create_decision,
 )
+from lingwen_core.agents.workflow_state import WorkflowState
 
 from infra.got.data_structures import NodeType, ThoughtNode
 
@@ -42,6 +43,9 @@ def _make_controller_with_stubs(monkeypatch) -> tuple[Any, Any]:
     monkeypatch.setattr(sm_mod, "StateManager", lambda *a, **kw: None)
 
     controller = mc_mod.MasterController.__new__(mc_mod.MasterController)
+    # Phase 26 v26.0 P2-WFSTATE refactor: _last_* 字段移入 self._state
+    # __new__ 绕过 __init__, 必须显式初始化 _state (workflow_runner.py:79 会读 controller._state)
+    controller._state = WorkflowState.empty()
     stub = _StubMaster()
     controller.content_writer = type(
         "cw",

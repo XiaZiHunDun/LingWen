@@ -15,6 +15,8 @@ from typing import Any, Optional
 
 import pytest
 
+from lingwen_core.agents.workflow_state import WorkflowState
+
 # === Stub MasterController (避免连真实 API) ===
 
 
@@ -256,6 +258,9 @@ def _make_controller_with_stubs(monkeypatch) -> tuple[Any, _StubAgents]:
     monkeypatch.setattr(sm_mod, "StateManager", lambda *a, **kw: None)
 
     controller = mc_mod.MasterController.__new__(mc_mod.MasterController)
+    # Phase 26 v26.0 P2-WFSTATE refactor: _last_* 字段移入 self._state
+    # __new__ 绕过 __init__, 必须显式初始化 _state (workflow_runner.py:79 会读 controller._state)
+    controller._state = WorkflowState.empty()
     stub = _StubAgents()
     # 注入 stubbed agents (MasterController.write_chapter 会用 outline_master.schema 等)
     # 用 lambda 包装: MasterController 调 self.write_chapter(...) → 走 lambda → stub.write_chapter
