@@ -194,7 +194,10 @@ class TestMasterControllerWithUsage:
         # 韧性契约: 返正常 audit report (无 _error, 避免 AgentComputeFn fail=True)
         assert isinstance(result, dict)
         assert "_error" not in result  # 跟 record_usage=False 路径一致
-        assert "chapter" in result  # generate_audit_report 用 "chapter" key
+        # Phase 30 T3: 真实 fallback 契约 — issues/suggestions 空列表
+        # (assertion 'chapter in result' 是 stale, _impl_audit_chapter 不 strip 'chapter')
+        assert result["issues"] == []
+        assert result["suggestions"] == []
         # usage 是 0 (LLM 失败不录)
         assert usage == {"input_tokens": 0, "output_tokens": 0}
 

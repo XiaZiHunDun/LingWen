@@ -3,7 +3,10 @@
 Phase 15.0 P3-SPLIT: 从 master_controller.py 拆分的创作相关方法。
 """
 
+import logging
 from typing import Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class WritingMixin:
@@ -162,17 +165,36 @@ class WritingMixin:
         record_usage: bool,
     ):
         if use_llm:
-            if record_usage:
-                result, usage = self.auditor.audit_chapter_with_usage(
-                    chapter_num, content, characters, timeline
-                )
+            try:
+                if record_usage:
+                    result, usage = self.auditor.audit_chapter_with_usage(
+                        chapter_num, content, characters, timeline
+                    )
+                    return {
+                        "issues": result.get("issues", []),
+                        "suggestions": result.get("suggestions", []),
+                    }, usage
+                result = self.auditor.audit_chapter(chapter_num, content, characters, timeline)
                 return {
                     "issues": result.get("issues", []),
                     "suggestions": result.get("suggestions", []),
-                }, usage
-            result = self.auditor.audit_chapter(chapter_num, content, characters, timeline)
-            return {
-                "issues": result.get("issues", []),
-                "suggestions": result.get("suggestions", []),
-            }
+                }
+            except Exception:
+                # Phase 30 T3: 韧性契约 — audit LLM 抛错时兜底返正常 audit report,
+                # workflow 不中断. record_usage=True 返 (empty issues, zero usage);
+                # record_usage=False 返 empty issues. broad except 因 LLM 库
+                # 异常多样 (502/timeout/rate limit/AttributeError from shape drift),
+                # 且历史契约 (test_phase7_1_production_fixes.py:113-117) 确认需吞
+                # AttributeError 而非仅 RequestException.
+                logger.warning(
+                    "audit_chapter failed at chapter_num=%s; returning empty audit report",
+                    chapter_num,
+                    exc_info=True,
+                )
+                if record_usage:
+                    return (
+                        {"issues": [], "suggestions": []},
+                        {"input_tokens": 0, "output_tokens": 0},
+                    )
+                return {"issues": [], "suggestions": []}
         return {"issues": [], "suggestions": []}
