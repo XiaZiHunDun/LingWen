@@ -52,56 +52,50 @@ def test_master_controller_generate_characters():
             assert characters[0]["name"] == "铁蛋"
 
 
-def test_master_controller_write_chapter():
-    """测试写章节流程"""
-    with patch("lingwen_core.agents.social_engine.relationship_tracker.RelationshipTracker") as mock_rt:
-        with patch("lingwen_core.agents.core.context_builder.ContextBuilder") as mock_cb:
-            mock_network = {"characters": [], "relationships": [], "events": []}
-            mock_rt_instance = Mock()
-            mock_rt_instance.get_network.return_value = mock_network
-            mock_rt.return_value = mock_rt_instance
+def test_master_controller_write_chapter(tmp_path):
+    """测试写章节流程 (no-LLM path 返回 prompt+suggestions+context).
 
-            mock_cb_instance = Mock()
-            mock_cb_instance.build_writing_context.return_value = {
-                "chapter_outline": {"num": 50, "title": "第五十章"},
-                "characters": [],
-                "style_guide": {},
-            }
-            mock_cb.return_value = mock_cb_instance
+    Phase 30 T5: 用 make_master_with_router 注入 stub router,
+    消除对 OPENAI_API_KEY / ANTHROPIC_API_KEY / MINIMAX_API_KEY env 的依赖.
+    """
+    from tests.agent_system._e2e_helpers import make_master_with_router
 
-            from lingwen_pipeline.master_controller import MasterController
+    master = make_master_with_router(tmp_path)
 
-            controller = MasterController()
+    result = master.write_chapter(
+        chapter_num=50,
+        outline={"title": "测试", "chapters": [{"num": 50, "title": "第五十章", "events": []}]},
+        characters=[],
+        memory_context={},
+        style_guide={},
+        use_llm=False,
+    )
 
-            result = controller.write_chapter(
-                chapter_num=50,
-                outline={"title": "测试", "chapters": [{"num": 50, "title": "第五十章", "events": []}]},
-                characters=[],
-                memory_context={},
-                style_guide={},
-            )
-
-            assert "prompt" in result
-            assert "suggestions" in result
-            assert "context" in result
+    assert "prompt" in result
+    assert "suggestions" in result
+    assert "context" in result
 
 
-def test_master_controller_audit_chapter():
-    """测试审核章节"""
-    with patch("lingwen_core.agents.social_engine.relationship_tracker.RelationshipTracker"):
-        with patch("lingwen_core.agents.core.context_builder.ContextBuilder"):
-            from lingwen_pipeline.master_controller import MasterController
+def test_master_controller_audit_chapter(tmp_path):
+    """测试审核章节 (no-LLM path 返回 issues+suggestions 空列表).
 
-            controller = MasterController()
-            content = "铁蛋冷静地看着对手。首先，他需要分析局势。"
-            report = controller.audit_chapter(
-                chapter_num=50,
-                content=content,
-                characters=[{"name": "铁蛋", "personality": ["冷静"]}],
-                timeline=[],
-            )
-            assert "chapter" in report
-            assert "issues" in report
+    Phase 30 T5: 用 make_master_with_router 注入 stub router,
+    消除对 API key env 的依赖. 修正 assert 反映真实契约:
+    no-LLM 路径不返 'chapter' 字段,只返 issues/suggestions.
+    """
+    from tests.agent_system._e2e_helpers import make_master_with_router
+
+    master = make_master_with_router(tmp_path)
+    content = "铁蛋冷静地看着对手。首先，他需要分析局势。"
+    report = master.audit_chapter(
+        chapter_num=50,
+        content=content,
+        characters=[{"name": "铁蛋", "personality": ["冷静"]}],
+        timeline=[],
+        use_llm=False,
+    )
+    assert "issues" in report
+    assert "suggestions" in report
 
 
 def test_master_controller_polish_chapter():
