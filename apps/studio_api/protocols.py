@@ -256,7 +256,7 @@ class MasterControllerAdapter:
         for nid in graph.node_ids():
             if graph.has_execution(nid):
                 executions[nid] = graph.get_execution(nid)
-        from infra.got.data_structures import NodeExecution, NodeStatus
+        from lingwen_got.data_structures import NodeExecution, NodeStatus
 
         paused_nodes: list[str] = []
         for nid, ex in executions.items():

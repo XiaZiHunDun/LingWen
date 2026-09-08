@@ -178,9 +178,9 @@ def register_workflows(app: FastAPI, ctx: RoutesContext) -> None:
         """
         from datetime import datetime, timezone
 
-        from infra.got.data_structures import NodeExecution, NodeStatus, NodeType
-        from infra.got.visualizer import render_mermaid
-        from infra.got.workflow_loader import (
+        from lingwen_got.data_structures import NodeExecution, NodeStatus, NodeType
+        from lingwen_got.visualizer import render_mermaid
+        from lingwen_got.workflow_loader import (
             WorkflowError,
             WorkflowNotFoundError,
             load_workflow,
