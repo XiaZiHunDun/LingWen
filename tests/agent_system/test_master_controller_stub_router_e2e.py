@@ -585,7 +585,10 @@ def test_emit_chapter_depends_on_polish_yaml_static():
 
     import yaml
 
-    yaml_path = Path(__file__).parent.parent.parent / "infra" / "got" / "workflows" / "novel_writing.yaml"
+    yaml_path = (
+        Path(__file__).parent.parent.parent
+        / "packages" / "lingwen-got" / "src" / "lingwen_got" / "workflows" / "novel_writing.yaml"
+    )
     assert yaml_path.exists(), f"workflow YAML not found: {yaml_path}"
     data = yaml.safe_load(yaml_path.read_text(encoding="utf-8"))
 
@@ -687,7 +690,10 @@ def test_novel_writing_emit_depends_on_polish_merge_yaml_static():
 
     import yaml
 
-    yaml_path = Path(__file__).parent.parent.parent / "infra" / "got" / "workflows" / "novel_writing.yaml"
+    yaml_path = (
+        Path(__file__).parent.parent.parent
+        / "packages" / "lingwen-got" / "src" / "lingwen_got" / "workflows" / "novel_writing.yaml"
+    )
     assert yaml_path.exists(), f"workflow YAML not found: {yaml_path}"
     data = yaml.safe_load(yaml_path.read_text(encoding="utf-8"))
 

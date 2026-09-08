@@ -35,7 +35,7 @@ def register_workflows(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.get("/api/workflows/list", response_model=list[WorkflowListItem])
     def list_workflows() -> list[WorkflowListItem]:
-        """列出 infra/got/workflows/*.yaml"""
+        """列出 lingwen_got/workflows/*.yaml"""
         return _list_workflow_yamls()
 
     @app.post(

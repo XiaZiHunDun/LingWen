@@ -45,23 +45,22 @@ _PROVIDER_ENV_KEYS: tuple[tuple[str, str], ...] = (
     ("anthropic", "ANTHROPIC_API_KEY"),
     ("openai", "OPENAI_API_KEY"),
 )
-_NOVEL_WRITING_YAML = Path(__file__).resolve().parents[1] / "got" / "workflows" / "novel_writing.yaml"
-
-
 def _resolve_novel_writing_yaml() -> Path:
-    """Locate novel_writing.yaml (package path first, then repo infra/got/workflows)."""
-    candidates: list[Path] = [_NOVEL_WRITING_YAML]
-    for ancestor in Path(__file__).resolve().parents:
-        candidate = ancestor / "infra" / "got" / "workflows" / "novel_writing.yaml"
-        if candidate.exists():
-            candidates.append(candidate)
-    for path in candidates:
-        if path.exists():
-            return path
-    raise FileNotFoundError(
-        "novel_writing.yaml not found in any of: "
-        + ", ".join(str(p) for p in candidates)
+    """Locate novel_writing.yaml from the lingwen_got package's workflows/ dir.
+
+    Canonical path: packages/lingwen-got/src/lingwen_got/workflows/novel_writing.yaml
+    (resolved dynamically from lingwen_got.workflow_loader.__file__ so it survives
+    both repo-relative checkouts and editable installs of the lingwen-got package).
+    Phase 34 pre-C6 fixup: replaced stale infra/got/workflows fallback (T6 deletes infra/got/).
+    """
+    from lingwen_got import workflow_loader as _wf_loader
+
+    primary = (
+        Path(_wf_loader.__file__).resolve().parent / "workflows" / "novel_writing.yaml"
     )
+    if primary.is_file():
+        return primary
+    raise FileNotFoundError(f"novel_writing.yaml not found at canonical path: {primary}")
 
 PRODUCTION_PILOT_BEHAVIOR: tuple[dict[str, str], ...] = (
     {

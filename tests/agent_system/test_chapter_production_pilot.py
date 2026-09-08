@@ -250,10 +250,15 @@ class TestProductionPilotRealLlmOptIn:
         assert result.preflight_ok is True
 
 
-def test_pilot_yaml_resolves_from_repo_workflows():
-    """preflight workflow_yaml 应从仓库 infra/got/workflows 找到 novel_writing.yaml."""
+def test_pilot_yaml_resolves_from_lingwen_got_workflows():
+    """preflight workflow_yaml 应从 lingwen_got/workflows 找到 novel_writing.yaml.
+
+    Phase 34 pre-C6 fixup: lingwen_got is the canonical home for workflow YAMLs.
+    """
     from lingwen_core.agents import chapter_production_pilot as pilot
 
     resolved = pilot._resolve_novel_writing_yaml()
     assert resolved.name == "novel_writing.yaml"
-    assert str(resolved).endswith("infra/got/workflows/novel_writing.yaml")
+    assert str(resolved).endswith(
+        "packages/lingwen-got/src/lingwen_got/workflows/novel_writing.yaml"
+    )

@@ -12,13 +12,18 @@ from apps.studio_api.models import WorkflowListItem, WorkflowStatusResponse
 
 
 def _list_workflow_yamls() -> list[WorkflowListItem]:
-    """扫描 infra/got/workflows/*.yaml → WorkflowListItem 列表
+    """扫描 lingwen_got/workflows/*.yaml → WorkflowListItem 列表
 
     简化:不调 workflow_loader,只读 YAML 文本粗略统计
     - node_count: text 中 `- id:` 出现次数
     - has_decision_nodes: text 中是否含 `type: decision`
+
+    Phase 34 pre-C6 fixup: scans packages/lingwen-got/src/lingwen_got/workflows/
+    (resolved dynamically from lingwen_got.workflow_loader.__file__).
     """
-    wf_dir = Path(__file__).parent.parent.parent / "infra" / "got" / "workflows"
+    from lingwen_got import workflow_loader as _wf_loader
+
+    wf_dir = Path(_wf_loader.__file__).resolve().parent / "workflows"
     if not wf_dir.exists():
         return []
     items: list[WorkflowListItem] = []
