@@ -23,13 +23,13 @@ from __future__ import annotations
 import pytest
 from lingwen_core.agents.workflow_state import WorkflowState
 
-from infra.got.data_structures import (
+from lingwen_got.data_structures import (
     NodeStatus,
     NodeType,
     ThoughtNode,
 )
-from infra.got.graph import ThoughtGraph
-from infra.got.scheduler import (
+from lingwen_got.graph import ThoughtGraph
+from lingwen_got.scheduler import (
     ComputeResult,
     GoTScheduler,
 )

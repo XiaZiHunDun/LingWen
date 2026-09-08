@@ -61,7 +61,7 @@ def _pass_report() -> QualityReport:
 
 class TestAggregatorBasics:
     def test_empty_reports(self):
-        from infra.got.aggregator import JudgmentAggregator
+        from lingwen_got.aggregator import JudgmentAggregator
 
         agg = JudgmentAggregator()
         result = agg.aggregate([])
@@ -70,7 +70,7 @@ class TestAggregatorBasics:
         assert result.score == 1.0
 
     def test_single_pass_report(self):
-        from infra.got.aggregator import JudgmentAggregator
+        from lingwen_got.aggregator import JudgmentAggregator
 
         agg = JudgmentAggregator()
         result = agg.aggregate([_pass_report()])
@@ -78,7 +78,7 @@ class TestAggregatorBasics:
         assert result.issues == ()
 
     def test_single_fail_report(self):
-        from infra.got.aggregator import JudgmentAggregator
+        from lingwen_got.aggregator import JudgmentAggregator
 
         agg = JudgmentAggregator()
         result = agg.aggregate([_fail_report(_p0("crash"))])
@@ -90,7 +90,7 @@ class TestAggregatorBasics:
 class TestAggregatorVerdict:
     def test_strictest_verdict_wins(self):
         """verdict: FAIL > WARN > PASS"""
-        from infra.got.aggregator import JudgmentAggregator
+        from lingwen_got.aggregator import JudgmentAggregator
 
         agg = JudgmentAggregator()
         result = agg.aggregate(
@@ -103,7 +103,7 @@ class TestAggregatorVerdict:
         assert result.verdict == "FAIL"
 
     def test_warn_overrides_pass(self):
-        from infra.got.aggregator import JudgmentAggregator
+        from lingwen_got.aggregator import JudgmentAggregator
 
         agg = JudgmentAggregator()
         result = agg.aggregate([_pass_report(), _warn_report(_p2("minor"))])
@@ -113,7 +113,7 @@ class TestAggregatorVerdict:
 class TestAggregatorIssues:
     def test_p0_strict_union(self):
         """P0 严格并集:任一报告有 → 输出有"""
-        from infra.got.aggregator import JudgmentAggregator
+        from lingwen_got.aggregator import JudgmentAggregator
 
         agg = JudgmentAggregator()
         result = agg.aggregate(
@@ -127,7 +127,7 @@ class TestAggregatorIssues:
         assert p0s[0].message == "error1"
 
     def test_p0_from_multiple_reports(self):
-        from infra.got.aggregator import JudgmentAggregator
+        from lingwen_got.aggregator import JudgmentAggregator
 
         agg = JudgmentAggregator()
         result = agg.aggregate(
@@ -142,7 +142,7 @@ class TestAggregatorIssues:
         assert messages == ["e1", "e2", "e3"]
 
     def test_p1_union_with_p0(self):
-        from infra.got.aggregator import JudgmentAggregator
+        from lingwen_got.aggregator import JudgmentAggregator
 
         agg = JudgmentAggregator()
         result = agg.aggregate(
@@ -156,7 +156,7 @@ class TestAggregatorIssues:
 
     def test_no_duplicate_issues(self):
         """完全相同的 issue 不应重复出现"""
-        from infra.got.aggregator import JudgmentAggregator
+        from lingwen_got.aggregator import JudgmentAggregator
 
         agg = JudgmentAggregator()
         result = agg.aggregate(
@@ -172,7 +172,7 @@ class TestAggregatorIssues:
 class TestAggregatorScore:
     def test_minimum_score_wins(self):
         """score: 取最低 (最严格)"""
-        from infra.got.aggregator import JudgmentAggregator
+        from lingwen_got.aggregator import JudgmentAggregator
 
         agg = JudgmentAggregator()
         result = agg.aggregate(
@@ -185,7 +185,7 @@ class TestAggregatorScore:
         assert result.score == 0.3
 
     def test_pass_score_1(self):
-        from infra.got.aggregator import JudgmentAggregator
+        from lingwen_got.aggregator import JudgmentAggregator
 
         agg = JudgmentAggregator()
         result = agg.aggregate([_pass_report(), _pass_report()])
@@ -194,7 +194,7 @@ class TestAggregatorScore:
 
 class TestAggregatorEdgeCases:
     def test_aggregate_returns_quality_report(self):
-        from infra.got.aggregator import JudgmentAggregator
+        from lingwen_got.aggregator import JudgmentAggregator
 
         agg = JudgmentAggregator()
         result = agg.aggregate([_warn_report(_p2("minor"))])
@@ -202,7 +202,7 @@ class TestAggregatorEdgeCases:
 
     def test_custom_severity_order(self):
         """支持自定义严重度顺序 (P0 > P1 > P2 > P3)"""
-        from infra.got.aggregator import JudgmentAggregator
+        from lingwen_got.aggregator import JudgmentAggregator
 
         agg = JudgmentAggregator()
         # 仅 P3 应不影响 verdict (还是 WARN if 有 P2)

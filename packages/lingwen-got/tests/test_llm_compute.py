@@ -23,9 +23,9 @@ from lingwen_llm.providers.cost_tracker import CostTracker
 from lingwen_llm.providers.model_tiers import ModelTier
 from lingwen_llm.providers.tiered_router import TieredRouter, TieredRouterError
 
-from infra.got.data_structures import NodeType, ThoughtNode
-from infra.got.llm_compute import LLMComputeFn
-from infra.got.scheduler import ComputeResult
+from lingwen_got.data_structures import NodeType, ThoughtNode
+from lingwen_got.llm_compute import LLMComputeFn
+from lingwen_got.scheduler import ComputeResult
 
 
 class _StubProvider(AIProvider):
@@ -307,12 +307,12 @@ class TestLLMComputeFnImport:
     """Public API"""
 
     def test_top_level_imports(self):
-        from infra.got import LLMComputeFn
+        from lingwen_got import LLMComputeFn
 
         assert LLMComputeFn is not None
 
     def test_callable(self):
-        from infra.got import LLMComputeFn
+        from lingwen_got import LLMComputeFn
 
         router, _ = _make_router(
             {

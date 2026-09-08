@@ -28,10 +28,10 @@ from lingwen_llm.providers.cost_tracker import CostTracker
 from lingwen_llm.providers.model_tiers import ModelTier
 from lingwen_llm.providers.tiered_router import TieredRouter
 
-from infra.got.data_structures import NodeStatus, NodeType, ThoughtNode
-from infra.got.graph import ThoughtGraph
-from infra.got.llm_compute import LLMComputeFn
-from infra.got.scheduler import ExecutionSummary, GoTScheduler
+from lingwen_got.data_structures import NodeStatus, NodeType, ThoughtNode
+from lingwen_got.graph import ThoughtGraph
+from lingwen_got.llm_compute import LLMComputeFn
+from lingwen_got.scheduler import ExecutionSummary, GoTScheduler
 
 # === Test fixtures: stub providers ===
 

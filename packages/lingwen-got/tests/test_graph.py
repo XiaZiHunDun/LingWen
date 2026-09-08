@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import pytest
 
-from infra.got.data_structures import (
+from lingwen_got.data_structures import (
     NodeExecution,
     NodeStatus,
     NodeType,
@@ -38,21 +38,21 @@ def _node(node_id: str, depends_on=(), **kwargs) -> ThoughtNode:
 
 class TestGraphBasics:
     def test_empty_graph(self):
-        from infra.got.graph import ThoughtGraph
+        from lingwen_got.graph import ThoughtGraph
 
         g = ThoughtGraph()
         assert g.node_ids() == []
         assert g.ready_nodes() == []
 
     def test_add_node(self):
-        from infra.got.graph import ThoughtGraph
+        from lingwen_got.graph import ThoughtGraph
 
         g = ThoughtGraph()
         g.add_node(_node("n1"))
         assert "n1" in g.node_ids()
 
     def test_add_duplicate_node_raises(self):
-        from infra.got.graph import DuplicateNodeError, ThoughtGraph
+        from lingwen_got.graph import DuplicateNodeError, ThoughtGraph
 
         g = ThoughtGraph()
         g.add_node(_node("n1"))
@@ -60,7 +60,7 @@ class TestGraphBasics:
             g.add_node(_node("n1"))
 
     def test_add_edge(self):
-        from infra.got.graph import ThoughtGraph
+        from lingwen_got.graph import ThoughtGraph
 
         g = ThoughtGraph()
         g.add_node(_node("a"))
@@ -69,7 +69,7 @@ class TestGraphBasics:
         assert "a" in g.get_node("a").depends_on or True  # edge stored
 
     def test_get_node_returns(self):
-        from infra.got.graph import ThoughtGraph
+        from lingwen_got.graph import ThoughtGraph
 
         g = ThoughtGraph()
         n = _node("n1")
@@ -77,7 +77,7 @@ class TestGraphBasics:
         assert g.get_node("n1") is n
 
     def test_get_nonexistent_node_raises(self):
-        from infra.got.graph import NodeNotFoundError, ThoughtGraph
+        from lingwen_got.graph import NodeNotFoundError, ThoughtGraph
 
         g = ThoughtGraph()
         with pytest.raises(NodeNotFoundError, match="(?i)not found"):
@@ -87,7 +87,7 @@ class TestGraphBasics:
 class TestReadyNodes:
     def test_root_nodes_are_ready(self):
         """无依赖的节点 → READY"""
-        from infra.got.graph import ThoughtGraph
+        from lingwen_got.graph import ThoughtGraph
 
         g = ThoughtGraph()
         g.add_node(_node("a"))
@@ -97,7 +97,7 @@ class TestReadyNodes:
 
     def test_node_with_pending_dep_not_ready(self):
         """依赖未完成 → 不 READY"""
-        from infra.got.graph import ThoughtGraph
+        from lingwen_got.graph import ThoughtGraph
 
         g = ThoughtGraph()
         g.add_node(_node("a"))
@@ -107,7 +107,7 @@ class TestReadyNodes:
 
     def test_node_with_completed_dep_is_ready(self):
         """依赖 COMPLETED → READY"""
-        from infra.got.graph import ThoughtGraph
+        from lingwen_got.graph import ThoughtGraph
 
         g = ThoughtGraph()
         g.add_node(_node("a"))
@@ -127,7 +127,7 @@ class TestReadyNodes:
 
     def test_already_running_not_ready(self):
         """已在 RUNNING 的节点 → 不再 READY"""
-        from infra.got.graph import ThoughtGraph
+        from lingwen_got.graph import ThoughtGraph
 
         g = ThoughtGraph()
         g.add_node(_node("a"))
@@ -145,7 +145,7 @@ class TestReadyNodes:
 
     def test_terminal_not_ready(self):
         """COMPLETED/FAILED/SKIPPED 都不再 READY"""
-        from infra.got.graph import ThoughtGraph
+        from lingwen_got.graph import ThoughtGraph
 
         g = ThoughtGraph()
         g.add_node(_node("a"))
@@ -168,7 +168,7 @@ class TestReadyNodes:
 class TestParallelBatches:
     def test_single_batch_for_chain(self):
         """链式 a → b → c → 3 批 [a], [b], [c]"""
-        from infra.got.graph import ThoughtGraph
+        from lingwen_got.graph import ThoughtGraph
 
         g = ThoughtGraph()
         g.add_node(_node("a"))
@@ -179,7 +179,7 @@ class TestParallelBatches:
 
     def test_parallel_batch(self):
         """a → {b, c} → d → 3 批 [a], [b, c], [d]"""
-        from infra.got.graph import ThoughtGraph
+        from lingwen_got.graph import ThoughtGraph
 
         g = ThoughtGraph()
         g.add_node(_node("a"))
@@ -195,7 +195,7 @@ class TestParallelBatches:
 
 class TestCycleDetection:
     def test_acyclic_graph_ok(self):
-        from infra.got.graph import ThoughtGraph
+        from lingwen_got.graph import ThoughtGraph
 
         g = ThoughtGraph()
         g.add_node(_node("a"))
@@ -203,7 +203,7 @@ class TestCycleDetection:
         assert g.detect_cycle() is None
 
     def test_cycle_raises(self):
-        from infra.got.graph import GraphCycleError, ThoughtGraph
+        from lingwen_got.graph import GraphCycleError, ThoughtGraph
 
         g = ThoughtGraph()
         g.add_node(_node("a", depends_on=("b",)))  # a 依赖 b
@@ -215,7 +215,7 @@ class TestCycleDetection:
 class TestBacktrack:
     def test_backtrack_to_leaf(self):
         """回溯到叶节点(无下游)→ 只返回该节点"""
-        from infra.got.graph import ThoughtGraph
+        from lingwen_got.graph import ThoughtGraph
 
         g = ThoughtGraph()
         g.add_node(_node("a"))
@@ -225,7 +225,7 @@ class TestBacktrack:
 
     def test_backtrack_to_middle(self):
         """回溯到中间节点 → 该节点 + 所有下游"""
-        from infra.got.graph import ThoughtGraph
+        from lingwen_got.graph import ThoughtGraph
 
         g = ThoughtGraph()
         g.add_node(_node("a"))
@@ -238,7 +238,7 @@ class TestBacktrack:
 
 class TestTopologicalPaths:
     def test_find_paths(self):
-        from infra.got.graph import ThoughtGraph
+        from lingwen_got.graph import ThoughtGraph
 
         g = ThoughtGraph()
         g.add_node(_node("a"))
@@ -253,7 +253,7 @@ class TestTopologicalPaths:
             assert path[-1] == "d"
 
     def test_no_paths(self):
-        from infra.got.graph import ThoughtGraph
+        from lingwen_got.graph import ThoughtGraph
 
         g = ThoughtGraph()
         g.add_node(_node("a"))
@@ -264,7 +264,7 @@ class TestTopologicalPaths:
 class TestCreateBranch:
     def test_branch_creates_alternatives(self):
         """create_branch 在 fork 节点后插入多个并行分支"""
-        from infra.got.graph import ThoughtGraph
+        from lingwen_got.graph import ThoughtGraph
 
         g = ThoughtGraph()
         g.add_node(_node("a"))
@@ -282,7 +282,7 @@ class TestCreateBranch:
 
 class TestRecordExecution:
     def test_record_execution_stores(self):
-        from infra.got.graph import ThoughtGraph
+        from lingwen_got.graph import ThoughtGraph
 
         g = ThoughtGraph()
         g.add_node(_node("a"))
@@ -299,7 +299,7 @@ class TestRecordExecution:
         assert g.get_execution("a").status == NodeStatus.COMPLETED
 
     def test_get_nonexistent_execution_raises(self):
-        from infra.got.graph import ExecutionNotFoundError, ThoughtGraph
+        from lingwen_got.graph import ExecutionNotFoundError, ThoughtGraph
 
         g = ThoughtGraph()
         with pytest.raises(ExecutionNotFoundError, match="(?i)not found"):

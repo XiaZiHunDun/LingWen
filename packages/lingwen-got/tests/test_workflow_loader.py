@@ -68,7 +68,7 @@ def _write_workflow(tmp_path: Path, name: str, content: str) -> Path:
 
 class TestLoadWorkflowBasics:
     def test_load_minimal_workflow(self, tmp_path):
-        from infra.got.workflow_loader import load_workflow
+        from lingwen_got.workflow_loader import load_workflow
 
         wf_dir = _write_workflow(tmp_path, "minimal", _MINIMAL_YAML)
         g = load_workflow("minimal", base_dir=wf_dir)
@@ -76,15 +76,15 @@ class TestLoadWorkflowBasics:
         assert "b" in g.node_ids()
 
     def test_load_returns_thought_graph(self, tmp_path):
-        from infra.got.graph import ThoughtGraph
-        from infra.got.workflow_loader import load_workflow
+        from lingwen_got.graph import ThoughtGraph
+        from lingwen_got.workflow_loader import load_workflow
 
         wf_dir = _write_workflow(tmp_path, "minimal", _MINIMAL_YAML)
         g = load_workflow("minimal", base_dir=wf_dir)
         assert isinstance(g, ThoughtGraph)
 
     def test_load_respects_depends_on(self, tmp_path):
-        from infra.got.workflow_loader import load_workflow
+        from lingwen_got.workflow_loader import load_workflow
 
         wf_dir = _write_workflow(tmp_path, "minimal", _MINIMAL_YAML)
         g = load_workflow("minimal", base_dir=wf_dir)
@@ -92,8 +92,8 @@ class TestLoadWorkflowBasics:
         assert "a" in b.depends_on
 
     def test_load_respects_node_type(self, tmp_path):
-        from infra.got.data_structures import NodeType
-        from infra.got.workflow_loader import load_workflow
+        from lingwen_got.data_structures import NodeType
+        from lingwen_got.workflow_loader import load_workflow
 
         wf_dir = _write_workflow(tmp_path, "minimal", _MINIMAL_YAML)
         g = load_workflow("minimal", base_dir=wf_dir)
@@ -101,7 +101,7 @@ class TestLoadWorkflowBasics:
         assert g.get_node("b").type == NodeType.GENERATION
 
     def test_load_respects_prompt_scenario(self, tmp_path):
-        from infra.got.workflow_loader import load_workflow
+        from lingwen_got.workflow_loader import load_workflow
 
         wf_dir = _write_workflow(tmp_path, "minimal", _MINIMAL_YAML)
         g = load_workflow("minimal", base_dir=wf_dir)
@@ -109,7 +109,7 @@ class TestLoadWorkflowBasics:
         assert g.get_node("a").prompt_scenario is None  # 默认
 
     def test_load_respects_token_budget(self, tmp_path):
-        from infra.got.workflow_loader import load_workflow
+        from lingwen_got.workflow_loader import load_workflow
 
         wf_dir = _write_workflow(tmp_path, "minimal", _MINIMAL_YAML)
         g = load_workflow("minimal", base_dir=wf_dir)
@@ -119,7 +119,7 @@ class TestLoadWorkflowBasics:
 
 class TestLoadWorkflowErrors:
     def test_workflow_not_found(self, tmp_path):
-        from infra.got.workflow_loader import (
+        from lingwen_got.workflow_loader import (
             WorkflowNotFoundError,
             load_workflow,
         )
@@ -129,7 +129,7 @@ class TestLoadWorkflowErrors:
             load_workflow("does_not_exist", base_dir=wf_dir)
 
     def test_invalid_yaml_raises(self, tmp_path):
-        from infra.got.workflow_loader import (
+        from lingwen_got.workflow_loader import (
             WorkflowParseError,
             load_workflow,
         )
@@ -139,7 +139,7 @@ class TestLoadWorkflowErrors:
             load_workflow("broken", base_dir=wf_dir)
 
     def test_missing_node_id_raises(self, tmp_path):
-        from infra.got.workflow_loader import (
+        from lingwen_got.workflow_loader import (
             WorkflowValidationError,
             load_workflow,
         )
@@ -157,8 +157,8 @@ nodes:
             load_workflow("bad", base_dir=wf_dir)
 
     def test_duplicate_node_id_raises(self, tmp_path):
-        from infra.got.graph import DuplicateNodeError
-        from infra.got.workflow_loader import load_workflow
+        from lingwen_got.graph import DuplicateNodeError
+        from lingwen_got.workflow_loader import load_workflow
 
         yaml_content = """
 workflow: dup_wf
@@ -176,7 +176,7 @@ nodes:
             load_workflow("dup", base_dir=wf_dir)
 
     def test_unknown_node_type_raises(self, tmp_path):
-        from infra.got.workflow_loader import (
+        from lingwen_got.workflow_loader import (
             WorkflowValidationError,
             load_workflow,
         )
@@ -196,7 +196,7 @@ nodes:
 
 class TestLoadWorkflowSingleNode:
     def test_single_node_workflow(self, tmp_path):
-        from infra.got.workflow_loader import load_workflow
+        from lingwen_got.workflow_loader import load_workflow
 
         yaml_content = """
 workflow: single
@@ -214,7 +214,7 @@ nodes:
 
 class TestLoadWorkflowNoExtension:
     def test_load_with_yaml_extension(self, tmp_path):
-        from infra.got.workflow_loader import load_workflow
+        from lingwen_got.workflow_loader import load_workflow
 
         wf_dir = _write_workflow(tmp_path, "named", _MINIMAL_YAML)
         # 自动补 .yaml 扩展名
@@ -222,7 +222,7 @@ class TestLoadWorkflowNoExtension:
         assert "a" in g.node_ids()
 
     def test_load_with_full_extension(self, tmp_path):
-        from infra.got.workflow_loader import load_workflow
+        from lingwen_got.workflow_loader import load_workflow
 
         wf_dir = _write_workflow(tmp_path, "named", _MINIMAL_YAML)
         # 显式带 .yaml 也应可工作

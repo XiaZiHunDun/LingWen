@@ -1,4 +1,4 @@
-"""Tests for infra.got.visualizer (Phase 4.1 — Enhanced GoT.visualize)
+"""Tests for lingwen_got.visualizer (Phase 4.1 — Enhanced GoT.visualize)
 
 Doc 4 (GoT 适配设计 v1.0) §11 Phase 4:
 - render_mermaid: 增强 mermaid 导出,按 NodeStatus 染色 (PENDING=grey, COMPLETED=green, FAILED=red, RUNNING=blue)
@@ -13,14 +13,14 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from infra.got.data_structures import (
+from lingwen_got.data_structures import (
     NodeExecution,
     NodeStatus,
     NodeType,
     ThoughtNode,
 )
-from infra.got.graph import ThoughtGraph
-from infra.got.visualizer import (
+from lingwen_got.graph import ThoughtGraph
+from lingwen_got.visualizer import (
     NODE_STATUS_CLASS,
     render_mermaid,
     render_status_table,
@@ -293,7 +293,7 @@ class TestVisualizerAcceptsBothInterfaces:
 
     def test_accepts_scheduler_like_object(self):
         """duck-typed 接受任何 ._graph + ._executions 的对象"""
-        from infra.got.scheduler import GoTScheduler
+        from lingwen_got.scheduler import GoTScheduler
 
         graph = ThoughtGraph()
         graph.add_node(_node("a"))
@@ -302,7 +302,7 @@ class TestVisualizerAcceptsBothInterfaces:
         # 用 scheduler 作为源(类属性 _graph, _executions)
         # 实际:render_* 接受 (graph, executions) 二元组
         # 但也提供便利包装 render_from_scheduler
-        from infra.got.visualizer import render_mermaid_from_scheduler
+        from lingwen_got.visualizer import render_mermaid_from_scheduler
 
         out = render_mermaid_from_scheduler(sched)
         assert "graph TD" in out
@@ -310,8 +310,8 @@ class TestVisualizerAcceptsBothInterfaces:
         assert "b" in out
 
     def test_summary_from_scheduler(self):
-        from infra.got.scheduler import GoTScheduler
-        from infra.got.visualizer import render_summary_from_scheduler
+        from lingwen_got.scheduler import GoTScheduler
+        from lingwen_got.visualizer import render_summary_from_scheduler
 
         graph = ThoughtGraph()
         graph.add_node(_node("a"))

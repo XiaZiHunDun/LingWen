@@ -21,7 +21,7 @@ from typing import Any, Callable, Optional
 
 import pytest
 
-from infra.got.data_structures import (
+from lingwen_got.data_structures import (
     NodeExecution,
     NodeStatus,
     NodeType,
@@ -89,8 +89,8 @@ def _flaky_compute(attempts_to_pass: int = 2) -> Callable:
 
 class TestSchedulerRunBasics:
     def test_run_empty_graph(self):
-        from infra.got.graph import ThoughtGraph
-        from infra.got.scheduler import GoTScheduler
+        from lingwen_got.graph import ThoughtGraph
+        from lingwen_got.scheduler import GoTScheduler
 
         g = ThoughtGraph()
         sched = GoTScheduler(graph=g, compute_fn=_ok_compute())
@@ -99,8 +99,8 @@ class TestSchedulerRunBasics:
         assert summary.failed == 0
 
     def test_run_single_root_node(self):
-        from infra.got.graph import ThoughtGraph
-        from infra.got.scheduler import GoTScheduler
+        from lingwen_got.graph import ThoughtGraph
+        from lingwen_got.scheduler import GoTScheduler
 
         g = ThoughtGraph()
         g.add_node(_node("a"))
@@ -114,8 +114,8 @@ class TestSchedulerRunBasics:
 
     def test_run_chain_a_b_c(self):
         """a → b → c 拓扑链:按顺序完成"""
-        from infra.got.graph import ThoughtGraph
-        from infra.got.scheduler import GoTScheduler
+        from lingwen_got.graph import ThoughtGraph
+        from lingwen_got.scheduler import GoTScheduler
 
         g = ThoughtGraph()
         g.add_node(_node("a"))
@@ -135,8 +135,8 @@ class TestSchedulerRunBasics:
 
     def test_run_parallel_batch(self):
         """a → {b, c} → d 并行分批"""
-        from infra.got.graph import ThoughtGraph
-        from infra.got.scheduler import GoTScheduler
+        from lingwen_got.graph import ThoughtGraph
+        from lingwen_got.scheduler import GoTScheduler
 
         g = ThoughtGraph()
         g.add_node(_node("a"))
@@ -155,8 +155,8 @@ class TestSchedulerRunBasics:
 class TestSchedulerFailure:
     def test_node_failure_marked_failed(self):
         """compute_fn 返回 fail=True → 节点 FAILED"""
-        from infra.got.graph import ThoughtGraph
-        from infra.got.scheduler import GoTScheduler
+        from lingwen_got.graph import ThoughtGraph
+        from lingwen_got.scheduler import GoTScheduler
 
         g = ThoughtGraph()
         g.add_node(_node("a"))
@@ -170,8 +170,8 @@ class TestSchedulerFailure:
 
     def test_downstream_skipped_on_failure(self):
         """a 失败 → b (依赖 a) 应被跳过或失败"""
-        from infra.got.graph import ThoughtGraph
-        from infra.got.scheduler import GoTScheduler
+        from lingwen_got.graph import ThoughtGraph
+        from lingwen_got.scheduler import GoTScheduler
 
         g = ThoughtGraph()
         g.add_node(_node("a"))
@@ -186,8 +186,8 @@ class TestSchedulerFailure:
 class TestSchedulerBacktrack:
     def test_soft_backtrack_within_limit(self):
         """前 1-2 次失败后成功 → 应在 soft limit 内完成"""
-        from infra.got.graph import ThoughtGraph
-        from infra.got.scheduler import GoTScheduler
+        from lingwen_got.graph import ThoughtGraph
+        from lingwen_got.scheduler import GoTScheduler
 
         g = ThoughtGraph()
         g.add_node(_node("a"))
@@ -203,8 +203,8 @@ class TestSchedulerBacktrack:
 
     def test_hard_backtrack_limit_raises(self):
         """连续失败超过 hard limit → 抛错"""
-        from infra.got.graph import ThoughtGraph
-        from infra.got.scheduler import (
+        from lingwen_got.graph import ThoughtGraph
+        from lingwen_got.scheduler import (
             GoTScheduler,
             HumanInterventionRequired,
         )
@@ -222,8 +222,8 @@ class TestSchedulerBacktrack:
 
     def test_backtrack_count_in_summary(self):
         """summary 应记录实际回溯次数"""
-        from infra.got.graph import ThoughtGraph
-        from infra.got.scheduler import GoTScheduler
+        from lingwen_got.graph import ThoughtGraph
+        from lingwen_got.scheduler import GoTScheduler
 
         g = ThoughtGraph()
         g.add_node(_node("a"))
@@ -240,9 +240,9 @@ class TestSchedulerBacktrack:
 class TestSchedulerCache:
     def test_cache_used_for_repeat_inputs(self):
         """相同 inputs 第二次运行应使用缓存"""
-        from infra.got.cache import ThoughtCache
-        from infra.got.graph import ThoughtGraph
-        from infra.got.scheduler import GoTScheduler
+        from lingwen_got.cache import ThoughtCache
+        from lingwen_got.graph import ThoughtGraph
+        from lingwen_got.scheduler import GoTScheduler
 
         g = ThoughtGraph()
         g.add_node(_node("a"))
@@ -266,8 +266,8 @@ class TestSchedulerCache:
 
 class TestSchedulerExecutionSummary:
     def test_summary_has_basic_fields(self):
-        from infra.got.graph import ThoughtGraph
-        from infra.got.scheduler import GoTScheduler
+        from lingwen_got.graph import ThoughtGraph
+        from lingwen_got.scheduler import GoTScheduler
 
         g = ThoughtGraph()
         g.add_node(_node("a"))
@@ -281,8 +281,8 @@ class TestSchedulerExecutionSummary:
 
     def test_summary_total_cost_aggregates(self):
         """多个节点 cost 应累加"""
-        from infra.got.graph import ThoughtGraph
-        from infra.got.scheduler import GoTScheduler
+        from lingwen_got.graph import ThoughtGraph
+        from lingwen_got.scheduler import GoTScheduler
 
         g = ThoughtGraph()
         g.add_node(_node("a"))
@@ -297,8 +297,8 @@ class TestSchedulerExecutionSummary:
 
 class TestSchedulerVisualize:
     def test_visualize_returns_mermaid_string(self):
-        from infra.got.graph import ThoughtGraph
-        from infra.got.scheduler import GoTScheduler
+        from lingwen_got.graph import ThoughtGraph
+        from lingwen_got.scheduler import GoTScheduler
 
         g = ThoughtGraph()
         g.add_node(_node("a"))
@@ -315,8 +315,8 @@ class TestSchedulerVisualize:
 class TestSchedulerMaxSteps:
     def test_max_steps_limits_execution(self):
         """max_steps 限制最大执行步数,防止无限循环"""
-        from infra.got.graph import ThoughtGraph
-        from infra.got.scheduler import GoTScheduler, MaxStepsExceeded
+        from lingwen_got.graph import ThoughtGraph
+        from lingwen_got.scheduler import GoTScheduler, MaxStepsExceeded
 
         g = ThoughtGraph()
         g.add_node(_node("a"))

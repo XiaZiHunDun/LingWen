@@ -17,7 +17,7 @@ import pytest
 
 class TestHashInputs:
     def test_hash_stable(self):
-        from infra.got.cache import ThoughtCache
+        from lingwen_got.cache import ThoughtCache
 
         cache = ThoughtCache()
         h1 = cache.hash_inputs({"a": 1, "b": 2})
@@ -28,7 +28,7 @@ class TestHashInputs:
 
     def test_hash_key_order_independent(self):
         """sort_keys=True → dict key 顺序不影响 hash"""
-        from infra.got.cache import ThoughtCache
+        from lingwen_got.cache import ThoughtCache
 
         cache = ThoughtCache()
         h1 = cache.hash_inputs({"a": 1, "b": 2})
@@ -36,7 +36,7 @@ class TestHashInputs:
         assert h1 == h2
 
     def test_hash_value_changes(self):
-        from infra.got.cache import ThoughtCache
+        from lingwen_got.cache import ThoughtCache
 
         cache = ThoughtCache()
         h1 = cache.hash_inputs({"a": 1})
@@ -46,7 +46,7 @@ class TestHashInputs:
 
 class TestGetOrCompute:
     def test_compute_on_miss(self):
-        from infra.got.cache import ThoughtCache
+        from lingwen_got.cache import ThoughtCache
 
         cache = ThoughtCache()
         call_count = [0]
@@ -60,7 +60,7 @@ class TestGetOrCompute:
         assert call_count[0] == 1
 
     def test_cache_hit(self):
-        from infra.got.cache import ThoughtCache
+        from lingwen_got.cache import ThoughtCache
 
         cache = ThoughtCache()
         call_count = [0]
@@ -77,7 +77,7 @@ class TestGetOrCompute:
         assert call_count[0] == 1  # 只算 1 次
 
     def test_different_hashes_different_results(self):
-        from infra.got.cache import ThoughtCache
+        from lingwen_got.cache import ThoughtCache
 
         cache = ThoughtCache()
         call_count = [0]
@@ -93,7 +93,7 @@ class TestGetOrCompute:
         assert call_count[0] == 2
 
     def test_clear_cache(self):
-        from infra.got.cache import ThoughtCache
+        from lingwen_got.cache import ThoughtCache
 
         cache = ThoughtCache()
         call_count = [0]
@@ -108,7 +108,7 @@ class TestGetOrCompute:
         assert call_count[0] == 2  # 清空后重算
 
     def test_cache_size(self):
-        from infra.got.cache import ThoughtCache
+        from lingwen_got.cache import ThoughtCache
 
         cache = ThoughtCache()
         cache.get_or_compute("n1", "h1", lambda: 1)

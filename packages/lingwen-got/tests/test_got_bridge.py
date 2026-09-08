@@ -26,8 +26,8 @@ from lingwen_core.agents.got_bridge import (
 from lingwen_llm.providers.cost_tracker import CostTracker
 from lingwen_llm.providers.model_tiers import ModelTier
 
-from infra.got.data_structures import NodeStatus, NodeType, ThoughtNode
-from infra.got.scheduler import ComputeResult, ExecutionSummary
+from lingwen_got.data_structures import NodeStatus, NodeType, ThoughtNode
+from lingwen_got.scheduler import ComputeResult, ExecutionSummary
 
 # === Test fixtures: stub MasterController ===
 
@@ -326,7 +326,7 @@ class TestBuildGoTScheduler:
         # Phase 7.4: 7 节点 (含 2 个并行 polish + 1 merge) — read_snapshot → write_chapter → review_chapter → polish_emotional_pacing + polish_ai_trace_removal → polish_merge → emit_chapter
         assert len(graph.node_ids()) == 7
         # scheduler 是 GoTScheduler 实例
-        from infra.got.scheduler import GoTScheduler
+        from lingwen_got.scheduler import GoTScheduler
 
         assert isinstance(scheduler, GoTScheduler)
 

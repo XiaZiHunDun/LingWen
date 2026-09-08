@@ -29,8 +29,8 @@ from lingwen_core.agents.got_bridge import AgentComputeFn
 from lingwen_llm.providers.cost_tracker import CostBudgetExceeded, CostTracker
 from lingwen_llm.providers.model_tiers import ModelTier
 
-from infra.got.data_structures import NodeType, ThoughtNode
-from infra.got.scheduler import ComputeResult
+from lingwen_got.data_structures import NodeType, ThoughtNode
+from lingwen_got.scheduler import ComputeResult
 
 
 def _make_node(scenario: str) -> ThoughtNode:
