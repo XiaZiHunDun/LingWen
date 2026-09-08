@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Migrate `infra/got/*` (8 modules, 1788 lines, 36 public symbols) to `packages/lingwen-got/src/lingwen_got/` as a proper uv workspace package, updating 30 consumer files across `apps/infra/packages/tests` and relocating 12 got-specific test files to `packages/lingwen-got/tests/`.
+**Goal:** Migrate `infra/got/*` (8 modules, 1788 lines, 32 public symbols) to `packages/lingwen-got/src/lingwen_got/` as a proper uv workspace package, updating 30 consumer files across `apps/infra/packages/tests` and relocating 12 got-specific test files to `packages/lingwen-got/tests/`.
 
 **Architecture:** Batched mechanical sed per Phase 32 SHIM-CLEANUP precedent. Flat package mirror (no sub-packages). 8 atomic commits (C0-C7) with each gated by 1-3 validation commands. `infra/got/` hard-deleted after all consumer migration complete (no shim needed since all 30 consumers are bounded + known).
 
@@ -21,7 +21,7 @@ packages/lingwen-got/                                    ← NEW
 ├── pyproject.toml                                       ← NEW
 ├── README.md                                            ← NEW
 ├── src/lingwen_got/                                     ← NEW (mirror infra/got/)
-│   ├── __init__.py          (98)    # 36 symbol re-export
+│   ├── __init__.py          (98)    # 32 symbol re-export
 │   ├── aggregator.py        (138)
 │   ├── cache.py              (66)
 │   ├── data_structures.py   (160)
@@ -185,7 +185,7 @@ LingWen · Graph of Thoughts engine.
 
 This package is the GoT scheduler + graph + LLM compute + workflow loader + visualizer stack, lifted out of `infra/got/` into a proper uv workspace package in Phase 34.
 
-Public API: 36 symbols (see `lingwen_got.__all__`).
+Public API: 32 symbols (see `lingwen_got.__all__`).
 ```
 
 - [ ] **Step 3: Copy 9 .py files from infra/got/ to packages/lingwen-got/src/lingwen_got/**
@@ -292,14 +292,14 @@ uv sync --all-packages --offline 2>&1 | tail -5
 
 Expected: "Resolved N packages" + "Installed N packages" + exit 0. No resolution errors for `lingwen-got`.
 
-- [ ] **Step 10: G2 — import lingwen_got and verify 36 symbols**
+- [ ] **Step 10: G2 — import lingwen_got and verify 32 symbols**
 
 ```bash
 cd /home/ailearn/projects/LingWen-phase-34
-.venv/bin/python -c "import lingwen_got; symbols = lingwen_got.__all__; print(f'count={len(symbols)}'); assert len(symbols) == 36, f'expected 36, got {len(symbols)}'"
+.venv/bin/python -c "import lingwen_got; symbols = lingwen_got.__all__; print(f'count={len(symbols)}'); assert len(symbols) == 32, f'expected 32, got {len(symbols)}'"
 ```
 
-Expected: prints `count=36`, exit 0.
+Expected: prints `count=32`, exit 0.
 
 - [ ] **Step 11: Verify zero literal-path infra.got imports inside lingwen-got**
 
@@ -826,10 +826,10 @@ def test_infra_got_directory_deleted():
     assert not (REPO_ROOT / "infra" / "got").exists()
 
 
-def test_lingwen_got_exports_36_symbols():
-    """Public API surface must match pre-migration infra.got (36 symbols)."""
+def test_lingwen_got_exports_32_symbols():
+    """Public API surface must match pre-migration infra.got (32 symbols)."""
     import lingwen_got
-    assert len(lingwen_got.__all__) == 36
+    assert len(lingwen_got.__all__) == 32
     expected = {
         "ThoughtNode", "NodeExecution", "NodeType", "NodeStatus",
         "ThoughtGraph", "GraphError", "DuplicateNodeError", "NodeNotFoundError",
@@ -960,7 +960,7 @@ Edit `/home/ailearn/projects/LingWen-phase-34/docs/superpowers/archive/PHASE_HIS
 
 Add a new row at the end (mirror v32.0 format):
 ```
-| v33.0 | 2026-09-08 | Phase 34 LINGWEN-GOT | packages/lingwen-got/ 创建 (9 modules, 36 public symbols); 30 consumer 迁移; 12 test files 搬到 packages/lingwen-got/tests/; infra/got/ 删除; invariant #49 NEW |
+| v33.0 | 2026-09-08 | Phase 34 LINGWEN-GOT | packages/lingwen-got/ 创建 (9 modules, 32 public symbols); 30 consumer 迁移; 12 test files 搬到 packages/lingwen-got/tests/; infra/got/ 删除; invariant #49 NEW |
 ```
 
 - [ ] **Step 8: Update MEMORY.md**
@@ -1045,7 +1045,7 @@ Guards (tests/test_phase34_lingwen_got.py):
 1. lingwen-got pyproject.toml exists
 2. lingwen-got __init__.py exists
 3. infra/got/ directory deleted
-4. lingwen_got.__all__ has 36 symbols (matches pre-migration API surface)
+4. lingwen_got.__all__ has 32 symbols (matches pre-migration API surface)
 5. 12 test files exist in packages/lingwen-got/tests/
 6. 4 lingwen-core consumers import lingwen_got (not infra.got)
 7. lingwen-got pyproject declares lingwen-llm dep

@@ -33,7 +33,7 @@
 
 ```
 infra/got/                                ← 8 Python 文件, 1788 行
-├── __init__.py           (98)   # 36 symbols re-export
+├── __init__.py           (98)   # 32 symbols re-export
 ├── aggregator.py        (138)  # JudgmentAggregator
 ├── cache.py              (66)  # ThoughtCache
 ├── data_structures.py   (160)  # ThoughtNode / NodeExecution / NodeType / NodeStatus
@@ -100,7 +100,7 @@ packages/lingwen-got/
 ├── README.md                                   # 1 段: 这是 GoT 引擎包
 ├── src/
 │   └── lingwen_got/
-│       ├── __init__.py                          # 36 symbol re-export (照搬 infra/got/__init__.py)
+│       ├── __init__.py                          # 32 symbol re-export (照搬 infra/got/__init__.py)
 │       ├── aggregator.py                        # 138 行
 │       ├── cache.py                             # 66 行
 │       ├── data_structures.py                   # 160 行
@@ -187,7 +187,7 @@ packages = ["src/lingwen_got"]
                 │ workspace dep
  ┌──────────────▼───────────────────┐
  │      packages/lingwen-got        │  ← 新包 (8 modules, 1788 行)
- │      (8 modules, 36 public API)  │
+ │      (8 modules, 32 public API)  │
  └──────┬─────────┬────────┬─────────┘
         │         │        │ consumer
  ┌──────▼──┐ ┌────▼────┐ ┌─▼───────────┐
@@ -293,7 +293,7 @@ Gate: 无 (doc-only)。
 | 改 | `packages/lingwen-got/src/lingwen_got/__init__.py` + 4 子文件 (scheduler/visualizer/workflow_loader/graph): 内部 literal-path imports → relative |
 
 **G1**: `uv sync --all-packages --offline` exit 0
-**G2**: `python -c "import lingwen_got; print(len(lingwen_got.__all__))"` → 36
+**G2**: `python -c "import lingwen_got; print(len(lingwen_got.__all__))"` → 32
 
 ### C2 — `refactor(test): move 12 got-related test files`
 
@@ -380,10 +380,10 @@ def test_infra_got_directory_deleted():
     """infra/got/ directory must NOT exist (Phase 34 C6)."""
     assert not Path("infra/got").exists()
 
-def test_lingwen_got_exports_36_symbols():
-    """Public API surface must match pre-migration infra.got (36 symbols)."""
+def test_lingwen_got_exports_32_symbols():
+    """Public API surface must match pre-migration infra.got (32 symbols)."""
     import lingwen_got
-    assert len(lingwen_got.__all__) == 36
+    assert len(lingwen_got.__all__) == 32
     expected = {"ThoughtNode", "NodeExecution", "ThoughtGraph", "GoTScheduler",
                 "JudgmentAggregator", "ThoughtCache", "load_workflow", "LLMComputeFn"}
     assert expected.issubset(set(lingwen_got.__all__))
@@ -426,7 +426,7 @@ def test_lingwen_got_depends_on_lingwen_llm():
 | Gate | Trigger | 命令 | 期望 |
 |------|---------|------|------|
 | **G1** | C1 | `uv sync --all-packages --offline` | exit 0 |
-| **G2** | C1 | `python -c "import lingwen_got; print(len(lingwen_got.__all__))"` | 36 |
+| **G2** | C1 | `python -c "import lingwen_got; print(len(lingwen_got.__all__))"` | 32 |
 | **G3** | C2 | `cd packages/lingwen-got && pytest tests/ -v` | 全 GREEN |
 | **G4** | C2 | `pytest tests/agent_system/ -v --ignore=...got_bridge...got_bridge_budget` | 7 文件 GREEN |
 | **G5** | C3 | `cd packages/lingwen-core && pytest tests/ -v` | 全 GREEN |
