@@ -23,7 +23,7 @@ from typing import Optional
 
 from lingwen_core.domain.ripple import Ripple, RippleState
 
-from infra.world_model.lifecycle import MAX_OPEN_RIPPLOTS
+from lingwen_world_model.lifecycle import MAX_OPEN_RIPPLOTS
 
 
 class RippleNotFoundError(LookupError):

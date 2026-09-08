@@ -4,7 +4,7 @@
 支持查询已解决、未解决和已放弃的伏笔。
 
 使用方式:
-    from infra.world_model.foreshadow_snapshot import (
+    from lingwen_world_model.foreshadow_snapshot import (
         ForeshadowSnapshot,
         ForeshadowState,
         capture_foreshadow_state,

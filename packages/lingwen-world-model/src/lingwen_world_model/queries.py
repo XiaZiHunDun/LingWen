@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Protocol
 
 from lingwen_core.domain.ripple import Ripple, RippleState
 
-from infra.world_model.lifecycle import (
+from lingwen_world_model.lifecycle import (
     MAX_OPEN_RIPPLOTS,
     RESOLUTION_GRACE_CH,
 )

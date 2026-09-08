@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from lingwen_core.domain.ripple import Ripple
     from lingwen_core.domain.subplot import Plot, PlotStatus
 
-    from infra.world_model.registry import RippleRegistry
+    from lingwen_world_model.registry import RippleRegistry
 
 
 # CLOSING_MIN_CHAPTERS 在 infra.subplot.lifecycle (值为 2)

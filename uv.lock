@@ -22,6 +22,7 @@ members = [
     "lingwen-shared",
     "lingwen-storage",
     "lingwen-studio-api",
+    "lingwen-world-model",
 ]
 
 [[package]]
@@ -1001,6 +1002,26 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.27" },
 ]
 provides-extras = ["dev"]
+
+[[package]]
+name = "lingwen-world-model"
+version = "0.1.0"
+source = { editable = "packages/lingwen-world-model" }
+dependencies = [
+    { name = "lingwen-core" },
+]
+
+[package.optional-dependencies]
+test = [
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "lingwen-core", editable = "packages/lingwen-core" },
+    { name = "pytest", marker = "extra == 'test'", specifier = ">=8.0" },
+]
+provides-extras = ["test"]
 
 [[package]]
 name = "markdown-it-py"

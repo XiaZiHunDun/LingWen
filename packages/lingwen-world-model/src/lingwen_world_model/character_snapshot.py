@@ -3,7 +3,7 @@
 捕获当前卷的人物属性变更记录，支持查询人物状态演变历史。
 
 使用方式:
-    from infra.world_model.character_snapshot import (
+    from lingwen_world_model.character_snapshot import (
         CharacterSnapshot,
         CharacterState,
         CharacterAttributeChange,

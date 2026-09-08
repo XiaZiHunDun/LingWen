@@ -1,10 +1,14 @@
-"""infra/subplot/helpers.py — Phase 1.2 application services on WorldSnapshot
+"""Phase 1.2 application services on WorldSnapshot (subplot_helpers).
 
-Behavior helpers that operate on ``WorldSnapshot.active_subplots``. Moved
-out of ``infra.world_model.__init__`` as part of Phase 19+ Sub1 (Task 5).
+Behavior helpers that operate on ``WorldSnapshot.active_subplots``.
 
-Implementation unchanged from when it lived in
-``infra/world_model/__init__``; only the import location moved.
+Migration history:
+- Originally lived in ``infra/world_model/__init__``.
+- Phase 19+ Sub1 (Task 5) moved them to ``infra/subplot/helpers.py``.
+- Phase 35 (v34.0) moved them into the canonical world model package at
+  ``packages/lingwen-world-model/src/lingwen_world_model/subplot_helpers.py``.
+
+Implementation unchanged across all moves; only the import location changed.
 
 Future Phase: these functions target ``lingwen_core.use_cases``
 (use-case layer), not domain entities.

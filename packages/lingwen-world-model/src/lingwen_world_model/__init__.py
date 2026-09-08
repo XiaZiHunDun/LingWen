@@ -47,17 +47,18 @@ from lingwen_core.domain.ripple import (
     WorldSnapshot,
 )
 
-# Phase 1.2 helpers — moved to infra.subplot.helpers (Phase 19+ Sub1 Task 5).
-# Re-exported here for backward compat with existing consumers
-# (`from infra.world_model import add_subplot, ...`).
-from infra.subplot.helpers import (  # noqa: E402, F401
+# PlotStatus (lightweight enum, infra-local — not part of DDD aggregate)
+from lingwen_core.domain.subplot import PlotStatus
+
+# Phase 1.2 helpers — historical path: infra.subplot.helpers (Phase 19+ Sub1 Task 5),
+# then packages/lingwen-world-model/src/lingwen_world_model/subplot_helpers.py
+# (Phase 35 / v34.0). Re-exported here for backward compat with existing consumers
+# (`from lingwen_world_model import add_subplot, ...`).
+from lingwen_world_model.subplot_helpers import (  # noqa: E402, F401
     add_subplot,
     get_active_subplots,
     subplots_count,
 )
-
-# PlotStatus (lightweight enum, infra-local — not part of DDD aggregate)
-from lingwen_core.domain.subplot import PlotStatus
 
 # Behavior services (NOT in PHASE-COMPAT shim scope)
 from .engine import RippleEngine

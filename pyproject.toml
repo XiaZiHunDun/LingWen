@@ -92,6 +92,7 @@ members = [
     "packages/lingwen-shared",    # ★ v16.1 新增
     "packages/lingwen-creator",   # ★ v16.2.0 新增
     "packages/lingwen-got",       # ★ Phase 34 新增
+    "packages/lingwen-world-model",  # ★ Phase 35 新增
     "apps/studio_api",
 ]
 
