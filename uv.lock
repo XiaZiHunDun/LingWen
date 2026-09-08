@@ -19,6 +19,7 @@ members = [
     "lingwen-novel-factory",
     "lingwen-paths",
     "lingwen-pipeline",
+    "lingwen-project-config",
     "lingwen-prompt",
     "lingwen-quality",
     "lingwen-shared",
@@ -868,6 +869,21 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.0" },
 ]
 provides-extras = ["test"]
+
+[[package]]
+name = "lingwen-project-config"
+version = "0.1.0"
+source = { editable = "packages/lingwen-project-config" }
+dependencies = [
+    { name = "lingwen-paths" },
+    { name = "lingwen-shared" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "lingwen-paths", editable = "packages/lingwen-paths" },
+    { name = "lingwen-shared", editable = "packages/lingwen-shared" },
+]
 
 [[package]]
 name = "lingwen-prompt"
