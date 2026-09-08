@@ -1,9 +1,9 @@
 # 待办事项列表
 
 > **最后更新**: 2026-09-08
-> **更新者**: 协调者（v35.0 P3-ARCHDEBT (errors pilot) 闭环；6 commits ff-merge `phase-36-p3-archdebt-errors`；P3-ARCHDEBT 1/5 → CLOSED；4/5 → Phase 37+）
+> **更新者**: 协调者（v36.0 P3-ARCHDEBT (paths) 闭环；6 commits ff-merge `phase-37-p3-archdebt-paths`；P3-ARCHDEBT 2/5 → CLOSED；3/5 → Phase 38+）
 > **优先级**: P0 > P1 > P2 > P3
-> **事实来源**: 本仓库当前版本在 `CLAUDE.md` v35.0；并行开发入口见根 `COORDINATION.md`
+> **事实来源**: 本仓库当前版本在 `CLAUDE.md` v36.0；并行开发入口见根 `COORDINATION.md`
 
 ---
 

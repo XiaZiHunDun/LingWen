@@ -17,7 +17,7 @@ ALLOWED_COMPAT_IMPORTS = frozenset(
         "infra.config",
         "infra.util",
         "infra.tools",
-        "infra.paths",
+        "lingwen_paths",  # Phase 37: was "infra.paths" (now deleted; canonicalized)
         "lingwen_errors",     # Phase 36: was "infra.errors" (now deleted; canonicalized)
         "infra.hooks",
     }
