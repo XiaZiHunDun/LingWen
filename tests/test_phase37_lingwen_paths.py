@@ -142,7 +142,7 @@ def test_canonical_symbols_migrated():
     # Spot-check 3 representative consumers: 1 package, 1 intra-infra, 1 tests
     representative_files = [
         REPO_ROOT / "packages" / "lingwen-core" / "src" / "lingwen_core" / "agents" / "chapter_emit.py",
-        REPO_ROOT / "infra" / "project_config.py",
+        REPO_ROOT / "packages" / "lingwen-core" / "src" / "lingwen_core" / "agents" / "chapter_production_outline.py",
         REPO_ROOT / "tests" / "conftest.py",
     ]
     for f in representative_files:
