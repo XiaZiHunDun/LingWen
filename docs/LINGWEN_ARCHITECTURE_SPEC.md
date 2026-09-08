@@ -562,15 +562,17 @@ class TieredRouter:
 
 ### 9.8 Graph of Thought (GOT)
 
+> Phase 34 (v33.0): GoT engine migrated from `infra/got/` to `packages/lingwen-got/src/lingwen_got/`. The module paths below are the canonical Phase 34+ locations.
+
 | 模块 | 文件 | 职责 |
 |------|------|------|
-| GOTGraph | `infra/got/graph.py` | 思维图谱 |
-| GOTScheduler | `infra/got/scheduler.py` | 图谱调度器 |
-| GOTAggregator | `infra/got/aggregator.py` | 结果聚合器 |
-| GOTLLMCompute | `infra/got/llm_compute.py` | LLM 计算 |
-| GOTVisualizer | `infra/got/visualizer.py` | 图谱可视化 |
-| GOTCache | `infra/got/cache.py` | 图谱缓存 |
-| WorkflowLoader | `infra/got/workflow_loader.py` | 工作流加载 |
+| GOTGraph | `packages/lingwen-got/src/lingwen_got/graph.py` | 思维图谱 |
+| GOTScheduler | `packages/lingwen-got/src/lingwen_got/scheduler.py` | 图谱调度器 |
+| GOTAggregator | `packages/lingwen-got/src/lingwen_got/aggregator.py` | 结果聚合器 |
+| GOTLLMCompute | `packages/lingwen-got/src/lingwen_got/llm_compute.py` | LLM 计算 |
+| GOTVisualizer | `packages/lingwen-got/src/lingwen_got/visualizer.py` | 图谱可视化 |
+| GOTCache | `packages/lingwen-got/src/lingwen_got/cache.py` | 图谱缓存 |
+| WorkflowLoader | `packages/lingwen-got/src/lingwen_got/workflow_loader.py` | 工作流加载 |
 
 ---
 

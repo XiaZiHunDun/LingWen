@@ -1,6 +1,6 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v32.0 (Phase 32 SHIM-CLEANUP 收尾) · 更新: 2026-09-07
+> **版本**: v33.0 (Phase 34 LINGWEN-GOT 闭环) · 更新: 2026-09-08
 > 当前状态: `collaboration/CURRENT_STATUS.md` · 待办: `collaboration/BACKLOG.md` · 版本史: `docs/superpowers/archive/PHASE_HISTORY.md`
 > 最高优先级参考: `.lingwen/architecture.yml`
 
@@ -88,6 +88,7 @@ python lingwen.py doctor
 | I004 | 写审分离（独立 AI 会话，无作者 CLAIM 访问） |
 | I005 | 创作流必须支持 checkpoint 恢复 |
 | I048 | PilotPage 独占 batch 生命周期 |
+| I049 | `packages/lingwen-got/` 是 GoT 引擎唯一实包; `infra.got.*` 路径非法 (Phase 34+) |
 
 > 完整不变量与设计原则 DP-01..06 见 `.lingwen/architecture.yml`；提交纪律与反模式见 `.lingwen/constraints.yml`。
 
@@ -110,6 +111,7 @@ python lingwen.py doctor
 
 ## 已知遗留
 
+- ✅ **v33.0 LINGWEN-GOT**（2026-09-08 ff-merge）：P2-ARCHDEBT 最大块 — `infra.got.*` (9 modules, 1788 lines) → `packages/lingwen-got/` (32 public symbols)。30 consumer 迁移 (4 lingwen-core + 3 apps/studio_api + 2 infra + 21 tests)；12 got-related test files 搬到 `packages/lingwen-got/tests/`；workflow YAML data dir 跟随；`infra/got/` 删除；invariant #49 NEW。11 commits on phase-34-lingwen-got。**Validation gates**: lingwen-got 208/208 + lingwen-core 68/68 + studio_api 82/82 + ruff (3 pre-existing errors in unrelated files)。**Pre-C6 fixup**: 5 file workflow path references migrated to dynamic `lingwen_got.workflow_loader.__file__` resolution (Phase 32 N.14 lesson 1, 3rd occurrence)。**Carryover closure**: P2-ARCHDEBT remaining 1/2 (infra.got) → CLOSED; P2-ARCHDEBT remaining 1/1 → `infra/world_model/__init__.py` split (Phase 35); P3-ARCHDEBT (NEW) → `infra.{paths, project_config, logging_config, errors, studio_registry}` → packages/ (Phase 36+)。详见 `docs/superpowers/handoffs/2026-09-08-phase-34-lingwen-got-handoff.md`。
 - ✅ **v32.0 SHIM-CLEANUP**（2026-09-07 ff-merge `<phase-32 HEAD>`，6 commit `3570a86f..<end>`）：P2-ARCHDEBT PHASE-COMPAT shim 清理 3/4 完成。**删除 3 个零/低消费者 shim**：(1) `infra/subplot/data_structures.py`（32 行，纯 re-export，0 消费者）、(2) `infra/world_model/data_structures.py`（69 行，纯 re-export，0 消费者）、(3) `packages/lingwen-core/src/lingwen_core/agents/master_controller.py`（11 行，6 test 消费者已迁移）。**+1 fixup commit** 修 5 处漏检的 relative import (`from .data_structures` / `from .master_controller` 在 `infra/subplot/__init__.py:19` / `infra/world_model/__init__.py:60` / `infra/world_model/key_point_graph.py:24` / `infra/world_model/snapshot_store.py:24` / `packages/lingwen-core/src/lingwen_core/agents/got_bridge.py:32`)。**+10 regression guard tests** in `tests/test_phase32_shim_cleanup.py` (3 path-deleted + 6 consumer-migrated + 1 canonical-symbol)。**Validation gates**: G1 ruff clean / G2 guard 10/10 GREEN / G3 6 consumer tests baseline 116+1 skip / G4 tests/world_model/ 201 ✅ (C2.5 修复后) / G5 tests/{agent_system,ci,tools}/test_chapter_emit/test_got_bridge/test_got_bridge_budget/test_phase7_1_production_fixes/test_polish_merge_with_usage_ci = 68 ✅ (C2.5 修复后). 剩余 P2-ARCHDEBT 1 项: `infra.got.*` 迁 `packages/lingwen-got/`。详见 `docs/superpowers/handoffs/2026-09-07-phase-32-shim-cleanup-handoff.md`。
 - ✅ **v31.0 ARCHDEBT-MINI**（2026-09-07 ff-merge `4dbe8939`，6 commit `8f8c3e1a..4dbe8939`）：P2-ARCHDEBT 子集 2/4 清理。**Sub-task A**：chapter_golden_path 反向 import 修复（create_golden_dashboard_client + run_human_review_smoke + HumanReviewSmokeResult 从 lingwen-core 迁 apps/studio_api/tests/golden_path_smoke.py；-87 行 / +106 行；fixes I001 spirit violation）。**Sub-task B**：4 薄代理 (advance_step/dispatch_task/verify_task/get_workflow_status) 从 WorkflowMixin 抽到 mc_orchestrator_proxy.py；MasterController MRO 加 OrchestratorProxyMixin；+5 refactor-guard tests（test_workflow_state.py）；mc_workflow.py 119→99 行。**12 文件 doc 同步**："5 薄代理" → "4 薄代理"（实际 4 不是 5，Phase 27 拆 WorkflowRunner 后 stale）。详见 `docs/superpowers/handoffs/2026-09-07-phase-31-archdebt-mini-handoff.md`。
 - ✅ **v30.0 TACKLE-14-FAILURES**（2026-09-07 ff-merge `38b854e7`，9 commit `2de95a80..38b854e7`）：Phase 29 剩余 14 failed 按 5 类根因一次性清零（ 0 failed / 480 passed / 20 skipped）。**2 真 prod 改动**：`mc_writing.py:155` 加 try/except 韧性契约（broad except + logger.warning + 空 audit report 兜底）+ `cost_persistence.py` 加 `record_at()` public helper（历史数据 seeding / migration / test fixture 用）。**3 test-only 清理**：stub factory `WorkflowState.empty()` 注入（-7）、`make_master_with_router` 替代 bare `MasterController()`（-2）、`WorkflowRunner._harvest_decision_specs` 迁移（-1）+ 2 处 stale assertion 修正。详见 `docs/superpowers/handoffs/2026-09-07-phase-30-tackle-14-handoff.md`。
@@ -120,7 +122,7 @@ python lingwen.py doctor
 - ✅ **v25.9 human_review 流水线修复**（2026-09-03 ff-merge `0a6f4346`）：mc_workflow.py 自仓库迁移后是 hallucinated stub；从 git history `5c4259e5:novel-factory/infra/agent_system/master_controller.py` 还原真实实现，对齐新 GoTScheduler API，解 4 个 dashboard smoke skip + 顺带 +15 cascade fixed。0 改范围（got_bridge.py / chapter_golden_path.py / apps.studio_api/* / infra/got/* / architecture.yml / HANDOFF*.md）。
 - **Prod preview regression** (Phase 114 accepted)：cytoscape-fcose CJS 与 rollup commonjs 插件不兼容，5 个 phase 投入失败。dev baseline 仍是 authoritative measurement。E2E Playwright runtime 暂时阻塞。
 - **vis-network install on fresh clone** (Phase 118 发现)：fresh checkout 下 `apps/dashboard/node_modules/` 缺 vis-network, 跑 frontend test 全失败。必须 `cd apps/dashboard && pnpm install`。
-- **架构债（v25.9/v27/v31/v32 推后，Phase 33+ 候选）**：`infra.got.*` 迁至 `packages/lingwen-got/`；HANDOFF 文档 `latest_decision_queue` 措辞修订；`infra/world_model/__init__.py` split (canonical re-exports vs behavior services, 5 consumer 迁移)。v32.0 SHIM-CLEANUP 已清 3 个 PHASE-COMPAT shim (infra/subplot + infra/world_model data_structures + master_controller) + 1 fixup commit (5 relative imports)。
+- **架构债（v25.9/v27/v31/v32/v33 推后，Phase 35+ 候选）**：HANDOFF 文档 `latest_decision_queue` 措辞修订；`infra/world_model/__init__.py` split (canonical re-exports vs behavior services, 5 consumer 迁移 — Phase 35); P3-ARCHDEBT: `infra.{paths, project_config, logging_config, errors, studio_registry}` → packages/ (Phase 36+)。v32.0 SHIM-CLEANUP 已清 3 个 PHASE-COMPAT shim (infra/subplot + infra/world_model data_structures + master_controller) + 1 fixup commit (5 relative imports); v33.0 LINGWEN-GOT 已迁 `infra.got.*` → `packages/lingwen-got/` + 删除 `infra/got/` 目录 + invariant #49。
 
 ---
 

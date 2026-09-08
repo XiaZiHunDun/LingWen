@@ -152,7 +152,7 @@ Updated invariants:
 
 | ID | Scope | Estimate |
 |----|-------|----------|
-| **`infra.got.*` → `packages/lingwen-got/` migration** | 199 tests, multi-day | 1 phase / 20-30 commits |
+| ~~**`infra.got.*` → `packages/lingwen-got/` migration**~~ | CLOSED by Phase 34 (v33.0) | n/a |
 | **`infra/world_model/__init__.py` split** | mixed file → canonical (lingwen_core.domain.*) + behavior (infra.world_model.{engine,queries,registry,...}) + 5 consumer migration (1 poc + 4 test files) | 1 phase / 8-12 commits |
 | **`polisher/prompts.py:132` `_safe_label` import** | latent broken import (pre-existing bug discovered during Explore agent verification) | 1 small fixup |
 | **HANDOFF.md `latest_decision_queue` wording** | pre-existing carryover | doc-only |
@@ -202,7 +202,7 @@ After Phase 32:
 - **All Phase 19+ sub-phases (Sub1/Sub1 polish/Sub2/Sub3) closed**
 - **All Phase 20-31 carryovers closed**
 - **PHASE-COMPAT shim directories cleanup**: `infra/consistency/` (Phase 21) + `infra/agent_system/` (Phase 21) + `infra/exports/` (Phase 20) + 3 individual shims (Phase 32)
-- **Only 1 remaining P2-ARCHDEBT item**: `infra.got.*` → `packages/lingwen-got/` migration (multi-day)
+- **Only 1 remaining P2-ARCHDEBT item**: `infra.got.*` → `packages/lingwen-got/` migration (multi-day) → **CLOSED by Phase 34 (v33.0)**; remaining P2-ARCHDEBT → `infra/world_model/__init__.py` split (Phase 35)
 
 ## Solo workflow closure
 
