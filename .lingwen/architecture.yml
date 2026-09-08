@@ -51,7 +51,7 @@ invariants:
   - id: I051   # ★ Phase 36 NEW
     rule: "packages/lingwen-errors/ 是错误基类系统的唯一实包；infra.errors.* 路径非法 (Phase 36+)"
     severity: error
-    scope: "all new error base-class code; enforcement via tests/test_phase36_lingwen_errors.py::test_infra_errors_module_deleted + grep -rln \"infra\\.errors\\b\" --include=\"*.py\" packages/ apps/ tests/ infra/ → 0 行"
+    scope: "all new error base-class code; enforcement via tests/test_phase36_lingwen_errors.py::test_infra_errors_deleted + grep -rln \"infra\\.errors\\b\" --include=\"*.py\" packages/ apps/ tests/ infra/ → 0 行"
 
 # 模块边界（明确每个模块的公共 API 和依赖）
 module_boundaries:

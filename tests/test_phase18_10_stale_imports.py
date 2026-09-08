@@ -16,7 +16,7 @@ ALLOWED_INFRA_PATHS = frozenset(
         "infra.util",
         "infra.tools",
         "infra.paths",
-        "infra.errors",
+        "lingwen_errors",     # Phase 36: was "infra.errors" (now deleted; canonicalized)
         "infra.hooks",
     }
 )
