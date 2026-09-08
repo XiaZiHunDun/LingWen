@@ -5,6 +5,8 @@ import logging
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional
 
+from lingwen_logging_config import logger
+
 # 导入事件总线（用于触发事件）
 from lingwen_pipeline.hooks.event_bus import EventBus
 from lingwen_pipeline.state.workflow_validator import (
@@ -12,8 +14,6 @@ from lingwen_pipeline.state.workflow_validator import (
     is_valid_step,
     validate_transition,
 )
-
-from infra.logging_config import logger
 
 
 class TaskOrchestrator:

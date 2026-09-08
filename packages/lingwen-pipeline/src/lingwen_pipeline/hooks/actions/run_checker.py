@@ -13,7 +13,7 @@ from typing import Any, Dict
 project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
-from infra.logging_config import logger
+from lingwen_logging_config import logger
 
 from .base import ActionResult, BaseAction
 

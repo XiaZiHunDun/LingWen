@@ -2,7 +2,7 @@
 
 import logging
 
-from infra.logging_config import logger
+from lingwen_logging_config import logger
 
 # 工作流步骤有效转换映射
 # Key: 当前步骤
