@@ -22,7 +22,7 @@ class ProjectPaths:
     项目路径配置 - 单例模式
 
     使用方式:
-        from infra.paths import ProjectPaths
+        from lingwen_paths import ProjectPaths
         paths = ProjectPaths.get()
         chapters_dir = paths.chapters
     """

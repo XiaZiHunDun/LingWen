@@ -9,7 +9,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from infra.paths import ProjectPaths
+from lingwen_paths import ProjectPaths
+
 from lingwen_creator.volume.plan import compute_volume_deviations, load_volume_plan
 
 

@@ -12,8 +12,7 @@ from lingwen_creator.shared.check import (
     load_creator_check_context,
 )
 from lingwen_creator.shared.mode import CREATION_MODE_COMPANION, CREATION_MODE_STUDIO
-
-from infra.paths import ProjectPaths
+from lingwen_paths import ProjectPaths
 
 
 @dataclass

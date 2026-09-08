@@ -8,10 +8,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from lingwen_paths import ProjectPaths
 from lingwen_quality.consistency.engine.consistency_engine import CheckScope, ConsistencyEngine
 from lingwen_quality.consistency.engine.data_structures import Issue, IssueSeverity
-
-from infra.paths import ProjectPaths
 
 _TOTAL_RE = re.compile(
     r"\*\*合计\*\*:\s*(\d+)\s*问题\s*\|\s*P0=(\d+)\s*P1=(\d+)\s*P2=(\d+)\s*P3=(\d+)",

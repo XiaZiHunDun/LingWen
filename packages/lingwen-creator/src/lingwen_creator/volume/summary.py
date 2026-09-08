@@ -10,7 +10,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from infra.paths import ProjectPaths
+from lingwen_paths import ProjectPaths
 
 
 def _char_count(text: str) -> int:

@@ -23,12 +23,12 @@ from lingwen_core.domain.subplot import (
     PlotStatus,
     PlotType,
 )
-
 from lingwen_world_model.subplot_helpers import (
     add_subplot,
     get_active_subplots,
     subplots_count,
 )
+
 from infra.subplot.queries import (
     can_open_new_subplot,
     detect_constraint_saturation,

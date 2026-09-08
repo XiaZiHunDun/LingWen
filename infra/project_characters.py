@@ -6,7 +6,7 @@ import json
 import re
 from pathlib import Path
 
-from infra.paths import ProjectPaths
+from lingwen_paths import ProjectPaths
 
 _DEFAULT_TESTBED_AGENCY = ("林夜", "苏琳", "星月")
 _OUTLINE_CHAR_SECTION = re.compile(

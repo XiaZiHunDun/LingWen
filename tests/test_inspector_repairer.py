@@ -28,6 +28,7 @@ import yaml
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from lingwen_paths import ProjectPaths
 from lingwen_quality.quality import (
     AITraceChecker,
     AITraceRepairer,
@@ -42,8 +43,6 @@ from lingwen_quality.quality import (
     WorldviewRepairer,
     YAMLRuleRepairer,
 )
-
-from infra.paths import ProjectPaths
 
 # ============================================================================
 # Fixtures

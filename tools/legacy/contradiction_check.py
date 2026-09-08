@@ -25,7 +25,7 @@ from lingwen_quality.consistency.checkers import (
     DetectionConfig,
 )
 from lingwen_quality.consistency.reports import ContradictionReporter
-from infra.paths import ProjectPaths
+from lingwen_paths import ProjectPaths
 
 
 class ContradictionChecker:

@@ -17,6 +17,7 @@ members = [
     "lingwen-llm",
     "lingwen-memory",
     "lingwen-novel-factory",
+    "lingwen-paths",
     "lingwen-pipeline",
     "lingwen-prompt",
     "lingwen-quality",
@@ -834,6 +835,11 @@ dev = [
     { name = "grimp", specifier = ">=3.15" },
     { name = "import-linter", specifier = ">=2.13" },
 ]
+
+[[package]]
+name = "lingwen-paths"
+version = "0.1.0"
+source = { editable = "packages/lingwen-paths" }
 
 [[package]]
 name = "lingwen-pipeline"

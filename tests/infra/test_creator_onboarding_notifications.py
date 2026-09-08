@@ -9,8 +9,8 @@ from lingwen_creator.onboarding.notifications import (
     unread_mention_count,
 )
 from lingwen_creator.onboarding.progress import save_onboarding_progress
+from lingwen_paths import ProjectPaths
 
-from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 
 

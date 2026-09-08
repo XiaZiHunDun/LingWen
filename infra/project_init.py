@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from lingwen_paths import ProjectPaths
 from lingwen_shared.mode import (
     CREATION_MODE_ADVANCE,
     CREATION_MODE_COMPANION,
@@ -16,8 +17,6 @@ from lingwen_shared.mode import (
     QUALITY_STUDIO_FULL,
     normalize_creation_mode,
 )
-
-from infra.paths import ProjectPaths
 
 _SLUG_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$")
 

@@ -10,8 +10,8 @@ from lingwen_creator.onboarding.progress import (
     reconcile_onboarding_toggle,
     save_onboarding_progress,
 )
+from lingwen_paths import ProjectPaths
 
-from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 
 

@@ -8,8 +8,8 @@ import pytest
 from lingwen_creator.onboarding.digest_background import tick_digest_for_active_project
 from lingwen_creator.onboarding.digest_schedule import save_digest_schedule
 from lingwen_creator.onboarding.notifications import record_mentions_from_notes
+from lingwen_paths import ProjectPaths
 
-from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 
 

@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-from infra.paths import ProjectPaths
+from lingwen_paths import ProjectPaths
 
 
 def emit_chapter_enabled() -> bool:

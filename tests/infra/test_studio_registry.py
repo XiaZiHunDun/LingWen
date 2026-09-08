@@ -6,8 +6,8 @@ import json
 from pathlib import Path
 
 import pytest
+from lingwen_paths import ProjectPaths
 
-from infra.paths import ProjectPaths
 from infra.studio_registry import (
     activate_project,
     active_state_path,

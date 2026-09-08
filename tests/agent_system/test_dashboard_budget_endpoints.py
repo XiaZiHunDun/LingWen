@@ -17,9 +17,10 @@ from fastapi.testclient import TestClient
 
 def _make_test_client(tmp_path: Path) -> tuple[TestClient, Any]:
     """构造 TestClient + budget_service 注入"""
+    from lingwen_core.agents.budget_persistence import BudgetService
+
     from apps.studio_api.app import create_app
     from apps.studio_api.protocols import MasterControllerAdapter
-    from lingwen_core.agents.budget_persistence import BudgetService
 
     service = BudgetService(db_path=tmp_path / "test.db")
     service.init_db()

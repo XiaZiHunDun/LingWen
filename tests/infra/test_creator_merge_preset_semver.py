@@ -8,8 +8,8 @@ from lingwen_creator.settings.merge_preferences import (
     get_merge_preset_package,
     save_merge_preset_package,
 )
+from lingwen_paths import ProjectPaths
 
-from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 
 

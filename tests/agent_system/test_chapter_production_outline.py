@@ -11,8 +11,8 @@ from lingwen_core.agents.chapter_production_outline import (
     production_mode,
     resolve_production_initial_inputs,
 )
+from lingwen_paths import ProjectPaths
 
-from infra.paths import ProjectPaths
 from infra.project_config import ProjectConfig
 
 SAMPLE_OUTLINE = """# 第三百六十章 星光永恒

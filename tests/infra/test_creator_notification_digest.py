@@ -7,8 +7,8 @@ from lingwen_creator.onboarding.notifications import (
     build_notification_digest,
     record_mentions_from_notes,
 )
+from lingwen_paths import ProjectPaths
 
-from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 
 

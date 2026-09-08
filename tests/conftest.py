@@ -22,7 +22,7 @@ import pytest
 @pytest.fixture(autouse=True)
 def _restore_lingwen_project_root():
     """activate_project() sets os.environ directly; restore after each test."""
-    from infra.paths import ProjectPaths
+    from lingwen_paths import ProjectPaths
 
     saved = os.environ.get("LINGWEN_PROJECT_ROOT")
     yield

@@ -14,8 +14,8 @@ from lingwen_creator.settings.docs import (
     text_diff_summary,
 )
 from lingwen_creator.shared.revision import CreatorDocConflictError
+from lingwen_paths import ProjectPaths
 
-from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 from infra.studio_registry import StudioProject
 

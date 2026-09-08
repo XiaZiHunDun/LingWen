@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from infra.paths import ProjectPaths
+from lingwen_paths import ProjectPaths
+
 from infra.project_config import ProjectConfig
 from infra.studio_registry import StudioProject, quality_report_summary
 from lingwen_creator.volume.plan import load_volume_plan, volume_plan_state_path

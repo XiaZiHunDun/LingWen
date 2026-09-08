@@ -13,7 +13,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from infra.paths import ProjectPaths
+from lingwen_paths import ProjectPaths
+
 from infra.project_config import ProjectConfig
 from lingwen_creator.shared.revision import CreatorDocConflictError, content_revision
 

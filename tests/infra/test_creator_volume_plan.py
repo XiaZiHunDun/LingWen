@@ -15,8 +15,8 @@ from lingwen_creator.volume.plan import (
     split_volume,
     volume_plan_revision,
 )
+from lingwen_paths import ProjectPaths
 
-from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 
 

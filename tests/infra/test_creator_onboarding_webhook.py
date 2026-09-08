@@ -10,8 +10,8 @@ from lingwen_creator.onboarding.webhook import (
     load_webhook_config,
     save_webhook_config,
 )
+from lingwen_paths import ProjectPaths
 
-from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 
 

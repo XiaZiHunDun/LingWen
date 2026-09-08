@@ -9,8 +9,8 @@ from lingwen_creator.settings.history import (
     restore_settings_snapshot,
     settings_history_payload,
 )
+from lingwen_paths import ProjectPaths
 
-from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 from infra.studio_registry import StudioProject
 

@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from infra.paths import ProjectPaths
+from lingwen_paths import ProjectPaths
+
 from infra.project_config import ProjectConfig
 
 _DEFAULT_MAX_CHAPTER = 360

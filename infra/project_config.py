@@ -8,13 +8,12 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from lingwen_paths import ProjectPaths
 from lingwen_shared.mode import (
     CREATION_MODE_STUDIO,
     normalize_creation_mode,
     normalize_quality_profile,
 )
-
-from infra.paths import ProjectPaths
 
 _DEFAULT_CONFIG_REL = Path("config/project.yaml")
 _TRUTHY = frozenset({"1", "true", "yes", "on"})

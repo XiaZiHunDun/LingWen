@@ -18,8 +18,7 @@ from lingwen_creator.volume.templates import (
     set_custom_template_version_label,
     sync_custom_volume_templates_from_projects,
 )
-
-from infra.paths import ProjectPaths
+from lingwen_paths import ProjectPaths
 
 
 def test_list_volume_templates():
@@ -48,7 +47,8 @@ def test_unknown_template():
 
 
 def test_custom_template_save_and_apply(factory_tmp):
-    from infra.paths import ProjectPaths
+    from lingwen_paths import ProjectPaths
+
     from infra.project_init import init_minimal_short_project
 
     ProjectPaths.reset()

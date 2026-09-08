@@ -10,8 +10,8 @@ from lingwen_creator.onboarding.email import (
     load_email_config,
     save_email_config,
 )
+from lingwen_paths import ProjectPaths
 
-from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 
 

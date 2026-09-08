@@ -10,8 +10,8 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from lingwen_paths import ProjectPaths
 
-from infra.paths import ProjectPaths
 from infra.project_config import ProjectConfig
 
 _CHAPTER_RE = re.compile(r"^ch(\d+)\.md$")

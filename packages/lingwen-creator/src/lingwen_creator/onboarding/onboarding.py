@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from infra.paths import ProjectPaths
+from lingwen_paths import ProjectPaths
+
 from infra.project_config import ProjectConfig
 from infra.studio_registry import StudioProject
 from lingwen_creator.onboarding.autodetect import infer_auto_completed_steps

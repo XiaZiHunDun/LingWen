@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from infra.paths import ProjectPaths
+from lingwen_paths import ProjectPaths
+
 from infra.project_characters import load_agency_target_characters, load_project_character_names
 
 

@@ -17,7 +17,7 @@ import re
 from pathlib import Path
 from typing import Any, AsyncIterator, Iterator
 
-from infra.paths import ProjectPaths
+from lingwen_paths import ProjectPaths
 
 logger = logging.getLogger(__name__)
 

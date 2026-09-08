@@ -30,8 +30,8 @@ from lingwen_creator.volume.template_approvals import (
     submit_template_version_approval,
 )
 from lingwen_creator.volume.templates import save_custom_volume_template, set_custom_template_version_label
+from lingwen_paths import ProjectPaths
 
-from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 
 

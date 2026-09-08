@@ -16,9 +16,8 @@ import yaml
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from lingwen_paths import ProjectPaths
 from lingwen_quality.quality.inspector import Issue
-
-from infra.paths import ProjectPaths
 
 
 @dataclass
