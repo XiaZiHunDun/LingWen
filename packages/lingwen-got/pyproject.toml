@@ -9,7 +9,9 @@ description = "LingWen · Graph of Thoughts engine (ThoughtGraph + GoTScheduler 
 requires-python = ">=3.12"
 dependencies = [
     "pydantic>=2.7",
+    "PyYAML>=6.0",
     "lingwen-llm",
+    "lingwen-prompt",
 ]
 
 [project.optional-dependencies]
@@ -17,3 +19,9 @@ test = ["pytest>=8.0"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/lingwen_got"]
+# Workflow YAML files in src/lingwen_got/workflows/ are NOT included in
+# wheels (hatchling default: **/*.py only). They are intended for
+# editable dev install (uv sync) and as reference data. Consumers
+# using lingwen_got via wheel must supply their own workflows via
+# load_workflow(name, base_dir=...). See workflow_loader.py:79-91.
+include = ["src/lingwen_got/**/*.py"]  # explicit (default but documented)
