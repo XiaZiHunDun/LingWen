@@ -9,8 +9,7 @@ from lingwen_core.agents.production_summary import (
     build_production_summary_from_controller,
 )
 from lingwen_core.agents.workflow_state import WorkflowState
-
-from infra.got.data_structures import NodeExecution, NodeStatus
+from lingwen_got.data_structures import NodeExecution, NodeStatus
 
 
 class TestBuildProductionSummary:

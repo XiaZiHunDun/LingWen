@@ -22,8 +22,7 @@ from lingwen_core.agents.decision_queue import (
     create_decision,
 )
 from lingwen_core.agents.workflow_state import WorkflowState
-
-from infra.got.data_structures import NodeType, ThoughtNode
+from lingwen_got.data_structures import NodeType, ThoughtNode
 
 # === Reuse stub helpers from test_master_controller_workflow ===
 
@@ -308,8 +307,8 @@ class TestRunWorkflowDecisionDiscovery:
         # 构造含 DECISION 节点的图
         from pathlib import Path
 
-        from infra.got.graph import ThoughtGraph
-        from infra.got.workflow_loader import load_workflow
+        from lingwen_got.graph import ThoughtGraph
+        from lingwen_got.workflow_loader import load_workflow
 
         # 用 novel_writing 作基础,然后注入 1 个 DECISION 节点
         graph = load_workflow("novel_writing")
@@ -325,8 +324,7 @@ class TestRunWorkflowDecisionDiscovery:
         # 写一个临时 workflow YAML? 简化为直接构造 graph,再用 scheduler
 
         from lingwen_core.agents.got_bridge import AgentComputeFn
-
-        from infra.got.scheduler import GoTScheduler
+        from lingwen_got.scheduler import GoTScheduler
 
         sched = GoTScheduler(graph, compute_fn=AgentComputeFn(controller), max_backtracks=0)
         del sched  # 仅构造验证 compute_fn 可注入
@@ -438,9 +436,9 @@ class TestDecisionQueueAutoInit:
 
     def test_run_workflow_with_injected_queue_creates_decisions(self, monkeypatch, tmp_path):
         """注入 decision queue 后,run_workflow 自动扫描 DECISION 节点"""
-        from infra.got.data_structures import NodeType, ThoughtNode
-        from infra.got.graph import ThoughtGraph
-        from infra.got.workflow_loader import load_workflow
+        from lingwen_got.data_structures import NodeType, ThoughtNode
+        from lingwen_got.graph import ThoughtGraph
+        from lingwen_got.workflow_loader import load_workflow
 
         controller, _ = _make_controller_with_stubs(monkeypatch)
         q = HumanDecisionQueue(state_dir=str(tmp_path))

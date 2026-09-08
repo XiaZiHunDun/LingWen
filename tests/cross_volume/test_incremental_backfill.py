@@ -7,6 +7,8 @@ from unittest.mock import MagicMock
 
 import pytest
 from lingwen_core.agents.workflow_state import WorkflowState
+from lingwen_got.data_structures import NodeExecution, NodeStatus
+from lingwen_got.scheduler import ExecutionSummary
 from lingwen_pipeline.master_controller import MasterController
 
 from infra.cross_volume.backfill import Backfiller, BackfillStats
@@ -21,8 +23,6 @@ from infra.cross_volume.incremental_backfill import (
     run_incremental_backfill,
     should_run_incremental_backfill,
 )
-from infra.got.data_structures import NodeExecution, NodeStatus
-from infra.got.scheduler import ExecutionSummary
 
 RULES_YAML = """
 character:

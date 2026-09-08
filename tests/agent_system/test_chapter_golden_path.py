@@ -12,10 +12,10 @@ from lingwen_core.agents.chapter_golden_path import (
     run_golden_path,
     setup_golden_workflow_dir,
 )
+from lingwen_got.data_structures import NodeExecution, NodeStatus
+from lingwen_got.scheduler import ExecutionSummary
 
 from infra.cross_volume.incremental_backfill import maybe_after_workflow
-from infra.got.data_structures import NodeExecution, NodeStatus
-from infra.got.scheduler import ExecutionSummary
 
 
 class TestChapterGoldenPathModule:

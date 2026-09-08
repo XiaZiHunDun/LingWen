@@ -31,10 +31,10 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from lingwen_got.data_structures import NodeStatus
+from lingwen_got.scheduler import HumanInterventionRequired
 from lingwen_llm.providers.router import AIRouter
 
-from infra.got.data_structures import NodeStatus
-from infra.got.scheduler import HumanInterventionRequired
 from tests.agent_system._e2e_helpers import (
     make_master_with_router,
     make_stub_router,

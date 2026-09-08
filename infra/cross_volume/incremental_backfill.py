@@ -7,9 +7,10 @@ import os
 from dataclasses import asdict, is_dataclass
 from typing import Any, Mapping
 
+from lingwen_got.data_structures import NodeStatus
+from lingwen_got.scheduler import ExecutionSummary
+
 from infra.cross_volume.backfill import Backfiller, BackfillStats
-from infra.got.data_structures import NodeStatus
-from infra.got.scheduler import ExecutionSummary
 
 logger = logging.getLogger(__name__)
 

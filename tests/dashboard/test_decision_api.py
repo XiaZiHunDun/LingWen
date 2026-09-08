@@ -43,7 +43,7 @@ from apps.studio_api.protocols import MasterControllerAdapter
 
 @dataclass
 class _FakeSummary:
-    """模拟 ExecutionSummary — 字段对齐 infra.got.scheduler.ExecutionSummary"""
+    """模拟 ExecutionSummary — 字段对齐 lingwen_got.scheduler.ExecutionSummary"""
 
     completed: int = 0
     failed: int = 0
@@ -630,9 +630,8 @@ def _make_fake_master_with_polish_merge_scores(
     """
     from datetime import datetime, timezone
 
+    from lingwen_got.data_structures import NodeExecution, NodeStatus, NodeType, ThoughtNode
     from lingwen_pipeline import master_controller as mc_mod
-
-    from infra.got.data_structures import NodeExecution, NodeStatus, NodeType, ThoughtNode
 
     s1_s8 = {"S1": 8, "S2": 7, "S3": 9, "S4": 8, "S5": 7, "S6": 8, "S7": 9, "S8": 8}
     if scores_a is None:

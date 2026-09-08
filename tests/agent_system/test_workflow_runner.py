@@ -650,7 +650,7 @@ class TestInternalHelpers:
         )
 
         # Stub graph: n1 (DECISION) + n2 (DECISION) + n3 (non-DECISION)
-        from infra.got.data_structures import NodeType
+        from lingwen_got.data_structures import NodeType
         stub_n1 = MagicMock(type=NodeType.DECISION, description="d1", name="d1")
         stub_n2 = MagicMock(type=NodeType.DECISION, description="d2", name="d2")
         # non-DECISION node uses any non-DECISION type
@@ -683,9 +683,9 @@ class TestResumeE2EWithRealScheduler:
 
         compute_fn 简单递增计数器记录执行次数.
         """
-        from infra.got.data_structures import NodeType, ThoughtNode
-        from infra.got.graph import ThoughtGraph
-        from infra.got.scheduler import ComputeResult, GoTScheduler
+        from lingwen_got.data_structures import NodeType, ThoughtNode
+        from lingwen_got.graph import ThoughtGraph
+        from lingwen_got.scheduler import ComputeResult, GoTScheduler
 
         graph = ThoughtGraph()
         graph.add_node(ThoughtNode(node_id="n1", type=NodeType.GENERATION, name="gen1", description="gen1", depends_on=()))
@@ -716,7 +716,7 @@ class TestResumeE2EWithRealScheduler:
         → scheduler 直接退出 (paused=False, paused_nodes=()). 这是正确行为 —
         scheduler.run 只报告 NEW pauses, 不报告之前已 paused 的节点.
         """
-        from infra.got.data_structures import NodeStatus
+        from lingwen_got.data_structures import NodeStatus
 
         scheduler, _ = self._build_graph_with_decision()
 
@@ -745,7 +745,7 @@ class TestResumeE2EWithRealScheduler:
         验证: scheduler.resume 把 n2 改 COMPLETED → 下次 run 时 n2 不进 ready_nodes
         → n3 ready → execute → n4 ready → execute.
         """
-        from infra.got.data_structures import NodeStatus
+        from lingwen_got.data_structures import NodeStatus
 
         scheduler, _ = self._build_graph_with_decision()
 
@@ -775,9 +775,9 @@ class TestResumeE2EWithRealScheduler:
         3. resume_workflow uses cached start_nodes (not re-derive)
         4. scheduler.run idempotent on completed nodes (n1 skipped on second call)
         """
-        from infra.got.data_structures import NodeType, ThoughtNode
-        from infra.got.graph import ThoughtGraph
-        from infra.got.scheduler import ComputeResult, GoTScheduler
+        from lingwen_got.data_structures import NodeType, ThoughtNode
+        from lingwen_got.graph import ThoughtGraph
+        from lingwen_got.scheduler import ComputeResult, GoTScheduler
 
         graph = ThoughtGraph()
         graph.add_node(ThoughtNode(node_id="n1", type=NodeType.GENERATION, name="gen1", description="gen1", depends_on=()))
@@ -853,9 +853,9 @@ class TestRunWithNoneStartNodesDerivation:
 
         用真实 GoTScheduler + ThoughtGraph (3 节点: n1 root, n2 DECISION, n3 dependent).
         """
-        from infra.got.data_structures import NodeType, ThoughtNode
-        from infra.got.graph import ThoughtGraph
-        from infra.got.scheduler import ComputeResult, GoTScheduler
+        from lingwen_got.data_structures import NodeType, ThoughtNode
+        from lingwen_got.graph import ThoughtGraph
+        from lingwen_got.scheduler import ComputeResult, GoTScheduler
 
         # Setup real graph
         graph = ThoughtGraph()
@@ -896,9 +896,9 @@ class TestRunWithNoneStartNodesDerivation:
         关键验证: state.start_nodes 在 resume 期间不被 graph mutation 污染.
         即使 graph 加新 root node (n4), state.start_nodes 仍是 run 时的 derived ["n1"].
         """
-        from infra.got.data_structures import NodeType, ThoughtNode
-        from infra.got.graph import ThoughtGraph
-        from infra.got.scheduler import ComputeResult, GoTScheduler
+        from lingwen_got.data_structures import NodeType, ThoughtNode
+        from lingwen_got.graph import ThoughtGraph
+        from lingwen_got.scheduler import ComputeResult, GoTScheduler
 
         # Setup real graph: n1 root + n2 DECISION + n3 dep
         graph = ThoughtGraph()

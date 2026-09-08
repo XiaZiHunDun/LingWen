@@ -23,17 +23,17 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
+from lingwen_got import (
+    ComputeResult,
+    GoTScheduler,
+    load_workflow,
+)
 from lingwen_prompt import (
     ContextItem,
     PromptContext,
     get_scenario,
 )
 
-from infra.got import (
-    ComputeResult,
-    GoTScheduler,
-    load_workflow,
-)
 from infra.subplot import (
     Plot,
     PlotPurpose,

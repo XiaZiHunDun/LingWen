@@ -12,8 +12,8 @@ from lingwen_core.agents.chapter_emit import (
 )
 from lingwen_core.agents.got_bridge import AgentComputeFn
 from lingwen_core.agents.workflow_state import WorkflowState
+from lingwen_got.data_structures import NodeType, ThoughtNode
 
-from infra.got.data_structures import NodeType, ThoughtNode
 from infra.paths import ProjectPaths
 
 

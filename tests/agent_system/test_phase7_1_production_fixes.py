@@ -119,7 +119,7 @@ def test_audit_chapter_failure_does_not_crash_workflow(tmp_path: Path):
     两种路径都验证 "audit 失败非致命" 契约。目的是把这条契约写进回归保护,
     防止未来重构破坏 master.audit_chapter 的 try/except 行为。
     """
-    from infra.got.data_structures import NodeStatus
+    from lingwen_got.data_structures import NodeStatus
 
     # StubProvider 默认返回固定 response,我们要让它在第 2 次 LLM 调用时抛错
     # minimal_e2e 节点顺序: write (1 LLM) → review (1 LLM via audit_chapter)
