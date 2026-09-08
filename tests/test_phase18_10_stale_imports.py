@@ -9,8 +9,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-# 允许保留的 infra.* import（Phase 18.8 薄壳白名单）
-ALLOWED_INFRA_PATHS = frozenset(
+# 允许保留的 compat import（Phase 18.8 薄壳 + Phase 36 lingwen_errors 迁移白名单）
+# 注：lingwen_errors 条目实际上无法匹配（外层 if 'from infra.' not in line 过滤掉了所有
+# 不含 'from infra.' 的行），保留它作为 Phase 36 迁移的语义标记；清理可作为后续 follow-up。
+ALLOWED_COMPAT_IMPORTS = frozenset(
     {
         "infra.config",
         "infra.util",
@@ -28,7 +30,7 @@ def _is_allowed(line: str) -> bool:
         return True
     if line.lstrip().startswith("#"):
         return True
-    for allowed in ALLOWED_INFRA_PATHS:
+    for allowed in ALLOWED_COMPAT_IMPORTS:
         if allowed in line:
             return True
     return False
