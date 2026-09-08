@@ -234,13 +234,12 @@ class WorkflowRunner:
         Phase 9.83 F75: context 带上 chapter_num (dashboard 决策卡片展示用).
         """
         from lingwen_core.agents.decision_queue import create_decision
+        from lingwen_got.data_structures import NodeStatus, NodeType
         from lingwen_pipeline.master_controller import (
             _DEFAULT_DECISION_OPTIONS,
             _DEFAULT_DECISION_PRIORITY,
             _infer_decision_kind,
         )
-
-        from infra.got.data_structures import NodeStatus, NodeType
 
         controller = self._controller
         queue = getattr(controller, "_decision_queue", None)

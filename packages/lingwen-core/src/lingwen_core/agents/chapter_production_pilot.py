@@ -426,10 +426,9 @@ def run_production_pilot(
         result.error = config_err or "provider config unavailable"
         return result
 
+    from lingwen_got.data_structures import NodeStatus
     from lingwen_llm.providers.cost_tracker import CostTracker
     from lingwen_pipeline.master_controller import MasterController
-
-    from infra.got.data_structures import NodeStatus
 
     cost_tracker = CostTracker()
     master = MasterController(

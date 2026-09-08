@@ -21,16 +21,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable, Optional, Union
 
+from lingwen_got.data_structures import ThoughtNode
+from lingwen_got.scheduler import ComputeResult
 from lingwen_llm.providers.cost_tracker import CostTracker
 from lingwen_llm.providers.model_tiers import ModelTier
-from lingwen_prompt.scenarios import SCENARIO_TIER_MAP, SCENARIOS
 
-from infra.got.data_structures import ThoughtNode
-from infra.got.scheduler import ComputeResult
-
-from .chapter_emit import emit_chapter_enabled, emit_chapter_to_repo
 # Phase 32: MasterController lives in lingwen_pipeline (canonical).
 from lingwen_pipeline.master_controller import MasterController
+from lingwen_prompt.scenarios import SCENARIO_TIER_MAP, SCENARIOS
+
+from .chapter_emit import emit_chapter_enabled, emit_chapter_to_repo
 
 EMIT_CHAPTER_NODE_ID = "emit_chapter"
 
@@ -444,9 +444,9 @@ def build_got_scheduler(
     # 延迟 import 避免 got ↔ agent_system 循环
     from pathlib import Path
 
-    from infra.got.graph import ThoughtGraph  # noqa: F401
-    from infra.got.scheduler import GoTScheduler
-    from infra.got.workflow_loader import load_workflow
+    from lingwen_got.graph import ThoughtGraph  # noqa: F401
+    from lingwen_got.scheduler import GoTScheduler
+    from lingwen_got.workflow_loader import load_workflow
 
     bd = Path(base_dir) if base_dir else None
     graph = load_workflow(workflow_name, base_dir=bd)

@@ -90,7 +90,7 @@ def run_golden_path(
     resolve_option: str = "approve",
 ) -> GoldenPathResult:
     """Execute stub golden path; raises on invariant violation."""
-    from infra.got.data_structures import NodeStatus
+    from lingwen_got.data_structures import NodeStatus
 
     setup_golden_workflow_dir(state_dir)
     controller = build_stub_master_controller(state_dir)
