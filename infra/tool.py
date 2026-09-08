@@ -26,7 +26,7 @@ from typing import (
     Union,
 )
 
-from lingwen_errors import BaseError, wrap
+from lingwen_errors import BaseError
 from pydantic import BaseModel, Field, ValidationError
 from pydantic_core import to_json
 
