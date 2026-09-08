@@ -1,6 +1,6 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v37.0 (Phase 38 P3-ARCHDEBT project_config 闭环) · 更新: 2026-09-08
+> **版本**: v38.0 (Phase 39 P3-ARCHDEBT logging_config 闭环) · 更新: 2026-09-08
 > 当前状态: `collaboration/CURRENT_STATUS.md` · 待办: `collaboration/BACKLOG.md` · 版本史: `docs/superpowers/archive/PHASE_HISTORY.md`
 > 最高优先级参考: `.lingwen/architecture.yml`
 
@@ -93,6 +93,7 @@ python lingwen.py doctor
 | I051 | `packages/lingwen-errors/` 是错误基类系统唯一实包；`infra.errors.*` 路径非法 (Phase 36+) |
 | I052 | `packages/lingwen-paths/` 是项目路径管理（ProjectPaths / resolve_project_root / get_paths / get_chapters_dir / get_rules_dir）的唯一实包；`infra.paths.*` 路径非法 (Phase 37+) |
 | I053 | `packages/lingwen-project-config/` 是项目配置管理（ProjectConfig / update_project_creation_mode）的唯一实包；`infra.project_config.*` 路径非法 (Phase 38+) |
+| I054 | `packages/lingwen-logging-config/` 是日志配置（StructuredFormatter / setup_logging / logger）的唯一实包；`infra.logging_config.*` 路径非法 (Phase 39+) |
 
 > 完整不变量与设计原则 DP-01..06 见 `.lingwen/architecture.yml`；提交纪律与反模式见 `.lingwen/constraints.yml`。
 
@@ -114,6 +115,8 @@ python lingwen.py doctor
 | `HANDOFF.md` | 切换工具 TL;DR + 交接 |
 
 ## 已知遗留
+
+- ✅ **v38.0 P3-ARCHDEBT (logging_config)**（2026-09-08 ff-merge `phase-39-p3-archdebt-logging-config`）：P3-ARCHDEBT item 4/5 — `infra/logging_config.py` (1 module, 59 lines, 3 top-level public symbols: StructuredFormatter + setup_logging + logger module-level instance) → `packages/lingwen-logging-config/`。7 consumer 迁移 (6 packages + 1 intra-infra; 0 function-body imports — pre-spec verified per Phase 38 lesson 3; 0 test consumers; 0 filesystem path literals; 1 wildcard `infra/core/__init__.py:6` paired with C3 source deletion); `infra/logging_config.py` 删除 + wildcard cleanup; invariant #54 NEW; **5 atomic commits** on phase-39-p3-archdebt-logging-config (C0 spec+plan / C1 scaffold / C2 migrate / C3 delete / C4 invariant+version / C5 guards+doc-sync). **Validation gates**: ruff clean + phase39 guards GREEN + phase38 guards preserved + baselines preserved. **LEAF package** (no workspace deps — only stdlib: json/logging/datetime/pathlib). **Carryover closure**: P3-ARCHDEBT 4/5 (logging_config) → CLOSED; P3-ARCHDEBT remaining 1/5 (studio_registry, 50 consumers) → Phase 40+. 详见 `docs/superpowers/handoffs/2026-09-08-phase-39-p3-archdebt-logging-config-handoff.md`。
 
 - ✅ **v37.0 P3-ARCHDEBT (project_config)**（2026-09-08 ff-merge `phase-38-p3-archdebt-project-config`）：P3-ARCHDEBT item 3/5 — `infra/project_config.py` (1 module, 170 lines, 2 top-level public symbols: ProjectConfig + update_project_creation_mode) → `packages/lingwen-project-config/`。26 consumer 迁移 (2 apps + 16 packages + 4 infra intra + 4 tests; 7 function-body imports via `^([[:space:]]*)from` sed pattern — N.14 lesson 1, 8th occurrence); `infra/project_config.py` 删除 + `infra/project/__init__.py` wildcard 清理; invariant #53 NEW; +1 Phase 37 guard fixup (test_phase37_lingwen_paths.py:145 — N.14 lesson 1, 9th occurrence: filesystem-path string literal in prior-phase regression guard). 7 atomic commits on phase-38-p3-archdebt-project-config (C0 spec+plan / C1 scaffold / C2 migrate / C3 delete / C3.5 phase37-guard-fixup / C4 invariant+version / C5 guards+doc-sync). **Validation gates**: ruff clean + 6 phase38 guards GREEN + 6 phase37 guards restored (after C3.5 fixup) + baselines preserved. **Carryover closure**: P3-ARCHDEBT 3/5 (project_config) → CLOSED; P3-ARCHDEBT remaining 2/5 (logging_config + studio_registry) → Phase 39+。详见 `docs/superpowers/handoffs/2026-09-08-phase-38-p3-archdebt-project-config-handoff.md`。
 
