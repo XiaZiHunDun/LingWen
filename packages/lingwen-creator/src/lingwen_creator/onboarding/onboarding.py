@@ -5,8 +5,8 @@ from __future__ import annotations
 from typing import Any
 
 from lingwen_paths import ProjectPaths
-
 from lingwen_project_config import ProjectConfig
+
 from infra.studio_registry import StudioProject
 from lingwen_creator.onboarding.autodetect import infer_auto_completed_steps
 from lingwen_creator.onboarding.progress import (

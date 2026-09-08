@@ -11,8 +11,8 @@ from dataclasses import replace
 from typing import Any
 
 from lingwen_paths import ProjectPaths
-
 from lingwen_project_config import ProjectConfig
+
 from lingwen_creator.shared.mode import (
     CREATION_MODE_STUDIO,
     CreatorSettings,

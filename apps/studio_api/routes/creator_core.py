@@ -75,7 +75,6 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
     @app.put("/api/creator/overview/mode", response_model=CreatorOverviewResponse)
     def creator_overview_mode_put(body: dict) -> CreatorOverviewResponse:
         from lingwen_creator.content.dashboard import creator_overview
-
         from lingwen_project_config import update_project_creation_mode
 
         project = _require_project(ctx)

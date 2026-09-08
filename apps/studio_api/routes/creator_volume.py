@@ -109,7 +109,6 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
     ) -> CreatorVolumeSaveTemplateResponse:
         from lingwen_creator.volume.templates import save_custom_volume_template
         from lingwen_paths import ProjectPaths
-
         from lingwen_project_config import ProjectConfig
 
         project = _require_project(ctx)
@@ -678,7 +677,6 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
     ) -> CreatorVolumeApplyTemplateResponse:
         from lingwen_creator.volume.templates import build_volume_template, template_meta
         from lingwen_paths import ProjectPaths
-
         from lingwen_project_config import ProjectConfig
 
         project = _require_project(ctx)

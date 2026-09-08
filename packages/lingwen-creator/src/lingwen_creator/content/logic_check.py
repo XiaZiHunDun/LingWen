@@ -10,8 +10,8 @@ from typing import Any
 
 from lingwen_cli.options import CheckOptions
 from lingwen_paths import ProjectPaths
-
 from lingwen_project_config import ProjectConfig
+
 from lingwen_creator.shared.check import apply_creator_check_defaults
 from lingwen_creator.shared.mode import settings_from_project_config
 

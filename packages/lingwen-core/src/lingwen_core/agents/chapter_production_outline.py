@@ -7,7 +7,6 @@ import re
 from typing import Any
 
 from lingwen_paths import ProjectPaths
-
 from lingwen_project_config import ProjectConfig
 
 _DEFAULT_WORD_TARGET = 2500

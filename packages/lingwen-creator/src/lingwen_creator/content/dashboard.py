@@ -15,8 +15,8 @@ from pathlib import Path
 from typing import Any
 
 from lingwen_paths import ProjectPaths
-
 from lingwen_project_config import ProjectConfig
+
 from infra.studio_registry import StudioProject, quality_report_summary
 from lingwen_creator.content.ui_profile import (
     filter_deviations_by_min_severity,
