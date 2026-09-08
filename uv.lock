@@ -12,6 +12,7 @@ members = [
     "lingwen-cli",
     "lingwen-core",
     "lingwen-creator",
+    "lingwen-errors",
     "lingwen-got",
     "lingwen-llm",
     "lingwen-memory",
@@ -684,6 +685,11 @@ requires-dist = [
     { name = "lingwen-shared", editable = "packages/lingwen-shared" },
     { name = "pydantic", specifier = ">=2.5" },
 ]
+
+[[package]]
+name = "lingwen-errors"
+version = "0.1.0"
+source = { editable = "packages/lingwen-errors" }
 
 [[package]]
 name = "lingwen-got"

@@ -93,6 +93,7 @@ members = [
     "packages/lingwen-creator",   # ★ v16.2.0 新增
     "packages/lingwen-got",       # ★ Phase 34 新增
     "packages/lingwen-world-model",  # ★ Phase 35 新增
+    "packages/lingwen-errors",   # ★ Phase 36 NEW
     "apps/studio_api",
 ]
 
@@ -109,6 +110,8 @@ lingwen-cli = { workspace = true }
 lingwen-shared = { workspace = true }
 lingwen-creator = { workspace = true }
 lingwen-got = { workspace = true }
+lingwen-world-model = { workspace = true }
+lingwen-errors = { workspace = true }   # ★ Phase 36 NEW
 
 # ---------------------------------------------------------------------------
 # Tool configs (pyproject.toml 集中配置,避免散在多个 ini/tox)
