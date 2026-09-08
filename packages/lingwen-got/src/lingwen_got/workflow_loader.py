@@ -16,7 +16,7 @@ YAML 格式:
         token_budget: <int>            # 可选,默认 0
         timeout_s: <int>               # 可选,默认 60
 
-默认 base_dir: infra/got/workflows/
+默认 base_dir: packages/lingwen-got/src/lingwen_got/workflows/
 
 不实施 (后续阶段):
 - output_schema 字符串 → 类型映射 (暂只存 None)
@@ -76,7 +76,7 @@ def load_workflow(
 
     Args:
         name: workflow 名称 (可省略 .yaml 后缀)
-        base_dir: 工作流目录 (默认 infra/got/workflows/)
+        base_dir: 工作流目录 (默认 packages/lingwen-got/src/lingwen_got/workflows/)
 
     Returns:
         ThoughtGraph: 加载完成的图

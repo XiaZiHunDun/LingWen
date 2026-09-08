@@ -1,4 +1,4 @@
-"""infra/got/visualizer.py — 增强 GoT 可视化
+"""lingwen_got/visualizer.py — 增强 GoT 可视化
 
 Doc 4 (GoT 适配设计 v1.0) §11 Phase 4: 可视化增强
 
