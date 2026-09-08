@@ -14,8 +14,6 @@ import re
 import subprocess
 from pathlib import Path
 
-import pytest
-
 REPO_ROOT = Path(__file__).parent.parent
 
 SKIP_FILES = {
@@ -145,9 +143,11 @@ def test_snapshot_error_migrated():
 
     for f in [char_snap, fore_snap]:
         content = f.read_text(encoding="utf-8")
-        assert "from lingwen_errors" in content, (
-            f"{f.name} should import from lingwen_errors"
+        # Anchor with regex (Phase 32+34 lesson: substring grep is brittle —
+        # could match docstrings, comments, or relative-path strings).
+        assert re.search(r"^from lingwen_errors\b", content, re.MULTILINE), (
+            f"{f.name} should 'from lingwen_errors' import (line-anchored)"
         )
-        assert "from infra.errors" not in content, (
-            f"{f.name} should NOT import from infra.errors (forbidden by I051)"
+        assert not re.search(r"^from infra\.errors\b", content, re.MULTILINE), (
+            f"{f.name} should NOT 'from infra.errors' import (forbidden by I051)"
         )
