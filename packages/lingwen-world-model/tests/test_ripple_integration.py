@@ -16,7 +16,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from lingwen_world_model import (
     MAX_OPEN_RIPPLOTS,
     NodeId,

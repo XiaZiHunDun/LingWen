@@ -23,6 +23,7 @@ from lingwen_core.domain.subplot import (
     PlotStatus,
     PlotType,
 )
+
 from .registry import (
     DuplicatePlotIdError,
     PlotNotFoundError,

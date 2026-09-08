@@ -18,7 +18,6 @@ from datetime import datetime
 import pytest
 from lingwen_core.domain.common import KeyPoint, NodeId, NodeType, Relation
 from lingwen_core.domain.ripple import WorldSnapshot
-
 from lingwen_world_model.key_point_graph import (
     Contradiction,
     ContradictionKind,

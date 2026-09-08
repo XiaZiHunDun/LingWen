@@ -1,7 +1,6 @@
 """人物状态快照测试"""
 
 import pytest
-
 from lingwen_world_model.character_snapshot import (
     CharacterAttributeChange,
     CharacterSnapshot,

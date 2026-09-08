@@ -29,8 +29,6 @@ from lingwen_prompt.templates import load_template, render_template
 from lingwen_quality.consistency.checkers.foreshadow_checker import ForeshadowChecker
 from lingwen_quality.consistency.checkers.pacing_checker import PacingChecker
 from lingwen_quality.consistency.engine.data_structures import IssueSeverity
-
-from infra.subplot.registry import PlotRegistry
 from lingwen_world_model import (
     LinkAction,
     RippleEngine,
@@ -41,6 +39,8 @@ from lingwen_world_model import (
     predict_collapse_risk,
 )
 from lingwen_world_model.snapshot_diff import ChangeKind, EntityKind
+
+from infra.subplot.registry import PlotRegistry
 
 # === Helpers ===
 

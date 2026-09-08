@@ -27,14 +27,14 @@ from lingwen_core.domain.subplot import (
     PlotStatus,
     PlotType,
 )
-
-from infra.subplot.registry import PlotRegistry
 from lingwen_world_model.links import (
     LinkAction,
     apply_ripple_resolution,
     link_subplot_to_ripple,
 )
 from lingwen_world_model.registry import RippleNotFoundError, RippleRegistry
+
+from infra.subplot.registry import PlotRegistry
 
 # === Helpers ===
 
