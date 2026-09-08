@@ -16,7 +16,7 @@ from __future__ import annotations
 import pytest
 from lingwen_core.domain.ripple import ResolutionMode, Ripple, RippleState
 
-from infra.world_model.lifecycle import (
+from lingwen_world_model.lifecycle import (
     COLLAPSE_RISK_THRESHOLD,
     MAX_OPEN_RIPPLOTS,
     RESOLUTION_GRACE_CH,

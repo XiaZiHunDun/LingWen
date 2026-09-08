@@ -20,7 +20,7 @@ import pytest
 from lingwen_core.domain.common import NodeId, NodeType
 from lingwen_core.domain.ripple import ResolutionMode, Ripple, RippleState
 
-from infra.world_model.engine import RippleEngine
+from lingwen_world_model.engine import RippleEngine
 
 # === Stub registry (解耦 RippleRegistry) ===
 

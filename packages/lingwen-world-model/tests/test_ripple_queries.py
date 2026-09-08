@@ -11,11 +11,11 @@ from __future__ import annotations
 import pytest
 from lingwen_core.domain.ripple import Ripple, RippleState
 
-from infra.world_model.lifecycle import (
+from lingwen_world_model.lifecycle import (
     MAX_OPEN_RIPPLOTS,
     RESOLUTION_GRACE_CH,
 )
-from infra.world_model.queries import (
+from lingwen_world_model.queries import (
     detect_unresolved_ripples,
     predict_collapse_risk,
     suggest_resolution_chapter,

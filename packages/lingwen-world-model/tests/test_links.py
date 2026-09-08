@@ -29,12 +29,12 @@ from lingwen_core.domain.subplot import (
 )
 
 from infra.subplot.registry import PlotRegistry
-from infra.world_model.links import (
+from lingwen_world_model.links import (
     LinkAction,
     apply_ripple_resolution,
     link_subplot_to_ripple,
 )
-from infra.world_model.registry import RippleNotFoundError, RippleRegistry
+from lingwen_world_model.registry import RippleNotFoundError, RippleRegistry
 
 # === Helpers ===
 
@@ -263,7 +263,7 @@ class TestImportContract:
     """Public API 完整性:所有 2.3 符号从顶层可导入"""
 
     def test_top_level_imports(self):
-        from infra.world_model import (
+        from lingwen_world_model import (
             LinkAction,
             apply_ripple_resolution,
             link_subplot_to_ripple,

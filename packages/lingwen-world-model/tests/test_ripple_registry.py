@@ -12,8 +12,8 @@ import pytest
 from lingwen_core.domain.common import NodeId, NodeType
 from lingwen_core.domain.ripple import Ripple, RippleState
 
-from infra.world_model.lifecycle import MAX_OPEN_RIPPLOTS
-from infra.world_model.registry import (
+from lingwen_world_model.lifecycle import MAX_OPEN_RIPPLOTS
+from lingwen_world_model.registry import (
     DuplicateRippleIdError,
     OpenRippleLimitExceeded,
     RippleNotFoundError,

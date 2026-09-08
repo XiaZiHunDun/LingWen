@@ -31,7 +31,7 @@ from lingwen_quality.consistency.checkers.pacing_checker import PacingChecker
 from lingwen_quality.consistency.engine.data_structures import IssueSeverity
 
 from infra.subplot.registry import PlotRegistry
-from infra.world_model import (
+from lingwen_world_model import (
     LinkAction,
     RippleEngine,
     RippleRegistry,
@@ -40,7 +40,7 @@ from infra.world_model import (
     link_subplot_to_ripple,
     predict_collapse_risk,
 )
-from infra.world_model.snapshot_diff import ChangeKind, EntityKind
+from lingwen_world_model.snapshot_diff import ChangeKind, EntityKind
 
 # === Helpers ===
 

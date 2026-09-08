@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from infra.world_model import (
+from lingwen_world_model import (
     MAX_OPEN_RIPPLOTS,
     NodeId,
     NodeType,
@@ -30,8 +30,8 @@ from infra.world_model import (
     predict_collapse_risk,
     suggest_resolution_chapter,
 )
-from infra.world_model.queries import detect_unresolved_ripples as detect_unresolved_ripples_q
-from infra.world_model.queries import predict_collapse_risk as predict_collapse_risk_q
+from lingwen_world_model.queries import detect_unresolved_ripples as detect_unresolved_ripples_q
+from lingwen_world_model.queries import predict_collapse_risk as predict_collapse_risk_q
 
 # === Helpers ===
 
@@ -136,7 +136,7 @@ class TestCollapseAlarm:
 
     def test_open_ripple_limit_enforced(self, tmp_path: Path):
         """注册 10 个就拒绝第 11 个 (registry.add_ripple 校验)"""
-        from infra.world_model.registry import OpenRippleLimitExceeded
+        from lingwen_world_model.registry import OpenRippleLimitExceeded
 
         reg = _tmp_registry(tmp_path)
         eng = RippleEngine()
@@ -308,7 +308,7 @@ class TestImportContract:
     """Public API 完整性:所有 1.5 符号从顶层可导入"""
 
     def test_top_level_imports(self):
-        from infra.world_model import (
+        from lingwen_world_model import (
             MAX_OPEN_RIPPLOTS,
             RESOLUTION_GRACE_CH,
             ResolutionMode,
@@ -334,9 +334,9 @@ class TestImportContract:
 
     def test_queries_module_path_consistent(self):
         """queries.predict_collapse_risk 应与 __init__ 导出的一致"""
-        from infra.world_model import predict_collapse_risk as top
+        from lingwen_world_model import predict_collapse_risk as top
 
         assert top is predict_collapse_risk_q
-        from infra.world_model import detect_unresolved_ripples as top_d
+        from lingwen_world_model import detect_unresolved_ripples as top_d
 
         assert top_d is detect_unresolved_ripples_q

@@ -25,7 +25,7 @@ from lingwen_core.domain.chapter import PhysicalLine
 from lingwen_core.domain.common import KeyPoint, NodeId, NodeType
 from lingwen_core.domain.ripple import WorldSnapshot
 
-from infra.world_model.snapshot_store import (
+from lingwen_world_model.snapshot_store import (
     SnapshotIntegrityError,
     SnapshotNotFoundError,
     SnapshotStore,

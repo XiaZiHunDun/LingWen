@@ -2,7 +2,7 @@
 
 import pytest
 
-from infra.world_model.character_snapshot import (
+from lingwen_world_model.character_snapshot import (
     CharacterAttributeChange,
     CharacterSnapshot,
     CharacterSnapshotError,
