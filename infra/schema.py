@@ -28,8 +28,8 @@ try:
 except ImportError:
     from pydantic_core import PydanticKnownError as PydanticCoreError
 
-from infra.errors import BaseError, wrap
-from infra.errors import ValidationError as InfraValidationError
+from lingwen_errors import BaseError, wrap
+from lingwen_errors import ValidationError as InfraValidationError
 
 T = TypeVar("T")
 S = TypeVar("S")

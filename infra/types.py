@@ -21,7 +21,7 @@ Example:
 from dataclasses import dataclass, field
 from typing import Any, Dict, Generic, Optional, Type, TypeVar, Union
 
-from infra.errors import BaseError, ValidationError
+from lingwen_errors import BaseError, ValidationError
 
 T = TypeVar("T")
 

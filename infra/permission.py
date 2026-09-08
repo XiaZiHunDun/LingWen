@@ -17,7 +17,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-from infra.errors import BaseError, wrap
+from lingwen_errors import BaseError, wrap
 
 
 class PermissionError(BaseError):

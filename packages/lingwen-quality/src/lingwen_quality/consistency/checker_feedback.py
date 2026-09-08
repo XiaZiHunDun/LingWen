@@ -23,7 +23,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
-from infra.errors import ValidationError
+from lingwen_errors import ValidationError
 
 logger = logging.getLogger(__name__)
 

@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Dict, Iterator, List, Optional, Type
 
-from infra.errors import BaseError, RetryableError
+from lingwen_errors import BaseError, RetryableError
 
 
 class AIProviderError(BaseError):

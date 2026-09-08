@@ -28,7 +28,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Iterable
 
-from infra.errors import SnapshotError, ValidationError
+from lingwen_errors import SnapshotError, ValidationError
 
 logger = logging.getLogger(__name__)
 

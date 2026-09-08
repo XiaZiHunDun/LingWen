@@ -18,7 +18,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-from infra.errors import BaseError
+from lingwen_errors import BaseError
 
 
 class CacheError(BaseError):

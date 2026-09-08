@@ -9,8 +9,9 @@
 - from lingwen_storage.X import Y
 """
 
+from lingwen_errors import BaseError, ValidationError
+
 from infra.config import APIConfig
-from infra.errors import BaseError, ValidationError
 from infra.util import RetryConfig, retry, retry_async, with_retry
 
 __all__ = [

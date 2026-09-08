@@ -14,7 +14,7 @@ import random
 import time
 from typing import Any, Callable, List, Optional, Type, TypeVar, Union
 
-from infra.errors import (
+from lingwen_errors import (
     AuthenticationError,
     BaseError,
     FatalError,

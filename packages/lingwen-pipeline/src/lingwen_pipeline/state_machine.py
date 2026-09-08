@@ -28,7 +28,7 @@ import json
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, Generic, List, Optional, Tuple, Type, TypeVar, Union
 
-from infra.errors import BaseError
+from lingwen_errors import BaseError
 
 T = TypeVar("T")
 S = TypeVar("S")

@@ -26,10 +26,10 @@ from typing import (
     Union,
 )
 
+from lingwen_errors import BaseError, wrap
 from pydantic import BaseModel, Field, ValidationError
 from pydantic_core import to_json
 
-from infra.errors import BaseError, wrap
 from infra.schema import Struct, to_json_schema
 from infra.schema import decode as schema_decode
 from infra.schema import encode as schema_encode

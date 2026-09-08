@@ -26,7 +26,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Iterable
 
-from infra.errors import SnapshotError, ValidationError
+from lingwen_errors import SnapshotError, ValidationError
 
 logger = logging.getLogger(__name__)
 
