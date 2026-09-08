@@ -3,7 +3,7 @@
 Phase 1.4.k — RED tests for workflow_loader.
 
 设计约束 (per Doc 4 v1.0):
-- 路径: infra/got/workflows/*.yaml (例: novel_writing.yaml)
+- 路径: packages/lingwen-got/src/lingwen_got/workflows/*.yaml (例: novel_writing.yaml)
 - 格式:
     workflow: novel_writing
     version: 1
@@ -24,7 +24,7 @@ Phase 1.4.k — RED tests for workflow_loader.
         token_budget: 8000
         timeout_s: 120
 - load_workflow(name) → ThoughtGraph
-- 默认 workflows 目录: infra/got/workflows/
+- 默认 workflows 目录: packages/lingwen-got/src/lingwen_got/workflows/
 - 不存在 → WorkflowNotFoundError
 - YAML 格式错 → WorkflowParseError
 - 节点缺 id → WorkflowValidationError

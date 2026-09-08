@@ -20,7 +20,6 @@ from datetime import datetime
 from typing import Any, Callable, Optional
 
 import pytest
-
 from lingwen_got.data_structures import (
     NodeExecution,
     NodeStatus,

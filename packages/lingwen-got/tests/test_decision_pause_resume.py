@@ -22,7 +22,6 @@ from __future__ import annotations
 
 import pytest
 from lingwen_core.agents.workflow_state import WorkflowState
-
 from lingwen_got.data_structures import (
     NodeStatus,
     NodeType,

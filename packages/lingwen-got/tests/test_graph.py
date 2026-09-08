@@ -16,7 +16,6 @@ Phase 1.4.c — RED tests for ThoughtGraph.
 from __future__ import annotations
 
 import pytest
-
 from lingwen_got.data_structures import (
     NodeExecution,
     NodeStatus,

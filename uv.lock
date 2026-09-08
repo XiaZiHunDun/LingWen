@@ -690,7 +690,9 @@ version = "0.1.0"
 source = { editable = "packages/lingwen-got" }
 dependencies = [
     { name = "lingwen-llm" },
+    { name = "lingwen-prompt" },
     { name = "pydantic" },
+    { name = "pyyaml" },
 ]
 
 [package.optional-dependencies]
@@ -701,8 +703,10 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "lingwen-llm", editable = "packages/lingwen-llm" },
+    { name = "lingwen-prompt", editable = "packages/lingwen-prompt" },
     { name = "pydantic", specifier = ">=2.7" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.0" },
+    { name = "pyyaml", specifier = ">=6.0" },
 ]
 provides-extras = ["test"]
 

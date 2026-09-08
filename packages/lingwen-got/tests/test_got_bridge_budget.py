@@ -26,11 +26,10 @@ from unittest.mock import MagicMock
 import pytest
 from lingwen_core.agents.budget_persistence import BudgetService
 from lingwen_core.agents.got_bridge import AgentComputeFn
-from lingwen_llm.providers.cost_tracker import CostBudgetExceeded, CostTracker
-from lingwen_llm.providers.model_tiers import ModelTier
-
 from lingwen_got.data_structures import NodeType, ThoughtNode
 from lingwen_got.scheduler import ComputeResult
+from lingwen_llm.providers.cost_tracker import CostBudgetExceeded, CostTracker
+from lingwen_llm.providers.model_tiers import ModelTier
 
 
 def _make_node(scenario: str) -> ThoughtNode:
