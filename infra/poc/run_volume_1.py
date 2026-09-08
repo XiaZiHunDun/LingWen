@@ -33,15 +33,7 @@ from lingwen_prompt import (
     PromptContext,
     get_scenario,
 )
-
-from infra.subplot import (
-    Plot,
-    PlotPurpose,
-    PlotRegistry,
-    PlotStatus,
-    PlotType,
-)
-from infra.world_model import (
+from lingwen_world_model import (
     KeyPoint,
     MentalLine,
     NodeId,
@@ -49,6 +41,14 @@ from infra.world_model import (
     PhysicalLine,
     SnapshotStore,
     WorldSnapshot,
+)
+
+from infra.subplot import (
+    Plot,
+    PlotPurpose,
+    PlotRegistry,
+    PlotStatus,
+    PlotType,
 )
 
 # === Result types ===
@@ -309,7 +309,7 @@ def run_poc(chapters: int = 5) -> PoCResult:
             agent_role=scenario["agent_role"],
             inputs=(
                 ContextItem(
-                    key="world", source="infra.world_model.WorldSnapshot", required=True, token_estimate=500
+                    key="world", source="lingwen_world_model.WorldSnapshot", required=True, token_estimate=500
                 ),
                 ContextItem(
                     key="plots", source="infra.subplot.PlotRegistry", required=True, token_estimate=200
