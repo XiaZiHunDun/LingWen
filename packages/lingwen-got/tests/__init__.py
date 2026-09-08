@@ -1,0 +1,1 @@
+"""lingwen-got test package."""

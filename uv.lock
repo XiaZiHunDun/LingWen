@@ -12,6 +12,7 @@ members = [
     "lingwen-cli",
     "lingwen-core",
     "lingwen-creator",
+    "lingwen-got",
     "lingwen-llm",
     "lingwen-memory",
     "lingwen-novel-factory",
@@ -682,6 +683,28 @@ requires-dist = [
     { name = "lingwen-shared", editable = "packages/lingwen-shared" },
     { name = "pydantic", specifier = ">=2.5" },
 ]
+
+[[package]]
+name = "lingwen-got"
+version = "0.1.0"
+source = { editable = "packages/lingwen-got" }
+dependencies = [
+    { name = "lingwen-llm" },
+    { name = "pydantic" },
+]
+
+[package.optional-dependencies]
+test = [
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "lingwen-llm", editable = "packages/lingwen-llm" },
+    { name = "pydantic", specifier = ">=2.7" },
+    { name = "pytest", marker = "extra == 'test'", specifier = ">=8.0" },
+]
+provides-extras = ["test"]
 
 [[package]]
 name = "lingwen-llm"
