@@ -18,7 +18,7 @@ from typing import Optional, Protocol
 
 import pytest
 
-# behavior constants/services stay in infra.world_model.*
+# behavior constants/services stay in lingwen_world_model.* (canonical since Phase 35)
 from lingwen_core.domain.ripple import Ripple, RippleState
 from lingwen_quality.consistency.checkers.pacing_checker import PacingChecker
 from lingwen_quality.consistency.engine.data_structures import (
@@ -26,8 +26,7 @@ from lingwen_quality.consistency.engine.data_structures import (
     Issue,
     IssueSeverity,
 )
-
-from infra.world_model.registry import RippleRegistry
+from lingwen_world_model.registry import RippleRegistry
 
 # === Helpers ===
 

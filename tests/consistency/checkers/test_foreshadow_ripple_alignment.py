@@ -24,9 +24,8 @@ from lingwen_quality.consistency.engine.data_structures import (
     Issue,
     IssueSeverity,
 )
-
-from infra.world_model.lifecycle import RESOLUTION_GRACE_CH
-from infra.world_model.registry import RippleRegistry
+from lingwen_world_model.lifecycle import RESOLUTION_GRACE_CH
+from lingwen_world_model.registry import RippleRegistry
 
 # === Helpers ===
 
