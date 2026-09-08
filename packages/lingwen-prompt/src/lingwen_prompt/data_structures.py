@@ -25,7 +25,7 @@ class ContextItem:
     """上下文输入项 — 声明 I/O 契约的一行
 
     key: 唯一标识 (e.g. "world_snapshot", "chapter_outline")
-    source: 数据源模块路径 (e.g. "infra.world_model.WorldSnapshot")
+    source: 数据源模块路径 (e.g. "lingwen_world_model.WorldSnapshot")
     required: 是否必需 (True 缺失则 fail;False 可降级)
     token_estimate: 估算 token 数 (用于 budget 校验)
     transform: 转换策略名 (e.g. "summary_500", "truncate_2000") — 由 AutoSummarizer 解释

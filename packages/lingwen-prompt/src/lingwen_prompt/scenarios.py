@@ -161,7 +161,7 @@ _STEP_CONTRACTS_DATA: tuple[tuple[str, str, str, tuple[ContextItem, ...], int, i
         "STEP_08",
         "Lock Check",
         "outline_review",
-        (ContextItem(key="outline", source="infra.world_model.SnapshotStore"),),
+        (ContextItem(key="outline", source="lingwen_world_model.SnapshotStore"),),
         4_000,
         60,
     ),

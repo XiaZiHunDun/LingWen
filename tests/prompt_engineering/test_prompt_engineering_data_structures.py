@@ -23,9 +23,9 @@ class TestContextItem:
         """最小 ContextItem 只需 key + source"""
         from lingwen_prompt.data_structures import ContextItem
 
-        item = ContextItem(key="world_snapshot", source="infra.world_model.WorldSnapshot")
+        item = ContextItem(key="world_snapshot", source="lingwen_world_model.WorldSnapshot")
         assert item.key == "world_snapshot"
-        assert item.source == "infra.world_model.WorldSnapshot"
+        assert item.source == "lingwen_world_model.WorldSnapshot"
         # 默认
         assert item.required is True
         assert item.token_estimate == 0
@@ -37,7 +37,7 @@ class TestContextItem:
 
         item = ContextItem(
             key="chapter_history",
-            source="infra.world_model.SnapshotStore",
+            source="lingwen_world_model.SnapshotStore",
             token_estimate=2000,
             transform="summary_500",
         )
