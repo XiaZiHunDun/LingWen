@@ -37,7 +37,7 @@ from lingwen_core.agents.internal.incremental_backfill import (
 )
 from lingwen_memory.embeddings.factory import describe_embedding_requirements
 
-from infra.project_config import ProjectConfig
+from lingwen_project_config import ProjectConfig
 
 PILOT_WORKFLOW_NAME = "novel_writing"
 _PROVIDER_ENV_KEYS: tuple[tuple[str, str], ...] = (

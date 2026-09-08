@@ -167,7 +167,7 @@ def generate_report(
     limit: int = 20,
     note: str = "",
 ) -> Path:
-    from infra.project_config import ProjectConfig
+    from lingwen_project_config import ProjectConfig
 
     paths = ProjectPaths.get(project_root)
     ProjectPaths.reset()

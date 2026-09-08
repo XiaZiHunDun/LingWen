@@ -15,7 +15,7 @@ from typing import Any
 
 from lingwen_paths import ProjectPaths
 
-from infra.project_config import ProjectConfig
+from lingwen_project_config import ProjectConfig
 from lingwen_creator.shared.revision import CreatorDocConflictError, content_revision
 
 _VOLUME_TABLE_HEADER = re.compile(r"^\|\s*卷\s*\|", re.MULTILINE)

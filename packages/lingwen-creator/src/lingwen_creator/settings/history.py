@@ -10,7 +10,7 @@ from typing import Any
 
 from lingwen_paths import ProjectPaths
 
-from infra.project_config import ProjectConfig
+from lingwen_project_config import ProjectConfig
 from infra.studio_registry import StudioProject
 from lingwen_creator.volume.plan import global_outline_path
 

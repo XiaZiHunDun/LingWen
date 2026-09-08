@@ -106,7 +106,7 @@ def write_volume_summary(
     title: str | None = None,
 ) -> Path:
     paths = ProjectPaths.get(project_root)
-    from infra.project_config import ProjectConfig
+    from lingwen_project_config import ProjectConfig
 
     config = ProjectConfig.load(paths)
     book_title = title or config.name

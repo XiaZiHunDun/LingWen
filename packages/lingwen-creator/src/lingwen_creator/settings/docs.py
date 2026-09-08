@@ -8,7 +8,7 @@ from typing import Any
 
 from lingwen_paths import ProjectPaths
 
-from infra.project_config import ProjectConfig
+from lingwen_project_config import ProjectConfig
 from infra.studio_registry import StudioProject
 from lingwen_creator.settings.history import append_settings_snapshot
 from lingwen_creator.shared.revision import CreatorDocConflictError, content_revision

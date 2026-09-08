@@ -65,7 +65,7 @@ def load_project_character_names(paths: ProjectPaths | None = None) -> list[str]
     outline_names = _names_from_outlines(resolved.chapters)
     if outline_names:
         return outline_names
-    from infra.project_config import ProjectConfig
+    from lingwen_project_config import ProjectConfig
 
     cfg = ProjectConfig.load(resolved)
     if cfg.role == "testbed":

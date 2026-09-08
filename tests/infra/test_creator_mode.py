@@ -12,7 +12,7 @@ from lingwen_creator.shared.mode import (
 from lingwen_creator.volume.summary import build_volume_summary, format_volume_summary_markdown
 from lingwen_paths import ProjectPaths
 
-from infra.project_config import ProjectConfig
+from lingwen_project_config import ProjectConfig
 
 
 def test_companion_settings_relaxed():

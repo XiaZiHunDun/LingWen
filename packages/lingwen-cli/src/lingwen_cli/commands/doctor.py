@@ -110,7 +110,7 @@ class DoctorCommand(Command):
 
     def _check_chapters(self) -> bool:
         """Check chapter files"""
-        from infra.project_config import ProjectConfig
+        from lingwen_project_config import ProjectConfig
 
         print("  检查章节文件...")
 
