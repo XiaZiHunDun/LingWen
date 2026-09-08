@@ -28,14 +28,16 @@ try:
 except ImportError:
     from pydantic_core import PydanticKnownError as PydanticCoreError
 
-from lingwen_errors import BaseError, wrap
-from lingwen_errors import ValidationError as InfraValidationError
+from lingwen_errors import BaseError
+from lingwen_errors import (
+    ValidationError as CanonicalValidationError,  # alias to avoid pydantic.ValidationError collision
+)
 
 T = TypeVar("T")
 S = TypeVar("S")
 
 
-class SchemaValidationError(InfraValidationError):
+class SchemaValidationError(CanonicalValidationError):
     """Schema 验证错误"""
 
     __error_name__ = "SchemaValidationError"
