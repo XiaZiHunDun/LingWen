@@ -342,12 +342,13 @@ class NotImplementedError(BaseError):
     __error_tags__ = ["not_implemented"]
 
 
-# PHASE-COMPAT: SnapshotError was used by infra.world_model.character_snapshot.
-# The class was removed during Phase 13.X consolidation but downstream code
-# still inherits from it. Restore here so test_character_snapshot.py
-# can collect.
 class SnapshotError(BaseError):
-    """角色快照操作失败时抛出（如空 chapter_range）。"""
+    """角色快照操作失败时抛出（如空 chapter_range）。
+
+    Canonical home (Phase 35+); consumed by packages/lingwen-world-model:
+    - character_snapshot.CharacterSnapshotError
+    - foreshadow_snapshot.ForeshadowSnapshotError
+    """
 
     __error_name__ = "SnapshotError"
     __error_tags__ = ["snapshot"]
