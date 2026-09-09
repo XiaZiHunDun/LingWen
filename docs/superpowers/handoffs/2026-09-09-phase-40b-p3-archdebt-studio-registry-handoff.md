@@ -1,11 +1,11 @@
 # Phase 40b — P3-ARCHDEBT (studio_registry) closure handoff
 
 > **Date**: 2026-09-09
-> **Branch**: `phase-40b-p3-archdebt-studio-registry` (pending ff-merge to master)
+> **Branch**: `phase-40b-p3-archdebt-studio-registry` (fast-forward merged to master; branch removed)
 > **Master HEAD before**: `1c473405` (Phase 40a ff-merge, v39.0)
-> **Master HEAD after**: `(this phase — Phase 40b doc-only commit)`
+> **Master HEAD after**: `37d7854a` (Phase 40a + Phase 40b closure, v39.0)
 > **Prior handoff**: `docs/superpowers/handoffs/2026-09-09-phase-40-p3-archdebt-studio-registry-handoff.md` (Phase 40a, `1c473405`)
-> **Closure commit (this branch HEAD)**: `5ccbe6e9`
+> **Phase 40b closure commits**: `5ccbe6e9` (functional), `af3ef427` (closure docs), `37d7854a` (post-merge doc sync)
 
 ## Summary
 
