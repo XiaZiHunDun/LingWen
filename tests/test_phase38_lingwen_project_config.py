@@ -147,9 +147,13 @@ def test_canonical_symbols_migrated():
     )
 
     # Spot-check 3 representative consumers: 1 apps, 1 intra-infra, 1 tests
+    # NOTE (Phase 40a): infra/studio_registry.py was converted to a 1-line shim
+    # in C3 (re-exports lingwen_studio_registry, not lingwen_project_config).
+    # Swapped to infra/project_characters.py — a real intra-infra consumer of
+    # lingwen_project_config.ProjectConfig (function-body import at line 68).
     representative_files = [
         REPO_ROOT / "apps" / "studio_api" / "routes" / "creator_volume.py",
-        REPO_ROOT / "infra" / "studio_registry.py",
+        REPO_ROOT / "infra" / "project_characters.py",
         REPO_ROOT / "tests" / "infra" / "test_project_config.py",
     ]
     for f in representative_files:
