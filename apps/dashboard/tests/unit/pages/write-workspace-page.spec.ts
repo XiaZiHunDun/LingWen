@@ -38,6 +38,7 @@ const setup = vi.hoisted(() => ({
   persist: {
     scheduleSave: vi.fn(),
     flushNow: vi.fn().mockResolvedValue(undefined),
+    cancel: vi.fn(),
     lastMtime: { value: null as number | null },
   },
   writeGoal: {
@@ -442,7 +443,7 @@ describe('WriteWorkspacePage (Task W-1)', () => {
     expect(setup.api.loadChapter).toHaveBeenCalled()
   })
 
-  test('handleDiscard closes dialog (no-op for now)', async () => {
+  test('handleDiscard clears local edits and closes dialog', async () => {
     setup.api.loadChapter.mockResolvedValue({
       frontmatter: { chapter: 1, title: 't', scenes: [], total_words: 0 },
       body: '',
@@ -451,19 +452,29 @@ describe('WriteWorkspacePage (Task W-1)', () => {
     const wrapper = mountPage()
     await flushPromises()
     const vm = wrapper.vm as unknown as { handleDiscard: () => void }
-    expect(() => vm.handleDiscard()).not.toThrow()
+    vm.handleDiscard()
+    expect(setup.store.markSaved).toHaveBeenCalledTimes(1)
+    expect(setup.persist.cancel).toHaveBeenCalledTimes(1)
   })
 
-  test('handleExportLocal closes dialog (no-op for now)', async () => {
+  test('handleExportLocal builds ch{N}.local.md and triggers download', async () => {
     setup.api.loadChapter.mockResolvedValue({
-      frontmatter: { chapter: 1, title: 't', scenes: [], total_words: 0 },
+      frontmatter: { chapter: 7, title: '试炼', scenes: [], total_words: 0 },
       body: '',
       mtime: 1,
     })
+    const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock')
+    const revokeObjectURLSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
     const wrapper = mountPage()
     await flushPromises()
     const vm = wrapper.vm as unknown as { handleExportLocal: () => Promise<void> }
-    await expect(vm.handleExportLocal()).resolves.not.toThrow()
+    await vm.handleExportLocal()
+    expect(createObjectURLSpy).toHaveBeenCalledTimes(1)
+    const blob = createObjectURLSpy.mock.calls[0][0] as Blob
+    expect(blob.type).toBe('text/markdown;charset=utf-8')
+    expect(revokeObjectURLSpy).toHaveBeenCalledWith('blob:mock')
+    createObjectURLSpy.mockRestore()
+    revokeObjectURLSpy.mockRestore()
   })
 
   test('handleJumpToFix runs quality check and updates annotations', async () => {

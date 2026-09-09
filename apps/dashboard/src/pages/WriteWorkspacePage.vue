@@ -79,6 +79,11 @@ import { useWriteWorkspaceStore } from '@/stores/useWriteWorkspaceStore'
 import { useWriteWorkspaceApi } from '@/composables/useWriteWorkspaceApi'
 import { useWriteWorkspacePersistence } from '@/composables/useWriteWorkspacePersistence'
 import { useWriteGoal } from '@/composables/useWriteGoal'
+import {
+  buildLocalMarkdown,
+  clearLocalEdits,
+  triggerDownload,
+} from '@/utils/writeWorkspace/conflictResolution.js'
 import { useTypewriterMode } from '@/composables/useTypewriterMode'
 import { useWriteQualityCheck } from '@/composables/useWriteQualityCheck'
 import WriteWorkspaceHeader from '@/components/writeWorkspace/WriteWorkspaceHeader.vue'
@@ -176,11 +181,20 @@ async function handleRebase() {
 
 function handleDiscard() {
   conflictDialogOpen.value = false
-  // TODO: also clear dirty state and any pending saves.
+  clearLocalEdits({ store, persist })
 }
 
 async function handleExportLocal() {
-  // TODO: write body to ch{N}.local.md via download anchor.
+  triggerDownload(
+    `ch${store.chapterId ?? 'unknown'}.local.md`,
+    buildLocalMarkdown({
+      chapter: store.chapterId,
+      title: currentTitle.value,
+      body: editorContent.value,
+      scenes: store.outline,
+      lastModifiedAt: new Date().toISOString(),
+    }),
+  )
   conflictDialogOpen.value = false
 }
 
