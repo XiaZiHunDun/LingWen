@@ -26,6 +26,7 @@ members = [
     "lingwen-shared",
     "lingwen-storage",
     "lingwen-studio-api",
+    "lingwen-studio-registry",
     "lingwen-world-model",
 ]
 
@@ -1036,6 +1037,23 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.27" },
 ]
 provides-extras = ["dev"]
+
+[[package]]
+name = "lingwen-studio-registry"
+version = "0.1.0"
+source = { editable = "packages/lingwen-studio-registry" }
+dependencies = [
+    { name = "lingwen-core" },
+    { name = "lingwen-paths" },
+    { name = "lingwen-project-config" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "lingwen-core", editable = "packages/lingwen-core" },
+    { name = "lingwen-paths", editable = "packages/lingwen-paths" },
+    { name = "lingwen-project-config", editable = "packages/lingwen-project-config" },
+]
 
 [[package]]
 name = "lingwen-world-model"

@@ -1,0 +1,17 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-studio-registry"
+version = "0.1.0"
+description = "LingWen canonical studio_registry module (Phase 40a P3-ARCHDEBT studio_registry)"
+requires-python = ">=3.11"
+dependencies = [
+    "lingwen-paths",
+    "lingwen-project-config",
+    "lingwen-core",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_studio_registry"]
