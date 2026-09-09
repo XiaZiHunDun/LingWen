@@ -7,9 +7,9 @@ from lingwen_creator.content.dashboard import creator_chapter_preview, save_crea
 from lingwen_creator.content.logic_check import run_creator_logic_check
 from lingwen_creator.content.ui_profile import resolve_creator_ui_profile
 from lingwen_paths import ProjectPaths
+from lingwen_studio_registry import StudioProject
 
 from infra.project_init import init_minimal_short_project
-from infra.studio_registry import StudioProject
 
 
 @pytest.fixture

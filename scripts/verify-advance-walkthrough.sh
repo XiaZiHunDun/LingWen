@@ -41,7 +41,7 @@ from infra.creator_volume_plan import (
     volume_plan_payload,
 )
 from infra.paths import ProjectPaths
-from infra.studio_registry import StudioProject
+from lingwen_studio_registry import StudioProject
 
 ProjectPaths.reset()
 root = Path("${PROJECT}")

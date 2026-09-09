@@ -35,7 +35,7 @@ from pathlib import Path
 from infra.creator_dashboard import creator_overview
 from infra.creator_volume_templates import build_volume_template, list_volume_templates
 from infra.paths import ProjectPaths
-from infra.studio_registry import StudioProject
+from lingwen_studio_registry import StudioProject
 
 ProjectPaths.reset()
 root = Path("${PROJECT}")

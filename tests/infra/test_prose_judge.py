@@ -130,7 +130,7 @@ class TestProseJudgeOffline:
 class TestProseJudgeProjectIntegration:
     @pytest.mark.asyncio
     async def test_run_and_save_jinghai(self, tmp_path: Path, monkeypatch) -> None:
-        import infra.studio_registry as registry
+        import lingwen_studio_registry as registry
 
         factory = Path(__file__).resolve().parents[1]
         project = factory / "projects" / "jinghai-rizhi"

@@ -81,7 +81,7 @@ def test_merge_preferences_per_doc_snapshots(factory_tmp):
 def test_merge_preferences_global_fallback(factory_tmp, monkeypatch):
     import lingwen_creator.settings.merge_preferences as cmp
 
-    monkeypatch.setattr("infra.studio_registry.factory_root", lambda: factory_tmp)
+    monkeypatch.setattr("lingwen_studio_registry.factory_root", lambda: factory_tmp)
     monkeypatch.setattr(
         cmp,
         "_global_prefs_path",
@@ -124,7 +124,7 @@ def test_merge_preferences_global_fallback(factory_tmp, monkeypatch):
 def test_merge_preferences_export_import(factory_tmp, monkeypatch):
     import lingwen_creator.settings.merge_preferences as cmp
 
-    monkeypatch.setattr("infra.studio_registry.factory_root", lambda: factory_tmp)
+    monkeypatch.setattr("lingwen_studio_registry.factory_root", lambda: factory_tmp)
     monkeypatch.setattr(
         cmp,
         "_global_prefs_path",

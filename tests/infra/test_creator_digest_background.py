@@ -34,7 +34,7 @@ def test_tick_digest_for_active_project(factory_tmp, monkeypatch) -> None:
     root = result.root
     mock_project = MagicMock()
     mock_project.root = root
-    monkeypatch.setattr("infra.studio_registry.active_project", lambda: mock_project)
+    monkeypatch.setattr("lingwen_studio_registry.active_project", lambda: mock_project)
     record_mentions_from_notes(
         root,
         step_notes={"volume": "先锁卷纲 @batch"},

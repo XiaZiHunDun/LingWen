@@ -35,7 +35,7 @@ from infra.creator_onboarding import onboarding_wizard_payload
 from infra.creator_settings_docs import save_creator_settings_docs, creator_settings_docs_payload
 from infra.creator_volume_templates import list_volume_templates, save_custom_volume_template
 from infra.paths import ProjectPaths
-from infra.studio_registry import StudioProject
+from lingwen_studio_registry import StudioProject
 
 ProjectPaths.reset()
 root = Path("${PROJECT}")

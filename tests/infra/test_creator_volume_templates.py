@@ -151,8 +151,9 @@ def test_export_import_custom_templates(factory_tmp):
 
 
 def test_sync_templates_from_other_project(factory_tmp, monkeypatch):
+    from lingwen_studio_registry import StudioProject
+
     from infra.project_init import init_minimal_short_project
-    from infra.studio_registry import StudioProject
 
     source = init_minimal_short_project(
         slug="tpl-source",
@@ -173,7 +174,7 @@ def test_sync_templates_from_other_project(factory_tmp, monkeypatch):
     ]
     save_custom_volume_template(source.root, name="共享结构", volumes=volumes, max_chapter=12)
     monkeypatch.setattr(
-        "infra.studio_registry.list_projects",
+        "lingwen_studio_registry.list_projects",
         lambda: [
             StudioProject(
                 slug="tpl-source",
@@ -209,7 +210,7 @@ def test_factory_template_publish_pull(factory_tmp, monkeypatch):
 
     from infra.project_init import init_minimal_short_project
 
-    monkeypatch.setattr("infra.studio_registry.factory_root", lambda: factory_tmp)
+    monkeypatch.setattr("lingwen_studio_registry.factory_root", lambda: factory_tmp)
     monkeypatch.setattr(
         cvt,
         "_factory_templates_path",

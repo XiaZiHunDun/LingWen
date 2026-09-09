@@ -5,8 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from lingwen_creator.export.publish import list_creator_publish_history, submit_creator_publish
-
-from infra.studio_registry import StudioProject
+from lingwen_studio_registry import StudioProject
 
 
 def test_submit_and_list_publish(tmp_path: Path) -> None:

@@ -15,9 +15,9 @@ def factory_root() -> Path:
 
     Resolution order (Phase 40a C1.5 fixup):
     1. ``LINGWEN_PROJECT_ROOT`` env var (matches ``lingwen_paths.resolve_project_root`` pattern)
-    2. Walk up from this file: 4 levels (Phase 40a moved ``studio_registry.py`` from ``infra/``
-       to ``packages/lingwen-studio-registry/src/lingwen_studio_registry/discovery.py``).
-       Original ``infra/studio_registry.py:30`` used ``Path(__file__).parent.parent`` (2 levels).
+    2. Walk up from this file: 4 levels (the package lives at
+       ``packages/lingwen-studio-registry/src/lingwen_studio_registry/discovery.py``).
+       The previous two-level formula was valid before the package relocation.
     """
     env = os.environ.get("LINGWEN_PROJECT_ROOT", "").strip()
     if env:

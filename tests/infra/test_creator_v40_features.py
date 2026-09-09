@@ -8,9 +8,9 @@ from lingwen_creator.content.ui_profile import resolve_creator_ui_profile
 from lingwen_creator.onboarding.progress import dismiss_wizard_panel, load_onboarding_progress
 from lingwen_creator.volume.summary import write_volume_summary
 from lingwen_paths import ProjectPaths
+from lingwen_studio_registry import StudioProject
 
 from infra.project_init import init_minimal_short_project
-from infra.studio_registry import StudioProject
 
 
 @pytest.fixture

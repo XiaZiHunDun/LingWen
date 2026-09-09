@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from lingwen_creator.content.dashboard import creator_overview
 from lingwen_paths import ProjectPaths
-
-from infra.studio_registry import get_project_by_slug
+from lingwen_studio_registry import get_project_by_slug
 
 
 def test_creator_overview_anye_xinbiao():

@@ -45,7 +45,7 @@ from infra.creator_dashboard import creator_overview
 from infra.creator_settings_docs import creator_settings_docs_payload
 from infra.creator_volume_plan import save_volume_plan, volume_plan_payload, merge_volume_range
 from infra.paths import ProjectPaths
-from infra.studio_registry import StudioProject
+from lingwen_studio_registry import StudioProject
 
 ProjectPaths.reset()
 root = Path("${PROJECT}")

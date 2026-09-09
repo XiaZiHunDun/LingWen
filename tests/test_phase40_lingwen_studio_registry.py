@@ -1,17 +1,16 @@
-"""Phase 40a P3-ARCHDEBT (studio_registry) regression guards.
+"""Phase 40b P3-ARCHDEBT (studio_registry) regression guards.
 
 Verifies the canonical migration of `infra.studio_registry` → `packages/lingwen-studio-registry/`:
 - Package importable + 18 public symbols in __all__
 - 5-sub-module structure (models + discovery + state + summary + reports)
-- Source file converted to thin shim (infra.studio_registry still works)
+- Legacy shim deleted after all test consumers migrated
+- `infra/studio/__init__.py` no longer re-exports the deleted shim
 - New package is canonical (workspace deps, NOT-LEAF — 3 deps)
 - I055 invariant present in .lingwen/architecture.yml
-- 5-pattern audit clean (no production consumer still references infra.studio_registry)
+- Production and test audits contain no legacy registry path references
 
-Phase 40b (planned, post-40a) will:
-- Migrate 24 remaining `tests/`-root references to `lingwen_studio_registry`
-- Delete the `infra/studio_registry.py` shim
-- Add ~33 test-side migration regression guards
+Phase 40a migrated all production consumers. Phase 40b completes the migration by
+moving the remaining test consumers and deleting the compatibility shim.
 
 Phase 40a commits: C0 (6ba28672) / C1 (76d3ed03) / C1.5 (b937a4ad) /
                   C2a (74c268a4) / C2b (53562912) / C3 (4d26cc1b) / C4 (1c473405)
@@ -19,7 +18,6 @@ Phase 40a commits: C0 (6ba28672) / C1 (76d3ed03) / C1.5 (b937a4ad) /
 from __future__ import annotations
 
 import dataclasses
-import subprocess
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -81,67 +79,58 @@ def test_lingwen_studio_registry_5_sub_modules() -> None:
         assert hasattr(module, "__file__"), f"{module.__name__} has no __file__"
 
 
-# === Test 5: infra/studio_registry.py exists as SHIM (NOT deleted in Phase 40a) ===
-def test_infra_studio_registry_exists_as_shim() -> None:
+# === Test 5: infra/studio_registry.py shim deleted in Phase 40b ===
+def test_infra_studio_registry_shim_deleted() -> None:
     shim_path = REPO_ROOT / "infra" / "studio_registry.py"
-    assert shim_path.exists(), (
-        "infra/studio_registry.py should exist as a shim in Phase 40a "
-        "(deleted in Phase 40b after tests/ migration)"
+    assert not shim_path.exists(), (
+        "infra/studio_registry.py must be deleted after the tests/ migration"
     )
-    # Shim should be small (~20 lines)
-    line_count = sum(1 for _ in shim_path.read_text(encoding="utf-8").splitlines())
-    assert line_count < 50, f"Shim has {line_count} lines; expected <50"
 
 
-# === Test 6: infra/studio/__init__.py uses lingwen_studio_registry ===
-def test_infra_studio_init_uses_lingwen_studio_registry() -> None:
+# === Test 6: infra/studio/__init__.py has no registry wildcard ===
+def test_infra_studio_init_has_no_registry_wildcard() -> None:
     init_path = REPO_ROOT / "infra" / "studio" / "__init__.py"
     content = init_path.read_text(encoding="utf-8")
-    assert "from lingwen_studio_registry import *" in content, (
-        "infra/studio/__init__.py should re-export from lingwen_studio_registry"
+    assert "from lingwen_studio_registry import *" not in content, (
+        "infra/studio/__init__.py must not re-export the deleted registry shim"
     )
     assert "from infra.studio_registry" not in content, (
-        "infra/studio/__init__.py should no longer reference infra.studio_registry"
+        "infra/studio/__init__.py must not reference infra.studio_registry"
     )
 
 
-# === Test 7: production code has no consumer imports of infra.studio_registry ===
-def test_no_production_consumer_imports_infra_studio_registry() -> None:
-    """No `from infra.studio_registry import` or `import infra.studio_registry`
-    in production code (infra/, apps/, packages/).
-
-    Excludes:
-    - infra/studio_registry.py itself (the shim — C3)
-    - infra/studio/__init__.py (the wildcard re-exporter)
-    - tests/ root (Phase 40b will migrate; should still have refs until then)
-    """
-    result = subprocess.run(
-        [
-            "grep",
-            "-rln",
-            "--include=*.py",
-            "from infra\\.studio_registry\\|import infra\\.studio_registry",
-            "infra/",
-            "apps/",
-            "packages/",
-        ],
-        cwd=str(REPO_ROOT),
-        capture_output=True,
-        text=True,
-    )
-    matches = [line for line in result.stdout.splitlines() if line.strip()]
-    # Filter allowed exceptions (the shim itself + the wildcard re-exporter)
-    ALLOWED = {
-        "infra/studio_registry.py",  # the shim (C3)
-        "infra/studio/__init__.py",  # the wildcard re-exporter
-    }
-    production_refs = [m for m in matches if m not in ALLOWED]
-    assert not production_refs, (
-        f"Production code still references infra.studio_registry: {production_refs}"
+# === Test 7: production code has no legacy registry path ===
+def test_no_production_references_infra_studio_registry() -> None:
+    """No legacy dotted or filesystem registry path remains in production code."""
+    production_refs: list[str] = []
+    for directory_name in ["infra", "apps", "packages"]:
+        directory = REPO_ROOT / directory_name
+        for path in sorted(directory.rglob("*.py")):
+            content = path.read_text(encoding="utf-8")
+            if "infra.studio_registry" in content or "infra/studio_registry" in content:
+                production_refs.append(str(path.relative_to(REPO_ROOT)))
+    assert production_refs == [], (
+        f"Production code still references the legacy registry path: {production_refs}"
     )
 
 
-# === Test 8: workspace member declares lingwen-studio-registry ===
+# === Test 8: test code has no legacy registry path ===
+def test_no_test_references_infra_studio_registry() -> None:
+    """All test consumers use the canonical lingwen_studio_registry package."""
+    guard_path = Path(__file__).resolve()
+    test_refs: list[str] = []
+    for directory_name in ["tests", "apps", "packages"]:
+        directory = REPO_ROOT / directory_name
+        for path in sorted(directory.rglob("*.py")):
+            if path == guard_path or "tests" not in path.parts:
+                continue
+            content = path.read_text(encoding="utf-8")
+            if "infra.studio_registry" in content or "infra/studio_registry" in content:
+                test_refs.append(str(path.relative_to(REPO_ROOT)))
+    assert test_refs == [], f"Tests still reference the legacy registry path: {test_refs}"
+
+
+# === Test 9: workspace member declares lingwen-studio-registry ===
 def test_workspace_member_declares_lingwen_studio_registry() -> None:
     pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
     assert "packages/lingwen-studio-registry" in pyproject, (
@@ -152,7 +141,7 @@ def test_workspace_member_declares_lingwen_studio_registry() -> None:
     )
 
 
-# === Test 9: pyproject declares 3 workspace deps (NOT-LEAF package) ===
+# === Test 10: pyproject declares 3 workspace deps (NOT-LEAF package) ===
 def test_lingwen_studio_registry_pyproject_dependencies() -> None:
     pkg_pyproject = (
         REPO_ROOT / "packages" / "lingwen-studio-registry" / "pyproject.toml"
@@ -164,7 +153,7 @@ def test_lingwen_studio_registry_pyproject_dependencies() -> None:
         )
 
 
-# === Test 10: invariant I055 in architecture.yml ===
+# === Test 11: invariant I055 in architecture.yml ===
 def test_inv_55_in_architecture_yml() -> None:
     arch_yml = (REPO_ROOT / ".lingwen" / "architecture.yml").read_text(encoding="utf-8")
     assert "I055" in arch_yml, ".lingwen/architecture.yml should declare invariant I055"
@@ -176,7 +165,7 @@ def test_inv_55_in_architecture_yml() -> None:
     )
 
 
-# === Test 11: factory_root() returns correct path (C1.5 fixup validation) ===
+# === Test 12: factory_root() returns correct path (C1.5 fixup validation) ===
 def test_factory_root_returns_lingwen_root() -> None:
     from lingwen_studio_registry import factory_root
     fr = factory_root()

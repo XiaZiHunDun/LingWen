@@ -9,8 +9,7 @@ from lingwen_creator.export.publish_adapters import (
     get_publish_adapter,
     list_publish_platforms,
 )
-
-from infra.studio_registry import StudioProject
+from lingwen_studio_registry import StudioProject
 
 
 def test_list_publish_platforms() -> None:

@@ -10,7 +10,8 @@ from fastapi.testclient import TestClient
 
 @pytest.fixture
 def client(tmp_path: Path, monkeypatch) -> TestClient:
-    import infra.studio_registry as registry
+    import lingwen_studio_registry as registry
+
     from apps.studio_api.app import create_app
 
     state = tmp_path / "studio_active.json"
@@ -1130,8 +1131,7 @@ class TestCreatorEndpoints:
 
     def test_creator_v37_endpoints(self, client: TestClient) -> None:
         from lingwen_creator.onboarding.digest_schedule import _save_dead_letter_items
-
-        from infra.studio_registry import active_project
+        from lingwen_studio_registry import active_project
 
         drift = client.get(
             "/api/creator/volume-plan/templates/approvals/missing/snapshot-drift",

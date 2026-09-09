@@ -10,7 +10,8 @@ from fastapi.testclient import TestClient
 
 @pytest.fixture
 def client(tmp_path: Path, monkeypatch) -> TestClient:
-    import infra.studio_registry as registry
+    import lingwen_studio_registry as registry
+
     from apps.studio_api.app import create_app
 
     state = tmp_path / "studio_active.json"

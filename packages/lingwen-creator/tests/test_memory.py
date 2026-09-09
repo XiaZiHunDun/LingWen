@@ -66,8 +66,8 @@ def test_legacy_shims_deleted() -> None:
 def test_intra_package_imports_use_new_path() -> None:
     """No `from infra.creator_*` left in memory/*.py (per v16.2.4 §5.1 lesson 1).
 
-    infra.studio_registry / infra.memory_service are NOT creator subdomain modules
-    and legitimately stay on the infra path.
+    lingwen_studio_registry / infra.memory_service are platform modules, not
+    creator subdomain modules, and the registry now uses its canonical package path.
     """
     pkg_dir = Path(__file__).resolve().parents[1] / "src" / "lingwen_creator" / "memory"
     offenders: list[str] = []

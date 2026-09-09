@@ -100,7 +100,7 @@ def test_export_import_merge_preset_packages(factory_tmp) -> None:
 def test_factory_merge_preset_publish_and_pull(factory_tmp, monkeypatch) -> None:
     import lingwen_creator.settings.merge_preferences as cmp
 
-    monkeypatch.setattr("infra.studio_registry.factory_root", lambda: factory_tmp)
+    monkeypatch.setattr("lingwen_studio_registry.factory_root", lambda: factory_tmp)
     monkeypatch.setattr(
         cmp,
         "_factory_preset_packages_path",

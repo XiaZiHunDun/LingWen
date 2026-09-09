@@ -10,9 +10,9 @@ from lingwen_creator.volume.plan import save_volume_plan
 from lingwen_creator.volume.pulse import build_volume_pulse
 from lingwen_creator.volume.summary import write_volume_summary
 from lingwen_paths import ProjectPaths
+from lingwen_studio_registry import StudioProject
 
 from infra.project_init import init_minimal_short_project
-from infra.studio_registry import StudioProject
 
 
 @pytest.fixture

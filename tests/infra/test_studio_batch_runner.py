@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from lingwen_paths import ProjectPaths
+from lingwen_studio_registry import activate_project, get_project_by_slug
 
 from infra.studio_batch_runner import (
     BatchAlreadyRunningError,
@@ -16,7 +17,6 @@ from infra.studio_batch_runner import (
     get_batch_job,
     start_batch_job,
 )
-from infra.studio_registry import activate_project, get_project_by_slug
 
 
 @pytest.fixture(autouse=True)

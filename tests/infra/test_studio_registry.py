@@ -1,4 +1,4 @@
-"""Tests for infra/studio_registry.py (Phase 10.04)."""
+"""Tests for the lingwen_studio_registry package (Phase 10.04)."""
 
 from __future__ import annotations
 
@@ -7,8 +7,7 @@ from pathlib import Path
 
 import pytest
 from lingwen_paths import ProjectPaths
-
-from infra.studio_registry import (
+from lingwen_studio_registry import (
     activate_project,
     active_state_path,
     get_project_by_slug,
@@ -35,7 +34,7 @@ def test_list_projects_includes_root_and_anye_xinbiao():
 
 def test_activate_project_persists_and_sets_env(monkeypatch, tmp_path: Path):
     state = tmp_path / "studio_active.json"
-    monkeypatch.setattr("infra.studio_registry.active_state_path", lambda: state)
+    monkeypatch.setattr("lingwen_studio_registry.state.active_state_path", lambda: state)
 
     project = activate_project("anye-xinbiao")
     assert project.slug == "anye-xinbiao"
