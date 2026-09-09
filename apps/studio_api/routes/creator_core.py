@@ -55,7 +55,7 @@ from apps.studio_api.routes.ctx import RoutesContext
 
 
 def _require_project(ctx: RoutesContext):
-    from infra.studio_registry import active_project
+    from lingwen_studio_registry import active_project
 
     project = active_project()
     if project is None:

@@ -8,7 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
-from infra.studio_registry import StudioProject
+from lingwen_studio_registry import StudioProject
 
 
 @dataclass(frozen=True)

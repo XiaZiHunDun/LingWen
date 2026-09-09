@@ -25,7 +25,8 @@ def digest_poll_interval_sec() -> int:
 
 def tick_digest_for_active_project() -> dict[str, Any]:
     """Run one digest dispatch tick for the active studio project."""
-    from infra.studio_registry import active_project
+    from lingwen_studio_registry import active_project
+
     from lingwen_creator.onboarding.digest_schedule import (
         dispatch_scheduled_digest,
         load_digest_schedule,

@@ -379,7 +379,7 @@ def _custom_templates_path(project_root: Path | str) -> Path:
 
 
 def _factory_templates_path() -> Path:
-    from infra.studio_registry import factory_root
+    from lingwen_studio_registry import factory_root
 
     return factory_root() / "infra" / ".state" / "factory_volume_templates.json"
 
@@ -732,7 +732,7 @@ def import_custom_volume_templates(
 
 def list_template_sync_sources(*, exclude_slug: str | None = None) -> list[dict[str, Any]]:
     """List other factory projects that have custom volume templates."""
-    from infra.studio_registry import list_projects
+    from lingwen_studio_registry import list_projects
 
     rows: list[dict[str, Any]] = []
     for project in list_projects():
@@ -758,7 +758,7 @@ def sync_custom_volume_templates_from_projects(
     exclude_slug: str | None = None,
 ) -> dict[str, Any]:
     """Import custom templates from other projects into the active project."""
-    from infra.studio_registry import list_projects
+    from lingwen_studio_registry import list_projects
 
     if not source_slugs:
         raise ValueError("source_slugs required")

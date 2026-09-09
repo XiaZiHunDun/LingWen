@@ -11,7 +11,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from infra.studio_registry import StudioProject
+from lingwen_studio_registry import StudioProject
+
 from lingwen_creator.export.publish_adapters import (
     get_publish_adapter,
     list_publish_platforms,

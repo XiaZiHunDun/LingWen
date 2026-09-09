@@ -16,8 +16,8 @@ from typing import Any
 
 from lingwen_paths import ProjectPaths
 from lingwen_project_config import ProjectConfig
+from lingwen_studio_registry import StudioProject, quality_report_summary
 
-from infra.studio_registry import StudioProject, quality_report_summary
 from lingwen_creator.content.ui_profile import (
     filter_deviations_by_min_severity,
     ui_profile_from_project_config,

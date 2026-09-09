@@ -6,7 +6,8 @@ import re
 from pathlib import Path
 from typing import Any
 
-from infra.studio_registry import StudioProject
+from lingwen_studio_registry import StudioProject
+
 from lingwen_creator.content.dashboard import creator_overview
 from lingwen_creator.settings.docs import creator_settings_docs_payload
 

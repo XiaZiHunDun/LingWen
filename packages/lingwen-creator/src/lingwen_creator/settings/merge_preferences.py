@@ -26,7 +26,7 @@ def _prefs_path(project_root: Path | str) -> Path:
 
 
 def _global_prefs_path() -> Path:
-    from infra.studio_registry import factory_root
+    from lingwen_studio_registry import factory_root
 
     return factory_root() / "infra" / ".state" / "creator_merge_preferences_global.json"
 
@@ -316,7 +316,7 @@ _MAX_FACTORY_PRESET_PACKAGES = 30
 
 
 def _factory_preset_packages_path() -> Path:
-    from infra.studio_registry import factory_root
+    from lingwen_studio_registry import factory_root
 
     return factory_root() / "infra" / ".state" / "factory_merge_preset_packages.json"
 

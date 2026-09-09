@@ -10,7 +10,8 @@ import uuid
 import zipfile
 from io import BytesIO
 
-from infra.studio_registry import StudioProject
+from lingwen_studio_registry import StudioProject
+
 from lingwen_creator.export.common import (
     export_metadata,
     load_export_chapters,

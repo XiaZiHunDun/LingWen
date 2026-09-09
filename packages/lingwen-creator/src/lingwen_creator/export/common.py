@@ -13,8 +13,8 @@ from typing import Any
 
 from lingwen_paths import ProjectPaths
 from lingwen_project_config import ProjectConfig
+from lingwen_studio_registry import StudioProject
 
-from infra.studio_registry import StudioProject
 from lingwen_creator.content.dashboard import creator_chapter_preview
 from lingwen_creator.settings.docs import creator_settings_docs_payload
 

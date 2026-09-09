@@ -5,7 +5,8 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from infra.studio_registry import StudioProject
+from lingwen_studio_registry import StudioProject
+
 from lingwen_creator.content.preferences import load_creator_preferences
 from lingwen_creator.memory.assets import creator_memory_assets_payload
 

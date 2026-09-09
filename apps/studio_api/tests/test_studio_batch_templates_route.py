@@ -43,7 +43,7 @@ def _template(template_id: str = "t1", **overrides) -> BatchTemplate:
 
 def test_create_template_returns_201(client):
     with (
-        patch("infra.studio_registry.get_project_by_slug", return_value=object()),
+        patch("lingwen_studio_registry.get_project_by_slug", return_value=object()),
         patch("infra.studio_batch_templates.create_batch_template", return_value=_template()),
     ):
         resp = client.post(
@@ -67,7 +67,7 @@ def test_create_template_returns_201(client):
 
 def test_create_template_404_for_unknown_slug(client):
     with (
-        patch("infra.studio_registry.get_project_by_slug", return_value=None),
+        patch("lingwen_studio_registry.get_project_by_slug", return_value=None),
         patch("infra.studio_batch_templates.create_batch_template"),
     ):
         resp = client.post(
@@ -80,7 +80,7 @@ def test_create_template_404_for_unknown_slug(client):
 
 def test_create_template_400_for_unknown_event_type(client):
     with (
-        patch("infra.studio_registry.get_project_by_slug", return_value=object()),
+        patch("lingwen_studio_registry.get_project_by_slug", return_value=object()),
         patch("infra.studio_batch_templates.create_batch_template"),
     ):
         resp = client.post(
@@ -99,7 +99,7 @@ def test_create_template_400_for_unknown_event_type(client):
 
 def test_create_template_400_for_invalid_preset(client):
     with (
-        patch("infra.studio_registry.get_project_by_slug", return_value=object()),
+        patch("lingwen_studio_registry.get_project_by_slug", return_value=object()),
         patch(
             "infra.studio_batch_templates.create_batch_template",
             side_effect=ValueError("end_chapter must be >= start_chapter"),
@@ -116,7 +116,7 @@ def test_create_template_400_for_invalid_preset(client):
 def test_create_template_404_when_slug_missing_and_no_active_project(client):
     # No active project; _require_project raises 404 rather than crashing.
     with (
-        patch("infra.studio_registry.active_project", return_value=None),
+        patch("lingwen_studio_registry.active_project", return_value=None),
         patch("infra.studio_batch_templates.create_batch_template"),
     ):
         resp = client.post(

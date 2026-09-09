@@ -5,7 +5,7 @@ Phase 15.0 T1.4: /api/studio/* routes.
 - studio quality + production endpoints (lines 3488-3676)
 
 Most routes share a pattern: lookup active project, 404 if None, then delegate to
-infra.studio_registry / infra.studio_batch_runner. We declare a local helper
+lingwen_studio_registry / infra.studio_batch_runner. We declare a local helper
 to dedupe the project lookup boilerplate.
 """
 
@@ -51,7 +51,7 @@ from apps.studio_api.routes.ctx import RoutesContext
 
 def _require_project(ctx: RoutesContext):
     """Look up the active studio project or raise 404. Used by most studio routes."""
-    from infra.studio_registry import active_project
+    from lingwen_studio_registry import active_project
 
     project = active_project()
     if project is None:
@@ -108,7 +108,7 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.get("/api/studio/projects", response_model=StudioProjectsResponse)
     def studio_list_projects() -> StudioProjectsResponse:
-        from infra.studio_registry import active_project, list_projects
+        from lingwen_studio_registry import active_project, list_projects
 
         projects = list_projects()
         active = active_project()
@@ -128,7 +128,7 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.get("/api/studio/active", response_model=StudioActiveResponse)
     def studio_get_active() -> StudioActiveResponse:
-        from infra.studio_registry import active_project
+        from lingwen_studio_registry import active_project
 
         project = active_project()
         if project is None:
@@ -142,7 +142,7 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.put("/api/studio/active", response_model=StudioActiveResponse)
     def studio_set_active(req: StudioSetActiveRequest) -> StudioActiveResponse:
-        from infra.studio_registry import activate_project, get_project_by_slug
+        from lingwen_studio_registry import activate_project, get_project_by_slug
 
         if get_project_by_slug(req.slug) is None:
             raise HTTPException(404, f"unknown project slug: {req.slug!r}")
@@ -159,21 +159,21 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.get("/api/studio/summary", response_model=StudioSummaryResponse)
     def studio_project_summary() -> StudioSummaryResponse:
-        from infra.studio_registry import project_summary
+        from lingwen_studio_registry import project_summary
 
         project = _require_project(ctx)
         return StudioSummaryResponse(**project_summary(project))
 
     @app.get("/api/studio/quality", response_model=StudioQualityResponse)
     def studio_quality_dashboard() -> StudioQualityResponse:
-        from infra.studio_registry import quality_summary
+        from lingwen_studio_registry import quality_summary
 
         project = _require_project(ctx)
         return StudioQualityResponse(**quality_summary(project))
 
     @app.get("/api/studio/quality-report", response_model=StudioQualityReportResponse)
     def studio_quality_report() -> StudioQualityReportResponse:
-        from infra.studio_registry import quality_report_summary
+        from lingwen_studio_registry import quality_report_summary
 
         project = _require_project(ctx)
         data = quality_report_summary(project)
@@ -181,7 +181,7 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.get("/api/studio/prose-diff", response_model=StudioProseDiffResponse)
     def studio_prose_diff() -> StudioProseDiffResponse:
-        from infra.studio_registry import prose_diff_summary
+        from lingwen_studio_registry import prose_diff_summary
 
         project = _require_project(ctx)
         data = prose_diff_summary(project)
@@ -206,7 +206,7 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.get("/api/studio/prose-judge", response_model=StudioProseJudgeResponse)
     def studio_prose_judge() -> StudioProseJudgeResponse:
-        from infra.studio_registry import prose_judge_summary
+        from lingwen_studio_registry import prose_judge_summary
 
         project = _require_project(ctx)
         data = prose_judge_summary(project)
@@ -254,7 +254,7 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
         req: StudioPreflightRequest,
         budget_usd: float = Query(default=0.15, ge=0, le=100),
     ) -> StudioPreflightResponse:
-        from infra.studio_registry import batch_command, production_preflight
+        from lingwen_studio_registry import batch_command, production_preflight
 
         project = _require_project(ctx)
         if req.end_chapter < req.start_chapter:
@@ -516,9 +516,10 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
         req: StudioBatchTemplateCreateRequest,
     ) -> StudioBatchTemplate:
         """Create a saved batch-run preset (Track B batch templates)."""
+        from lingwen_studio_registry import get_project_by_slug
+
         from infra.studio_batch_streamer import KNOWN_EVENT_TYPES
         from infra.studio_batch_templates import create_batch_template
-        from infra.studio_registry import get_project_by_slug
 
         slug = req.slug or _require_project(ctx).slug
         if get_project_by_slug(slug) is None:

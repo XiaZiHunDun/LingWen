@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from lingwen_paths import ProjectPaths
 from lingwen_project_config import ProjectConfig
+from lingwen_studio_registry import StudioProject, quality_report_summary
 
-from infra.studio_registry import StudioProject, quality_report_summary
 from lingwen_creator.volume.plan import load_volume_plan, volume_plan_state_path
 
 _PILLARS_MIN_CHARS = 60
