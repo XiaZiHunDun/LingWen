@@ -40,7 +40,14 @@
             :aria-current="isNavItemActive(item.id) ? 'page' : undefined"
             @click.prevent="onNavClick(item.id)"
           >
-            <span v-if="item.icon" class="nav-icon" aria-hidden="true">{{ item.icon }}</span>
+            <component
+              :is="item.iconComponent"
+              v-if="item.iconComponent"
+              class="nav-icon"
+              :class="{ 'nav-icon--active': isNavItemActive(item.id) }"
+              aria-hidden="true"
+            />
+            <span v-else-if="item.icon" class="nav-icon" aria-hidden="true">{{ item.icon }}</span>
             <span class="nav-label">{{ item.label }}</span>
           </a>
         </div>
@@ -155,6 +162,7 @@ import SidebarWsDisconnectedBanner from './components/SidebarWsDisconnectedBanne
 import SidebarTierBudgetAlerts from './components/SidebarTierBudgetAlerts.vue'
 import ProjectSwitcher from './components/ProjectSwitcher.vue'
 import TextScaleToggle from './components/TextScaleToggle.vue'
+import { SIDEBAR_ICONS } from './components/icons/sidebar/index.js'
 import { resolveNavContextTitle } from './config/dashboardNavTitles.js'
 import { buildVisibleNavGroups, suggestNavFallback } from './config/dashboardNavByMode.js'
 import { isHumanNavItemActive } from './config/humanFirstNav.js'
@@ -244,9 +252,19 @@ const creationMode = computed(() =>
   resolveEffectiveCreationMode(rawCreationMode.value, activeStudioProject.value),
 )
 
+// Nav items come from config (humanFirstNav / dashboardNav) and carry only
+// { id, label, icon? }. Attach the SVG component here, keyed by nav id, so the
+// sidebar renders `iconComponent` and falls back to the emoji `icon` string
+// for any id without a registered SVG.
 const visibleNavGroups = computed(() => buildVisibleNavGroups(creationMode.value, {
   isReviewer: isReviewer ?? false,
-}))
+}).map((group) => ({
+  ...group,
+  items: group.items.map((item) => ({
+    ...item,
+    iconComponent: SIDEBAR_ICONS[item.id],
+  })),
+})))
 
 const isHumanFirstShell = computed(() => {
   if (isReviewer) return false
@@ -601,7 +619,19 @@ function onNavClick(itemId) {
   background: var(--bg-muted);
   border-radius: 8px;
   flex-shrink: 0;
+  vertical-align: middle;
   transition: all var(--transition-normal);
+}
+
+/* SVG variant: inset the glyph so it breathes inside the 24px chip. */
+svg.nav-icon {
+  box-sizing: border-box;
+  padding: 3px;
+}
+
+/* On the active gradient the purple accent layer would vanish — lift it to white. */
+.nav-icon--active {
+  --lingwen-icon-accent: rgba(255, 255, 255, 0.62);
 }
 
 .nav-item:hover .nav-icon {
