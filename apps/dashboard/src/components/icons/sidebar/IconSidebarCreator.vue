@@ -10,7 +10,7 @@ defineProps<{ size?: number | string }>()
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
     role="img"
-    :aria-label="$attrs['aria-label']"
+    :aria-label="($attrs['aria-label'] as string | undefined)"
   >
     <!-- base: pen nib outline (closed shape, no dead subpaths) -->
     <path

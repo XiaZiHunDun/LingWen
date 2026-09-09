@@ -10,7 +10,7 @@ defineProps<{ size?: number | string }>()
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
     role="img"
-    :aria-label="$attrs['aria-label']"
+    :aria-label="($attrs['aria-label'] as string | undefined)"
   >
     <!-- Phosphor-duotone base layer -->
     <path d="M64 56h32v32H64Zm48 0h32v32h-32Zm48 0h32v32h-32ZM64 104h32v32H64Zm48 0h32v32h-32Zm48 0h32v32h-32ZM64 152h32v32H64Zm48 0h32v32h-32Zm48 0h32v32h-32Z" fill="currentColor" />
