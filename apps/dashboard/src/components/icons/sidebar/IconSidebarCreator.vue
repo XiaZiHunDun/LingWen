@@ -12,9 +12,15 @@ defineProps<{ size?: number | string }>()
     role="img"
     :aria-label="$attrs['aria-label']"
   >
-    <!-- Phosphor-duotone base layer -->
-    <path d="M211.31 92.69 163.31 44.69l-104 104v48h48ZM136 70l50 50" fill="currentColor" />
-    <!-- Phosphor-duotone accent layer -->
-    <path d="m186 60 10 10-22 22-10-10ZM64 192l80-80 32 32-80 80Z" fill="var(--lingwen-icon-accent, oklch(70% 0.18 280))" />
+    <!-- base: pen nib outline (closed shape, no dead subpaths) -->
+    <path
+      d="M216 32 96 152v56h56L216 144Zm-96 176h-32v-32"
+      fill="currentColor"
+    />
+    <!-- accent: nib slit + ink drop detail -->
+    <path
+      d="M168 56l32 32-72 72h-32v-32ZM128 144l16 16M120 168l-8 8 16 16 8-8Z"
+      fill="var(--lingwen-icon-accent, oklch(70% 0.18 280))"
+    />
   </svg>
 </template>

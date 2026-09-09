@@ -12,9 +12,15 @@ defineProps<{ size?: number | string }>()
     role="img"
     :aria-label="$attrs['aria-label']"
   >
-    <!-- Phosphor-duotone base layer -->
-    <path d="M64 64h32v32H64Zm96 96h32v32h-32Zm-32-32h32v32h-32Z" fill="currentColor" />
-    <!-- Phosphor-duotone accent layer -->
-    <path d="M80 80h32v32H80Zm96 96h32v32h-32Zm-32-32h32v32h-32Z" fill="var(--lingwen-icon-accent, oklch(70% 0.18 280))" />
+    <!-- base: root node + 2 child nodes + connecting lines (branching tree) -->
+    <path
+      d="M128 32a24 24 0 0 0-24 24 24 24 0 0 0 24 24 24 24 0 0 0 24-24 24 24 0 0 0-24-24ZM56 176a24 24 0 0 0-24 24 24 24 0 0 0 24 24 24 24 0 0 0 24-24 24 24 0 0 0-24-24ZM200 176a24 24 0 0 0-24 24 24 24 0 0 0 24 24 24 24 0 0 0 24-24 24 24 0 0 0-24-24ZM112 80v32h32V80M128 112 56 200M128 112l72 88"
+      fill="currentColor"
+    />
+    <!-- accent: highlight on root node (filled center dot) -->
+    <path
+      d="M128 56a8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8 8 8 0 0 0-8-8Z"
+      fill="var(--lingwen-icon-accent, oklch(70% 0.18 280))"
+    />
   </svg>
 </template>

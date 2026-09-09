@@ -48,15 +48,25 @@ describe('sidebar icons: SIDEBAR_ICONS registry', () => {
 
 describe('sidebar icons: per-SFC rendering', () => {
   for (const [id, Component] of ICON_CASES) {
-    it(`${id} renders svg with viewBox 0 0 256 256`, () => {
+    it(`${id} renders svg with base+accent dual-path Phosphor-duotone structure`, () => {
       const wrapper = mount(Component)
       try {
         const svg = wrapper.find('svg')
         expect(svg.exists()).toBe(true)
         expect(svg.attributes('viewBox')).toBe('0 0 256 256')
-        // SVG must contain at least one drawing element (path/circle/rect/etc.)
-        // Loose enough to allow path/circle/rect; strict enough to catch blank SVGs.
-        expect(wrapper.findAll('path, circle, rect, line, polyline, polygon').length).toBeGreaterThanOrEqual(1)
+
+        const paths = wrapper.findAll('path')
+        expect(paths).toHaveLength(2)
+
+        // base path (first child) uses currentColor
+        expect(paths[0].attributes('fill')).toBe('currentColor')
+
+        // accent path (second child) uses themed CSS var
+        // (Insight is the lone exception: stroked trending arrow, so check stroke too)
+        const accentFill = paths[1].attributes('fill') ?? ''
+        const accentStroke = paths[1].attributes('stroke') ?? ''
+        const usesAccent = accentFill.includes('--lingwen-icon-accent') || accentStroke.includes('--lingwen-icon-accent')
+        expect(usesAccent).toBe(true)
       } finally {
         wrapper.unmount()
       }

@@ -12,9 +12,19 @@ defineProps<{ size?: number | string }>()
     role="img"
     :aria-label="$attrs['aria-label']"
   >
-    <!-- Phosphor-duotone base layer -->
-    <path d="M40 200V40h16v160Zm32 0V72h16v128Zm32 0v-96h16v96Zm32 0v-72h16v72Zm32 0V88h16v112Zm32 0v-72h16v72Z" fill="currentColor" />
-    <!-- Phosphor-duotone accent layer -->
-    <path d="M48 56h160v128H48Z" fill="var(--lingwen-icon-accent, oklch(70% 0.18 280))" opacity="0.3" />
+    <!-- base: vertical bars at increasing heights (chart frame) -->
+    <path
+      d="M40 200V40h16v160Zm32 0V72h16v128Zm32 0v-96h16v96Zm32 0v-72h16v72Zm32 0V88h16v112Zm32 0v-72h16v72Z"
+      fill="currentColor"
+    />
+    <!-- accent: trending arrow line on top of bars (highlight detail) -->
+    <path
+      d="M48 168l48-48 32 16 48-56 32 24"
+      stroke="var(--lingwen-icon-accent, oklch(70% 0.18 280))"
+      stroke-width="12"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      fill="none"
+    />
   </svg>
 </template>
