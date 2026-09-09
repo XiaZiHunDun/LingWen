@@ -8,6 +8,7 @@ import {
   listStudioBatchJobs,
   listStudioBatchQueue,
   listStudioBatchTemplates,
+  studioProductionPreflight,
   studioProductionRun,
 } from '@/api/studio';
 import type {
@@ -268,8 +269,14 @@ export function usePilotBatch() {
     preflightLoading.value = true;
     preflightError.value = null;
     try {
-      // TODO Phase 24+: dedicated preflight wrapper; reuse studio preflight helper
-      preflightRows.value = [];
+      const response = await studioProductionPreflight({
+        start_chapter: _form.start_chapter,
+        end_chapter: _form.end_chapter,
+      });
+      preflightRows.value = response.chapters;
+    } catch (err) {
+      preflightError.value = err instanceof Error ? err.message : String(err);
+      throw err;
     } finally {
       preflightLoading.value = false;
     }
