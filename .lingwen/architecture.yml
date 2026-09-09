@@ -1,7 +1,7 @@
 # LingWen 架构契约 — AI 可读的结构化模块边界定义
 # 此文件是 AGENTS.md 的机器可读版本，AI 开发工具应优先解析此文件
 
-version: "38.0"  # Phase 39 — P3-ARCHDEBT (logging_config): infra.logging_config (1 module, 59 lines, 3 public symbols: StructuredFormatter + setup_logging + logger instance) → packages/lingwen-logging-config/. 7 consumer migration (6 packages + 1 intra-infra, 0 function-body, 0 test consumers, 0 path literals, 1 wildcard in infra/core/__init__.py). infra/logging_config.py deleted. 1 NEW invariant (#54 packages/lingwen-logging-config/ 是日志配置唯一实包; infra.logging_config.* 路径非法). 5 atomic commits (C0 spec+plan, C1 scaffold, C2 migrate, C3 delete, C4 invariant+version, C5 guards+doc-sync). Carryover closure: P3-ARCHDEBT 4/5 (logging_config) → CLOSED; P3-ARCHDEBT remaining 1/5 (studio_registry) → Phase 40+. Phase 36
+version: "39.0"  # Phase 40a — P3-ARCHDEBT (studio_registry): infra.studio_registry (1 module, 422 lines, 24 public symbols: 1 class StudioProject + 20 funcs + 3 module consts) → packages/lingwen-studio-registry/ (5 sub-modules: models + discovery + state + summary + reports, 491 lines total). 47 production edits 迁移 (6 C2a intra-infra + 41 C2b bulk: 17 apps + 18 packages + 5 apps test patches + 1 doc); 0 function-body import misses; 0 relative imports; 0 filesystem path literals; 1 wildcard infra/studio/__init__.py:2 paired with C3 shim approach; infra/studio_registry.py CONVERTED TO 1-LINE SHIM (NOT deleted — full deletion deferred to Phase 40b after tests/ migration). 1 NEW invariant (#55 packages/lingwen-studio-registry/ 是 Studio 多项目注册表唯一实包; infra.studio_registry.* 路径非法). 8 atomic commits (C0 spec+plan, C1 scaffold, C1.5 factory_root() fixup, C2a intra-infra, C2b bulk, C3 shim, C4 invariant+version, C5 guards+handoff). NOT-LEAF package — 3 workspace deps: lingwen-paths + lingwen-project-config + lingwen-core (first non-LEAF P3-ARCHDEBT package, lesson 1). Carryover closure: P3-ARCHDEBT 5/5a (studio_registry source migration) → CLOSED; P3-ARCHDEBT 5/5b carryover (tests/ root ~33 edits + DELETE shim) → Phase 40b+.
 
 # 模块分层（单向依赖：上层可依赖下层，下层禁止依赖上层）
 layers:
@@ -64,6 +64,10 @@ invariants:
     rule: "packages/lingwen-logging-config/ 是日志配置（StructuredFormatter / setup_logging / logger）的唯一实包；infra.logging_config.* 路径非法 (Phase 39+)"
     severity: error
     scope: "all new logging-config code; enforcement via tests/test_phase39_lingwen_logging_config.py::test_infra_logging_config_deleted + grep -rln \"infra\\.logging_config\b\" --include=\"*.py\" packages/ apps/ tests/ infra/ → 0 行"
+  - id: I055   # ★ Phase 40a NEW
+    rule: "packages/lingwen-studio-registry/ 是 Studio 多项目注册表（factory_root + StudioProject + active project state + summaries + reports）的唯一实包；infra.studio_registry.* 路径非法 (Phase 40a P3-ARCHDEBT studio_registry)"
+    severity: error
+    scope: "all new studio-registry code; enforcement via tests/test_phase40a_lingwen_studio_registry.py + grep -rln \"infra\\.studio_registry\b\" --include=\"*.py\" packages/ apps/ tests/ infra/ → 0 行"
 
 # 模块边界（明确每个模块的公共 API 和依赖）
 module_boundaries:

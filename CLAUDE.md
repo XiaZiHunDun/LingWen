@@ -1,6 +1,6 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v38.0 (Phase 39 P3-ARCHDEBT logging_config 闭环) · 更新: 2026-09-08
+> **版本**: v39.0 (Phase 40a P3-ARCHDEBT studio_registry 闭环) · 更新: 2026-09-09
 > 当前状态: `collaboration/CURRENT_STATUS.md` · 待办: `collaboration/BACKLOG.md` · 版本史: `docs/superpowers/archive/PHASE_HISTORY.md`
 > 最高优先级参考: `.lingwen/architecture.yml`
 
@@ -94,6 +94,7 @@ python lingwen.py doctor
 | I052 | `packages/lingwen-paths/` 是项目路径管理（ProjectPaths / resolve_project_root / get_paths / get_chapters_dir / get_rules_dir）的唯一实包；`infra.paths.*` 路径非法 (Phase 37+) |
 | I053 | `packages/lingwen-project-config/` 是项目配置管理（ProjectConfig / update_project_creation_mode）的唯一实包；`infra.project_config.*` 路径非法 (Phase 38+) |
 | I054 | `packages/lingwen-logging-config/` 是日志配置（StructuredFormatter / setup_logging / logger）的唯一实包；`infra.logging_config.*` 路径非法 (Phase 39+) |
+| I055 | `packages/lingwen-studio-registry/` 是 Studio 多项目注册表（factory_root + StudioProject + active project state + summaries + reports）的唯一实包；`infra.studio_registry.*` 路径非法 (Phase 40a P3-ARCHDEBT studio_registry) |
 
 > 完整不变量与设计原则 DP-01..06 见 `.lingwen/architecture.yml`；提交纪律与反模式见 `.lingwen/constraints.yml`。
 
@@ -115,6 +116,8 @@ python lingwen.py doctor
 | `HANDOFF.md` | 切换工具 TL;DR + 交接 |
 
 ## 已知遗留
+
+- ✅ **v39.0 P3-ARCHDEBT (studio_registry)**（2026-09-09 ff-merge `phase-40-p3-archdebt-studio-registry`）：P3-ARCHDEBT item 5/5a — `infra/studio_registry.py` (1 module, 422 lines, 24 top-level public symbols: 1 class StudioProject + 20 funcs + 3 module consts) → `packages/lingwen-studio-registry/` (5 sub-modules: models + discovery + state + summary + reports, 491 lines total). 47 production edits 迁移 (6 C2a intra-infra + 41 C2b bulk: 17 apps + 18 packages + 5 apps test patches + 1 doc); 0 function-body import misses (verified via \1 backreference sed, Phase 37 lesson); 0 relative imports (clean); 0 filesystem path literals (clean); 1 wildcard `infra/studio/__init__.py:2` paired with C3 shim approach; `infra/studio_registry.py` CONVERTED TO 1-LINE SHIM (NOT deleted — full deletion deferred to Phase 40b after `tests/` migration); invariant #55 NEW; +1 fixup commit (C1.5: factory_root() defect — original `Path(__file__).parent.parent` formula broke after file relocation to `packages/lingwen-studio-registry/src/lingwen_studio_registry/discovery.py`; fix: LINGWEN_PROJECT_ROOT env var + parents[4]). 7 atomic commits on phase-40-p3-archdebt-studio-registry (C0 spec+plan / C1 scaffold / C1.5 fixup / C2a intra-infra / C2b bulk / C3 shim / [C4 invariant+version] / [C5 guards+handoff]). **NOT-LEAF package** — 3 workspace deps: lingwen-paths + lingwen-project-config + lingwen-core (first non-LEAF P3-ARCHDEBT package, lesson 1). **Phase 40b carryover**: ~33 edits in `tests/` root (21 `from` + 4 `import as` + 7 `monkeypatch.setattr` + 1 doc) + DELETE shim. 详见 `docs/superpowers/handoffs/2026-09-09-phase-40-p3-archdebt-studio-registry-handoff.md` (after C5)。
 
 - ✅ **v38.0 P3-ARCHDEBT (logging_config)**（2026-09-08 ff-merge `phase-39-p3-archdebt-logging-config`）：P3-ARCHDEBT item 4/5 — `infra/logging_config.py` (1 module, 59 lines, 3 top-level public symbols: StructuredFormatter + setup_logging + logger module-level instance) → `packages/lingwen-logging-config/`。7 consumer 迁移 (6 packages + 1 intra-infra; 0 function-body imports — pre-spec verified per Phase 38 lesson 3; 0 test consumers; 0 filesystem path literals; 1 wildcard `infra/core/__init__.py:6` paired with C3 source deletion); `infra/logging_config.py` 删除 + wildcard cleanup; invariant #54 NEW; **5 atomic commits** on phase-39-p3-archdebt-logging-config (C0 spec+plan / C1 scaffold / C2 migrate / C3 delete / C4 invariant+version / C5 guards+doc-sync). **Validation gates**: ruff clean + phase39 guards GREEN + phase38 guards preserved + baselines preserved. **LEAF package** (no workspace deps — only stdlib: json/logging/datetime/pathlib). **Carryover closure**: P3-ARCHDEBT 4/5 (logging_config) → CLOSED; P3-ARCHDEBT remaining 1/5 (studio_registry, 50 consumers) → Phase 40+. 详见 `docs/superpowers/handoffs/2026-09-08-phase-39-p3-archdebt-logging-config-handoff.md`。
 
