@@ -11,6 +11,7 @@
   --transition-fast: 0.12s ease-out;
   --transition-normal: 0.2s ease-out;
   --transition-slow: 0.3s ease-out;
+  --lingwen-icon-accent: oklch(70% 0.18 280);
 }
 
 /* —— 书桌工作台：去掉外层套娃，编辑器占主视觉 —— */
