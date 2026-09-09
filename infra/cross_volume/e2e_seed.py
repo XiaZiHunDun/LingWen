@@ -307,8 +307,9 @@ def ensure_e2e_cascade_run(db_path: Path | None = None) -> int:
 
 def ensure_e2e_studio_project() -> Path:
     """Studio-mode project for factory produce-hub live e2e."""
+    from lingwen_studio_registry import factory_root, get_project_by_slug
+
     from infra.project_init import init_minimal_short_project
-    from infra.studio_registry import factory_root, get_project_by_slug
 
     factory = factory_root()
     existing = get_project_by_slug(E2E_STUDIO_SLUG)
@@ -328,8 +329,9 @@ def ensure_e2e_studio_project() -> Path:
 
 def ensure_e2e_creator_project() -> Path:
     """Advance-mode project for creator share-link live e2e."""
+    from lingwen_studio_registry import activate_project, factory_root, get_project_by_slug
+
     from infra.project_init import init_minimal_short_project
-    from infra.studio_registry import activate_project, factory_root, get_project_by_slug
 
     factory = factory_root()
     existing = get_project_by_slug(E2E_CREATOR_SLUG)
@@ -352,8 +354,9 @@ def ensure_e2e_companion_project() -> Path:
     """Companion-mode project for creator workspace live e2e."""
     import json
 
+    from lingwen_studio_registry import factory_root, get_project_by_slug
+
     from infra.project_init import init_minimal_short_project
-    from infra.studio_registry import factory_root, get_project_by_slug
 
     factory = factory_root()
     existing = get_project_by_slug(E2E_COMPANION_SLUG)

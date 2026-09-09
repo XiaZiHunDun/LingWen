@@ -21,7 +21,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from infra.studio_registry import factory_root
+from lingwen_studio_registry import factory_root
 
 
 def _now_iso() -> str:
