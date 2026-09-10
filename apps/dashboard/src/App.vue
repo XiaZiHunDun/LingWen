@@ -570,7 +570,9 @@ function onNavClick(itemId) {
   border: none;
   border-radius: var(--radius-md);
   position: relative;
-  transition: all var(--transition-normal);
+  /* Explicit transition list — never `transition: all` (anti-pattern, animates layout-bound props). */
+  transition-property: background-color, color, transform, box-shadow;
+  transition-duration: var(--transition-normal);
   overflow: hidden;
 }
 
@@ -594,6 +596,20 @@ function onNavClick(itemId) {
 
 .nav-item:hover::after {
   background: var(--color-accent);
+}
+
+/* Press feedback: tightened translateX + slight scale-down. Overrides hover transform. */
+.nav-item:active {
+  transform: translateX(2px) scale(0.98);
+}
+
+/* Keyboard focus ring (skip on mouse click via :focus-visible). */
+.nav-item:focus {
+  outline: none;
+}
+.nav-item:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 .nav-item--active {
@@ -620,7 +636,10 @@ function onNavClick(itemId) {
   border-radius: 8px;
   flex-shrink: 0;
   vertical-align: middle;
-  transition: all var(--transition-normal);
+  transform-origin: center;
+  /* Explicit transition list — never `transition: all`. */
+  transition-property: background-color, color, transform;
+  transition-duration: var(--transition-normal);
 }
 
 /* SVG variant: inset the glyph so it breathes inside the 24px chip. */
@@ -634,14 +653,38 @@ svg.nav-icon {
   --lingwen-icon-accent: rgba(255, 255, 255, 0.62);
 }
 
+/* Smooth the duotone accent swap when icon flips between idle / hover / active. */
+svg.nav-icon path {
+  transition: fill var(--transition-normal);
+}
+
 .nav-item:hover .nav-icon {
   background: var(--color-accent-soft);
   color: var(--color-accent);
+  /* Subtle scale-up — chip "lifts" toward the cursor. */
+  transform: scale(1.08);
 }
 
 .nav-item--active .nav-icon {
   background: rgba(255, 255, 255, 0.2);
   color: #fff;
+}
+
+/* Accessibility: respect OS-level reduced-motion preference. Strip transitions entirely. */
+@media (prefers-reduced-motion: reduce) {
+  .nav-item,
+  .nav-item::after,
+  .nav-icon,
+  svg.nav-icon path {
+    transition: none;
+  }
+  .nav-item:hover,
+  .nav-item:active {
+    transform: none;
+  }
+  .nav-item:hover .nav-icon {
+    transform: none;
+  }
 }
 
 .nav-label {
