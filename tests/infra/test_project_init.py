@@ -1,4 +1,4 @@
-"""Tests for infra.project_init minimal-short scaffold."""
+"""Tests for lingwen_project_init minimal-short scaffold."""
 
 from __future__ import annotations
 
