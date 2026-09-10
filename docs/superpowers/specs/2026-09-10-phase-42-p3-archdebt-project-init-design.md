@@ -63,13 +63,18 @@ P3-ARCHDEBT item **6/6+1** (Phase 42 candidate, ranked #1 in [`ARCHDEBT-CANDIDAT
 
 ### Consumers (migrate) — 50 call-sites across 46 unique files in 2 sub-commits
 
-**C2a sub-commit (intra-infra, 0 sites)**:
+**C2a sub-commit (intra-infra + wildcard, 4 sites in 2 files)**:
 
-| # | File | Sites | Notes |
-|---|------|-------|-------|
-| — | — | — | `project_init.py` is self-contained — NO intra-infra consumers (`grep -rln "from infra\.project_init" infra/ --include="*.py"` returns only `infra/project_init.py` itself) |
+| # | File | Line | Pattern | Current | New |
+|---|------|------|---------|---------|-----|
+| 1 | `infra/project/__init__.py` | 4 | wildcard | `from infra.project_init import *  # noqa: F403` | `from lingwen_project_init import *  # noqa: F403` |
+| 2 | `infra/cross_volume/e2e_seed.py` | 312 | function-body | `    from infra.project_init import init_minimal_short_project` | `    from lingwen_project_init import init_minimal_short_project` |
+| 3 | `infra/cross_volume/e2e_seed.py` | 334 | function-body | `    from infra.project_init import init_minimal_short_project` | `    from lingwen_project_init import init_minimal_short_project` |
+| 4 | `infra/cross_volume/e2e_seed.py` | 359 | function-body | `    from infra.project_init import init_minimal_short_project` | `    from lingwen_project_init import init_minimal_short_project` |
 
-C2a total: **0 sites** (intentional; project_init is leaf-in-infra).
+C2a total: **4 sites in 2 files** (1 wildcard + 3 intra-infra dotted-path; intra-infra dotted-path sub-total = 3).
+
+> **LESSON (Phase 42 spec drift fix)**: pre-spec 9-pattern audit initially missed `infra/project/__init__.py` wildcard (line 4) — the anchored `^from infra\.project_init` regex was correct but the audit grep was `grep -rn "from infra\.project_init" infra/` which returns the line; the issue was that I trusted "0 intra-infra consumers" without re-running after the broader audit. Lesson: **always re-run grep after every spec section write, especially wildcards in `__init__.py` files** (N.14 lesson 1 第 15 次变体 — wildcard-in-init detection).
 
 **C2b sub-commit (bulk: 1 production + 45 test consumers, 50 sites in 46 unique files)**:
 
