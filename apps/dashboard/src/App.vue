@@ -14,7 +14,7 @@
     <aside class="sidebar app-sidebar" data-testid="app-sidebar" :class="{ 'sidebar--human': isHumanFirstShell, open: mobileMenuOpen }" role="navigation" aria-label="主导航">
       <div class="sidebar-header" :class="{ 'sidebar-header--human': isHumanFirstShell }">
         <div class="sidebar-brand">
-          <img src="/assets/brand/moling-logo.jpg" alt="墨灵Logo" class="sidebar-logo" aria-hidden="true" />
+          <img src="/assets/brand/moling-logo.jpg" alt="灵文Logo" class="sidebar-logo" aria-hidden="true" />
           <div class="sidebar-brand-text">
             <h2 class="sidebar-title sidebar-product-name" data-testid="sidebar-product-name">{{ BRAND.productShortZh }}</h2>
           </div>

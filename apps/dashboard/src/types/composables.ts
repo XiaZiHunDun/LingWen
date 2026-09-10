@@ -1,5 +1,5 @@
 /**
- * Composable return types for 墨灵 Dashboard
+ * Composable return types for 灵文 Dashboard
  * Provides type definitions for composable return values
  */
 

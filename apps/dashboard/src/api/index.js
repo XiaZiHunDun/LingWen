@@ -1,5 +1,5 @@
 /**
- * API Client for 墨灵 Dashboard
+ * API Client for 灵文 Dashboard
  * Barrel re-export from domain-specific modules
  *
  * Phase 126 v16.2.8 T5: legacy creator.js + its 5 underlying modules (agent,

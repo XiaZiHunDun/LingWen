@@ -1,5 +1,5 @@
 /**
- * Core API utilities for 墨灵 Dashboard
+ * Core API utilities for 灵文 Dashboard
  * @module api/core
  * (2 funcs)
  */

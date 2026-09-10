@@ -8,7 +8,7 @@
       <div class="today-hero__overlay"></div>
       <div class="today-hero__content">
         <span class="today-hero__tag">AI创作助手</span>
-        <h1 class="today-hero__title">墨灵</h1>
+        <h1 class="today-hero__title">灵文</h1>
         <p class="today-hero__subtitle">让每个故事，都有人陪你写完</p>
       </div>
     </div>
