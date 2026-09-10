@@ -1,7 +1,7 @@
 <template>
   <div class="onboarding no-project-onboarding" data-testid="no-project-onboarding">
     <div class="onboarding__card onboarding-card" data-testid="onboarding-card">
-      <img src="/assets/brand/moling-logo.jpg" alt="灵文Logo" class="onboarding__logo" aria-hidden="true" />
+      <img src="/assets/brand/lingwen-logo.jpg" alt="灵文Logo" class="onboarding__logo" aria-hidden="true" />
 
       <div class="onboarding__head">
         <h1 class="onboarding__title">{{ BRAND.productNameZh }}</h1>
