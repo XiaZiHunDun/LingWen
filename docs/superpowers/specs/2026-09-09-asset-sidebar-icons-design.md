@@ -13,7 +13,7 @@
 
 BACKLOG 中 `ASSET-001~011` 描述模糊（"品牌 Logo、模块图标、空状态插图、界面概念图、场景插画"），盘点后实际状态：
 
-- `apps/dashboard/public/assets/brand/` — 1 JPG（moling-logo.jpg，沿用旧品牌名"墨灵"，CLAUDE.md 标"范围外遗留"）
+- `apps/dashboard/public/assets/brand/` — 1 JPG（`lingwen-logo.jpg`，2026-09-10 Phase 41+ mini 由 `moling-logo.jpg` 改名）
 - `apps/dashboard/public/assets/illustrations/` — 6 JPG（hero / creation-scene / anime-empty-state ×2 / empty-state ×2）
 - `apps/dashboard/public/assets/concepts/` — 3 JPG（moling-ui-concept / tech-hero-banner / tech-workspace-bg）
 - `apps/dashboard/icons/` — 仅有占位 PNG（32x32.png + placeholder.png），**0 SVG**
@@ -168,6 +168,6 @@ Phosphor 双色有两 SVG `<path>`：
 
 ## Carryover
 
-- 品牌名迁移（moling-logo.jpg → 灵文品牌）：留待后续 phase
+- ~~品牌名迁移（moling-logo.jpg → 灵文品牌）：留待后续 phase~~ — **2026-09-10 Phase 41+ mini 已闭环**（commit `19050c00` on `phase-41-plus-asset-rename`，git mv + 2 runtime 引用迁移）。`concepts/moling-ui-concept.jpg` 仍为 known legacy（美术资产，非品牌字串）。
 - 子页面图标（batch / queue / template / 陪伴 / 推进 / 差异收尾）：留待后续 phase
 - 视觉回归 Playwright 截图：Phase 114 闭环后才有

@@ -11,8 +11,10 @@
  *   - 工程命名空间（包名 / import path / Python module）沿用历史 `lingwen`，
  *     不要改成 `moling` —— 改名会破坏外部引用与历史 commit blame。
  *   - 2026-09-10 v40.0 闭环：productNameZh '墨灵 Studio' → '灵文工作室'，同步所有用户可见
- *     字符串消费方（App.vue / NoProjectOnboarding / TodayPage / e2e smoke）。asset 文件名
- *     `moling-logo.jpg` 暂不改（外部引用 + commit blame 风险，留待 Phase 41+）。
+ *     字符串消费方（App.vue / NoProjectOnboarding / TodayPage / e2e smoke）。
+ *   - 2026-09-10 Phase 41+ mini：asset 文件名 `moling-logo.jpg` → `lingwen-logo.jpg`
+ *     （`apps/dashboard/public/assets/brand/`），2 个 runtime 引用迁移完毕。
+ *     `concepts/moling-ui-concept.jpg` 为美术资产（非品牌字串），留 known legacy。
  *
  * @typedef {{
  *   productNameZh: string,

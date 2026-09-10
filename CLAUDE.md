@@ -102,7 +102,8 @@ python lingwen.py doctor
 
 - **产品名**：灵文工作室（用户可见 UI 标题、侧栏副标题、对外文档统一使用）。
 - **工程命名空间**：沿用历史 `lingwen`（包名 / import path / Python module 全部使用 `lingwen`，**不要改成 moling**）。
-- 2026-09-10 已闭环：`apps/dashboard/src/config/brand.js` 与所有用户可见消费方（App.vue / NoProjectOnboarding / TodayPage / e2e smoke）统一为「灵文工作室 / 灵文」。asset 文件名 `moling-logo.jpg` 暂不改（外部引用 + commit blame 风险）。
+- 2026-09-10 已闭环：`apps/dashboard/src/config/brand.js` 与所有用户可见消费方（App.vue / NoProjectOnboarding / TodayPage / e2e smoke）统一为「灵文工作室 / 灵文」。
+- 2026-09-10 Phase 41+ mini：asset 文件名 `moling-logo.jpg` → `lingwen-logo.jpg`（`apps/dashboard/public/assets/brand/`，2 个 runtime 引用迁移）。`public/assets/concepts/moling-ui-concept.jpg` 为美术资产（非品牌字串），留 known legacy。
 
 ## 文档入口
 

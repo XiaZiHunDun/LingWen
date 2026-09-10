@@ -46,7 +46,7 @@
 **已知遗留**（按优先级）：
 1. **Prod preview regression** (Phase 114 accepted)：cytoscape-fcose CJS 与 rollup 冲突，dev baseline 仍 authoritative。E2E Playwright runtime 暂时阻塞。
 2. **OPTIMIZATION_PLAN 收尾**：page test coverage 24% → 80%（OPTIMIZATION_PLAN 立项 P0，未闭环）；ESLint warnings 148 → ≤50。截至 v40.0：vitest/ESLint/knip/vue-tsc/build 零问题（ESLint warnings ≤50 已满足），page test coverage 待量。
-3. **brand.js 已闭环 (2026-09-10)** — `apps/dashboard/src/config/brand.js` + 7 消费方（App.vue / NoProjectOnboarding / TodayPage / e2e smoke + 3 JSDoc）已统一为 `灵文工作室 / 灵文`。asset 文件名 `moling-logo.jpg` 仍保留（外部引用 + commit blame 风险）。
+3. **brand.js 已闭环 (2026-09-10)** — `apps/dashboard/src/config/brand.js` + 7 消费方（App.vue / NoProjectOnboarding / TodayPage / e2e smoke + 3 JSDoc）已统一为 `灵文工作室 / 灵文`。**Phase 41+ mini (2026-09-10)** asset 文件名 `moling-logo.jpg` → `lingwen-logo.jpg`（brand/ 资产 + 2 runtime 引用），品牌闭环完成。`concepts/moling-ui-concept.jpg` 留 known legacy（美术资产，非品牌字串）。
 
 不要主动开第九本书、星陨 wave、SaaS、录屏、或恢复 llm×7 每次 push 全跑。
 
