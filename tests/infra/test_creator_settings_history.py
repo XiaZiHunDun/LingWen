@@ -10,9 +10,8 @@ from lingwen_creator.settings.history import (
     settings_history_payload,
 )
 from lingwen_paths import ProjectPaths
+from lingwen_project_init import init_minimal_short_project
 from lingwen_studio_registry import StudioProject
-
-from infra.project_init import init_minimal_short_project
 
 
 @pytest.fixture

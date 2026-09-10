@@ -15,9 +15,8 @@ from lingwen_creator.settings.docs import (
 )
 from lingwen_creator.shared.revision import CreatorDocConflictError
 from lingwen_paths import ProjectPaths
+from lingwen_project_init import init_minimal_short_project
 from lingwen_studio_registry import StudioProject
-
-from infra.project_init import init_minimal_short_project
 
 
 @pytest.fixture

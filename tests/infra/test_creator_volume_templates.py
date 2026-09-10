@@ -48,8 +48,7 @@ def test_unknown_template():
 
 def test_custom_template_save_and_apply(factory_tmp):
     from lingwen_paths import ProjectPaths
-
-    from infra.project_init import init_minimal_short_project
+    from lingwen_project_init import init_minimal_short_project
 
     ProjectPaths.reset()
     result = init_minimal_short_project(
@@ -78,7 +77,7 @@ def test_custom_template_save_and_apply(factory_tmp):
 
 
 def test_delete_custom_template(factory_tmp):
-    from infra.project_init import init_minimal_short_project
+    from lingwen_project_init import init_minimal_short_project
 
     result = init_minimal_short_project(
         slug="del-tpl",
@@ -102,7 +101,7 @@ def test_delete_custom_template(factory_tmp):
 
 
 def test_rename_custom_template(factory_tmp):
-    from infra.project_init import init_minimal_short_project
+    from lingwen_project_init import init_minimal_short_project
 
     result = init_minimal_short_project(
         slug="rename-tpl",
@@ -127,7 +126,7 @@ def test_rename_custom_template(factory_tmp):
 
 
 def test_export_import_custom_templates(factory_tmp):
-    from infra.project_init import init_minimal_short_project
+    from lingwen_project_init import init_minimal_short_project
 
     result = init_minimal_short_project(
         slug="tpl-io",
@@ -151,9 +150,8 @@ def test_export_import_custom_templates(factory_tmp):
 
 
 def test_sync_templates_from_other_project(factory_tmp, monkeypatch):
+    from lingwen_project_init import init_minimal_short_project
     from lingwen_studio_registry import StudioProject
-
-    from infra.project_init import init_minimal_short_project
 
     source = init_minimal_short_project(
         slug="tpl-source",
@@ -207,8 +205,7 @@ def test_sync_templates_from_other_project(factory_tmp, monkeypatch):
 
 def test_factory_template_publish_pull(factory_tmp, monkeypatch):
     import lingwen_creator.volume.templates as cvt
-
-    from infra.project_init import init_minimal_short_project
+    from lingwen_project_init import init_minimal_short_project
 
     monkeypatch.setattr("lingwen_studio_registry.factory_root", lambda: factory_tmp)
     monkeypatch.setattr(

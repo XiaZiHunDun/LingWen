@@ -8,9 +8,8 @@ from io import BytesIO
 import pytest
 from lingwen_creator.export.docx import build_creator_docx_bytes
 from lingwen_paths import ProjectPaths
+from lingwen_project_init import init_minimal_short_project
 from lingwen_studio_registry import StudioProject
-
-from infra.project_init import init_minimal_short_project
 
 
 @pytest.fixture

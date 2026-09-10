@@ -14,8 +14,7 @@ from lingwen_creator.volume.template_approvals import (
 )
 from lingwen_creator.volume.templates import save_custom_volume_template
 from lingwen_paths import ProjectPaths
-
-from infra.project_init import init_minimal_short_project
+from lingwen_project_init import init_minimal_short_project
 
 
 @pytest.fixture

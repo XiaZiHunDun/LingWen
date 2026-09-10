@@ -9,8 +9,7 @@ from lingwen_creator.settings.merge_preferences import (
     preflight_merge_preset_import,
 )
 from lingwen_paths import ProjectPaths
-
-from infra.project_init import init_minimal_short_project
+from lingwen_project_init import init_minimal_short_project
 
 
 @pytest.fixture

@@ -16,8 +16,7 @@ from lingwen_creator.volume.plan import (
     volume_plan_revision,
 )
 from lingwen_paths import ProjectPaths
-
-from infra.project_init import init_minimal_short_project
+from lingwen_project_init import init_minimal_short_project
 
 
 def test_parse_chapter_range_variants():

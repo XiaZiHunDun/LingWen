@@ -7,9 +7,8 @@ from lingwen_creator.onboarding.autodetect import infer_auto_completed_steps
 from lingwen_creator.volume.plan import save_volume_plan
 from lingwen_paths import ProjectPaths
 from lingwen_project_config import ProjectConfig
+from lingwen_project_init import init_minimal_short_project
 from lingwen_studio_registry import StudioProject
-
-from infra.project_init import init_minimal_short_project
 
 
 @pytest.fixture

@@ -9,9 +9,8 @@ import yaml
 from lingwen_core.agents.chapter_production_outline import build_canon_initial_inputs
 from lingwen_core.agents.chapter_production_pilot import preflight_checklist
 from lingwen_paths import ProjectPaths
-
 from lingwen_project_config import ProjectConfig
-from infra.project_init import init_minimal_short_project, validate_slug
+from lingwen_project_init import init_minimal_short_project, validate_slug
 
 
 @pytest.fixture

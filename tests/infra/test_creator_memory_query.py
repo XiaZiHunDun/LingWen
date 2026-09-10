@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from lingwen_creator.memory.query import creator_memory_query
 from lingwen_paths import ProjectPaths
+from lingwen_project_init import init_minimal_short_project
 from lingwen_studio_registry import StudioProject
-
-from infra.project_init import init_minimal_short_project
 
 
 def test_local_fallback_search(tmp_path):

@@ -10,8 +10,7 @@ from lingwen_creator.onboarding.notifications import (
 )
 from lingwen_creator.onboarding.progress import save_onboarding_progress
 from lingwen_paths import ProjectPaths
-
-from infra.project_init import init_minimal_short_project
+from lingwen_project_init import init_minimal_short_project
 
 
 @pytest.fixture

@@ -7,8 +7,7 @@ from lingwen_creator.content.ui_profile import resolve_creator_ui_profile
 from lingwen_creator.onboarding.progress import load_onboarding_progress, save_wizard_panel_collapsed
 from lingwen_creator.volume.plan import volume_plan_diff_payload
 from lingwen_paths import ProjectPaths
-
-from infra.project_init import init_minimal_short_project
+from lingwen_project_init import init_minimal_short_project
 
 
 @pytest.fixture

@@ -7,8 +7,8 @@ from lingwen_creator.shared.mode import (
     CREATION_MODE_COMPANION,
     CREATION_MODE_STUDIO,
 )
+from lingwen_project_init import init_minimal_short_project
 
-from infra.project_init import init_minimal_short_project
 from lingwen_cli.options import InitProjectOptions
 
 from .base import Command

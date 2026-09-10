@@ -11,8 +11,7 @@ from lingwen_creator.onboarding.email import (
     save_email_config,
 )
 from lingwen_paths import ProjectPaths
-
-from infra.project_init import init_minimal_short_project
+from lingwen_project_init import init_minimal_short_project
 
 
 @pytest.fixture
