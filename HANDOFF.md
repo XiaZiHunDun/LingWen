@@ -41,10 +41,12 @@
 ### 当前阶段
 
 > 当前阶段 / 已完成见 `collaboration/CURRENT_STATUS.md`；待办见 `collaboration/BACKLOG.md`。
+> **最新闭环**: v40.0 asset sidebar icons（11 emoji → 12 Phosphor-duotone SVG + `--lingwen-icon-accent` CSS var；8 commits ff-merge at `be5e73d1`）。**P3-ARCHDEBT 5/5b + v40.0 双闭环**。
 
 **已知遗留**（按优先级）：
 1. **Prod preview regression** (Phase 114 accepted)：cytoscape-fcose CJS 与 rollup 冲突，dev baseline 仍 authoritative。E2E Playwright runtime 暂时阻塞。
-2. **OPTIMIZATION_PLAN 收尾**：page test coverage 24% → 80%（OPTIMIZATION_PLAN 立项 P0，未闭环）；ESLint warnings 148 → ≤50。
+2. **OPTIMIZATION_PLAN 收尾**：page test coverage 24% → 80%（OPTIMIZATION_PLAN 立项 P0，未闭环）；ESLint warnings 148 → ≤50。截至 v40.0：vitest/ESLint/knip/vue-tsc/build 零问题（ESLint warnings ≤50 已满足），page test coverage 待量。
+3. **brand.js "墨灵 Studio" 遗留** (v40.0 发现)：用户可见 UI 用 v40.0 SVG 已统一 `灵文工作室` 语境，但 `apps/dashboard/src/config/brand.js` 仍为 `墨灵 Studio`。是否纳入 Phase 41 待决策。
 
 不要主动开第九本书、星陨 wave、SaaS、录屏、或恢复 llm×7 每次 push 全跑。
 

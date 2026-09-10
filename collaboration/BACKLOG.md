@@ -1,9 +1,9 @@
 # 待办事项列表
 
-> **最后更新**: 2026-09-08
-> **更新者**: 协调者（v36.0 P3-ARCHDEBT (paths) 闭环；6 commits ff-merge `phase-37-p3-archdebt-paths`；P3-ARCHDEBT 2/5 → CLOSED；3/5 → Phase 38+）
+> **最后更新**: 2026-09-10
+> **更新者**: 协调者（v40.0 asset sidebar icons 闭环；8 commits ff-merge at `be5e73d1`；5 quality gates 全过；P3-ARCHDEBT 5/5b + v40.0 双闭环）
 > **优先级**: P0 > P1 > P2 > P3
-> **事实来源**: 本仓库当前版本在 `CLAUDE.md` v36.0；并行开发入口见根 `COORDINATION.md`
+> **事实来源**: 本仓库当前版本在 `CLAUDE.md` v40.0；并行开发入口见根 `COORDINATION.md`
 
 ---
 
@@ -91,7 +91,7 @@
 
 | ID | 标题 | 描述 | 认领人 | 状态 | 创建日期 |
 |----|------|------|--------|------|----------|
-| ASSET-001~011 | sidebar SVG 图标（11 模块） | 侧栏 emoji → Phosphor 双色 SVG；Vue SFC 扁平；CSS var 主题；nav 配置一次性迁移 | 协调者（自服务） | ✅ 完成 | 2026-09-09 |
+| ASSET-001~011 | sidebar SVG 图标（11 模块 + 1 Pilot follow-up） | 侧栏 emoji → Phosphor 双色 SVG；Vue SFC 扁平；`--lingwen-icon-accent` CSS var 主题；nav 配置 `.map()` 集成 | 协调者（自服务） | ✅ 完成 | 2026-09-10 |
 
 > 风格要求：现代科技/动漫风格、暗色底、霓虹紫蓝、渐变发光。
 
