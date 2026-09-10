@@ -1,8 +1,21 @@
 // tests/unit/analytics-page.spec.ts — Phase 9.77 F67
 import { describe, test, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
+import type { ChapterProgressEvent } from '../../src/composables/usePilotBatch'
 import AnalyticsPage from '../../src/pages/AnalyticsPage.vue'
 import { byTestid } from '../helpers/by-testid'
+
+// 本地 minimal DTO shape — mirror of StudioBatchJobResponseDTO.
+// 之所以不复用 @lingwen/dashboard-contracts/shared/studio：apps/dashboard/tsconfig.json
+// 只 include tests/**（无 vite alias），`@lingwen/dashboard-contracts` 在 tsc 上下文不解析。
+type MockBatchJob = {
+  job_id: string
+  status: string
+  start_chapter: number
+  end_chapter: number
+  budget_usd: number
+  pid: number
+}
 
 const mocks = vi.hoisted(() => ({
   fetchProductionRollup: vi.fn(),
@@ -38,8 +51,8 @@ const mocks = vi.hoisted(() => ({
     },
   },
   pilotBatch: {
-    activeJob: { value: null },
-    chapterEvents: { value: [] },
+    activeJob: { value: null as MockBatchJob | null },
+    chapterEvents: { value: [] as ChapterProgressEvent[] },
     isConnected: { value: true },
     refreshActive: vi.fn().mockResolvedValue(undefined),
   },
