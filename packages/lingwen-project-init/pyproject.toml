@@ -1,0 +1,16 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-project-init"
+version = "0.1.0"
+description = "LingWen canonical project_init module (Phase 42 P3-ARCHDEBT project_init)"
+requires-python = ">=3.11"
+dependencies = [
+    "lingwen-paths",            # Phase 37 — top-level: ProjectPaths
+    "lingwen-shared",           # Phase 38+ — top-level: mode constants (CREATION_MODE_* + QUALITY_*)
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_project_init"]

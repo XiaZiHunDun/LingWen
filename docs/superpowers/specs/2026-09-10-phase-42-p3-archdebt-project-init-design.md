@@ -55,9 +55,9 @@ P3-ARCHDEBT item **6/6+1** (Phase 42 candidate, ranked #1 in [`ARCHDEBT-CANDIDAT
 |------|----------------|---------|
 | `packages/lingwen-project-init/pyproject.toml` | (~20 行) | workspace deps: paths + shared |
 | `packages/lingwen-project-init/src/lingwen_project_init/__init__.py` | (~30 行) | `__all__` + re-exports from 3 sub-modules |
-| `packages/lingwen-project-init/src/lingwen_project_init/models.py` | (~15 行) | `InitProjectResult` dataclass + module-level consts (`_SLUG_RE`, `_MINIMAL_BEATS`) |
+| `packages/lingwen-project-init/src/lingwen_project_init/models.py` | (~70 行) | `InitProjectResult` dataclass (6 fields: slug/title/root/chapter_count/creation_mode/files_written) + module-level consts (`_SLUG_RE` + 10-entry `_MINIMAL_BEATS` tuple) |
 | `packages/lingwen-project-init/src/lingwen_project_init/slug.py` | (~25 行) | `validate_slug` + `default_project_parent` + `_validate_chapter_count` |
-| `packages/lingwen-project-init/src/lingwen_project_init/beats.py` | (~150 行) | `_chapter_beats` + `_project_yaml` + `_pillars_md` + `_readme_md` + `_global_outline_md` + `_chapter_outline_md` + `_character_profiles` + `init_minimal_short_project` |
+| `packages/lingwen-project-init/src/lingwen_project_init/beats.py` | (~330 行) | `_chapter_beats` + `_project_yaml` + `_pillars_md` + `_readme_md` + `_global_outline_md` + `_chapter_outline_md` + `_character_profiles` + `init_minimal_short_project` |
 
 > **Decision: 3 sub-modules** (NOT 1 monolithic ~200 line file per MANY SMALL FILES principle; NOT 5+ files because project_init is simpler than studio_registry with 24 symbols vs 14).
 
@@ -172,9 +172,9 @@ __all__ = [
 ]
 ```
 
-**14 top-level definitions**: 1 class + 8 public funcs + 5 private funcs (`_validate_chapter_count`, `_chapter_beats`, `_project_yaml`, `_pillars_md`, `_readme_md`, `_global_outline_md`, `_chapter_outline_md`, `_character_profiles` — these are re-exported but NOT in `__all__` per Python convention) + 2 module-level consts (`_SLUG_RE`, `_MINIMAL_BEATS`).
+**14 top-level definitions**: 1 class + 9 public funcs + 4 private funcs (`_validate_chapter_count`, `_chapter_beats`, `_project_yaml`, `_character_profiles` — these are re-exported but NOT in `__all__` per Python convention) + 2 module-level consts (`_SLUG_RE`, `_MINIMAL_BEATS`).
 
-**`__all__` lists 3 public symbols** (1 class + 2 funcs). Private funcs and module consts re-exported for backward-compat with intra-package callers (none in production — but kept for tests that may import them indirectly).
+**`__all__` lists 4 public symbols** (1 class + 3 funcs: `InitProjectResult` + `validate_slug` + `default_project_parent` + `init_minimal_short_project`). Private funcs and module consts re-exported for backward-compat with intra-package callers (none in production — but kept for tests that may import them indirectly).
 
 ### Sub-module content split (3 files)
 
@@ -194,16 +194,15 @@ _MINIMAL_BEATS: tuple[tuple[int, str, str, tuple[str, ...], tuple[str, ...]], ..
 )
 
 
-@dataclass
+@dataclass(frozen=True)
 class InitProjectResult:
     """Result of project initialization."""
+    slug: str
+    title: str
     root: Path
-    pillars: dict[str, Any]
-    readme: str
-    outline: str
-    chapter_outline: dict[str, Any]
-    project_yaml: str
-    character_profiles: dict[str, Any]
+    chapter_count: int
+    creation_mode: str
+    files_written: tuple[str, ...]
 ```
 
 **`slug.py`** (~25 行):
@@ -237,8 +236,8 @@ class InitProjectResult:
 | # | Test | Assertion |
 |---|------|-----------|
 | 1 | `test_lingwen_project_init_importable` | `import lingwen_project_init` succeeds |
-| 2 | `test_lingwen_project_init_exposes_3_public_symbols` | `len(__all__) == 3` (public symbols: InitProjectResult + validate_slug + init_minimal_short_project); verify count: 1 class + 2 funcs; verify underscore-prefixed private funcs/consts NOT in `__all__` |
-| 3 | `test_lingwen_project_init_init_project_result` | `InitProjectResult` is dataclass with 7 fields (root, pillars, readme, outline, chapter_outline, project_yaml, character_profiles) |
+| 2 | `test_lingwen_project_init_exposes_4_public_symbols` | `len(__all__) == 4` (public symbols: InitProjectResult + validate_slug + default_project_parent + init_minimal_short_project); verify count: 1 class + 3 funcs; verify underscore-prefixed private funcs/consts NOT in `__all__` |
+| 3 | `test_lingwen_project_init_init_project_result` | `InitProjectResult` is frozen dataclass with 6 fields (slug, title, root, chapter_count, creation_mode, files_written) |
 | 4 | `test_lingwen_project_init_3_sub_modules` | All 3 sub-module files exist: `models`, `slug`, `beats` |
 | 5 | `test_infra_project_init_path_forbidden` | `! Path("infra/project_init.py").exists()` (deleted in C3) |
 | 6 | `test_no_consumer_imports_infra_project_init` | `subprocess.run(["grep", "-rn", "infra.project_init", "infra/", "apps/", "packages/", "tests/"], capture_output=True).stdout == b""` |

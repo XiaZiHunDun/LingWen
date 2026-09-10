@@ -98,6 +98,7 @@ members = [
     "packages/lingwen-project-config",   # ★ Phase 38 NEW
     "packages/lingwen-logging-config",   # ★ Phase 39 NEW
     "packages/lingwen-studio-registry",   # ★ Phase 40 NEW
+    "packages/lingwen-project-init",   # ★ Phase 42 NEW
     "apps/studio_api",
 ]
 
@@ -120,6 +121,7 @@ lingwen-paths = { workspace = true }  # ★ Phase 37 NEW
 lingwen-project-config = { workspace = true }  # ★ Phase 38 NEW
 lingwen-logging-config = { workspace = true }   # ★ Phase 39 NEW
 lingwen-studio-registry = { workspace = true }   # ★ Phase 40 NEW
+lingwen-project-init = { workspace = true }   # ★ Phase 42 NEW
 
 # ---------------------------------------------------------------------------
 # Tool configs (pyproject.toml 集中配置,避免散在多个 ini/tox)
