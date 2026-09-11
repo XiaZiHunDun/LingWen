@@ -1,1 +1,1 @@
-from infra.studio_batch_runner import *  # noqa: F403
+from lingwen_studio_batch_runner import *  # noqa: F403

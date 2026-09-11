@@ -55,7 +55,7 @@ def test_history_route_returns_jobs_for_slug(client):
         },
     ]
     with patch(
-        "infra.studio_batch_runner.list_batch_jobs_for_slug",
+        "lingwen_studio_batch_runner.list_batch_jobs_for_slug",
         return_value=rows,
     ):
         resp = client.get("/api/studio/batch/history", params={"slug": "my-project", "limit": 20})
@@ -77,7 +77,7 @@ def test_history_route_uses_default_limit_20(client):
     assert the route shape here.
     """
     with patch(
-        "infra.studio_batch_runner.list_batch_jobs_for_slug",
+        "lingwen_studio_batch_runner.list_batch_jobs_for_slug",
         return_value=[],
     ) as mock_list:
         resp = client.get("/api/studio/batch/history", params={"slug": "anything"})
@@ -91,7 +91,7 @@ def test_history_route_uses_default_limit_20(client):
 def test_history_route_filters_by_slug(client):
     """Route must pass slug to infra helper so jobs from other slugs don't leak."""
     with patch(
-        "infra.studio_batch_runner.list_batch_jobs_for_slug",
+        "lingwen_studio_batch_runner.list_batch_jobs_for_slug",
         return_value=[],
     ) as mock_list:
         resp = client.get("/api/studio/batch/history", params={"slug": "项目 with spaces"})

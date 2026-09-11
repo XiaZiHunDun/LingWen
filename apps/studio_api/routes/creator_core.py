@@ -158,7 +158,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_batch_history_endpoint() -> CreatorBatchHistoryResponse:
         from lingwen_creator.content.batch_history import enrich_batch_history_job
 
-        from infra.studio_batch_runner import list_batch_jobs_for_slug
+        from lingwen_studio_batch_runner import list_batch_jobs_for_slug
 
         project = _require_project(ctx)
         jobs = list_batch_jobs_for_slug(project.slug, limit=5)
@@ -168,7 +168,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_batch_history_export_endpoint() -> CreatorBatchHistoryExportResponse:
         from lingwen_creator.content.batch_history import enrich_batch_history_job
 
-        from infra.studio_batch_runner import list_batch_jobs_for_slug
+        from lingwen_studio_batch_runner import list_batch_jobs_for_slug
 
         project = _require_project(ctx)
         jobs = list_batch_jobs_for_slug(project.slug, limit=20)

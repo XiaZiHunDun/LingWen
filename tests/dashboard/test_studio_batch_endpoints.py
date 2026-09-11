@@ -19,7 +19,7 @@ def client(tmp_path: Path, monkeypatch) -> TestClient:
     jobs = tmp_path / "jobs"
     jobs.mkdir()
     monkeypatch.setattr(registry, "active_state_path", lambda: state)
-    monkeypatch.setattr("infra.studio_batch_runner._jobs_dir", lambda: jobs)
+    monkeypatch.setattr("lingwen_studio_batch_runner._jobs_dir", lambda: jobs)
     monkeypatch.setenv("LINGWEN_ALLOW_DASHBOARD_BATCH", "1")
     registry.activate_project("anye-xinbiao")
 
@@ -28,7 +28,7 @@ def client(tmp_path: Path, monkeypatch) -> TestClient:
 
 
 class TestStudioBatchEndpoints:
-    @patch("infra.studio_batch_runner.subprocess.Popen")
+    @patch("lingwen_studio_batch_runner.subprocess.Popen")
     def test_run_batch(self, mock_popen, client: TestClient) -> None:
         proc = MagicMock()
         proc.pid = 9999
@@ -63,8 +63,8 @@ class TestStudioBatchEndpoints:
         assert records.status_code == 200
         assert summary["pilot_records_dir"] in records.json()["records_dir"]
 
-    @patch("infra.studio_batch_runner._process_running", return_value=True)
-    @patch("infra.studio_batch_runner.subprocess.Popen")
+    @patch("lingwen_studio_batch_runner._process_running", return_value=True)
+    @patch("lingwen_studio_batch_runner.subprocess.Popen")
     def test_second_run_queues_and_is_listed(self, mock_popen, _running, client: TestClient) -> None:
         mock_popen.return_value = MagicMock(pid=7001)
 

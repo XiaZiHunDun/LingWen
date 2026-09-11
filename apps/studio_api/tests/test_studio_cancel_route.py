@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from apps.studio_api.routes.studio import register_studio
-from infra.studio_batch_runner import BatchJob
+from lingwen_studio_batch_runner import BatchJob
 
 
 @pytest.fixture
@@ -41,7 +41,7 @@ def _make_running_job(job_id: str = "abc-123") -> BatchJob:
 def test_cancel_route_returns_200_with_cancelled_status(client):
     job = _make_running_job("abc-123")
     with patch(
-        "infra.studio_batch_runner.cancel_batch_job",
+        "lingwen_studio_batch_runner.cancel_batch_job",
         return_value=job,
     ):
         resp = client.post("/api/studio/batch/abc-123/cancel")
@@ -53,7 +53,7 @@ def test_cancel_route_returns_200_with_cancelled_status(client):
 
 def test_cancel_route_returns_404_for_unknown_job_id(client):
     with patch(
-        "infra.studio_batch_runner.cancel_batch_job",
+        "lingwen_studio_batch_runner.cancel_batch_job",
         side_effect=LookupError("batch job not found: 'ghost'"),
     ):
         resp = client.post("/api/studio/batch/ghost/cancel")
@@ -62,7 +62,7 @@ def test_cancel_route_returns_404_for_unknown_job_id(client):
 
 def test_cancel_route_returns_409_for_terminal_state(client):
     with patch(
-        "infra.studio_batch_runner.cancel_batch_job",
+        "lingwen_studio_batch_runner.cancel_batch_job",
         side_effect=RuntimeError("batch job 'done-001' is in terminal state 'completed', cannot cancel"),
     ):
         resp = client.post("/api/studio/batch/done-001/cancel")

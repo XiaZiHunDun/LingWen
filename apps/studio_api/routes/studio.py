@@ -292,7 +292,7 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
         priority: int = Query(default=0, ge=0, le=100),
     ) -> StudioBatchJobResponse:
         """Start a batch run, or enqueue it (priority-ordered) if already busy."""
-        from infra.studio_batch_runner import (
+        from lingwen_studio_batch_runner import (
             BatchAlreadyRunningError,
             BatchNotAllowedError,
             BatchPreflightError,
@@ -330,14 +330,14 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
         slug: str,
     ) -> StudioBatchJobListResponse:
         """List queued (not yet started) batch jobs for a slug, ordered by priority."""
-        from infra.studio_batch_runner import list_batch_queue
+        from lingwen_studio_batch_runner import list_batch_queue
 
         rows = list_batch_queue(slug)
         return StudioBatchJobListResponse(jobs=[StudioBatchJobSummary.model_validate(r) for r in rows])
 
     @app.get("/api/studio/production/jobs/active", response_model=Optional[StudioBatchJobResponse])
     def studio_production_active_job() -> Optional[StudioBatchJobResponse]:
-        from infra.studio_batch_runner import active_batch_job_for_project
+        from lingwen_studio_batch_runner import active_batch_job_for_project
 
         payload = active_batch_job_for_project()
         if payload is None:
@@ -346,7 +346,7 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.get("/api/studio/production/jobs/{job_id}", response_model=StudioBatchJobResponse)
     def studio_production_job_status(job_id: str) -> StudioBatchJobResponse:
-        from infra.studio_batch_runner import get_batch_job
+        from lingwen_studio_batch_runner import get_batch_job
 
         payload = get_batch_job(job_id)
         if payload is None:
@@ -356,7 +356,7 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
     @app.post("/api/studio/batch/{job_id}/cancel", response_model=StudioBatchJobResponse)
     def studio_batch_cancel_endpoint(job_id: str) -> StudioBatchJobResponse:
         """Cancel a running batch job (SIGTERM + 5s grace + SIGKILL fallback)."""
-        from infra.studio_batch_runner import cancel_batch_job
+        from lingwen_studio_batch_runner import cancel_batch_job
 
         try:
             job = cancel_batch_job(job_id)
@@ -373,7 +373,7 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
         limit: int = Query(default=20, ge=1, le=100),
     ) -> StudioBatchJobListResponse:
         """List recent batch jobs for a slug (Pilot Page history)."""
-        from infra.studio_batch_runner import list_batch_jobs_for_slug
+        from lingwen_studio_batch_runner import list_batch_jobs_for_slug
 
         rows = list_batch_jobs_for_slug(slug, limit=limit)
         return StudioBatchJobListResponse(jobs=[StudioBatchJobSummary.model_validate(r) for r in rows])
@@ -393,13 +393,13 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
         - ``replay=1``: first replay deterministic history from disk (reconnect recovery).
         - ``slug`` / ``mode``: guard params; 403 when the job does not match.
         """
-        from infra.studio_batch_runner import (
+        from lingwen_studio_batch_runner import (
             _load_job,
             _poll_job,
             dashboard_batch_allowed,
             replay_events,
         )
-        from infra.studio_batch_streamer import (
+        from lingwen_studio_batch_streamer import (
             EVENT_JOB_STATE,
             KNOWN_EVENT_TYPES,
             format_event,
@@ -518,8 +518,8 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
         """Create a saved batch-run preset (Track B batch templates)."""
         from lingwen_studio_registry import get_project_by_slug
 
-        from infra.studio_batch_streamer import KNOWN_EVENT_TYPES
-        from infra.studio_batch_templates import create_batch_template
+        from lingwen_studio_batch_streamer import KNOWN_EVENT_TYPES
+        from lingwen_studio_batch_templates import create_batch_template
 
         slug = req.slug or _require_project(ctx).slug
         if get_project_by_slug(slug) is None:
@@ -547,7 +547,7 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
     )
     def studio_batch_template_get(template_id: str) -> StudioBatchTemplate:
         """Load a single saved batch template by id."""
-        from infra.studio_batch_templates import get_batch_template
+        from lingwen_studio_batch_templates import get_batch_template
 
         payload = get_batch_template(template_id)
         if payload is None:
@@ -562,7 +562,7 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
         slug: str | None = Query(default=None),
     ) -> StudioBatchTemplateListResponse:
         """List saved batch templates, optionally filtered by project slug."""
-        from infra.studio_batch_templates import list_batch_templates
+        from lingwen_studio_batch_templates import list_batch_templates
 
         rows = list_batch_templates(slug=slug)
         return StudioBatchTemplateListResponse(
@@ -578,8 +578,8 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
         req: StudioBatchTemplateUpdateRequest,
     ) -> StudioBatchTemplate:
         """Partially update an existing saved batch template."""
-        from infra.studio_batch_streamer import KNOWN_EVENT_TYPES
-        from infra.studio_batch_templates import update_batch_template
+        from lingwen_studio_batch_streamer import KNOWN_EVENT_TYPES
+        from lingwen_studio_batch_templates import update_batch_template
 
         _validate_event_types(req.event_types, KNOWN_EVENT_TYPES)
         try:
@@ -606,7 +606,7 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
     )
     def studio_batch_template_delete(template_id: str) -> StudioBatchTemplate:
         """Delete a saved batch template by id; returns the deleted template."""
-        from infra.studio_batch_templates import delete_batch_template
+        from lingwen_studio_batch_templates import delete_batch_template
 
         try:
             template = delete_batch_template(template_id)
