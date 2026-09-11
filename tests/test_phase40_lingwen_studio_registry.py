@@ -87,15 +87,20 @@ def test_infra_studio_registry_shim_deleted() -> None:
     )
 
 
-# === Test 6: infra/studio/__init__.py has no registry wildcard ===
+# === Test 6: infra/studio/__init__.py MUST NOT EXIST (Phase 53) ===
 def test_infra_studio_init_has_no_registry_wildcard() -> None:
+    """Phase 40b removed the `from infra.studio_registry import *` wildcard.
+
+    Phase 53 P3-ARCHDEBT deleted the entire infra/studio/ directory
+    (zero remaining consumers — the only remaining wildcard was the
+    `from infra.studio_batch_runner import *` from Phase 47, which was
+    itself deleted by Phase 53 because the barrel no longer serves
+    any purpose after all `infra.studio_*` modules were migrated to
+    `packages/lingwen-studio-*` in Phase 47).
+    """
     init_path = REPO_ROOT / "infra" / "studio" / "__init__.py"
-    content = init_path.read_text(encoding="utf-8")
-    assert "from lingwen_studio_registry import *" not in content, (
-        "infra/studio/__init__.py must not re-export the deleted registry shim"
-    )
-    assert "from infra.studio_registry" not in content, (
-        "infra/studio/__init__.py must not reference infra.studio_registry"
+    assert not init_path.exists(), (
+        f"{init_path} should be deleted by Phase 53 (zero-consumer barrel)."
     )
 
 

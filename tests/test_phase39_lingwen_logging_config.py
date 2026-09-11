@@ -189,15 +189,16 @@ def test_canonical_symbols_migrated():
 
 
 def test_infra_core_init_no_logging_config_wildcard():
-    """Verify infra/core/__init__.py no longer references logging_config."""
-    init_file = REPO_ROOT / "infra" / "core" / "__init__.py"
-    content = init_file.read_text(encoding="utf-8")
+    """Verify infra/core/__init__.py no longer exists (Phase 53 P3-ARCHDEBT).
 
-    assert "infra.logging_config" not in content, (
-        f"{init_file} should not reference 'infra.logging_config' (deleted in C3)"
-    )
-    # Wildcard re-export through infra.core.* namespace is no longer needed;
-    # consumers should import directly from lingwen_logging_config
-    assert not re.search(r"from\s+lingwen_logging_config\s+import\s+\*", content), (
-        f"{init_file} should not have wildcard re-export of lingwen_logging_config"
+    Phase 39 C3 removed the `from lingwen_logging_config import *` wildcard
+    line; the file became empty. Phase 49 removed the `from
+    lingwen_memory_service import *` wildcard. Phase 53 deleted the entire
+    `infra/core/` directory (zero remaining consumers after Phase 39 + 49).
+
+    Stronger assertion: the file MUST NOT EXIST.
+    """
+    init_file = REPO_ROOT / "infra" / "core" / "__init__.py"
+    assert not init_file.exists(), (
+        f"{init_file} should be deleted by Phase 53 (zero-consumer barrel)"
     )

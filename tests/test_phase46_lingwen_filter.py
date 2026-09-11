@@ -301,32 +301,21 @@ def test_prior_phase_guards_preserved() -> None:
 
 
 def test_infra_core_init_remaining_wildcards() -> None:
-    """infra/core/__init__.py must have 0 wildcards (all migrated).
+    """infra/core/__init__.py MUST NOT EXIST (Phase 53 P3-ARCHDEBT).
 
-    Phase 46: removed `from infra.filter import *`
-    Phase 48: removed `from infra.full_check_report import *`
-    Phase 49: removed `from infra.memory_service import *`
-    All infra.core/* wildcards migrated to lingwen_* canonical packages.
+    Phase 46 + 48 + 49 progressively removed all `infra.X import *` wildcards.
+    Phase 53 deleted the entire zero-consumer barrel directory (no remaining
+    wildcards, no remaining consumers).
+
+    Replaces the old "0 wildcards" assertion with a stronger one: the file
+    is GONE entirely.
     """
     init = PROJECT_ROOT / "infra" / "core" / "__init__.py"
-    content = init.read_text()
-    expected_remaining = []  # all migrated
-    for wildcard in expected_remaining:
-        assert wildcard in content, (
-            f"infra/core/__init__.py should still have `{wildcard}` "
-        )
-    # Phase 46 wildcard (filter) should be REPLACED with lingwen_quality.filter
-    assert "from infra.filter import *" not in content, (
-        "Phase 46 should have REMOVED `from infra.filter import *`"
+    assert not init.exists(), (
+        f"{init} should be deleted by Phase 53 (zero-consumer barrel)."
     )
-    assert "from lingwen_quality.filter import *" in content, (
-        "Phase 46 should have ADDED `from lingwen_quality.filter import *`"
-    )
-    # Phase 48 wildcard (full_check_report) should be REPLACED
-    assert "from infra.full_check_report import *" not in content, (
-        "Phase 48 should have REMOVED `from infra.full_check_report import *`"
-    )
-    # Phase 49 wildcard (memory_service) should be REPLACED
-    assert "from infra.memory_service import *" not in content, (
-        "Phase 49 should have REMOVED `from infra.memory_service import *`"
+    # And the directory itself should be gone.
+    core_dir = PROJECT_ROOT / "infra" / "core"
+    assert not core_dir.exists() or not any(core_dir.iterdir()), (
+        f"{core_dir} should be deleted by Phase 53 (or empty)."
     )

@@ -172,10 +172,16 @@ def test_prior_phase_guards_preserved() -> None:
 
 
 def test_wildcard_replaced_in_infra_core_init() -> None:
+    """infra/core/__init__.py MUST NOT EXIST (Phase 53 P3-ARCHDEBT).
+
+    Phase 49 C3 removed the last remaining `infra.memory_service` wildcard
+    and replaced it with `lingwen_memory_service`. Phase 53 then deleted
+    the entire zero-consumer barrel directory.
+    """
     init = PROJECT_ROOT / "infra" / "core" / "__init__.py"
-    content = init.read_text()
-    assert "from lingwen_memory_service import *" in content
-    assert "from infra.memory_service import *" not in content
+    assert not init.exists(), (
+        f"{init} should be deleted by Phase 53 (zero-consumer barrel)."
+    )
 
 
 def test_self_import_preserved_in_service() -> None:

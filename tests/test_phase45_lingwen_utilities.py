@@ -388,27 +388,12 @@ def test_moved_tests_in_canonical_locations() -> None:
 
 
 def test_infra_core_init_retains_unmigrated_wildcards() -> None:
-    """infra/core/__init__.py must have 0 wildcards (all infra.core/* migrated).
+    """infra/core/__init__.py MUST NOT EXIST (Phase 53 P3-ARCHDEBT).
 
-    Phase 46: removed `from infra.filter import *`
-    Phase 48: removed `from infra.full_check_report import *`
-    Phase 49: removed `from infra.memory_service import *`
-    All wildcards migrated to lingwen_* canonical packages.
+    Phase 46 + 48 + 49 progressively migrated all `infra.X import *` wildcards.
+    Phase 53 deleted the entire zero-consumer barrel directory.
     """
     init = PROJECT_ROOT / "infra" / "core" / "__init__.py"
-    content = init.read_text()
-    expected_remaining = []  # all migrated
-    for wildcard in expected_remaining:
-        assert wildcard in content, (
-            f"infra/core/__init__.py should still have `{wildcard}` "
-        )
-    # All infra.core/* wildcards migrated
-    assert "from infra.filter import *" not in content, (
-        "Phase 46 should have REMOVED `from infra.filter import *`"
-    )
-    assert "from infra.full_check_report import *" not in content, (
-        "Phase 48 should have REMOVED `from infra.full_check_report import *`"
-    )
-    assert "from infra.memory_service import *" not in content, (
-        "Phase 49 should have REMOVED `from infra.memory_service import *`"
+    assert not init.exists(), (
+        f"{init} should be deleted by Phase 53 (zero-consumer barrel)."
     )

@@ -262,11 +262,17 @@ def test_prior_phase_guards_preserved() -> None:
 
 
 def test_wildcard_replaced_in_infra_studio_init() -> None:
-    """infra/studio/__init__.py wildcard must use lingwen_studio_batch_runner."""
+    """infra/studio/__init__.py MUST NOT EXIST (Phase 53 P3-ARCHDEBT).
+
+    Phase 40 + 47 progressively replaced infra.studio_batch_runner
+    references with lingwen_studio_batch_runner; the wildcard line was
+    the last remaining reference. Phase 53 deleted the entire barrel
+    directory (1 LOC, zero consumers after the wildcard removal).
+    """
     init = PROJECT_ROOT / "infra" / "studio" / "__init__.py"
-    content = init.read_text()
-    assert "from lingwen_studio_batch_runner import *" in content
-    assert "from infra.studio_batch_runner import *" not in content
+    assert not init.exists(), (
+        f"{init} should be deleted by Phase 53 (zero-consumer barrel)."
+    )
 
 
 def test_test_files_moved_to_canonical_locations() -> None:
