@@ -12,7 +12,7 @@ class TestSchema:
     """Schema 验证系统测试"""
 
     def test_struct_decode(self):
-        from infra.schema import Struct
+        from lingwen_schema import Struct
 
         class User(Struct):
             name: str
@@ -23,7 +23,7 @@ class TestSchema:
         assert user.age == 25
 
     def test_struct_encode(self):
-        from infra.schema import Struct
+        from lingwen_schema import Struct
 
         class User(Struct):
             name: str
@@ -34,7 +34,7 @@ class TestSchema:
         assert encoded == {"name": "Bob", "age": 30}
 
     def test_struct_validate(self):
-        from infra.schema import Struct, validate
+        from lingwen_schema import Struct, validate
 
         class User(Struct):
             name: str
@@ -49,7 +49,7 @@ class TestSchema:
         assert errors is not None
 
     def test_array_decode(self):
-        from infra.schema import Array
+        from lingwen_schema import Array
 
         StringArray = Array[str]
         arr = StringArray.decode(["a", "b", "c"])
@@ -60,7 +60,7 @@ class TestTool:
     """类型安全工具定义测试"""
 
     def test_make_typed_tool(self):
-        from infra.schema import Struct
+        from lingwen_schema import Struct
         from infra.tool import ToolOutput, dispatch, make
 
         class WeatherParams(Struct):
@@ -99,7 +99,7 @@ class TestTool:
         assert result.content["result"] == "Found: test"
 
     def test_tools_registry(self):
-        from infra.schema import Struct
+        from lingwen_schema import Struct
         from infra.tool import ToolsRegistry, make
 
         class Params(Struct):

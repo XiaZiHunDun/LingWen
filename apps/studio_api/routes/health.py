@@ -17,7 +17,7 @@ from fastapi import FastAPI
 
 from apps.studio_api.models import DatabaseStatus, HealthResponse, MemoryUsage
 from apps.studio_api.routes.ctx import RoutesContext
-from infra.health import (
+from lingwen_health import (
     CacheHealthCheck,
     DatabaseHealthCheck,
     HealthManager,
