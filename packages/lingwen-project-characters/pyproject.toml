@@ -1,0 +1,17 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-project-characters"
+version = "0.1.0"
+description = "LingWen canonical project_characters package (Phase 51 P3-ARCHDEBT prose cluster closure)"
+requires-python = ">=3.11"
+dependencies = [
+    "lingwen-paths",           # ProjectPaths (Phase 37)
+    "lingwen-project-config",  # ProjectConfig (Phase 38)
+]
+# NOT-LEAF — 2 workspace deps. Provides 2 public funcs in a single sub-module.
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_project_characters"]

@@ -112,6 +112,9 @@ members = [
     "packages/lingwen-memory-service",   # ★ Phase 49 NEW
     "packages/lingwen-schema",   # ★ Phase 50 NEW (utilities batch)
     "packages/lingwen-health",   # ★ Phase 50 NEW (utilities batch)
+    "packages/lingwen-prose-judge",   # ★ Phase 51 NEW (prose cluster closure)
+    "packages/lingwen-prose-snapshot",   # ★ Phase 51 NEW (prose cluster closure)
+    "packages/lingwen-project-characters",   # ★ Phase 51 NEW (prose cluster closure)
     "apps/studio_api",
 ]
 
@@ -148,6 +151,9 @@ lingwen-full-check-report = { workspace = true }   # ★ Phase 48 NEW
 lingwen-memory-service = { workspace = true }   # ★ Phase 49 NEW
 lingwen-schema = { workspace = true }   # ★ Phase 50 NEW (utilities batch)
 lingwen-health = { workspace = true }   # ★ Phase 50 NEW (utilities batch)
+lingwen-prose-judge = { workspace = true }   # ★ Phase 51 NEW (prose cluster closure)
+lingwen-prose-snapshot = { workspace = true }   # ★ Phase 51 NEW (prose cluster closure)
+lingwen-project-characters = { workspace = true }   # ★ Phase 51 NEW (prose cluster closure)
 
 # ---------------------------------------------------------------------------
 # Tool configs (pyproject.toml 集中配置,避免散在多个 ini/tox)

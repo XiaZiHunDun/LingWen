@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-prose-judge"
+version = "0.1.0"
+description = "LingWen canonical prose_judge package (Phase 51 P3-ARCHDEBT prose cluster closure)"
+requires-python = ">=3.11"
+dependencies = [
+    "lingwen-prose-calibration",  # is_prose_issue / load_prose_config (Phase 44)
+    "lingwen-llm",                # LLMServiceAdapter (Phase 34 / 43)
+    "lingwen-shared",             # LLMTask + TaskType contracts
+    "lingwen-full-check-report",  # load_report_summary (Phase 48)
+]
+# NOT-LEAF — 4 workspace deps. Provides 28 public symbols
+# (7 consts + 21 funcs) split across 5 sub-modules:
+#   constants.py  — rubric, dimensions, prompt
+#   report_io.py  — paths, IO, validate, issue helpers
+#   ratings.py    — offline derive + LLM judge + orchestration
+#   analysis.py   — cross-signal correlation + summarisation
+#   calibration.py — sampling / verdict / log rendering
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_prose_judge"]
