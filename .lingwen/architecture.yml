@@ -1,7 +1,7 @@
 # LingWen 架构契约 — AI 可读的结构化模块边界定义
 # 此文件是 AGENTS.md 的机器可读版本，AI 开发工具应优先解析此文件
 
-version: "42.0"  # Phase 44 — P3-ARCHDEBT (lingwen-prose-calibration): infra.prose_calibration (1 module, 191 lines, 8 top-level public symbols + 2 private consts: load_prose_config + is_prose_issue + build_prose_heatmap + evaluate_against_baseline + format_calibration_report + list_primary_revision_slugs + is_primary_revision_slug + resolve_llm_post_check + _FACTORY_ROOT + _DEFAULT_CONFIG) → packages/lingwen-prose-calibration/ (2 sub-modules: service.py + __init__.py, 191 LOC total — TRUE LEAF, only PyYAML 3rd-party). 6 consumer edits 迁移 (1 wildcard infra/prose/__init__.py + 4 infra intra-include full_check_report.py/prose_judge.py/prose_snapshot.py + 1 ci test tests/ci/test_llm_golden_primary_ci.py; tests/infra/test_prose_calibration.py MOVE in C1). False-positive filter: tests/infra/test_prose_calibration_overrides.py imports from infra.prose_calibration_overrides (DIFFERENT module). FULL DELETE in C3 (NOT shim — 0 deferred consumers). 1 NEW invariant (#58 packages/lingwen-prose-calibration/ 是 prose calibration 唯一实包; infra.prose_calibration.* 路径非法). _FACTORY_ROOT path resolution fixup in C1: parents[1] → parents[4] (4 levels up from new location to repo root, similar to Phase 40a C1.5 factory_root fixup). 5 atomic commits (C0 spec+plan, C1 scaffold+MOVE-test, C2 bulk 6-site migration, C3 delete+invariant+version, C4 guards+handoff). TRUE LEAF package — 0 workspace deps (PyYAML>=6.0 3rd-party only; declared explicitly so package installable standalone per Phase 39 LEAF template). Carryover closure: P3-ARCHDEBT 8/7+1 (lingwen-prose-calibration) → CLOSED; P3-ARCHDEBT continued (Phase 45+ candidates: cache LEAF batch → Phase 45, filter near-LEAF → Phase 46) → see docs/superpowers/ARCHDEBT-CANDIDATES.md.
+version: "43.0"  # Phase 45 — P3-ARCHDEBT (lingwen-utilities BATCH): 4 TRUE-LEAF utility modules in single atomic phase (cache 91 LOC + coverage_gate 78 LOC + patterns 80 LOC + result 168 LOC = 417 LOC total) → packages/lingwen-cache/ + packages/lingwen-coverage-gate/ + packages/lingwen-patterns/ + packages/lingwen-result/ (8 sub-modules total, 4 pyproject, 3 test MOVEs in C1). 12 consumer edits 迁移 (4 wildcards infra/core/__init__.py lines 1/2/7/8 + 2 tools/llm_quality/ + 1 tests/ci/test_coverage_modules_ci.py + 1 cross-package lingwen-quality + 1 sed in-place tests/test_infra_modules.py with 6 imports for result). FULL DELETE in C3 (NOT shim — 0 deferred consumers). 4 NEW invariants (#59 cache + #60 coverage_gate + #61 patterns + #62 result). _FACTORY_ROOT path resolution fixup in C1 for coverage_gate only: parents[1] → parents[4] (cache/patterns/result have no _FACTORY_ROOT). 5 atomic commits (C0 spec+plan, C1 scaffold 16 files + 3 test MOVE, C2 bulk 12-site migration, C3 delete 4 files + 4 invariants + version, C4 guards+handoff). TRUE LEAF packages — 3× stdlib-only (cache/patterns/result) + 1× PyYAML>=6.0 (coverage_gate). First multi-module P3-ARCHDEBT batch phase (vs single-module per phase 36-44). Carryover closure: P3-ARCHDEBT 9/8+1 (lingwen-utilities batch) → CLOSED; P3-ARCHDEBT continued (Phase 46+ candidates: filter near-LEAF → Phase 46) → see docs/superpowers/ARCHDEBT-CANDIDATES.md.
 
 # 模块分层（单向依赖：上层可依赖下层，下层禁止依赖上层）
 layers:
@@ -80,6 +80,22 @@ invariants:
     rule: "packages/lingwen-prose-calibration/ 是 prose calibration config + heatmap + golden baseline gate + format helpers（load_prose_config + is_prose_issue + build_prose_heatmap + evaluate_against_baseline + format_calibration_report + list_primary_revision_slugs + is_primary_revision_slug + resolve_llm_post_check）的唯一实包；infra.prose_calibration.* 路径非法 (Phase 44 P3-ARCHDEBT lingwen-prose-calibration)"
     severity: error
     scope: "all new prose-calibration code; enforcement via tests/test_phase44_lingwen_prose_calibration.py + grep -rln \"infra\\.prose_calibration\b\" --include=\"*.py\" packages/ apps/ tests/ infra/ → 0 行"
+  - id: I059   # ★ Phase 45 NEW
+    rule: "packages/lingwen-cache/ 是 CheckerCache + CacheEntry（dataclass）的唯一实包；infra.cache.* 路径非法 (Phase 45 P3-ARCHDEBT lingwen-utilities batch cache)"
+    severity: error
+    scope: "all new cache code; enforcement via tests/test_phase45_lingwen_utilities.py + grep -rln \"infra\\.cache\b\" --include=\"*.py\" packages/ apps/ tests/ infra/ tools/ → 0 行"
+  - id: I060   # ★ Phase 45 NEW
+    rule: "packages/lingwen-coverage-gate/ 是 coverage module gate helpers（load_coverage_policy + module_percent + evaluate_module_gate + format_module_gate_report）的唯一实包；infra.coverage_gate.* 路径非法 (Phase 45 P3-ARCHDEBT lingwen-utilities batch coverage_gate)"
+    severity: error
+    scope: "all new coverage-gate code; enforcement via tests/test_phase45_lingwen_utilities.py + grep -rln \"infra\\.coverage_gate\b\" --include=\"*.py\" packages/ apps/ tests/ infra/ → 0 行"
+  - id: I061   # ★ Phase 45 NEW
+    rule: "packages/lingwen-patterns/ 是 PatternRegistry（singleton）+ Pattern type alias 的唯一实包；infra.patterns.* 路径非法 (Phase 45 P3-ARCHDEBT lingwen-utilities batch patterns)"
+    severity: error
+    scope: "all new patterns code; enforcement via tests/test_phase45_lingwen_utilities.py + grep -rln \"infra\\.patterns\b\" --include=\"*.py\" packages/ apps/ tests/ infra/ → 0 行"
+  - id: I062   # ★ Phase 45 NEW
+    rule: "packages/lingwen-result/ 是 Result type（Ok/Err union）+ 5 helper functions（ok + err + wrap + from_optional + combine + either）的唯一实包；infra.result.* 路径非法 (Phase 45 P3-ARCHDEBT lingwen-utilities batch result)"
+    severity: error
+    scope: "all new result code; enforcement via tests/test_phase45_lingwen_utilities.py + grep -rln \"infra\\.result\b\" --include=\"*.py\" packages/ apps/ tests/ infra/ → 0 行"
 
 # 模块边界（明确每个模块的公共 API 和依赖）
 module_boundaries:
