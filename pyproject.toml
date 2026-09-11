@@ -116,6 +116,7 @@ members = [
     "packages/lingwen-prose-snapshot",   # ★ Phase 51 NEW (prose cluster closure)
     "packages/lingwen-project-characters",   # ★ Phase 51 NEW (prose cluster closure)
     "packages/lingwen-persistence",   # ★ Phase 54 NEW (infra/persistence relocation)
+    "packages/lingwen-world-db",   # ★ Phase 56 NEW (infra/world_db relocation)
     "apps/studio_api",
 ]
 
@@ -156,6 +157,7 @@ lingwen-prose-judge = { workspace = true }   # ★ Phase 51 NEW (prose cluster c
 lingwen-prose-snapshot = { workspace = true }   # ★ Phase 51 NEW (prose cluster closure)
 lingwen-project-characters = { workspace = true }   # ★ Phase 51 NEW (prose cluster closure)
 lingwen-persistence = { workspace = true }   # ★ Phase 54 NEW (infra/persistence relocation)
+lingwen-world-db = { workspace = true }   # ★ Phase 56 NEW (infra/world_db relocation)
 
 # ---------------------------------------------------------------------------
 # Tool configs (pyproject.toml 集中配置,避免散在多个 ini/tox)

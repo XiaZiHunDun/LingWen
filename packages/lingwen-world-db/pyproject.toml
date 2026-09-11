@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-world-db"
+version = "0.1.0"
+description = "LingWen canonical world_db package (Phase 56 P3-ARCHDEBT infra/world_db relocation)"
+requires-python = ">=3.11"
+dependencies = [
+    "lingwen-shared",  # ConnectionPort (Phase 36)
+]
+# NOT-LEAF — 1 workspace dep. Provides 18 public symbols across
+# 4 top-level sub-modules + 8 queries/* sub-modules (re-exported
+# transitively). schema.py uses parents[N] for repo-root resolution;
+# original infra/world_db/schema.py used parents[2] from infra/world_db/
+# to reach repo root. New location packages/lingwen-world-db/src/
+# lingwen_world_db/schema.py needs parents[4] (Phase 40a C1.5 fixup).
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_world_db"]
