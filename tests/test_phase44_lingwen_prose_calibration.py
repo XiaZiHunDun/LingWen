@@ -83,8 +83,13 @@ def test_lingwen_prose_calibration_module_importable() -> None:
         raise
 
 
-def test_lingwen_prose_calibration_has_8_public_symbols() -> None:
-    """lingwen_prose_calibration.__all__ must be EXACTLY 8 (Phase 42 lesson #4)."""
+def test_lingwen_prose_calibration_has_17_public_symbols() -> None:
+    """lingwen_prose_calibration.__all__ must be EXACTLY 17.
+
+    Phase 44 established 8 (Phase 42 lesson #4: spec drift prevention).
+    Phase 51 MERGED infra.prose_calibration_overrides (9 funcs) into this
+    package per Phase 46 filter-MERGE precedent. New count: 8 + 9 = 17.
+    """
     try:
         import lingwen_prose_calibration  # noqa: F401
     except ImportError:
@@ -93,6 +98,7 @@ def test_lingwen_prose_calibration_has_8_public_symbols() -> None:
         pytest.skip("lingwen_prose_calibration not importable; run `uv sync --all-packages`")
 
     expected = {
+        # Phase 44 service module (8)
         "load_prose_config",
         "is_prose_issue",
         "build_prose_heatmap",
@@ -101,11 +107,21 @@ def test_lingwen_prose_calibration_has_8_public_symbols() -> None:
         "list_primary_revision_slugs",
         "is_primary_revision_slug",
         "resolve_llm_post_check",
+        # Phase 51 overrides MERGE (9)
+        "apply_calibration_overrides",
+        "default_overrides_path",
+        "load_all_calibration_overrides",
+        "load_yaml_overrides",
+        "merge_calibration_overrides",
+        "override_key",
+        "parse_markdown_log_overrides",
+        "parse_override_key",
+        "save_yaml_override",
     }
     actual = set(lingwen_prose_calibration.__all__)
 
-    assert len(lingwen_prose_calibration.__all__) == 8, (
-        f"__all__ count drift. Expected 8, got {len(lingwen_prose_calibration.__all__)}. "
+    assert len(lingwen_prose_calibration.__all__) == 17, (
+        f"__all__ count drift. Expected 17, got {len(lingwen_prose_calibration.__all__)}. "
         f"Symbols: {lingwen_prose_calibration.__all__}. "
         f"If a new public symbol is intentionally added, update spec + this test."
     )
@@ -311,15 +327,25 @@ def test_prior_phase_guards_preserved() -> None:
 
 
 def test_no_dpkg_breaker_overrides_imports() -> None:
-    """infra/prose/__init__.py:2 prose_calibration_overrides import must be unchanged.
+    """infra/prose/__init__.py MUST NOT exist (Phase 51 closure).
 
-    False-positive guard: the audit must NOT flag this line (different module).
+    Phase 44 reverse direction: this guard asserted the legacy barrel
+    `from infra.prose_calibration_overrides import *` MUST be preserved.
+    Phase 51 P3-ARCHDEBT deleted that file along with infra/prose/ as a
+    whole (zero-consumer barrel, N.14 lesson 1 pattern 5). Replaced with
+    a guard that the barrel directory is gone.
     """
     prose_init = PROJECT_ROOT / "infra" / "prose" / "__init__.py"
-    content = prose_init.read_text()
-    assert "from infra.prose_calibration_overrides import *" in content, (
-        "infra/prose/__init__.py:2 prose_calibration_overrides import should be preserved "
-        "(different module, NOT Phase 44 scope)"
+    assert not prose_init.exists(), (
+        f"infra/prose/__init__.py should be deleted by Phase 51 "
+        f"(zero-consumer barrel). Found at {prose_init}."
+    )
+    # And prose_calibration_overrides source must also be gone (merged into
+    # lingwen_prose_calibration per Phase 46 precedent).
+    overrides_src = PROJECT_ROOT / "infra" / "prose_calibration_overrides.py"
+    assert not overrides_src.exists(), (
+        f"infra/prose_calibration_overrides.py should be deleted by Phase 51 "
+        f"(MERGED into lingwen_prose_calibration). Found at {overrides_src}."
     )
 
 

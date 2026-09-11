@@ -150,9 +150,11 @@ def test_canonical_symbols_migrated():
     # NOTE (Phase 40b): studio registry consumers now import the canonical
     # lingwen_studio_registry package, so this guard uses a real project-config
     # consumer rather than the deleted registry shim.
+    # NOTE (Phase 51): infra/project_characters.py was deleted (relocated to
+    # lingwen_project_characters); substitute another intra-infra consumer.
     representative_files = [
         REPO_ROOT / "apps" / "studio_api" / "routes" / "creator_volume.py",
-        REPO_ROOT / "infra" / "project_characters.py",
+        REPO_ROOT / "apps" / "studio_api" / "routes" / "creator_core.py",
         REPO_ROOT / "tests" / "infra" / "test_project_config.py",
     ]
     for f in representative_files:
@@ -172,15 +174,19 @@ def test_canonical_symbols_migrated():
 
 
 def test_infra_project_init_no_project_config_wildcard():
-    """Verify infra/project/__init__.py no longer references project_config."""
-    init_file = REPO_ROOT / "infra" / "project" / "__init__.py"
-    content = init_file.read_text(encoding="utf-8")
+    """Verify infra/project/__init__.py is gone (Phase 51) and never
+    referenced project_config (Phase 38 C3 deletion).
 
-    assert "infra.project_config" not in content, (
-        f"{init_file} should not reference 'infra.project_config' (deleted in C3)"
+    Phase 51 deleted the entire infra/project/ barrel directory (zero-consumer
+    re-export shim; N.14 lesson 1 pattern 5). The Phase 38 assertion that
+    the file MUST NOT reference `infra.project_config` is now strictly
+    stronger: the file MUST NOT EXIST at all.
+    """
+    init_file = REPO_ROOT / "infra" / "project" / "__init__.py"
+    assert not init_file.exists(), (
+        f"{init_file} should be deleted by Phase 51 (zero-consumer barrel)"
     )
-    # Wildcard re-export through infra.project.* namespace is no longer needed;
-    # consumers should import directly from lingwen_project_config
-    assert not re.search(r"from\s+lingwen_project_config\s+import\s+\*", content), (
-        f"{init_file} should not have wildcard re-export of lingwen_project_config"
+    project_dir = REPO_ROOT / "infra" / "project"
+    assert not project_dir.exists() or not any(project_dir.iterdir()), (
+        f"{project_dir} should be deleted by Phase 51 (or empty)"
     )
