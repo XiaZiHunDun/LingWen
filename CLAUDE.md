@@ -1,6 +1,6 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v41.0 (Phase 43 P3-ARCHDEBT lingwen-llm-service) + Phase 42 (project_init) + Phase 41 mini (brand 字串闭环) + Phase 41+ mini (asset rename) + Phase 41++ mini (sidebar nav micro-interaction polish) + Phase 41+++ mini (infra/ 残留审查 + Top 5 候选识别) + v40.0 (asset sidebar icons 闭环：11 emoji → Phosphor-duotone SVG + 1 Pilot follow-up icon) · 更新: 2026-09-11
+> **版本**: v42.0 (Phase 44 P3-ARCHDEBT lingwen-prose-calibration) + Phase 43 (lingwen-llm-service) + Phase 42 (project_init) + Phase 41 mini (brand 字串闭环) + Phase 41+ mini (asset rename) + Phase 41++ mini (sidebar nav micro-interaction polish) + Phase 41+++ mini (infra/ 残留审查 + Top 5 候选识别) + v40.0 (asset sidebar icons 闭环：11 emoji → Phosphor-duotone SVG + 1 Pilot follow-up icon) · 更新: 2026-09-11
 > 当前状态: `collaboration/CURRENT_STATUS.md` · 待办: `collaboration/BACKLOG.md` · 版本史: `docs/superpowers/archive/PHASE_HISTORY.md`
 > 最高优先级参考: `.lingwen/architecture.yml`
 
@@ -96,7 +96,8 @@ python lingwen.py doctor
 | I054 | `packages/lingwen-logging-config/` 是日志配置（StructuredFormatter / setup_logging / logger）的唯一实包；`infra.logging_config.*` 路径非法 (Phase 39+) |
 | I055 | `packages/lingwen-studio-registry/` 是 Studio 多项目注册表（factory_root + StudioProject + active project state + summaries + reports）的唯一实包；`infra.studio_registry.*` 路径非法 (Phase 40a P3-ARCHDEBT studio_registry) |
 | I056 | `packages/lingwen-project-init/` 是项目初始化器（InitProjectResult + validate_slug + default_project_parent + init_minimal_short_project + 7 markdown helpers）的唯一实包；`infra.project_init.*` 路径非法 (Phase 42 P3-ARCHDEBT project_init) |
-| I057 | `packages/lingwen-llm-service/` 是 LLM 服务（LLMService class + get_llm_service / create_task + DP-02 模块加载时 LLMServiceAdapter factory 注册）的唯一实包；`infra.llm_service.*` 路径非法 (Phase 43 P3-ARCHDEBT lingwen-llm-service) | |
+| I057 | `packages/lingwen-llm-service/` 是 LLM 服务（LLMService class + get_llm_service / create_task + DP-02 模块加载时 LLMServiceAdapter factory 注册）的唯一实包；`infra.llm_service.*` 路径非法 (Phase 43 P3-ARCHDEBT lingwen-llm-service) |
+| I058 | `packages/lingwen-prose-calibration/` 是 prose calibration config + heatmap + golden baseline gate + format helpers（load_prose_config + is_prose_issue + build_prose_heatmap + evaluate_against_baseline + format_calibration_report + list_primary_revision_slugs + is_primary_revision_slug + resolve_llm_post_check）的唯一实包；`infra.prose_calibration.*` 路径非法 (Phase 44 P3-ARCHDEBT lingwen-prose-calibration) | |
 
 > 完整不变量与设计原则 DP-01..06 见 `.lingwen/architecture.yml`；提交纪律与反模式见 `.lingwen/constraints.yml`。
 
