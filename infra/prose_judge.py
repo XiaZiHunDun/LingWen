@@ -595,7 +595,7 @@ def build_calibration_round(
     per_chapter: int = 5,
     overrides: dict[str, dict[str, str]] | None = None,
 ) -> dict[str, Any]:
-    from infra.full_check_report import load_report_summary
+    from lingwen_full_check_report import load_report_summary
     from infra.prose_calibration_overrides import apply_calibration_overrides
 
     summary = load_report_summary(project_root)
@@ -710,7 +710,7 @@ async def run_prose_judge(
     full_check_report: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build judge report: auto=LLM if key else offline; offline|llm force mode."""
-    from infra.full_check_report import load_report_summary
+    from lingwen_full_check_report import load_report_summary
 
     chapter_nums = load_golden_chapter_nums(project_root)
     if not chapter_nums:

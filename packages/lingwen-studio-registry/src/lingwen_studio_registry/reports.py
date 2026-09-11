@@ -8,14 +8,14 @@ from lingwen_studio_registry.models import StudioProject
 
 def quality_report_summary(project: StudioProject) -> dict[str, Any]:
     """Parsed docs/full-check-report.md for Studio dashboard (Phase 10.07)."""
-    from infra.full_check_report import load_report_summary
+    from lingwen_full_check_report import load_report_summary
 
     return load_report_summary(project.root)
 
 
 def prose_diff_summary(project: StudioProject) -> dict[str, Any]:
     """Prose snapshot diff vs current full-check report (v12 Dashboard)."""
-    from infra.full_check_report import load_report_summary
+    from lingwen_full_check_report import load_report_summary
     from infra.prose_snapshot import (
         build_snapshot,
         diff_snapshots,
@@ -67,7 +67,7 @@ def prose_diff_summary(project: StudioProject) -> dict[str, Any]:
 
 def prose_judge_summary(project: StudioProject) -> dict[str, Any]:
     """Prose rubric v2 judge report for Studio dashboard (Phase 12.03)."""
-    from infra.full_check_report import load_report_summary
+    from lingwen_full_check_report import load_report_summary
     from infra.prose_judge import (
         load_judge_report,
         report_path_for,
