@@ -16,7 +16,7 @@ class TestLlmGoldenPrimaryCi:
         assert "MINIMAX_API_KEY required for llm-golden-primary" in wf
 
     def test_primary_matrix_seven_slugs(self):
-        from infra.prose_calibration import list_primary_revision_slugs
+        from lingwen_prose_calibration import list_primary_revision_slugs
 
         wf = (REPO_ROOT / ".github" / "workflows" / "test.yml").read_text(encoding="utf-8")
         for slug in list_primary_revision_slugs():

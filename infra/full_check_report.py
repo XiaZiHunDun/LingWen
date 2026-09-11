@@ -268,7 +268,7 @@ def load_report_summary(project_root: Path) -> dict[str, Any]:
             "prose_vitality_avg": None,
         }
     parsed = parse_report_markdown(path.read_text(encoding="utf-8"))
-    from infra.prose_calibration import build_prose_heatmap
+    from lingwen_prose_calibration import build_prose_heatmap
 
     heatmap = build_prose_heatmap(parsed.get("chapters") or [])
     vitality_chapters = [ch for ch in (parsed.get("chapters") or []) if ch.get("prose_vitality")]

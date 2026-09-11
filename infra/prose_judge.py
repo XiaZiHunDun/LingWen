@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from infra.prose_calibration import is_prose_issue, load_prose_config
+from lingwen_prose_calibration import is_prose_issue, load_prose_config
 
 logger = logging.getLogger(__name__)
 
