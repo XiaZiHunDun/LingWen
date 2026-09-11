@@ -15,6 +15,7 @@ members = [
     "lingwen-coverage-gate",
     "lingwen-creator",
     "lingwen-errors",
+    "lingwen-full-check-report",
     "lingwen-got",
     "lingwen-llm",
     "lingwen-llm-service",
@@ -720,6 +721,21 @@ requires-dist = [
 name = "lingwen-errors"
 version = "0.1.0"
 source = { editable = "packages/lingwen-errors" }
+
+[[package]]
+name = "lingwen-full-check-report"
+version = "0.1.0"
+source = { editable = "packages/lingwen-full-check-report" }
+dependencies = [
+    { name = "lingwen-paths" },
+    { name = "lingwen-quality" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "lingwen-paths", editable = "packages/lingwen-paths" },
+    { name = "lingwen-quality", editable = "packages/lingwen-quality" },
+]
 
 [[package]]
 name = "lingwen-got"

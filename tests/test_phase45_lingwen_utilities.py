@@ -388,24 +388,29 @@ def test_moved_tests_in_canonical_locations() -> None:
 
 
 def test_infra_core_init_retains_unmigrated_wildcards() -> None:
-    """infra/core/__init__.py must still have 2 wildcards for NOT-YET-MIGRATED modules.
+    """infra/core/__init__.py must still have 1 wildcard for NOT-YET-MIGRATED modules.
 
     Phase 46 fixup: removed `from infra.filter import *` (now `from lingwen_quality.filter import *`).
-    Remaining 2 wildcards target Phase 48/49+ scope (full_check_report + memory_service).
+    Phase 48 fixup: removed `from infra.full_check_report import *` (now `from lingwen_full_check_report import *`).
+    Remaining 1 wildcard targets Phase 49+ scope (memory_service).
     """
     init = PROJECT_ROOT / "infra" / "core" / "__init__.py"
     content = init.read_text()
     expected_remaining = [
-        "from infra.full_check_report import *",
         "from infra.memory_service import *",
     ]
     for wildcard in expected_remaining:
         assert wildcard in content, (
             f"infra/core/__init__.py should still have `{wildcard}` "
-            f"(Phase 48/49+ scope, NOT Phase 45/46)"
+            f"(Phase 49+ scope, NOT Phase 45/46/48)"
         )
     # Phase 46 migrated the filter wildcard
     assert "from infra.filter import *" not in content, (
         "Phase 46 should have REMOVED `from infra.filter import *` "
         "(replaced with `from lingwen_quality.filter import *`)"
+    )
+    # Phase 48 migrated the full_check_report wildcard
+    assert "from infra.full_check_report import *" not in content, (
+        "Phase 48 should have REMOVED `from infra.full_check_report import *` "
+        "(replaced with `from lingwen_full_check_report import *`)"
     )
