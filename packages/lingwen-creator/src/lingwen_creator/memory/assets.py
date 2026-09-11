@@ -29,7 +29,7 @@ def _memory_gateway_items() -> tuple[list[dict[str, Any]], bool]:
     """Return items from memory gateway and whether gateway is live."""
     items: list[dict[str, Any]] = []
     try:
-        from infra.memory_service import get_memory_gateway
+        from lingwen_memory_service import get_memory_gateway
 
         gateway = get_memory_gateway()
         if getattr(gateway, "is_noop", False):

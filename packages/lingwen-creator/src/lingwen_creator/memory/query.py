@@ -116,7 +116,7 @@ def creator_memory_query(
     memory_available = False
     if prefs.get("memory_rag_enabled", True):
         try:
-            from infra.memory_service import get_memory_gateway
+            from lingwen_memory_service import get_memory_gateway
 
             gateway = get_memory_gateway()
             if not getattr(gateway, "is_noop", False):

@@ -75,7 +75,7 @@ def _has_llm_api_key() -> bool:
 def _memory_character_hints(project_root: Path) -> list[str]:
     hints: list[str] = []
     try:
-        from infra.memory_service import get_memory_gateway
+        from lingwen_memory_service import get_memory_gateway
 
         gateway = get_memory_gateway()
         if getattr(gateway, "is_noop", False):
