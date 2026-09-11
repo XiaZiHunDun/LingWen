@@ -45,7 +45,7 @@ python -m infra.agent_system.chapter_production_batch \
 
 python3 - <<PY
 from infra.paths import ProjectPaths
-from infra.project_characters import load_project_character_names
+from lingwen_project_characters import load_project_character_names
 
 ProjectPaths.reset()
 paths = ProjectPaths.get("${PROJECT}")

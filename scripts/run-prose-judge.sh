@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 
 from infra.prose_calibration import list_primary_revision_slugs
-from infra.prose_judge import run_prose_judge, save_judge_report, summarize_judge_report
+from lingwen_prose_judge import run_prose_judge, save_judge_report, summarize_judge_report
 from infra.full_check_report import load_report_summary, generate_report
 
 root = Path(os.getcwd())

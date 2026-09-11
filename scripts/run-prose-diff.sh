@@ -21,7 +21,7 @@ import sys
 from pathlib import Path
 
 from infra.full_check_report import generate_report, load_report_summary
-from infra.prose_snapshot import (
+from lingwen_prose_snapshot import (
     build_snapshot,
     diff_snapshots,
     format_diff_report,

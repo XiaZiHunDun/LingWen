@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from infra.prose_snapshot import (
+from lingwen_prose_snapshot import (
     build_snapshot,
     diff_snapshots,
     format_diff_report,

@@ -1,4 +1,4 @@
-"""Tests for infra.prose_judge (Phase 12.03)."""
+"""Tests for lingwen_prose_judge (Phase 12.03 / Phase 51 P3-ARCHDEBT)."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from infra.prose_judge import (
+from lingwen_prose_judge import (
     build_offline_judge_report,
     compute_misreport_stats,
     cross_reference_signals,
@@ -143,7 +143,7 @@ class TestProseJudgeProjectIntegration:
 
         out = tmp_path / "judge.json"
         monkeypatch.setattr(
-            "infra.prose_judge.report_path_for",
+            "lingwen_prose_judge.report_path_for",
             lambda _root: out,
         )
         save_judge_report(project, report)

@@ -14,7 +14,7 @@ from pathlib import Path
 
 from infra.full_check_report import load_report_summary
 from infra.prose_calibration import list_primary_revision_slugs
-from infra.prose_judge import (
+from lingwen_prose_judge import (
     format_calibration_sample_markdown,
     load_golden_chapter_nums,
     sample_calibration_pack,

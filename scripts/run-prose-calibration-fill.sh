@@ -13,8 +13,8 @@ from datetime import date
 from pathlib import Path
 
 from infra.prose_calibration import list_primary_revision_slugs
-from infra.prose_calibration_overrides import load_all_calibration_overrides
-from infra.prose_judge import build_calibration_round, render_calibration_log_document
+from lingwen_prose_calibration import load_all_calibration_overrides
+from lingwen_prose_judge import build_calibration_round, render_calibration_log_document
 
 root = Path.cwd()
 overrides = load_all_calibration_overrides()

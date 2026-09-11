@@ -16,7 +16,7 @@ def quality_report_summary(project: StudioProject) -> dict[str, Any]:
 def prose_diff_summary(project: StudioProject) -> dict[str, Any]:
     """Prose snapshot diff vs current full-check report (v12 Dashboard)."""
     from lingwen_full_check_report import load_report_summary
-    from infra.prose_snapshot import (
+    from lingwen_prose_snapshot import (
         build_snapshot,
         diff_snapshots,
         load_snapshot,
@@ -68,7 +68,7 @@ def prose_diff_summary(project: StudioProject) -> dict[str, Any]:
 def prose_judge_summary(project: StudioProject) -> dict[str, Any]:
     """Prose rubric v2 judge report for Studio dashboard (Phase 12.03)."""
     from lingwen_full_check_report import load_report_summary
-    from infra.prose_judge import (
+    from lingwen_prose_judge import (
         load_judge_report,
         report_path_for,
         summarize_judge_report,

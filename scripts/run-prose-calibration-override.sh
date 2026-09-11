@@ -18,7 +18,7 @@ VERDICT="${4:?verdict (留|删|疑)}"
 NOTE="${5:-}"
 
 python3 - <<PY
-from infra.prose_calibration_overrides import save_yaml_override
+from lingwen_prose_calibration import save_yaml_override
 
 path = save_yaml_override(
     "${SLUG}",

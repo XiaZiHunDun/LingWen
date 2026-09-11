@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from infra.prose_calibration_overrides import (
+from lingwen_prose_calibration import (
     apply_calibration_overrides,
     load_yaml_overrides,
     override_key,

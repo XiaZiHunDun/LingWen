@@ -85,7 +85,7 @@ class TestStudioEndpoints:
 
     def test_prose_diff_no_baseline(self, client: TestClient, monkeypatch) -> None:
         monkeypatch.setattr(
-            "infra.prose_snapshot.load_snapshot",
+            "lingwen_prose_snapshot.load_snapshot",
             lambda _root: None,
         )
         resp = client.get("/api/studio/prose-diff")

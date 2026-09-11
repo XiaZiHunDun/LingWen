@@ -15,7 +15,7 @@ from pathlib import Path
 
 from infra.agent_system.chapter_memory_hook import default_studio_memory_rag_mode
 from infra.agent_system.chapter_production_batch import auto_resolve_calibrate_from
-from infra.prose_calibration_overrides import (
+from lingwen_prose_calibration import (
     apply_calibration_overrides,
     load_yaml_overrides,
     override_key,

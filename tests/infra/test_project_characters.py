@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from lingwen_paths import ProjectPaths
 
-from infra.project_characters import load_agency_target_characters, load_project_character_names
+from lingwen_project_characters import (
+    load_agency_target_characters,
+    load_project_character_names,
+)
 
 
 def test_huiyu_dangan_protagonist_only():
