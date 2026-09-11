@@ -1,6 +1,6 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v50.0 (Phase 53 P3-ARCHDEBT 死代码清理 — infra/tools/legacy/ + infra/core/ + infra/studio/ 删除 + I074 + run_quality_checks 改为 no-op stub 修复 dangling reference) + Phase 52 (infra/ sub-dir audit-only) + v49.0 (Phase 51 P3-ARCHDEBT prose 簇收尾 — prose-judge + prose-snapshot + project-characters + prose-calibration overrides MERGE) + v48.0 (Phase 50 utilities batch — schema + health) + Phase 49 (lingwen-memory-service) + Phase 48 (lingwen-full-check-report) + Phase 47 (lingwen-studio-batch batch — runner + templates + streamer) + Phase 46 (filter MERGE) + Phase 45 (lingwen-utilities batch) + Phase 44 (lingwen-prose-calibration) + Phase 43 (lingwen-llm-service) + Phase 42 (project_init) + Phase 41 mini (brand 字串闭环) + Phase 41+ mini (asset rename) + Phase 41++ mini (sidebar nav micro-interaction polish) + Phase 41+++ mini (infra/ 残留审查 + Top 5 候选识别) + v40.0 (asset sidebar icons 闭环：11 emoji → Phosphor-duotone SVG + 1 Pilot follow-up icon) · 更新: 2026-09-11
+> **版本**: v52.0 (Phase 54 P3-ARCHDEBT infra/persistence 迁移 + I075 + Phase 56 P3-ARCHDEBT infra/world_db 迁移 + I076) + v51.0 (Phase 53 P3-ARCHDEBT dead code cleanup — infra/tools/legacy/ + infra/core/ + infra/studio/ 删除 + I074 + run_quality_checks 改为 no-op stub 修复 dangling reference) + Phase 52 (infra/ sub-dir audit-only) + v49.0 (Phase 51 P3-ARCHDEBT prose 簇收尾 — prose-judge + prose-snapshot + project-characters + prose-calibration overrides MERGE + I071-I073 + I058-ext) + v48.0 (Phase 50 utilities batch — schema + health) + Phase 49 (lingwen-memory-service) + Phase 48 (lingwen-full-check-report) + Phase 47 (lingwen-studio-batch batch — runner + templates + streamer) + Phase 46 (filter MERGE) + Phase 45 (lingwen-utilities batch) + Phase 44 (lingwen-prose-calibration) + Phase 43 (lingwen-llm-service) + Phase 42 (project_init) + Phase 41 mini (brand 字串闭环) + Phase 41+ mini (asset rename) + Phase 41++ mini (sidebar nav micro-interaction polish) + Phase 41+++ mini (infra/ 残留审查 + Top 5 候选识别) + v40.0 (asset sidebar icons 闭环：11 emoji → Phosphor-duotone SVG + 1 Pilot follow-up icon) · 更新: 2026-09-11
 > 当前状态: `collaboration/CURRENT_STATUS.md` · 待办: `collaboration/BACKLOG.md` · 版本史: `docs/superpowers/archive/PHASE_HISTORY.md`
 > 最高优先级参考: `.lingwen/architecture.yml`
 
@@ -49,8 +49,8 @@ python lingwen.py doctor
 | `apps/dashboard/src/composables/` | 7 个 write-workspace composables |
 | `apps/dashboard/src/utils/writeWorkspace/` | serializer / sceneParser / wordCounter / schema |
 | `apps/studio_api/` | FastAPI app 入口（write-workspace router 已注册） |
-| `infra/persistence/write_chapter.py` | 章节原子写 Python 端点 |
-| `infra/persistence/write_workspace_api.py` | FastAPI router (`/api/write/:id`) |
+| `packages/lingwen-persistence/src/lingwen_persistence/write_chapter.py` | 章节原子写 Python 端点 (Phase 54 P3-ARCHDEBT) |
+| `packages/lingwen-persistence/src/lingwen_persistence/write_workspace_api.py` | FastAPI router (`/api/write/:id`) (Phase 54 P3-ARCHDEBT) |
 
 ### World (Phase 117 + 118 + 119)
 
@@ -61,10 +61,10 @@ python lingwen.py doctor
 | `apps/dashboard/src/composables/world/` | 4 composables (useWorldDb / useWorldReview / useWorldImportExport / useWorldAgent 真实 fetch + fetchChapterTexts) |
 | `apps/dashboard/src/stores/useWorldStore.js` | Pinia world store |
 | `apps/studio_api/routes/world.py` | FastAPI `/api/world/*` (9 GET/POST + 2 agent extraction + chapter texts bulk + per-IP rate limiter) |
-| `infra/world_db/` | World DB SQLite + markdown round-trip + LLM agent |
-| `infra/world_db/queries/_helpers.py` | Phase 118 DRY helpers (now_iso / row_to_dict / RevisionConflict) |
-| `infra/world_db/agent_schemas.py` | Phase 118 Pydantic schemas for LLM 输出 |
-| `infra/world_db/agent_extractors.py` | Phase 118 真实 LLM 调用 (chapters / prompt 两条路) |
+| `packages/lingwen-world-db/src/lingwen_world_db/` | World DB SQLite + markdown round-trip + LLM agent (Phase 56 P3-ARCHDEBT) |
+| `packages/lingwen-world-db/src/lingwen_world_db/queries/_helpers.py` | Phase 118 DRY helpers (now_iso / row_to_dict / RevisionConflict) |
+| `packages/lingwen-world-db/src/lingwen_world_db/agent_schemas.py` | Phase 118 Pydantic schemas for LLM 输出 |
+| `packages/lingwen-world-db/src/lingwen_world_db/agent_extractors.py` | Phase 118 真实 LLM 调用 (chapters / prompt 两条路) |
 
 ### Spec + Handoff
 
@@ -110,12 +110,12 @@ python lingwen.py doctor
 | I068 | `packages/lingwen-memory-service/` 是 NoOpMemoryGateway + get_memory_gateway + is_memory_gateway_available + get_initialization_error 的唯一实包；`infra.memory_service.*` 路径非法 (Phase 49 P3-ARCHDEBT memory-service) |
 | I069 | `packages/lingwen-schema/` 是 Struct + Array + String + Number + Integer + Boolean + OptionalSchema + PositiveInt + NonNegativeInt + decode + encode + validate + to_json_schema + 3 exception classes 的唯一实包；`infra.schema.*` 路径非法 (Phase 50 P3-ARCHDEBT utilities batch schema) |
 | I070 | `packages/lingwen-health/` 是 HealthCheck + HealthStatus + 5 check classes（Composite/Database/LLM/VectorDB/Cache）+ HealthManager + 4 functions（get_health_manager + register_health_check + health_status + health_endpoint）的唯一实包；`infra.health.*` 路径非法 (Phase 50 P3-ARCHDEBT utilities batch health) |
-| I076 | `packages/lingwen-world-db/` 是 World DB（character + faction + relationship + lore + timeline + proposal 表 + queries 子目录 6 query 模块）的唯一实包；`infra.world_db.*` 和 `infra/world_db/`` 路径非法 (Phase 56 P3-ARCHDEBT infra/world_db 全量迁移) |
 | I071 | `packages/lingwen-prose-judge/` 是 prose rubric v2 judge reports + 校准 helpers（28 symbols: ACTIONS + DIMENSIONS + DIMENSION_LABELS + ISSUE_TYPE_TO_DIMENSION + JUDGE_REPORT_VERSION + JUDGE_SYSTEM_PROMPT + REPORT_FILENAME + report_path_for + golden_manifest_path + golden_chapter_path + load_golden_chapter_nums + load_judge_report + save_judge_report + map_issue_type_to_dimension + validate_judge_report + derive_offline_chapter_ratings + build_offline_judge_report + build_llm_judge_report + run_prose_judge + cross_reference_signals + summarize_judge_report + sample_calibration_pack + format_calibration_sample_markdown + suggest_calibration_verdict + fill_calibration_samples + compute_misreport_stats + build_calibration_round + render_calibration_log_document，5 子模块 constants + report_io + ratings + analysis + calibration）的唯一实包；`infra.prose_judge.*` 路径非法 (Phase 51 P3-ARCHDEBT prose 簇) |
 | I072 | `packages/lingwen-prose-snapshot/` 是 prose revision snapshot + diff（8 symbols: SNAPSHOT_VERSION + SNAPSHOT_FILENAME + snapshot_path_for + build_snapshot + save_snapshot + load_snapshot + diff_snapshots + format_diff_report）的唯一实包；`infra.prose_snapshot.*` 路径非法 (Phase 51 P3-ARCHDEBT prose 簇) |
 | I073 | `packages/lingwen-project-characters/` 是项目角色名抽取（load_project_character_names + load_agency_target_characters）的唯一实包；`infra.project_characters.*` 路径非法 (Phase 51 P3-ARCHDEBT prose 簇) |
 | I074 | `infra/tools/legacy/` `infra/core/` `infra/studio/` 3 个零消费者目录已删；其下任何子目录或文件路径非法 (Phase 53 P3-ARCHDEBT legacy + core + studio 残留清理，~5727 LOC dead code) |
 | I075 | `packages/lingwen-persistence/` 是 SQLite 持久化层（24 symbols: connection + paths + registry + schemas + sqlite_config + write_chapter + write_workspace_api + sqlite_storage_adapter shim）的唯一实包；`infra.persistence.*` 和 `infra/persistence/`` 路径非法 (Phase 54 P3-ARCHDEBT infra/persistence 全量迁移) |
+| I076 | `packages/lingwen-world-db/` 是 World DB（character + faction + relationship + lore + timeline + proposal 表 + queries 子目录 6 query 模块）的唯一实包；`infra.world_db.*` 和 `infra/world_db/`` 路径非法 (Phase 56 P3-ARCHDEBT infra/world_db 全量迁移) |
 
 > 完整不变量与设计原则 DP-01..06 见 `.lingwen/architecture.yml`；提交纪律与反模式见 `.lingwen/constraints.yml`。
 
