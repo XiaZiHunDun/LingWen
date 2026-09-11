@@ -11,7 +11,7 @@ from lingwen_quality.consistency.engine.data_structures import (
     IssueSeverity,
 )
 
-from infra.full_check_report import (
+from lingwen_full_check_report import (
     format_report_markdown,
     generate_report,
     load_report_summary,

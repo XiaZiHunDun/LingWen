@@ -1,0 +1,19 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-full-check-report"
+version = "0.1.0"
+description = "LingWen canonical full_check_report package (Phase 48 P3-ARCHDEBT full-check-report)"
+requires-python = ">=3.11"
+dependencies = [
+    "lingwen-paths",      # ProjectPaths (Phase 37)
+    "lingwen-quality",    # ConsistencyEngine + Issue (Phase 36)
+]
+# NOT-LEAF — 2 workspace deps. Provides report_path_for + collect_prose_vitality_scores
+# + collect_full_check_issues + format_report_markdown + generate_report + parse_report_markdown +
+# load_report_summary.
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_full_check_report"]
