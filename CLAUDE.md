@@ -102,7 +102,10 @@ python lingwen.py doctor
 | I060 | `packages/lingwen-coverage-gate/` 是 coverage module gate helpers（load_coverage_policy + module_percent + evaluate_module_gate + format_module_gate_report）的唯一实包；`infra.coverage_gate.*` 路径非法 (Phase 45 P3-ARCHDEBT lingwen-utilities batch coverage_gate) |
 | I061 | `packages/lingwen-patterns/` 是 PatternRegistry（singleton）+ Pattern type alias 的唯一实包；`infra.patterns.*` 路径非法 (Phase 45 P3-ARCHDEBT lingwen-utilities batch patterns) |
 | I062 | `packages/lingwen-result/` 是 Result type（Ok/Err union）+ 5 helper functions（ok + err + wrap + from_optional + combine + either）的唯一实包；`infra.result.*` 路径非法 (Phase 45 P3-ARCHDEBT lingwen-utilities batch result) |
-| I063 | `packages/lingwen-quality/`（扩展）是 FalsePositiveFilter + ProblemClassifier 的唯一实包；`infra.filter.*` 和 `tools.problem_classifier.*` 路径非法 (Phase 46 P3-ARCHDEBT filter MERGE into lingwen-quality) | |
+| I063 | `packages/lingwen-quality/`（扩展）是 FalsePositiveFilter + ProblemClassifier 的唯一实包；`infra.filter.*` 和 `tools.problem_classifier.*` 路径非法 (Phase 46 P3-ARCHDEBT filter MERGE into lingwen-quality) |
+| I064 | `packages/lingwen-studio-batch-runner/` 是 BatchJob + dashboard_batch_allowed + start_batch_job + submit_batch_job + advance_batch_queue + list_batch_queue + list_batch_jobs_for_slug + get_batch_job + active_batch_job_for_project + cancel_batch_job + compute_pilot_eta + replay_events + 3 exception classes 的唯一实包；`infra.studio_batch_runner.*` 路径非法 (Phase 47 P3-ARCHDEBT studio-batch batch runner) |
+| I065 | `packages/lingwen-studio-batch-templates/` 是 BatchTemplate + create_batch_template + list_batch_templates + get_batch_template + update_batch_template + delete_batch_template 的唯一实包；`infra.studio_batch_templates.*` 路径非法 (Phase 47 P3-ARCHDEBT studio-batch batch templates) |
+| I066 | `packages/lingwen-studio-batch-streamer/` 是 6 event constants + format_event + is_terminal_event + subscribe + unsubscribe + publish 的唯一实包；`infra.studio_batch_streamer.*` 路径非法 (Phase 47 P3-ARCHDEBT studio-batch batch streamer) | |
 
 > 完整不变量与设计原则 DP-01..06 见 `.lingwen/architecture.yml`；提交纪律与反模式见 `.lingwen/constraints.yml`。
 

@@ -100,6 +100,18 @@ invariants:
     rule: "packages/lingwen-quality/（扩展）是 FalsePositiveFilter + ProblemClassifier 的唯一实包；infra.filter.* 和 tools.problem_classifier.* 路径非法 (Phase 46 P3-ARCHDEBT filter MERGE into lingwen-quality)"
     severity: error
     scope: "all new filter/problem_classifier code; enforcement via tests/test_phase46_lingwen_filter.py + grep -rln \"infra\\.filter\\b\" --include=\"*.py\" packages/ apps/ tests/ infra/ → 0 行 AND grep -rln \"tools\\.problem_classifier\\b\" --include=\"*.py\" packages/ apps/ tests/ tools/ → 0 行"
+  - id: I064   # ★ Phase 47 NEW
+    rule: "packages/lingwen-studio-batch-runner/ 是 BatchJob + dashboard_batch_allowed + start_batch_job + submit_batch_job + advance_batch_queue + list_batch_queue + list_batch_jobs_for_slug + get_batch_job + active_batch_job_for_project + cancel_batch_job + compute_pilot_eta + replay_events + 3 exception classes 的唯一实包；infra.studio_batch_runner.* 路径非法 (Phase 47 P3-ARCHDEBT studio-batch batch runner)"
+    severity: error
+    scope: "all new studio-batch-runner code; enforcement via tests/test_phase47_lingwen_studio_batch.py + grep -rln \"infra\\.studio_batch_runner\\b\" --include=\"*.py\" packages/ apps/ tests/ infra/ → 0 行"
+  - id: I065   # ★ Phase 47 NEW
+    rule: "packages/lingwen-studio-batch-templates/ 是 BatchTemplate + create_batch_template + list_batch_templates + get_batch_template + update_batch_template + delete_batch_template 的唯一实包；infra.studio_batch_templates.* 路径非法 (Phase 47 P3-ARCHDEBT studio-batch batch templates)"
+    severity: error
+    scope: "all new studio-batch-templates code; enforcement via tests/test_phase47_lingwen_studio_batch.py + grep -rln \"infra\\.studio_batch_templates\\b\" --include=\"*.py\" packages/ apps/ tests/ infra/ → 0 行"
+  - id: I066   # ★ Phase 47 NEW
+    rule: "packages/lingwen-studio-batch-streamer/ 是 6 event constants + format_event + is_terminal_event + subscribe + unsubscribe + publish 的唯一实包；infra.studio_batch_streamer.* 路径非法 (Phase 47 P3-ARCHDEBT studio-batch batch streamer)"
+    severity: error
+    scope: "all new studio-batch-streamer code; enforcement via tests/test_phase47_lingwen_studio_batch.py + grep -rln \"infra\\.studio_batch_streamer\\b\" --include=\"*.py\" packages/ apps/ tests/ infra/ → 0 行"
 
 # 模块边界（明确每个模块的公共 API 和依赖）
 module_boundaries:
