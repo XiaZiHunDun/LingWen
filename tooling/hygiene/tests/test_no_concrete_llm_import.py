@@ -4,7 +4,12 @@ Catches regressions in:
 - pyproject.toml import-linter contract removal
 - LLMServiceAdapter deletion (the only allowed indirect touchpoint)
 - LLMServicePort Protocol is_available() removal
-- New direct infra.llm_service imports in tools/ (defense-in-depth gate)
+- New direct infra.llm_service or lingwen_llm_service imports in tools/
+  (defense-in-depth gate)
+
+Phase 43 P3-ARCHDEBT: infra.llm_service.py was relocated to
+packages/lingwen-llm-service/. The forbidden pattern now blocks BOTH
+old (infra.llm_service) and new (lingwen_llm_service) paths.
 """
 
 from __future__ import annotations
@@ -31,7 +36,12 @@ def test_pyproject_has_dp02_forbidden_contract() -> None:
 
 
 def test_dp02_contract_targets_correct_modules() -> None:
-    """DP-02 contract must forbid infra.llm_service in business code."""
+    """DP-02 contract must forbid BOTH infra.llm_service AND lingwen_llm_service.
+
+    Phase 43: lingwen_llm_service is the canonical package; infra.llm_service
+    remains in forbidden_modules for backward-compat (shim deleted in C4 but
+    contract preserves both names for one cycle to catch any reintroduction).
+    """
     pyproject = PROJECT_ROOT / "pyproject.toml"
     config = tomllib.loads(pyproject.read_text())
 
@@ -39,7 +49,12 @@ def test_dp02_contract_targets_correct_modules() -> None:
     dp02 = next(c for c in contracts if c["name"] == "no_concrete_llm_service_in_business_code")
 
     assert dp02["type"] == "forbidden"
-    assert "infra.llm_service" in dp02["forbidden_modules"]
+    assert "infra.llm_service" in dp02["forbidden_modules"], (
+        "DP-02 forbidden_modules must include infra.llm_service (legacy)"
+    )
+    assert "lingwen_llm_service" in dp02["forbidden_modules"], (
+        "DP-02 forbidden_modules must include lingwen_llm_service (canonical post-Phase 43)"
+    )
     assert "lingwen_creator" in dp02["source_modules"]
     assert "apps" in dp02["source_modules"]
 
@@ -63,8 +78,9 @@ def test_llm_service_adapter_file_exists() -> None:
 def test_no_concrete_llm_in_business_code() -> None:
     """Business code MUST NOT import concrete LLMService class directly.
 
-    LLMTask/TaskType data types are allowed via port_adapter re-export.
-    The actual concrete LLMService class import is what we're blocking.
+    Phase 43: blocks both infra.llm_service (legacy) AND lingwen_llm_service
+    (canonical). LLMTask/TaskType data types are allowed via port_adapter
+    re-export; the concrete LLMService class import is what we're blocking.
     """
     # Grep business code (lingwen_creator + apps) for concrete LLMService imports.
     # We exclude the port_adapter re-export path since that's the allowed escape hatch.
@@ -72,7 +88,7 @@ def test_no_concrete_llm_in_business_code() -> None:
         [
             "grep",
             "-rn",
-            "from infra.llm_service import.*LLMService($|[^A-Za-z])",
+            r"from (?:infra\.llm_service|lingwen_llm_service) import.*LLMService($|[^A-Za-z])",
             "--include=*.py",
             "packages/lingwen-creator/",
             "apps/",
@@ -93,18 +109,18 @@ def test_no_concrete_llm_in_business_code() -> None:
     )
 
 
-def test_no_infra_llm_service_imports_in_tools_with_whitelist() -> None:
-    """tools/ MUST NOT contain any direct infra.llm_service imports.
+def test_no_concrete_llm_imports_in_tools_with_whitelist() -> None:
+    """tools/ MUST NOT contain any direct infra.llm_service or lingwen_llm_service imports.
 
     All 12 whitelisted dev scripts were migrated to LLMServiceAdapter in
     v16.5 #N.6, so the whitelist is retired. Any direct infra.llm_service
-    import in tools/ now fails CI.
+    or lingwen_llm_service import in tools/ now fails CI.
     """
     tools_root = PROJECT_ROOT / "tools"
     if not tools_root.exists():
         return
     pattern = re.compile(
-        r"^\s*(?:from\s+infra\.llm_service|import\s+infra\.llm_service)\b",
+        r"^\s*(?:from\s+(?:infra\.llm_service|lingwen_llm_service)|import\s+(?:infra\.llm_service|lingwen_llm_service))\b",
         re.MULTILINE,
     )
     violations: list[str] = []
@@ -117,8 +133,8 @@ def test_no_infra_llm_service_imports_in_tools_with_whitelist() -> None:
             rel_path = str(py_file.relative_to(PROJECT_ROOT))
             violations.append(f"{rel_path}:{match.start()}")
     assert not violations, (
-        "Direct infra.llm_service imports found in tools/:\n  "
+        "Direct infra.llm_service or lingwen_llm_service imports found in tools/:\n  "
         + "\n  ".join(violations)
-        + "\n\nDirect infra.llm_service imports are forbidden in tools/. "
+        + "\n\nDirect infra.llm_service or lingwen_llm_service imports are forbidden in tools/. "
         + "Use LLMServiceAdapter from lingwen_llm.port_adapter instead."
     )
