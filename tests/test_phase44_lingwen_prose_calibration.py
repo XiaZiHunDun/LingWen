@@ -279,9 +279,15 @@ def test_invariant_in_claude_md() -> None:
     content = claude_md.read_text()
     # I058 row should be present
     assert "| I058" in content, "I058 not in CLAUDE.md 架构不变量 table"
-    # Version bump should be reflected
-    assert "v42.0" in content, (
-        "CLAUDE.md version not bumped to v42.0"
+    # Version bump should be reflected (>= v42.0 — Phase 45 bumps to v43.0)
+    # Phase 45 fixup: original strict check `assert "v42.0" in content` broke
+    # when Phase 45 replaced the version header. Forward-compatible check uses
+    # regex to find any vN.0 with N >= 42.
+    import re
+
+    version_match = re.search(r"\bv(\d+)\.0\b", content)
+    assert version_match and int(version_match.group(1)) >= 42, (
+        f"CLAUDE.md version not >= v42.0 (current: {version_match.group(0) if version_match else 'none'})"
     )
 
 
