@@ -11,7 +11,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from lingwen_quality.quality import Issue
 
-from infra.filter import FalsePositiveFilter
+from lingwen_quality.filter import FalsePositiveFilter
 
 
 def test_filter_removes_detector_issues():

@@ -1,10 +1,14 @@
-"""Tests for tools.problem_classifier (Phase 11.11 coverage)."""
+"""Tests for tools.problem_classifier (Phase 11.11 coverage).
+
+Phase 46 P3-ARCHDEBT: ProblemClassifier relocated from tools/problem_classifier.py
+to packages/lingwen-quality/src/lingwen_quality/problem_classifier.py.
+"""
 
 from __future__ import annotations
 
 from lingwen_quality.quality import Issue
 
-from tools.problem_classifier import ProblemClassifier
+from lingwen_quality.problem_classifier import ProblemClassifier
 
 
 def _issue(**kwargs) -> Issue:
