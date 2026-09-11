@@ -1,6 +1,6 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v45.0 (Phase 47 P3-ARCHDEBT lingwen-studio-batch 3-module batch — runner + templates + streamer) + Phase 46 (filter MERGE) + Phase 45 (lingwen-utilities batch) + Phase 44 (lingwen-prose-calibration) + Phase 43 (lingwen-llm-service) + Phase 42 (project_init) + Phase 41 mini (brand 字串闭环) + Phase 41+ mini (asset rename) + Phase 41++ mini (sidebar nav micro-interaction polish) + Phase 41+++ mini (infra/ 残留审查 + Top 5 候选识别) + v40.0 (asset sidebar icons 闭环：11 emoji → Phosphor-duotone SVG + 1 Pilot follow-up icon) · 更新: 2026-09-11
+> **版本**: v46.0 (Phase 48 P3-ARCHDEBT lingwen-full-check-report) + Phase 47 (lingwen-studio-batch batch — runner + templates + streamer) + Phase 46 (filter MERGE) + Phase 45 (lingwen-utilities batch) + Phase 44 (lingwen-prose-calibration) + Phase 43 (lingwen-llm-service) + Phase 42 (project_init) + Phase 41 mini (brand 字串闭环) + Phase 41+ mini (asset rename) + Phase 41++ mini (sidebar nav micro-interaction polish) + Phase 41+++ mini (infra/ 残留审查 + Top 5 候选识别) + v40.0 (asset sidebar icons 闭环：11 emoji → Phosphor-duotone SVG + 1 Pilot follow-up icon) · 更新: 2026-09-11
 > 当前状态: `collaboration/CURRENT_STATUS.md` · 待办: `collaboration/BACKLOG.md` · 版本史: `docs/superpowers/archive/PHASE_HISTORY.md`
 > 最高优先级参考: `.lingwen/architecture.yml`
 
@@ -105,7 +105,8 @@ python lingwen.py doctor
 | I063 | `packages/lingwen-quality/`（扩展）是 FalsePositiveFilter + ProblemClassifier 的唯一实包；`infra.filter.*` 和 `tools.problem_classifier.*` 路径非法 (Phase 46 P3-ARCHDEBT filter MERGE into lingwen-quality) |
 | I064 | `packages/lingwen-studio-batch-runner/` 是 BatchJob + dashboard_batch_allowed + start_batch_job + submit_batch_job + advance_batch_queue + list_batch_queue + list_batch_jobs_for_slug + get_batch_job + active_batch_job_for_project + cancel_batch_job + compute_pilot_eta + replay_events + 3 exception classes 的唯一实包；`infra.studio_batch_runner.*` 路径非法 (Phase 47 P3-ARCHDEBT studio-batch batch runner) |
 | I065 | `packages/lingwen-studio-batch-templates/` 是 BatchTemplate + create_batch_template + list_batch_templates + get_batch_template + update_batch_template + delete_batch_template 的唯一实包；`infra.studio_batch_templates.*` 路径非法 (Phase 47 P3-ARCHDEBT studio-batch batch templates) |
-| I066 | `packages/lingwen-studio-batch-streamer/` 是 6 event constants + format_event + is_terminal_event + subscribe + unsubscribe + publish 的唯一实包；`infra.studio_batch_streamer.*` 路径非法 (Phase 47 P3-ARCHDEBT studio-batch batch streamer) | |
+| I066 | `packages/lingwen-studio-batch-streamer/` 是 6 event constants + format_event + is_terminal_event + subscribe + unsubscribe + publish 的唯一实包；`infra.studio_batch_streamer.*` 路径非法 (Phase 47 P3-ARCHDEBT studio-batch batch streamer) |
+| I067 | `packages/lingwen-full-check-report/` 是 full-check report generation + parsing（report_path_for + collect_prose_vitality_scores + collect_full_check_issues + format_report_markdown + generate_report + parse_report_markdown + load_report_summary）的唯一实包；`infra.full_check_report.*` 路径非法 (Phase 48 P3-ARCHDEBT full-check-report) | |
 
 > 完整不变量与设计原则 DP-01..06 见 `.lingwen/architecture.yml`；提交纪律与反模式见 `.lingwen/constraints.yml`。
 
