@@ -87,8 +87,8 @@ def test_lingwen_prose_calibration_has_17_public_symbols() -> None:
     """lingwen_prose_calibration.__all__ must be EXACTLY 17.
 
     Phase 44 established 8 (Phase 42 lesson #4: spec drift prevention).
-    Phase 51 MERGED infra.prose_calibration_overrides (9 funcs) into this
-    package per Phase 46 filter-MERGE precedent. New count: 8 + 9 = 17.
+    Phase 51 MERGED the overrides module (9 funcs) into this package per
+    Phase 46 filter-MERGE precedent. New count: 8 + 9 = 17.
     """
     try:
         import lingwen_prose_calibration  # noqa: F401
@@ -154,9 +154,10 @@ def test_factory_root_resolves_to_repo_root() -> None:
 def test_production_audit_no_infra_prose_calibration_imports() -> None:
     """Production code (infra/, apps/, packages/) MUST NOT import infra.prose_calibration.
 
-    Note: infra/prose/__init__.py:2 still imports from infra.prose_calibration_overrides
-    (a DIFFERENT module, not Phase 44 scope). The regex \\b boundary ensures
-    `prose_calibration_overrides` is NOT matched.
+    Note (Phase 51 update): infra/prose_calibration_overrides was MERGED into
+    this package per Phase 46 filter-MERGE precedent; the regex \\b boundary
+    on `prose_calibration` excludes the longer `prose_calibration_overrides`
+    substring, so neither raises.
     """
     result = subprocess.run(
         [
@@ -330,10 +331,9 @@ def test_no_dpkg_breaker_overrides_imports() -> None:
     """infra/prose/__init__.py MUST NOT exist (Phase 51 closure).
 
     Phase 44 reverse direction: this guard asserted the legacy barrel
-    `from infra.prose_calibration_overrides import *` MUST be preserved.
-    Phase 51 P3-ARCHDEBT deleted that file along with infra/prose/ as a
-    whole (zero-consumer barrel, N.14 lesson 1 pattern 5). Replaced with
-    a guard that the barrel directory is gone.
+    must be preserved. Phase 51 P3-ARCHDEBT deleted that file along with
+    infra/prose/ as a whole (zero-consumer barrel, N.14 lesson 1
+    pattern 5). Replaced with a guard that the barrel directory is gone.
     """
     prose_init = PROJECT_ROOT / "infra" / "prose" / "__init__.py"
     assert not prose_init.exists(), (
