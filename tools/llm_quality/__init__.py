@@ -16,7 +16,7 @@
 from lingwen_llm.port_adapter import LLMServiceAdapter
 from lingwen_quality.quality import Issue, RepairResult
 
-from infra.cache import CheckerCache
+from lingwen_cache import CheckerCache
 from infra.filter import FalsePositiveFilter
 
 from .checker import LLMQualityChecker

@@ -45,7 +45,7 @@ class TestCoverageGateModule:
     def test_evaluate_module_gate_passes_on_current_data(self):
         from coverage import Coverage
 
-        from infra.coverage_gate import evaluate_module_gate
+        from lingwen_coverage_gate import evaluate_module_gate
 
         cov_file = NOVEL_FACTORY / ".coverage"
         if not cov_file.is_file():

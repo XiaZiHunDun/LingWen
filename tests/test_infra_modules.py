@@ -379,7 +379,7 @@ class TestResult:
     """Result 类型测试"""
 
     def test_ok(self):
-        from infra.result import Ok, ok
+        from lingwen_result import Ok, ok
 
         result = Ok(42)
         assert result.is_ok() is True
@@ -390,7 +390,7 @@ class TestResult:
         assert result2.unwrap() == 42
 
     def test_err(self):
-        from infra.result import Err, err
+        from lingwen_result import Err, err
 
         result = Err("error message")
         assert result.is_ok() is False
@@ -402,7 +402,7 @@ class TestResult:
         assert result.unwrap_or("default") == "default"
 
     def test_map(self):
-        from infra.result import Err, Ok
+        from lingwen_result import Err, Ok
 
         result = Ok(42)
         mapped = result.map(lambda x: x * 2)
@@ -413,14 +413,14 @@ class TestResult:
         assert mapped_err.is_err() is True
 
     def test_flat_map(self):
-        from infra.result import Err, Ok, ok
+        from lingwen_result import Err, Ok, ok
 
         result = Ok(42)
         flat_mapped = result.flat_map(lambda x: ok(x * 2))
         assert flat_mapped.unwrap() == 84
 
     def test_wrap(self):
-        from infra.result import wrap
+        from lingwen_result import wrap
 
         @wrap
         def success_func():
@@ -438,7 +438,7 @@ class TestResult:
         assert result2.is_err() is True
 
     def test_combine(self):
-        from infra.result import Err, Ok, combine
+        from lingwen_result import Err, Ok, combine
 
         results = [Ok(1), Ok(2), Ok(3)]
         combined = combine(results)

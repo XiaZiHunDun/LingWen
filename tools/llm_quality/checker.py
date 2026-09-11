@@ -10,7 +10,7 @@ from typing import Dict, List, Optional
 from lingwen_llm.port_adapter import LLMServiceAdapter
 from lingwen_quality.quality import Issue
 
-from infra.cache import CheckerCache
+from lingwen_cache import CheckerCache
 from infra.filter import FalsePositiveFilter
 
 from . import paths

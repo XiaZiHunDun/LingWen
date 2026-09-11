@@ -18,7 +18,7 @@ import threading
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from infra.patterns import PatternRegistry
+from lingwen_patterns import PatternRegistry
 
 from ..engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
 from .base_checker import BaseChecker
