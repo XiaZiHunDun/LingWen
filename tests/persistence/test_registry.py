@@ -7,8 +7,8 @@ from time import sleep
 
 import pytest
 
-from infra.persistence.bootstrap import register_all
-from infra.persistence.registry import (
+from lingwen_persistence.bootstrap import register_all
+from lingwen_persistence.registry import (
     get,
     get_registration,
     is_registered,

@@ -15,7 +15,7 @@ def _warn_deprecated_backend(cls_name: str) -> None:
     """发出 T2.8 弃用警告 (导出 helper 避免各 backend 重复)."""
     warnings.warn(
         f"Phase 15.0 T2.8: {cls_name} 是旧 StateBackend 实现, "
-        "新代码请使用 infra.persistence.registry singleton "
+        "新代码请使用 lingwen_persistence.registry singleton "
         "(get('workflow') / get('ripple') / get('cost') 等).",
         DeprecationWarning,
         stacklevel=3,

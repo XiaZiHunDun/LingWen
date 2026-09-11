@@ -59,7 +59,7 @@ class CostTrackerDB:
         warnings.warn(
             "Phase 15.0 T2.8: CostTrackerDB 直接实例化已弃用, "
             "请使用 infra.persistence.registry.get('cost') singleton. "
-            "DB 路径统一在 infra/persistence/paths.py 定义.",
+            "DB 路径统一在 lingwen_persistence.paths 定义.",
             DeprecationWarning,
             stacklevel=2,
         )

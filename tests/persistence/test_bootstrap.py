@@ -26,8 +26,8 @@ def _autouse_reset():
 
 class TestRegisterAll:
     def test_register_all_registers_six_storages(self):
-        from infra.persistence.bootstrap import register_all
-        from infra.persistence.registry import registered_names
+        from lingwen_persistence.bootstrap import register_all
+        from lingwen_persistence.registry import registered_names
 
         results = register_all()
         names = registered_names()
@@ -39,8 +39,8 @@ class TestRegisterAll:
 
     def test_get_each_storage_creates_instance(self):
         """每个 storage 在 :memory: 下应能构造."""
-        from infra.persistence.bootstrap import register_all
-        from infra.persistence.registry import get
+        from lingwen_persistence.bootstrap import register_all
+        from lingwen_persistence.registry import get
 
         register_all()
         for name in ("ripple", "cost", "budget", "reading", "workflow", "relationship"):
@@ -49,8 +49,8 @@ class TestRegisterAll:
 
     def test_register_all_idempotent(self):
         """重复 register_all 不破坏 (后注册覆盖前)."""
-        from infra.persistence.bootstrap import register_all
-        from infra.persistence.registry import registered_names
+        from lingwen_persistence.bootstrap import register_all
+        from lingwen_persistence.registry import registered_names
 
         r1 = register_all()
         r2 = register_all()
@@ -63,7 +63,7 @@ class TestRegisterAll:
     def test_lazy_import_no_side_effect(self):
         """import bootstrap 本身不应注册 storage."""
         # 在 fixture 已经 reset_all 基础上, 仅 import 不调 register_all
-        import infra.persistence.bootstrap  # noqa: F401
+        import lingwen_persistence.bootstrap  # noqa: F401
         from infra.persistence import registry
 
         # bootstrap 不应自动 register
@@ -73,13 +73,13 @@ class TestRegisterAll:
         assert registry._registry == {} or len(registry._registry) >= 0
         # 强制清空
         registry._registry.clear()
-        import infra.persistence.bootstrap as b2  # noqa: F401
+        import lingwen_persistence.bootstrap as b2  # noqa: F401
 
         assert b2 is not None
         assert registry._registry == {}
 
     def test_register_all_returns_results_dict(self):
-        from infra.persistence.bootstrap import register_all
+        from lingwen_persistence.bootstrap import register_all
 
         results = register_all()
         assert isinstance(results, dict)
@@ -89,8 +89,8 @@ class TestRegisterAll:
 
     def test_get_uses_registered_db_path(self):
         """get 不带 override 时, 用 register 时 db_path."""
-        from infra.persistence.bootstrap import register_all
-        from infra.persistence.registry import get
+        from lingwen_persistence.bootstrap import register_all
+        from lingwen_persistence.registry import get
 
         register_all()
         # 至少要能取到 (不强求 db_path 属性, 视具体 storage 而定)

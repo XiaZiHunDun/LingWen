@@ -4,7 +4,8 @@ SQLite 状态后端
 基于 SQLite 的状态存储实现
 
 Phase 15.0 T2.8: DeprecationWarning — 引导 caller 切到
-`infra.persistence.registry.get("workflow")` (singleton).
+`lingwen_persistence.registry.get("workflow")` (singleton).
+(Phase 54: infra.persistence -> lingwen_persistence canonical package.)
 
 v16.5 #N.3: Migrated to SqliteStorageAdapter from lingwen_storage.
 Public API unchanged (SQLiteBackend(db_path=...) + get/set/delete/list_keys).
@@ -40,7 +41,7 @@ class SQLiteBackend(StateBackend):
         warnings.warn(
             "Phase 15.0 T2.8: SQLiteBackend 已弃用, 请使用 "
             "infra.persistence.registry.get('workflow') singleton. "
-            "DB 路径统一在 infra/persistence/paths.py 定义.",
+            "DB 路径统一在 lingwen_persistence.paths 定义.",
             DeprecationWarning,
             stacklevel=2,
         )

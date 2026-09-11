@@ -26,8 +26,8 @@ def _autouse_reset():
 
 class TestEndToEnd:
     def test_full_pipeline_register_and_get(self):
-        from infra.persistence.bootstrap import register_all
-        from infra.persistence.registry import get, registered_names
+        from lingwen_persistence.bootstrap import register_all
+        from lingwen_persistence.registry import get, registered_names
 
         register_all()
         names = registered_names()
@@ -38,8 +38,8 @@ class TestEndToEnd:
             assert inst is not None
 
     def test_schema_apply_creates_table_and_roundtrip(self):
-        from infra.persistence.connection import get_connection
-        from infra.persistence.schemas import apply_schema
+        from lingwen_persistence.connection import get_connection
+        from lingwen_persistence.schemas import apply_schema
 
         conn = get_connection(":memory:")
         try:
@@ -56,15 +56,15 @@ class TestEndToEnd:
             conn.close()
 
     def test_paths_bootstrap_registry_chain(self):
-        from infra.persistence.bootstrap import register_all
-        from infra.persistence.paths import (
+        from lingwen_persistence.bootstrap import register_all
+        from lingwen_persistence.paths import (
             COST_TRACKER_DB,
             READING_POWER_DB,
             RELATIONSHIP_DB,
             RIPPLE_DB,
             WORKFLOW_DB,
         )
-        from infra.persistence.registry import get
+        from lingwen_persistence.registry import get
 
         register_all()
         # 验证各 storage 注册时用的 db_path 与 paths 一致
@@ -82,8 +82,8 @@ class TestEndToEnd:
 
     def test_six_storages_init_with_memory(self):
         """6 storage 都能用 :memory: 初始化不抛."""
-        from infra.persistence.bootstrap import register_all
-        from infra.persistence.registry import get
+        from lingwen_persistence.bootstrap import register_all
+        from lingwen_persistence.registry import get
 
         register_all()
         for name in ("ripple", "cost", "budget", "reading", "workflow", "relationship"):

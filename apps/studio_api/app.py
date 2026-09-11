@@ -117,8 +117,9 @@ from infra.reading_power.db import ReadingPowerDB  # noqa: F401
 # Phase 15.0 T1.3: CVG storage singleton stays module-level in dashboard.app so tests
 # can monkeypatch app_module._default_storage / _default_storage_instance / _DEFAULT_CVG_DB_PATH
 # (reader + globals must be co-located for setattr to take effect).
-# Phase 15.0 T2.6: delegate to infra.persistence.registry.get("ripple") for unified
+# Phase 15.0 T2.6: delegate to lingwen_persistence.registry.get("ripple") for unified
 # singleton lifecycle (still respects _default_storage_instance override for tests).
+# (Phase 54: infra.persistence -> lingwen_persistence canonical package.)
 _DEFAULT_CVG_DB_PATH = Path(__file__).parent.parent / ".state" / "cross_volume.db"
 _default_storage_instance: "RippleStorage | None" = None
 
@@ -128,7 +129,7 @@ def _default_storage() -> "RippleStorage":
 
     Resolution order:
     1. _default_storage_instance override (test monkeypatch) → return as-is
-    2. infra.persistence.registry.get("ripple") → unified singleton
+    2. lingwen_persistence.registry.get("ripple") → unified singleton
     3. fallback: construct fresh RippleStorage with _DEFAULT_CVG_DB_PATH
 
     测试通过 monkeypatch `app_module._default_storage_instance = mock_storage`
@@ -138,8 +139,8 @@ def _default_storage() -> "RippleStorage":
     if _default_storage_instance is not None:
         return _default_storage_instance
     # Phase 15.0 T3: dashboard singleton 完全走 registry
-    from infra.persistence.bootstrap import register_all
-    from infra.persistence.registry import get as _reg_get
+    from lingwen_persistence.bootstrap import register_all
+    from lingwen_persistence.registry import get as _reg_get
 
     register_all()  # idempotent
     storage = _reg_get("ripple", db_path=str(_DEFAULT_CVG_DB_PATH))

@@ -2,7 +2,7 @@
 
 v16.5 #N.0 relocated the canonical SqliteStorageAdapter from infra.persistence
 to packages/lingwen-storage. This shim preserves the import path for existing
-consumers — they can keep doing ``from infra.persistence.sqlite_storage_adapter
+consumers — they can keep doing ``from lingwen_persistence.sqlite_storage_adapter
 import SqliteStorageAdapter`` while new code should prefer:
 
     from lingwen_storage.sqlite_storage_adapter import SqliteStorageAdapter

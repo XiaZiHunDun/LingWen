@@ -18,7 +18,7 @@ from typing import Any, Optional
 
 from lingwen_storage.sqlite_storage_adapter import SqliteStorageAdapter
 
-from infra.persistence.sqlite_config import apply_sqlite_pragmas
+from lingwen_persistence.sqlite_config import apply_sqlite_pragmas
 
 
 class WorkflowDB:
@@ -39,7 +39,7 @@ class WorkflowDB:
         warnings.warn(
             "Phase 15.0 T2.8: WorkflowDB 直接实例化已弃用, "
             "请使用 infra.persistence.registry.get('workflow') singleton. "
-            "DB 路径统一在 infra/persistence/paths.py 定义.",
+            "DB 路径统一在 lingwen_persistence.paths 定义.",
             DeprecationWarning,
             stacklevel=2,
         )

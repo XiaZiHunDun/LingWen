@@ -143,7 +143,7 @@ def test_read_chapter_function_round_trip(tmp_path, monkeypatch):
     """Unit test for read_chapter() — direct function call, not via HTTP."""
     monkeypatch.chdir(tmp_path)
     _make_project_dirs(tmp_path, "unit-proj")
-    from infra.persistence.write_chapter import read_chapter, write_chapter
+    from lingwen_persistence.write_chapter import read_chapter, write_chapter
 
     write_chapter(
         5,
@@ -162,7 +162,7 @@ def test_read_chapter_function_round_trip(tmp_path, monkeypatch):
 def test_read_chapter_function_raises_for_missing(tmp_path, monkeypatch):
     """read_chapter() must raise FileNotFoundError for missing chapter."""
     monkeypatch.chdir(tmp_path)
-    from infra.persistence.write_chapter import read_chapter
+    from lingwen_persistence.write_chapter import read_chapter
 
     with pytest.raises(FileNotFoundError):
         read_chapter(404, "unit-proj")

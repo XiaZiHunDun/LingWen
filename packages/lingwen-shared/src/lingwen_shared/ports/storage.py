@@ -85,8 +85,8 @@ def get_default_storage() -> "StoragePort":
     Apps should use this convenience function (no args). The concrete
     ``lingwen_storage.sqlite_storage_adapter`` registers itself at import time,
     so as long as the canonical module is imported somewhere during app
-    startup (e.g., via ``infra.persistence.sqlite_storage_adapter`` shim which
-    ``infra.persistence.bootstrap`` imports), this function works.
+    startup (e.g., via ``lingwen_persistence.sqlite_storage_adapter`` shim which
+    ``lingwen_persistence.bootstrap`` imports), this function works.
     """
     if _DEFAULT_STORAGE_FACTORY is None:
         raise RuntimeError(

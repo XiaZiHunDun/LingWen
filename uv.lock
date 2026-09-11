@@ -26,6 +26,7 @@ members = [
     "lingwen-novel-factory",
     "lingwen-paths",
     "lingwen-patterns",
+    "lingwen-persistence",
     "lingwen-pipeline",
     "lingwen-project-characters",
     "lingwen-project-config",
@@ -942,6 +943,21 @@ source = { editable = "packages/lingwen-paths" }
 name = "lingwen-patterns"
 version = "0.1.0"
 source = { editable = "packages/lingwen-patterns" }
+
+[[package]]
+name = "lingwen-persistence"
+version = "0.1.0"
+source = { editable = "packages/lingwen-persistence" }
+dependencies = [
+    { name = "lingwen-shared" },
+    { name = "lingwen-storage" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "lingwen-shared", editable = "packages/lingwen-shared" },
+    { name = "lingwen-storage", editable = "packages/lingwen-storage" },
+]
 
 [[package]]
 name = "lingwen-pipeline"

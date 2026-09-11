@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from infra.persistence.paths import (
+from lingwen_persistence.paths import (
     COST_TRACKER_DB,
     CROSS_VOLUME_DB,
     PROJECT_ROOT,

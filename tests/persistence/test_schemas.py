@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import pytest
 
-from infra.persistence.connection import get_connection
-from infra.persistence.schemas import SCHEMAS, apply_schema, registered_schema_names
+from lingwen_persistence.connection import get_connection
+from lingwen_persistence.schemas import SCHEMAS, apply_schema, registered_schema_names
 
 
 def _table_list(conn):

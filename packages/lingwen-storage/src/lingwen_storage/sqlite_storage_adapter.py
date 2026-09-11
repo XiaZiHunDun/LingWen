@@ -7,8 +7,9 @@ v16.5 #N.0 relocated: this file moved from
 Why: enable shared use across all lingwen-* packages (lingwen_core,
 lingwen_pipeline, lingwen_cli) without circular import. Previously the
 canonical SQLite backend lived in infra/, but lingwen_core/pipeline depend
-on infra.persistence (reverse of the desired direction) — moving to a leaf
+on lingwen_persistence (reverse of the desired direction) — moving to a leaf
 package (lingwen_storage has no lingwen_* dependencies) breaks the cycle.
+(Phase 54: infra.persistence -> lingwen_persistence canonical package.)
 
 The OLD location at ``infra/persistence/sqlite_storage_adapter.py`` is now a
 back-compat re-export shim that imports from this module. All consumers can
@@ -18,7 +19,7 @@ directly at their convenience (v16.5 #N.2-N.6).
 Architectural invariant: this module is the canonical SQLite backend
 implementation. It is the ONLY file in the lingwen-* package family allowed
 to ``import sqlite3`` directly. The
-``infra/persistence/sqlite_storage_adapter.py`` shim re-exports symbols from
+``lingwen_persistence.sqlite_storage_adapter`` shim re-exports symbols from
 here — it does not import sqlite3 itself.
 
 Regression-tested by:

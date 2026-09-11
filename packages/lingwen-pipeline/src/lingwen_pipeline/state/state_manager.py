@@ -3,7 +3,8 @@
 SQLite State Manager - replaces workflow_state.json
 Provides atomic state operations with transaction support
 
-Phase 15.0 T2.8: DeprecationWarning — 推荐切到 infra.persistence.registry.get("workflow").
+Phase 15.0 T2.8: DeprecationWarning — 推荐切到 lingwen_persistence.registry.get("workflow").
+(Phase 54: infra.persistence -> lingwen_persistence canonical package.)
 
 v16.5 #N.3: Migrated to SqliteStorageAdapter from lingwen_storage.
 Public API preserved (StateManager(db_path=...), _get_conn(), _transaction(),
@@ -32,7 +33,7 @@ class StateManager:
     def __init__(self, db_path: Optional[str] = None):
         warnings.warn(
             "Phase 15.0 T2.8: StateManager 已弃用, 推荐使用 "
-            "infra.persistence.registry.get('workflow') singleton.",
+            "lingwen_persistence.registry.get('workflow') singleton.",
             DeprecationWarning,
             stacklevel=2,
         )

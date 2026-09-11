@@ -55,8 +55,9 @@ def test_default_timeout_is_5_seconds() -> None:
     """Default timeout matches the existing ``connection.DEFAULT_TIMEOUT``.
 
     Keeps the adapter behaviourally aligned with
-    ``infra/persistence/connection.py`` so existing timeout-sensitive
+    ``lingwen_persistence.connection`` so existing timeout-sensitive
     tests continue to pass against either implementation.
+    (Phase 54: infra.persistence -> lingwen_persistence canonical package.)
     """
     assert DEFAULT_TIMEOUT == 5.0
 

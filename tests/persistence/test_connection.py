@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from infra.persistence.connection import DEFAULT_TIMEOUT, _connect, get_connection
+from lingwen_persistence.connection import DEFAULT_TIMEOUT, _connect, get_connection
 
 
 class TestGetConnection:
