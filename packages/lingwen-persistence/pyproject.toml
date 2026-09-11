@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-persistence"
+version = "0.1.0"
+description = "LingWen canonical persistence package (Phase 54 P3-ARCHDEBT infra/persistence relocation)"
+requires-python = ">=3.11"
+dependencies = [
+    "lingwen-shared",   # ConnectionPort (Phase 36)
+    "lingwen-storage",  # SqliteStorageAdapter (Phase 37/40)
+]
+# NOT-LEAF — 2 workspace deps. Provides 21 public symbols across 8 sub-modules
+# (connection + paths + registry + schemas + sqlite_config + write_chapter +
+# write_workspace_api + sqlite_storage_adapter back-compat shim).
+# bootstrap.py imports lingwen-core / lingwen-pipeline / lingwen-cross-volume
+# lazily at register_all() call time.
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_persistence"]

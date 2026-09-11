@@ -115,6 +115,7 @@ members = [
     "packages/lingwen-prose-judge",   # ★ Phase 51 NEW (prose cluster closure)
     "packages/lingwen-prose-snapshot",   # ★ Phase 51 NEW (prose cluster closure)
     "packages/lingwen-project-characters",   # ★ Phase 51 NEW (prose cluster closure)
+    "packages/lingwen-persistence",   # ★ Phase 54 NEW (infra/persistence relocation)
     "apps/studio_api",
 ]
 
@@ -154,6 +155,7 @@ lingwen-health = { workspace = true }   # ★ Phase 50 NEW (utilities batch)
 lingwen-prose-judge = { workspace = true }   # ★ Phase 51 NEW (prose cluster closure)
 lingwen-prose-snapshot = { workspace = true }   # ★ Phase 51 NEW (prose cluster closure)
 lingwen-project-characters = { workspace = true }   # ★ Phase 51 NEW (prose cluster closure)
+lingwen-persistence = { workspace = true }   # ★ Phase 54 NEW (infra/persistence relocation)
 
 # ---------------------------------------------------------------------------
 # Tool configs (pyproject.toml 集中配置,避免散在多个 ini/tox)
