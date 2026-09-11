@@ -2,7 +2,7 @@
 
 Migrated from infra/creator_dashboard.py in Phase 126 v16.2.4.
 Uses:
-  - infra.persistence (storage)
+  - lingwen_persistence (storage)
   - lingwen_creator.shared.mode (settings_from_project_config)
   - lingwen_creator.volume.plan (load_volume_plan for context)
   - lingwen_creator.volume.pulse (creator_volume_pulse for metrics)

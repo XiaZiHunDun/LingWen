@@ -2,7 +2,7 @@
 
 Migrated from infra/creator_preferences.py in Phase 126 v16.2.4.
 Uses:
-  - infra.persistence (storage)
+  - lingwen_persistence (storage)
   - lingwen_creator.shared.mode (resolve_creator_settings)
 """
 

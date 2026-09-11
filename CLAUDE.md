@@ -114,6 +114,7 @@ python lingwen.py doctor
 | I072 | `packages/lingwen-prose-snapshot/` 是 prose revision snapshot + diff（8 symbols: SNAPSHOT_VERSION + SNAPSHOT_FILENAME + snapshot_path_for + build_snapshot + save_snapshot + load_snapshot + diff_snapshots + format_diff_report）的唯一实包；`infra.prose_snapshot.*` 路径非法 (Phase 51 P3-ARCHDEBT prose 簇) |
 | I073 | `packages/lingwen-project-characters/` 是项目角色名抽取（load_project_character_names + load_agency_target_characters）的唯一实包；`infra.project_characters.*` 路径非法 (Phase 51 P3-ARCHDEBT prose 簇) |
 | I074 | `infra/tools/legacy/` `infra/core/` `infra/studio/` 3 个零消费者目录已删；其下任何子目录或文件路径非法 (Phase 53 P3-ARCHDEBT legacy + core + studio 残留清理，~5727 LOC dead code) |
+| I075 | `packages/lingwen-persistence/` 是 SQLite 持久化层（24 symbols: connection + paths + registry + schemas + sqlite_config + write_chapter + write_workspace_api + sqlite_storage_adapter shim）的唯一实包；`infra.persistence.*` 和 `infra/persistence/`` 路径非法 (Phase 54 P3-ARCHDEBT infra/persistence 全量迁移) |
 
 > 完整不变量与设计原则 DP-01..06 见 `.lingwen/architecture.yml`；提交纪律与反模式见 `.lingwen/constraints.yml`。
 

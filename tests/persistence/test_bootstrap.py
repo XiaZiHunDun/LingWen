@@ -15,7 +15,7 @@ import pytest
 
 @pytest.fixture(autouse=True)
 def _autouse_reset():
-    from infra.persistence import registry
+    from lingwen_persistence import registry
 
     registry.reset_all()
     registry._registry.clear()
@@ -64,7 +64,7 @@ class TestRegisterAll:
         """import bootstrap 本身不应注册 storage."""
         # 在 fixture 已经 reset_all 基础上, 仅 import 不调 register_all
         import lingwen_persistence.bootstrap  # noqa: F401
-        from infra.persistence import registry
+        from lingwen_persistence import registry
 
         # bootstrap 不应自动 register
         # 注意: 同一进程可能已被其他 test 注册, 用 is_registered 验证

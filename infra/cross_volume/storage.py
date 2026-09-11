@@ -7,7 +7,7 @@
 
 Pattern 1:1 跟 infra/ai_service/cost_persistence.py::CostTrackerDB
 
-Phase 15.0 T2.8: 直接实例化已弃用, 请使用 infra.persistence.registry.get("ripple") singleton.
+Phase 15.0 T2.8: 直接实例化已弃用, 请使用 lingwen_persistence.registry.get("ripple") singleton.
 
 v16.5 #N.4: drop direct ``import sqlite3``; ``IntegrityError`` is imported
 selectively (``from sqlite3 import IntegrityError``) so the regex-based
@@ -36,7 +36,7 @@ from lingwen_shared.ports.storage import ConnectionPort
 
 from infra.cross_volume.reference_graph import CascadedRipple, ReferenceEdge, ReferenceNode
 from infra.cross_volume.ripple import CrossVolumeRipple
-from infra.persistence.sqlite_config import apply_sqlite_pragmas
+from lingwen_persistence.sqlite_config import apply_sqlite_pragmas
 
 logger = logging.getLogger(__name__)
 
@@ -199,7 +199,7 @@ class RippleStorage:
     - load_all_nodes / load_all_edges / load_all_ripples: SELECT *, _row_to_*
       反序列化 (JSON payload + ISO 8601 datetime)
 
-    Phase 15.0 T2.8: 直接实例化已弃用, 请使用 infra.persistence.registry.get("ripple") singleton.
+    Phase 15.0 T2.8: 直接实例化已弃用, 请使用 lingwen_persistence.registry.get("ripple") singleton.
     """
 
     def __init__(self, db_path, graph=None) -> None:
@@ -209,7 +209,7 @@ class RippleStorage:
         self._graph = graph  # Phase 9.15: optional, for cascade hook in append_ripple
         warnings.warn(
             "Phase 15.0 T2.8: RippleStorage 直接实例化已弃用, "
-            "请使用 infra.persistence.registry.get('ripple') singleton. "
+            "请使用 lingwen_persistence.registry.get('ripple') singleton. "
             "DB 路径统一在 lingwen_persistence.paths 定义.",
             DeprecationWarning,
             stacklevel=2,

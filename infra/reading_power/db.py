@@ -2,7 +2,7 @@
 Reading Power Database Module for 追读力系统.
 Provides SQLite-based storage for hooks, coolpoints, and chapter analysis results.
 
-Phase 15.0 T2.8: 直接实例化已弃用, 请使用 infra.persistence.registry.get("reading") singleton.
+Phase 15.0 T2.8: 直接实例化已弃用, 请使用 lingwen_persistence.registry.get("reading") singleton.
 
 v16.5 #N.4: drop direct ``import sqlite3``. The connection helper now
 borrows from ``SqliteStorageAdapter._open()`` and wraps the result in
@@ -29,7 +29,7 @@ class ReadingPowerDB:
         self.db_path = db_path or self.DB_PATH
         warnings.warn(
             "Phase 15.0 T2.8: ReadingPowerDB 直接实例化已弃用, "
-            "请使用 infra.persistence.registry.get('reading') singleton. "
+            "请使用 lingwen_persistence.registry.get('reading') singleton. "
             "DB 路径统一在 lingwen_persistence.paths 定义.",
             DeprecationWarning,
             stacklevel=2,

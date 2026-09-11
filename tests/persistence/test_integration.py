@@ -15,7 +15,7 @@ import pytest
 
 @pytest.fixture(autouse=True)
 def _autouse_reset():
-    from infra.persistence import registry
+    from lingwen_persistence import registry
 
     registry.reset_all()
     registry._registry.clear()
