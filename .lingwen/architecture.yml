@@ -112,6 +112,14 @@ invariants:
     rule: "packages/lingwen-studio-batch-streamer/ 是 6 event constants + format_event + is_terminal_event + subscribe + unsubscribe + publish 的唯一实包；infra.studio_batch_streamer.* 路径非法 (Phase 47 P3-ARCHDEBT studio-batch batch streamer)"
     severity: error
     scope: "all new studio-batch-streamer code; enforcement via tests/test_phase47_lingwen_studio_batch.py + grep -rln \"infra\\.studio_batch_streamer\\b\" --include=\"*.py\" packages/ apps/ tests/ infra/ → 0 行"
+  - id: I067   # ★ Phase 48 NEW
+    rule: "packages/lingwen-full-check-report/ 是 full-check report generation + parsing（report_path_for + collect_prose_vitality_scores + collect_full_check_issues + format_report_markdown + generate_report + parse_report_markdown + load_report_summary）的唯一实包；infra.full_check_report.* 路径非法 (Phase 48 P3-ARCHDEBT full-check-report)"
+    severity: error
+    scope: "all new full-check-report code; enforcement via tests/test_phase48_lingwen_full_check_report.py + grep -rln \"infra\\.full_check_report\\b\" --include=\"*.py\" packages/ apps/ tests/ infra/ → 0 行"
+  - id: I068   # ★ Phase 49 NEW
+    rule: "packages/lingwen-memory-service/ 是 NoOpMemoryGateway + get_memory_gateway + is_memory_gateway_available + get_initialization_error 的唯一实包；infra.memory_service.* 路径非法 (Phase 49 P3-ARCHDEBT memory-service)"
+    severity: error
+    scope: "all new memory-service code; enforcement via tests/test_phase49_lingwen_memory_service.py + grep -rln \"infra\\.memory_service\\b\" --include=\"*.py\" packages/ apps/ tests/ infra/ → 0 行"
 
 # 模块边界（明确每个模块的公共 API 和依赖）
 module_boundaries:

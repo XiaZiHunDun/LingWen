@@ -170,7 +170,7 @@ def test_canonical_symbols_migrated():
     representative_files = [
         REPO_ROOT / "packages" / "lingwen-pipeline" / "src" / "lingwen_pipeline" / "state" / "workflow_validator.py",
         REPO_ROOT / "packages" / "lingwen-core" / "src" / "lingwen_core" / "agents" / "orchestration" / "task_orchestrator.py",
-        REPO_ROOT / "infra" / "memory_service.py",
+        REPO_ROOT / "packages" / "lingwen-memory-service" / "src" / "lingwen_memory_service" / "service.py",
     ]
     for f in representative_files:
         content = f.read_text(encoding="utf-8")

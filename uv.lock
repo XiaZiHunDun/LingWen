@@ -21,6 +21,7 @@ members = [
     "lingwen-llm-service",
     "lingwen-logging-config",
     "lingwen-memory",
+    "lingwen-memory-service",
     "lingwen-novel-factory",
     "lingwen-paths",
     "lingwen-patterns",
@@ -836,6 +837,21 @@ requires-dist = [
     { name = "qdrant-client", specifier = ">=1.9" },
 ]
 provides-extras = ["test"]
+
+[[package]]
+name = "lingwen-memory-service"
+version = "0.1.0"
+source = { editable = "packages/lingwen-memory-service" }
+dependencies = [
+    { name = "lingwen-logging-config" },
+    { name = "lingwen-memory" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "lingwen-logging-config", editable = "packages/lingwen-logging-config" },
+    { name = "lingwen-memory", editable = "packages/lingwen-memory" },
+]
 
 [[package]]
 name = "lingwen-novel-factory"
