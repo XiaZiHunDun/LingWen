@@ -1,8 +1,12 @@
-"""Tests for PatternRegistry singleton"""
+"""Tests for PatternRegistry singleton.
+
+Phase 45 P3-ARCHDEBT: relocated from tests/test_patterns.py →
+packages/lingwen-patterns/tests/test_patterns.py (canonical package).
+"""
 
 import pytest
 
-from infra.patterns import PatternRegistry
+from lingwen_patterns import PatternRegistry
 
 
 def test_singleton():

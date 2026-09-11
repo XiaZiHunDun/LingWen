@@ -2,7 +2,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from infra.cache import CheckerCache
+from lingwen_cache import CheckerCache
 
 
 def test_cache_set_and_get():

@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-coverage-gate"
+version = "0.1.0"
+description = "LingWen canonical coverage_gate package (Phase 45 P3-ARCHDEBT utilities batch: coverage_gate)"
+requires-python = ">=3.11"
+dependencies = [
+    "PyYAML>=6.0",  # 3rd-party only; declared explicitly so package is installable standalone
+]
+# TRUE LEAF — zero workspace deps. PyYAML>=6.0 3rd-party only.
+# Module-load behavior: 4 public funcs + 2 private consts (_FACTORY_ROOT + _DEFAULT_POLICY).
+# _FACTORY_ROOT resolves to repo root via parents[4] (Phase 40a C1.5 + Phase 44 lesson).
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_coverage_gate"]

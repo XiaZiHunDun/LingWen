@@ -1,0 +1,15 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-patterns"
+version = "0.1.0"
+description = "LingWen canonical patterns package (Phase 45 P3-ARCHDEBT utilities batch: patterns)"
+requires-python = ">=3.11"
+dependencies = []
+# TRUE LEAF — zero workspace deps, only stdlib (re/typing).
+# Module-load behavior: PatternRegistry singleton + Pattern type alias.
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_patterns"]

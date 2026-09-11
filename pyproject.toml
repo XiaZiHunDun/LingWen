@@ -101,6 +101,10 @@ members = [
     "packages/lingwen-project-init",   # ★ Phase 42 NEW
     "packages/lingwen-llm-service",   # ★ Phase 43 NEW
     "packages/lingwen-prose-calibration",   # ★ Phase 44 NEW
+    "packages/lingwen-cache",   # ★ Phase 45 NEW (utilities batch)
+    "packages/lingwen-coverage-gate",   # ★ Phase 45 NEW (utilities batch)
+    "packages/lingwen-patterns",   # ★ Phase 45 NEW (utilities batch)
+    "packages/lingwen-result",   # ★ Phase 45 NEW (utilities batch)
     "apps/studio_api",
 ]
 

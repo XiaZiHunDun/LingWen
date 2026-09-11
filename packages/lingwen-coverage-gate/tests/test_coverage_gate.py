@@ -1,10 +1,14 @@
-"""Tests for infra.coverage_gate (Phase 11.11)."""
+"""Tests for lingwen_coverage_gate (Phase 11.11).
+
+Phase 45 P3-ARCHDEBT: relocated from tests/infra/test_coverage_gate.py →
+packages/lingwen-coverage-gate/tests/test_coverage_gate.py (canonical package).
+"""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from infra.coverage_gate import (
+from lingwen_coverage_gate import (
     evaluate_module_gate,
     format_module_gate_report,
     load_coverage_policy,

@@ -1,0 +1,15 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-result"
+version = "0.1.0"
+description = "LingWen canonical result package (Phase 45 P3-ARCHDEBT utilities batch: result)"
+requires-python = ">=3.11"
+dependencies = []
+# TRUE LEAF — zero workspace deps, only stdlib (typing).
+# Module-load behavior: Ok + Err classes + Result type alias + 5 helper funcs.
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_result"]

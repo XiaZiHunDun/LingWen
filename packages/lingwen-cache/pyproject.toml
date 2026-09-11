@@ -1,0 +1,15 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-cache"
+version = "0.1.0"
+description = "LingWen canonical cache package (Phase 45 P3-ARCHDEBT utilities batch: cache)"
+requires-python = ">=3.11"
+dependencies = []
+# TRUE LEAF — zero workspace deps, only stdlib (hashlib/json/time/dataclasses/pathlib).
+# Module-load behavior: CacheEntry + CheckerCache (no module-load side effects).
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_cache"]
