@@ -120,6 +120,14 @@ invariants:
     rule: "packages/lingwen-memory-service/ 是 NoOpMemoryGateway + get_memory_gateway + is_memory_gateway_available + get_initialization_error 的唯一实包；infra.memory_service.* 路径非法 (Phase 49 P3-ARCHDEBT memory-service)"
     severity: error
     scope: "all new memory-service code; enforcement via tests/test_phase49_lingwen_memory_service.py + grep -rln \"infra\\.memory_service\\b\" --include=\"*.py\" packages/ apps/ tests/ infra/ → 0 行"
+  - id: I069   # ★ Phase 50 NEW
+    rule: "packages/lingwen-schema/ 是 Struct + Array + String + Number + Integer + Boolean + OptionalSchema + PositiveInt + NonNegativeInt + decode + encode + validate + to_json_schema + 3 exception classes 的唯一实包；infra.schema.* 路径非法 (Phase 50 P3-ARCHDEBT utilities batch schema)"
+    severity: error
+    scope: "all new schema code; enforcement via tests/test_phase50_lingwen_utilities_batch.py + grep -rln \"infra\\.schema\\b\" --include=\"*.py\" packages/ apps/ tests/ infra/ → 0 行"
+  - id: I070   # ★ Phase 50 NEW
+    rule: "packages/lingwen-health/ 是 HealthCheck + HealthStatus + 5 check classes（Composite/Database/LLM/VectorDB/Cache）+ HealthManager + 4 functions（get_health_manager + register_health_check + health_status + health_endpoint）的唯一实包；infra.health.* 路径非法 (Phase 50 P3-ARCHDEBT utilities batch health)"
+    severity: error
+    scope: "all new health code; enforcement via tests/test_phase50_lingwen_utilities_batch.py + grep -rln \"infra\\.health\\b\" --include=\"*.py\" packages/ apps/ tests/ infra/ → 0 行"
 
 # 模块边界（明确每个模块的公共 API 和依赖）
 module_boundaries:
