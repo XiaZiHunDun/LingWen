@@ -1,6 +1,6 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v43.0 (Phase 45 P3-ARCHDEBT lingwen-utilities batch — cache + coverage_gate + patterns + result) + Phase 44 (lingwen-prose-calibration) + Phase 43 (lingwen-llm-service) + Phase 42 (project_init) + Phase 41 mini (brand 字串闭环) + Phase 41+ mini (asset rename) + Phase 41++ mini (sidebar nav micro-interaction polish) + Phase 41+++ mini (infra/ 残留审查 + Top 5 候选识别) + v40.0 (asset sidebar icons 闭环：11 emoji → Phosphor-duotone SVG + 1 Pilot follow-up icon) · 更新: 2026-09-11
+> **版本**: v44.0 (Phase 46 P3-ARCHDEBT filter MERGE — FalsePositiveFilter + ProblemClassifier into lingwen-quality) + Phase 45 (lingwen-utilities batch) + Phase 44 (lingwen-prose-calibration) + Phase 43 (lingwen-llm-service) + Phase 42 (project_init) + Phase 41 mini (brand 字串闭环) + Phase 41+ mini (asset rename) + Phase 41++ mini (sidebar nav micro-interaction polish) + Phase 41+++ mini (infra/ 残留审查 + Top 5 候选识别) + v40.0 (asset sidebar icons 闭环：11 emoji → Phosphor-duotone SVG + 1 Pilot follow-up icon) · 更新: 2026-09-11
 > 当前状态: `collaboration/CURRENT_STATUS.md` · 待办: `collaboration/BACKLOG.md` · 版本史: `docs/superpowers/archive/PHASE_HISTORY.md`
 > 最高优先级参考: `.lingwen/architecture.yml`
 
@@ -101,7 +101,8 @@ python lingwen.py doctor
 | I059 | `packages/lingwen-cache/` 是 CheckerCache + CacheEntry（dataclass）的唯一实包；`infra.cache.*` 路径非法 (Phase 45 P3-ARCHDEBT lingwen-utilities batch cache) |
 | I060 | `packages/lingwen-coverage-gate/` 是 coverage module gate helpers（load_coverage_policy + module_percent + evaluate_module_gate + format_module_gate_report）的唯一实包；`infra.coverage_gate.*` 路径非法 (Phase 45 P3-ARCHDEBT lingwen-utilities batch coverage_gate) |
 | I061 | `packages/lingwen-patterns/` 是 PatternRegistry（singleton）+ Pattern type alias 的唯一实包；`infra.patterns.*` 路径非法 (Phase 45 P3-ARCHDEBT lingwen-utilities batch patterns) |
-| I062 | `packages/lingwen-result/` 是 Result type（Ok/Err union）+ 5 helper functions（ok + err + wrap + from_optional + combine + either）的唯一实包；`infra.result.*` 路径非法 (Phase 45 P3-ARCHDEBT lingwen-utilities batch result) | |
+| I062 | `packages/lingwen-result/` 是 Result type（Ok/Err union）+ 5 helper functions（ok + err + wrap + from_optional + combine + either）的唯一实包；`infra.result.*` 路径非法 (Phase 45 P3-ARCHDEBT lingwen-utilities batch result) |
+| I063 | `packages/lingwen-quality/`（扩展）是 FalsePositiveFilter + ProblemClassifier 的唯一实包；`infra.filter.*` 和 `tools.problem_classifier.*` 路径非法 (Phase 46 P3-ARCHDEBT filter MERGE into lingwen-quality) | |
 
 > 完整不变量与设计原则 DP-01..06 见 `.lingwen/architecture.yml`；提交纪律与反模式见 `.lingwen/constraints.yml`。
 

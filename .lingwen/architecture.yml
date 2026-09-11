@@ -1,7 +1,7 @@
 # LingWen 架构契约 — AI 可读的结构化模块边界定义
 # 此文件是 AGENTS.md 的机器可读版本，AI 开发工具应优先解析此文件
 
-version: "43.0"  # Phase 45 — P3-ARCHDEBT (lingwen-utilities BATCH): 4 TRUE-LEAF utility modules in single atomic phase (cache 91 LOC + coverage_gate 78 LOC + patterns 80 LOC + result 168 LOC = 417 LOC total) → packages/lingwen-cache/ + packages/lingwen-coverage-gate/ + packages/lingwen-patterns/ + packages/lingwen-result/ (8 sub-modules total, 4 pyproject, 3 test MOVEs in C1). 12 consumer edits 迁移 (4 wildcards infra/core/__init__.py lines 1/2/7/8 + 2 tools/llm_quality/ + 1 tests/ci/test_coverage_modules_ci.py + 1 cross-package lingwen-quality + 1 sed in-place tests/test_infra_modules.py with 6 imports for result). FULL DELETE in C3 (NOT shim — 0 deferred consumers). 4 NEW invariants (#59 cache + #60 coverage_gate + #61 patterns + #62 result). _FACTORY_ROOT path resolution fixup in C1 for coverage_gate only: parents[1] → parents[4] (cache/patterns/result have no _FACTORY_ROOT). 5 atomic commits (C0 spec+plan, C1 scaffold 16 files + 3 test MOVE, C2 bulk 12-site migration, C3 delete 4 files + 4 invariants + version, C4 guards+handoff). TRUE LEAF packages — 3× stdlib-only (cache/patterns/result) + 1× PyYAML>=6.0 (coverage_gate). First multi-module P3-ARCHDEBT batch phase (vs single-module per phase 36-44). Carryover closure: P3-ARCHDEBT 9/8+1 (lingwen-utilities batch) → CLOSED; P3-ARCHDEBT continued (Phase 46+ candidates: filter near-LEAF → Phase 46) → see docs/superpowers/ARCHDEBT-CANDIDATES.md.
+version: "44.0"  # Phase 46 — P3-ARCHDEBT (filter MERGE): MERGE decision per ARCHDEBT-CANDIDATES.md #5 boundary case. infra.filter.py (63 LOC, FalsePositiveFilter) + tools.problem_classifier.py (242 LOC, ProblemClassifier) → packages/lingwen-quality/src/lingwen_quality/{filter,problem_classifier}.py (305 LOC total into existing namespace package, no __init__.py). 5 consumer edits 迁移 (4 wildcard + 1 missed tests/tools/test_problem_classifier.py — N.14 lesson 1 #25 spec drift caught pre-commit). MERGE (vs split package) rationale: both are quality-domain logic, eliminates 2 sys.path hacks, avoids 1-dep cross-cutting package. FULL DELETE in C3 (NOT shim — both files removed: infra.filter.py + tools.problem_classifier.py). 1 NEW invariant (#63 lingwen-quality extended: FalsePositiveFilter + ProblemClassifier unique canonical home). NO workspace deps changes (lingwen-quality pyproject.toml unchanged). NO __init__.py changes (namespace package auto-discovery). 5 atomic commits (C0 spec+plan, C1 add 2 sub-modules, C2 bulk 5-site migration, C3 delete 2 files + I063 + v44.0, C4 guards+handoff). First P3-ARCHDEBT MERGE pattern (vs scaffold-new-package in phases 36-45). Carryover closure: P3-ARCHDEBT 10/9+1 (filter merge) → CLOSED; P3-ARCHDEBT continued (Phase 47+ candidates: studio_batch_* NOT-LEAF batch → Phase 47) → see docs/superpowers/ARCHDEBT-CANDIDATES.md.
 
 # 模块分层（单向依赖：上层可依赖下层，下层禁止依赖上层）
 layers:
@@ -96,6 +96,10 @@ invariants:
     rule: "packages/lingwen-result/ 是 Result type（Ok/Err union）+ 5 helper functions（ok + err + wrap + from_optional + combine + either）的唯一实包；infra.result.* 路径非法 (Phase 45 P3-ARCHDEBT lingwen-utilities batch result)"
     severity: error
     scope: "all new result code; enforcement via tests/test_phase45_lingwen_utilities.py + grep -rln \"infra\\.result\b\" --include=\"*.py\" packages/ apps/ tests/ infra/ → 0 行"
+  - id: I063   # ★ Phase 46 NEW
+    rule: "packages/lingwen-quality/（扩展）是 FalsePositiveFilter + ProblemClassifier 的唯一实包；infra.filter.* 和 tools.problem_classifier.* 路径非法 (Phase 46 P3-ARCHDEBT filter MERGE into lingwen-quality)"
+    severity: error
+    scope: "all new filter/problem_classifier code; enforcement via tests/test_phase46_lingwen_filter.py + grep -rln \"infra\\.filter\\b\" --include=\"*.py\" packages/ apps/ tests/ infra/ → 0 行 AND grep -rln \"tools\\.problem_classifier\\b\" --include=\"*.py\" packages/ apps/ tests/ tools/ → 0 行"
 
 # 模块边界（明确每个模块的公共 API 和依赖）
 module_boundaries:
