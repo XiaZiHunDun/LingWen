@@ -109,6 +109,7 @@ members = [
     "packages/lingwen-studio-batch-templates",   # ★ Phase 47 NEW (studio-batch batch)
     "packages/lingwen-studio-batch-streamer",   # ★ Phase 47 NEW (studio-batch batch)
     "packages/lingwen-full-check-report",   # ★ Phase 48 NEW
+    "packages/lingwen-memory-service",   # ★ Phase 49 NEW
     "apps/studio_api",
 ]
 
@@ -142,6 +143,7 @@ lingwen-studio-batch-runner = { workspace = true }   # ★ Phase 47 NEW (studio-
 lingwen-studio-batch-templates = { workspace = true }   # ★ Phase 47 NEW (studio-batch batch)
 lingwen-studio-batch-streamer = { workspace = true }   # ★ Phase 47 NEW (studio-batch batch)
 lingwen-full-check-report = { workspace = true }   # ★ Phase 48 NEW
+lingwen-memory-service = { workspace = true }   # ★ Phase 49 NEW
 
 # ---------------------------------------------------------------------------
 # Tool configs (pyproject.toml 集中配置,避免散在多个 ini/tox)

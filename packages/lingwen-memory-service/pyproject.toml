@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-memory-service"
+version = "0.1.0"
+description = "LingWen canonical memory_service package (Phase 49 P3-ARCHDEBT memory-service)"
+requires-python = ">=3.11"
+dependencies = [
+    "lingwen-logging-config",  # Phase 39 (logger)
+    "lingwen-memory",           # covers 8 submodule imports:
+                                #   config.load_yaml,
+                                #   embeddings.batch_embed.BatchEmbedder,
+                                #   gateway.memory_gateway.MemoryGateway,
+                                #   state.character_tracker.CharacterTracker,
+                                #   state.fact_base.FactBase,
+                                #   state.plot_thread_tracker.PlotThreadTracker,
+                                #   state.timeline_manager.TimelineManager,
+                                #   vector.embedder.Embedder,
+                                #   vector.qdrant_client.QdrantClientWrapper
+]
+# NOT-LEAF — 2 deps (1 direct + 1 umbrella). Provides NoOpMemoryGateway +
+# get_memory_gateway + is_memory_gateway_available + get_initialization_error.
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_memory_service"]
