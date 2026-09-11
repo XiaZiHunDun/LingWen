@@ -249,9 +249,9 @@ class TestLLMBasedInspector:
         """首次访问 .llm_service 才会创建 LLMService 实例"""
         paths, _, _ = isolated_paths
 
-        # 桩: 预加载 infra.llm_service 模块,然后 patch LLMService.get
+        # 桩: 预加载 lingwen_llm_service 模块,然后 patch LLMService.get
         # (LLMBasedInspector 在 property 内 import,模块不会直接持有引用)
-        import infra.llm_service as llm_mod
+        import lingwen_llm_service as llm_mod
 
         sentinel = MagicMock(name="LLMServiceSentinel")
         monkeypatch.setattr(llm_mod, "LLMService", MagicMock(get=MagicMock(return_value=sentinel)))

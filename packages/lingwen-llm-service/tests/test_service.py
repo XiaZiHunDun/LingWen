@@ -1,9 +1,12 @@
-"""Tests for infra.llm_service.LLMService provider initialization.
+"""Tests for lingwen_llm_service.LLMService provider initialization.
 
 Phase 123 regression: ensure _init_providers uses the decorator-driven
 _PROVIDER_REGISTRY (via list_registered_providers) instead of the broken
 PluginManager.get_priority() path that tries to import
 'infra.ai_service.<name>' modules which don't exist.
+
+Phase 43 P3-ARCHDEBT: relocated from tests/infra/test_llm_service.py →
+packages/lingwen-llm-service/tests/test_service.py (canonical package).
 """
 
 from __future__ import annotations
@@ -23,7 +26,7 @@ def test_llm_service_loads_minimax_with_env_key(minimax_api_key):
     tries to import 'infra.ai_service.<name>' modules that don't exist, leaving the
     plugin manager's priority list empty.
     """
-    from infra.llm_service import LLMService
+    from lingwen_llm_service import LLMService
 
     service = LLMService.get()
     assert service._providers, "no providers loaded"
@@ -39,7 +42,7 @@ def test_llm_service_uses_decorator_registry_not_broken_plugin_manager(minimax_a
     """
     from lingwen_llm.providers import list_registered_providers
 
-    from infra.llm_service import LLMService
+    from lingwen_llm_service import LLMService
 
     registered = list_registered_providers()
     assert "minimax" in registered, "minimax must be registered via @register_provider"
@@ -52,7 +55,7 @@ def test_llm_service_uses_decorator_registry_not_broken_plugin_manager(minimax_a
 
 def test_llm_service_resets_singleton_between_tests(monkeypatch):
     """LLMService.get() uses a singleton; reset between tests to avoid cross-test pollution."""
-    from infra.llm_service import LLMService
+    from lingwen_llm_service import LLMService
 
     monkeypatch.setattr(LLMService, "_instance", None)
     monkeypatch.setenv("MINIMAX_API_KEY", "test-key")

@@ -137,7 +137,7 @@ class TestCreatorAgent:
             yield payload[20:]
 
         monkeypatch.setattr("lingwen_creator.content.agent._has_llm_api_key", lambda: True)
-        monkeypatch.setattr("infra.llm_service.LLMService.execute_stream", fake_stream)
+        monkeypatch.setattr("lingwen_llm_service.LLMService.execute_stream", fake_stream)
 
         events: list[dict] = []
         async for event in iter_creator_agent_plan_stream(
