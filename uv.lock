@@ -33,6 +33,9 @@ members = [
     "lingwen-shared",
     "lingwen-storage",
     "lingwen-studio-api",
+    "lingwen-studio-batch-runner",
+    "lingwen-studio-batch-streamer",
+    "lingwen-studio-batch-templates",
     "lingwen-studio-registry",
     "lingwen-world-model",
 ]
@@ -1111,6 +1114,37 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.27" },
 ]
 provides-extras = ["dev"]
+
+[[package]]
+name = "lingwen-studio-batch-runner"
+version = "0.1.0"
+source = { editable = "packages/lingwen-studio-batch-runner" }
+dependencies = [
+    { name = "lingwen-studio-batch-streamer" },
+    { name = "lingwen-studio-registry" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "lingwen-studio-batch-streamer", editable = "packages/lingwen-studio-batch-streamer" },
+    { name = "lingwen-studio-registry", editable = "packages/lingwen-studio-registry" },
+]
+
+[[package]]
+name = "lingwen-studio-batch-streamer"
+version = "0.1.0"
+source = { editable = "packages/lingwen-studio-batch-streamer" }
+
+[[package]]
+name = "lingwen-studio-batch-templates"
+version = "0.1.0"
+source = { editable = "packages/lingwen-studio-batch-templates" }
+dependencies = [
+    { name = "lingwen-studio-registry" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "lingwen-studio-registry", editable = "packages/lingwen-studio-registry" }]
 
 [[package]]
 name = "lingwen-studio-registry"

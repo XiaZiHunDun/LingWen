@@ -131,6 +131,15 @@ lingwen-project-config = { workspace = true }  # ★ Phase 38 NEW
 lingwen-logging-config = { workspace = true }   # ★ Phase 39 NEW
 lingwen-studio-registry = { workspace = true }   # ★ Phase 40 NEW
 lingwen-project-init = { workspace = true }   # ★ Phase 42 NEW
+lingwen-llm-service = { workspace = true }   # ★ Phase 43 NEW
+lingwen-prose-calibration = { workspace = true }   # ★ Phase 44 NEW
+lingwen-cache = { workspace = true }   # ★ Phase 45 NEW (utilities batch)
+lingwen-coverage-gate = { workspace = true }   # ★ Phase 45 NEW (utilities batch)
+lingwen-patterns = { workspace = true }   # ★ Phase 45 NEW (utilities batch)
+lingwen-result = { workspace = true }   # ★ Phase 45 NEW (utilities batch)
+lingwen-studio-batch-runner = { workspace = true }   # ★ Phase 47 NEW (studio-batch batch)
+lingwen-studio-batch-templates = { workspace = true }   # ★ Phase 47 NEW (studio-batch batch)
+lingwen-studio-batch-streamer = { workspace = true }   # ★ Phase 47 NEW (studio-batch batch)
 
 # ---------------------------------------------------------------------------
 # Tool configs (pyproject.toml 集中配置,避免散在多个 ini/tox)
