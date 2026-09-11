@@ -1,7 +1,7 @@
 # LingWen 架构契约 — AI 可读的结构化模块边界定义
 # 此文件是 AGENTS.md 的机器可读版本，AI 开发工具应优先解析此文件
 
-version: "40.0"  # Phase 42 — P3-ARCHDEBT (project_init): infra.project_init (1 module, 453 lines, 14 top-level definitions: 1 class InitProjectResult + 9 public funcs + 4 private funcs + 2 module consts) → packages/lingwen-project-init/ (3 sub-modules: models + slug + beats, 446 lines total). 51 consumer edits 迁移 (4 C2a intra-infra including infra/project/__init__.py wildcard + 47 C2b bulk: 1 cli + 1 test_project_init multi-symbol + 44 test_creator_* + 1 test_creator_volume_templates function-body imports x5). FULL DELETE in C3 (NOT shim — 0 deferred consumers via 9-pattern audit). 1 NEW invariant (#56 packages/lingwen-project-init/ 是项目初始化器唯一实包; infra.project_init.* 路径非法). 7 atomic commits (C0 spec+plan, C1 scaffold, C2a intra-infra + wildcard, C2b bulk sed \1 backreference, C3 full delete, C4 invariant+version, C5 guards+handoff). NOT-LEAF package — 2 workspace deps: lingwen-paths + lingwen-shared (NOT-LEAF pattern similar to Phase 40a but simpler). First REAL phase after 4 mini-phases (41/41+/41++/41+++) all closed 2026-09-10. Carryover closure: P3-ARCHDEBT 6/6+1 (project_init) → CLOSED; P3-ARCHDEBT continued (Phase 43+ top 5 candidates) → see docs/superpowers/ARCHDEBT-CANDIDATES.md.
+version: "41.0"  # Phase 43 — P3-ARCHDEBT (lingwen-llm-service): infra.llm_service (1 module, 309 lines, 5 top-level public symbols: 1 class LLMService + 2 helpers get_llm_service/create_task + 2 re-exports LLMTask/TaskType) → packages/lingwen-llm-service/ (3 sub-modules: service.py + factory.py + __init__.py, 280 LOC total). 6 consumer edits 迁移 (1 wildcard infra/core/__init__.py + 4 test imports/monkeypatches + 1 tests/tools/conftest.py factory trigger); infra/world_db/agent_extractors.py no code change (relies on infra/core/__init__.py wildcard load). FULL DELETE in C4 (NOT shim — 0 deferred consumers via 9-pattern audit). 1 NEW invariant (#57 packages/lingwen-llm-service/ 是 LLM 服务唯一实包; infra.llm_service.* 路径非法). DP-02 contract preservation: module-load set_default_factory(_default_service_factory) call in __init__.py wires LLMServiceAdapter() default factory at any process that imports lingwen_llm_service (v16.5 #1 invariant). 6 atomic commits (C0 spec+plan, C1 scaffold+workspace-register, C2 bulk 6-site migration, C3 tooling/DP-02 update, C4 delete+invariant+version, C5 guards+handoff). NOT-LEAF package — 2 workspace deps: lingwen-shared + lingwen-llm (similar to Phase 40a/42 but smaller fan-out). Carryover closure: P3-ARCHDEBT 7/6+1 (lingwen-llm-service) → CLOSED; P3-ARCHDEBT continued (Phase 44+ candidates: prose_calibration TRUE LEAF → Phase 44, cache LEAF batch → Phase 45, filter near-LEAF → Phase 46) → see docs/superpowers/ARCHDEBT-CANDIDATES.md.
 
 # 模块分层（单向依赖：上层可依赖下层，下层禁止依赖上层）
 layers:
@@ -72,6 +72,10 @@ invariants:
     rule: "packages/lingwen-project-init/ 是项目初始化器（InitProjectResult + validate_slug + default_project_parent + init_minimal_short_project + 7 markdown helpers）的唯一实包；infra.project_init.* 路径非法 (Phase 42 P3-ARCHDEBT project_init)"
     severity: error
     scope: "all new project-init code; enforcement via tests/test_phase42_lingwen_project_init.py + grep -rln \"infra\\.project_init\b\" --include=\"*.py\" packages/ apps/ tests/ infra/ → 0 行"
+  - id: I057   # ★ Phase 43 NEW
+    rule: "packages/lingwen-llm-service/ 是 LLM 服务（LLMService class + get_llm_service / create_task + DP-02 模块加载时 LLMServiceAdapter factory 注册）的唯一实包；infra.llm_service.* 路径非法 (Phase 43 P3-ARCHDEBT lingwen-llm-service)"
+    severity: error
+    scope: "all new llm-service code; enforcement via tests/test_phase43_lingwen_llm_service.py + grep -rln \"infra\\.llm_service\b\" --include=\"*.py\" packages/ apps/ tests/ infra/ → 0 行"
 
 # 模块边界（明确每个模块的公共 API 和依赖）
 module_boundaries:
