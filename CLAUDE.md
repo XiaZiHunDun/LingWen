@@ -1,6 +1,6 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v44.0 (Phase 46 P3-ARCHDEBT filter MERGE — FalsePositiveFilter + ProblemClassifier into lingwen-quality) + Phase 45 (lingwen-utilities batch) + Phase 44 (lingwen-prose-calibration) + Phase 43 (lingwen-llm-service) + Phase 42 (project_init) + Phase 41 mini (brand 字串闭环) + Phase 41+ mini (asset rename) + Phase 41++ mini (sidebar nav micro-interaction polish) + Phase 41+++ mini (infra/ 残留审查 + Top 5 候选识别) + v40.0 (asset sidebar icons 闭环：11 emoji → Phosphor-duotone SVG + 1 Pilot follow-up icon) · 更新: 2026-09-11
+> **版本**: v45.0 (Phase 47 P3-ARCHDEBT lingwen-studio-batch 3-module batch — runner + templates + streamer) + Phase 46 (filter MERGE) + Phase 45 (lingwen-utilities batch) + Phase 44 (lingwen-prose-calibration) + Phase 43 (lingwen-llm-service) + Phase 42 (project_init) + Phase 41 mini (brand 字串闭环) + Phase 41+ mini (asset rename) + Phase 41++ mini (sidebar nav micro-interaction polish) + Phase 41+++ mini (infra/ 残留审查 + Top 5 候选识别) + v40.0 (asset sidebar icons 闭环：11 emoji → Phosphor-duotone SVG + 1 Pilot follow-up icon) · 更新: 2026-09-11
 > 当前状态: `collaboration/CURRENT_STATUS.md` · 待办: `collaboration/BACKLOG.md` · 版本史: `docs/superpowers/archive/PHASE_HISTORY.md`
 > 最高优先级参考: `.lingwen/architecture.yml`
 
