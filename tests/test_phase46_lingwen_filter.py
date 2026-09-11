@@ -331,4 +331,3 @@ def test_infra_core_init_remaining_wildcards() -> None:
         "Phase 48 should have REMOVED `from infra.full_check_report import *` "
         "(replaced with `from lingwen_full_check_report import *`)"
     )
-    )
