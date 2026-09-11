@@ -16,7 +16,7 @@ def _world_db_path() -> Path:
 
 def _get_world_db():
     """Open world DB connection. Creates schema if missing."""
-    from infra.world_db.schema import get_connection, init_schema
+    from lingwen_world_db.schema import get_connection, init_schema
 
     path = _world_db_path()
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -35,14 +35,14 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.get("/api/world/characters")
     def list_characters(canon_level: Optional[str] = Query(default=None)):
-        from infra.world_db.queries.characters import list_characters
+        from lingwen_world_db.queries.characters import list_characters
 
         conn = _get_world_db()
         return {"characters": list_characters(conn, canon_level=canon_level)}
 
     @app.get("/api/world/characters/{cid}")
     def get_character(cid: int):
-        from infra.world_db.queries.characters import get_character
+        from lingwen_world_db.queries.characters import get_character
 
         conn = _get_world_db()
         char = get_character(conn, cid)
@@ -52,14 +52,14 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.get("/api/world/factions")
     def list_factions():
-        from infra.world_db.queries.factions import list_factions
+        from lingwen_world_db.queries.factions import list_factions
 
         conn = _get_world_db()
         return {"factions": list_factions(conn)}
 
     @app.get("/api/world/relationships")
     def list_relationships(source_kind: Optional[str] = None, source_id: Optional[int] = None):
-        from infra.world_db.queries.relationships import list_relationships
+        from lingwen_world_db.queries.relationships import list_relationships
 
         conn = _get_world_db()
         return {
@@ -72,14 +72,14 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.get("/api/world/lore")
     def list_lore(category: Optional[str] = None):
-        from infra.world_db.queries.lore import list_lore
+        from lingwen_world_db.queries.lore import list_lore
 
         conn = _get_world_db()
         return {"lore": list_lore(conn, category=category)}
 
     @app.get("/api/world/timeline")
     def list_timeline():
-        from infra.world_db.queries.timeline import list_timeline
+        from lingwen_world_db.queries.timeline import list_timeline
 
         conn = _get_world_db()
         return {"events": list_timeline(conn)}
@@ -88,7 +88,7 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
     def import_markdown(project: str = Query(default="lingwen-novel")):
         from pathlib import Path
 
-        from infra.world_db.markdown_roundtrip import import_project_markdown
+        from lingwen_world_db.markdown_roundtrip import import_project_markdown
 
         project_dir = Path(f"projects/{project}")
         conn = _get_world_db()
@@ -120,12 +120,12 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
     def export_markdown(project: str = Query(default="lingwen-novel")):
         from pathlib import Path
 
-        from infra.world_db.markdown_roundtrip import (
+        from lingwen_world_db.markdown_roundtrip import (
             serialize_character_markdown,
             serialize_timeline_markdown,
         )
-        from infra.world_db.queries.characters import list_characters
-        from infra.world_db.queries.timeline import list_timeline
+        from lingwen_world_db.queries.characters import list_characters
+        from lingwen_world_db.queries.timeline import list_timeline
 
         conn = _get_world_db()
         out_dir = Path(f"projects/{project}/03_内容仓库/world-export")
@@ -142,14 +142,14 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.get("/api/world/proposals")
     def list_proposals(status: Optional[str] = None):
-        from infra.world_db.queries.proposals import list_proposals
+        from lingwen_world_db.queries.proposals import list_proposals
 
         conn = _get_world_db()
         return {"proposals": list_proposals(conn, status=status)}
 
     @app.post("/api/world/proposals")
     def post_proposal(payload: dict = Body(...)):
-        from infra.world_db.queries.proposals import create_proposal
+        from lingwen_world_db.queries.proposals import create_proposal
 
         conn = _get_world_db()
         pid = create_proposal(conn, payload)
@@ -158,12 +158,12 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
     @app.post("/api/world/proposals/{pid}/accept")
     def accept_proposal(pid: int, payload: dict = Body(...)):
         """Apply the proposal's payload to the main table."""
-        from infra.world_db.queries.characters import (
+        from lingwen_world_db.queries.characters import (
             create_character,
             get_character_by_slug,
             update_character,
         )
-        from infra.world_db.queries.proposals import (
+        from lingwen_world_db.queries.proposals import (
             get_proposal,
             update_proposal_status,
         )
@@ -201,7 +201,7 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.post("/api/world/proposals/{pid}/reject")
     def reject_proposal(pid: int, payload: dict = Body(...)):
-        from infra.world_db.queries.proposals import (
+        from lingwen_world_db.queries.proposals import (
             get_proposal,
             update_proposal_status,
         )
@@ -229,10 +229,10 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
         payload: dict = Body(...),
     ):
         """Extract character-update proposals from chapter text via LLM."""
-        from infra.world_db.agent_extractors import (
+        from lingwen_world_db.agent_extractors import (
             extract_proposals_from_chapters,
         )
-        from infra.world_db.queries.proposals import create_proposal
+        from lingwen_world_db.queries.proposals import create_proposal
 
         client_host = request.client.host if request.client else "unknown"
         if not agent_rate_limiter.allow(client_host):
@@ -264,10 +264,10 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
         payload: dict = Body(...),
     ):
         """Extract character-update proposals from a free-form user prompt."""
-        from infra.world_db.agent_extractors import (
+        from lingwen_world_db.agent_extractors import (
             extract_proposals_from_prompt,
         )
-        from infra.world_db.queries.proposals import create_proposal
+        from lingwen_world_db.queries.proposals import create_proposal
 
         client_host = request.client.host if request.client else "unknown"
         if not agent_rate_limiter.allow(client_host):
