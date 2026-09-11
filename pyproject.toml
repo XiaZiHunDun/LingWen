@@ -105,6 +105,9 @@ members = [
     "packages/lingwen-coverage-gate",   # ★ Phase 45 NEW (utilities batch)
     "packages/lingwen-patterns",   # ★ Phase 45 NEW (utilities batch)
     "packages/lingwen-result",   # ★ Phase 45 NEW (utilities batch)
+    "packages/lingwen-studio-batch-runner",   # ★ Phase 47 NEW (studio-batch batch)
+    "packages/lingwen-studio-batch-templates",   # ★ Phase 47 NEW (studio-batch batch)
+    "packages/lingwen-studio-batch-streamer",   # ★ Phase 47 NEW (studio-batch batch)
     "apps/studio_api",
 ]
 

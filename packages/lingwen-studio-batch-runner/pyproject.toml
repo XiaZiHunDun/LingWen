@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-studio-batch-runner"
+version = "0.1.0"
+description = "LingWen canonical studio_batch_runner package (Phase 47 P3-ARCHDEBT studio-batch batch: runner)"
+requires-python = ">=3.11"
+dependencies = [
+    "lingwen-studio-registry",  # Phase 40a (NOT-LEAF for runner)
+    "lingwen-studio-batch-streamer",  # intra-batch dep (Phase 47 batch)
+]
+# NOT-LEAF — 2 workspace deps. Provides BatchJob + dashboard_batch_allowed +
+# start_batch_job + submit_batch_job + advance_batch_queue + list_batch_queue +
+# list_batch_jobs_for_slug + get_batch_job + active_batch_job_for_project +
+# cancel_batch_job + compute_pilot_eta + replay_events + 3 exception classes.
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_studio_batch_runner"]

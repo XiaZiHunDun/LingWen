@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from infra.studio_batch_runner import (
+from lingwen_studio_batch_runner import (
     BatchAlreadyRunningError,
     BatchJob,
     _jobs_dir,

@@ -2,7 +2,7 @@
 
 import pytest
 
-from infra import studio_batch_templates as tpl
+from lingwen_studio_batch_templates as tpl
 
 
 @pytest.fixture(autouse=True)

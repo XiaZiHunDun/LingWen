@@ -13,7 +13,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from lingwen_studio_registry import get_project_by_slug
 
-from infra.studio_batch_runner import (
+from lingwen_studio_batch_runner import (
     _load_job,
     _poll_job,
     submit_batch_job,

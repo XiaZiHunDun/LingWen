@@ -9,8 +9,8 @@ import json
 
 import pytest
 
-from infra import studio_batch_streamer
-from infra.studio_batch_streamer import EVENT_CHAPTER_COMPLETED, publish, subscribe, unsubscribe
+from lingwen_studio_batch_streamer
+from lingwen_studio_batch_streamer import EVENT_CHAPTER_COMPLETED, publish, subscribe, unsubscribe
 
 JOB = "job-test-123"
 

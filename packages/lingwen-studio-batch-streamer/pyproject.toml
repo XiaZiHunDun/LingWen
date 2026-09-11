@@ -1,0 +1,16 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-studio-batch-streamer"
+version = "0.1.0"
+description = "LingWen canonical studio_batch_streamer package (Phase 47 P3-ARCHDEBT studio-batch batch: streamer)"
+requires-python = ">=3.11"
+dependencies = []
+# TRUE LEAF — zero workspace deps, stdlib only (asyncio/json/dataclasses).
+# Provides 6 event constants + format_event + is_terminal_event + subscribe +
+# unsubscribe + publish (SSE fan-out per-subscriber queue cap pattern).
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_studio_batch_streamer"]

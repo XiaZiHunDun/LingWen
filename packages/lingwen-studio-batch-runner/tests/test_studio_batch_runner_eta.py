@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from infra.studio_batch_runner import compute_pilot_eta
+from lingwen_studio_batch_runner import compute_pilot_eta
 
 
 def test_eta_returns_none_when_no_chapters_completed():

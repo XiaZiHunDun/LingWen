@@ -22,7 +22,7 @@ from lingwen_studio_registry import (
     production_preflight,
 )
 
-from infra.studio_batch_streamer import (
+from lingwen_studio_batch_streamer import (
     EVENT_CHAPTER_COMPLETED,
     EVENT_JOB_CANCELLED,
     EVENT_JOB_COMPLETED,

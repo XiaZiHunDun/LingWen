@@ -9,7 +9,7 @@ import pytest
 from lingwen_paths import ProjectPaths
 from lingwen_studio_registry import activate_project, get_project_by_slug
 
-from infra.studio_batch_runner import (
+from lingwen_studio_batch_runner import (
     BatchAlreadyRunningError,
     BatchNotAllowedError,
     BatchPreflightError,
