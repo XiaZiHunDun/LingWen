@@ -99,6 +99,7 @@ members = [
     "packages/lingwen-logging-config",   # ★ Phase 39 NEW
     "packages/lingwen-studio-registry",   # ★ Phase 40 NEW
     "packages/lingwen-project-init",   # ★ Phase 42 NEW
+    "packages/lingwen-llm-service",   # ★ Phase 43 NEW
     "apps/studio_api",
 ]
 

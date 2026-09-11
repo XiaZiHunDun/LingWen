@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-llm-service"
+version = "0.1.0"
+description = "LingWen canonical LLM service package (Phase 43 P3-ARCHDEBT llm_service)"
+requires-python = ">=3.11"
+dependencies = [
+    "lingwen-shared",
+    "lingwen-llm",
+]
+# NOT-LEAF — depends on lingwen_shared (LLMTask/TaskType contracts) and
+# lingwen_llm (LLMServiceAdapter port_adapter for factory registration).
+# Module-load side effect: imports lingwen_llm_service anywhere in the
+# process wires up LLMServiceAdapter() default factory (DP-02 contract).
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_llm_service"]
