@@ -24,6 +24,7 @@ members = [
     "lingwen-project-config",
     "lingwen-project-init",
     "lingwen-prompt",
+    "lingwen-prose-calibration",
     "lingwen-quality",
     "lingwen-shared",
     "lingwen-storage",
@@ -945,6 +946,17 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0" },
 ]
 provides-extras = ["test"]
+
+[[package]]
+name = "lingwen-prose-calibration"
+version = "0.1.0"
+source = { editable = "packages/lingwen-prose-calibration" }
+dependencies = [
+    { name = "pyyaml" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pyyaml", specifier = ">=6.0" }]
 
 [[package]]
 name = "lingwen-quality"
