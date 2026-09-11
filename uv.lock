@@ -15,6 +15,7 @@ members = [
     "lingwen-errors",
     "lingwen-got",
     "lingwen-llm",
+    "lingwen-llm-service",
     "lingwen-logging-config",
     "lingwen-memory",
     "lingwen-novel-factory",
@@ -745,6 +746,21 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.0" },
 ]
 provides-extras = ["test"]
+
+[[package]]
+name = "lingwen-llm-service"
+version = "0.1.0"
+source = { editable = "packages/lingwen-llm-service" }
+dependencies = [
+    { name = "lingwen-llm" },
+    { name = "lingwen-shared" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "lingwen-llm", editable = "packages/lingwen-llm" },
+    { name = "lingwen-shared", editable = "packages/lingwen-shared" },
+]
 
 [[package]]
 name = "lingwen-logging-config"
