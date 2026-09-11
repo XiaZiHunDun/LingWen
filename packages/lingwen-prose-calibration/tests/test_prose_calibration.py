@@ -1,8 +1,12 @@
-"""Tests for prose calibration (Phase 11.23)."""
+"""Tests for prose calibration (Phase 11.23).
+
+Phase 44 P3-ARCHDEBT: relocated from tests/infra/test_prose_calibration.py →
+packages/lingwen-prose-calibration/tests/test_prose_calibration.py (canonical package).
+"""
 
 from __future__ import annotations
 
-from infra.prose_calibration import (
+from lingwen_prose_calibration import (
     build_prose_heatmap,
     evaluate_against_baseline,
     is_primary_revision_slug,

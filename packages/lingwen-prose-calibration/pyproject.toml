@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-prose-calibration"
+version = "0.1.0"
+description = "LingWen canonical prose_calibration package (Phase 44 P3-ARCHDEBT prose_calibration)"
+requires-python = ">=3.11"
+dependencies = [
+    "PyYAML>=6.0",  # 3rd-party only; declared explicitly so package is installable standalone
+]
+# TRUE LEAF — zero workspace deps. Only stdlib (functools/pathlib/typing) + PyYAML.
+# Module-load behavior: 8 public funcs + 2 private consts.
+# _FACTORY_ROOT resolves to repo root via parents[4] (Phase 40a C1.5 lesson).
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_prose_calibration"]

@@ -100,6 +100,7 @@ members = [
     "packages/lingwen-studio-registry",   # ★ Phase 40 NEW
     "packages/lingwen-project-init",   # ★ Phase 42 NEW
     "packages/lingwen-llm-service",   # ★ Phase 43 NEW
+    "packages/lingwen-prose-calibration",   # ★ Phase 44 NEW
     "apps/studio_api",
 ]
 
