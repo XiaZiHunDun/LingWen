@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-schema"
+version = "0.1.0"
+description = "LingWen canonical schema package (Phase 50 P3-ARCHDEBT utilities batch: schema)"
+requires-python = ">=3.11"
+dependencies = [
+    "lingwen-errors",  # Phase 36 (SchemaValidationError, BaseError, etc.)
+]
+# TRUE LEAF — 1 workspace dep. Provides Struct + Array + String + Number + Integer +
+# Boolean + OptionalSchema + PositiveInt + NonNegativeInt + decode + encode + validate +
+# to_json_schema + 3 exception classes (SchemaValidationError, SchemaDecodeError, SchemaEncodeError).
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_schema"]

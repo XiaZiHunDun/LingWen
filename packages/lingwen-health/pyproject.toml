@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-health"
+version = "0.1.0"
+description = "LingWen canonical health package (Phase 50 P3-ARCHDEBT utilities batch: health)"
+requires-python = ">=3.11"
+dependencies = [
+    "lingwen-errors",  # Phase 36 (BaseError, etc.)
+]
+# TRUE LEAF — 1 workspace dep. Provides HealthCheck + HealthStatus + 5 check classes
+# (Composite/Database/LLM/VectorDB/Cache) + HealthManager + 4 functions
+# (get_health_manager, register_health_check, health_status, health_endpoint).
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_health"]
