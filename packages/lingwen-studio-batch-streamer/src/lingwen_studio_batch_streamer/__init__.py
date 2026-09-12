@@ -13,6 +13,7 @@ from lingwen_studio_batch_streamer.service import (
     EVENT_JOB_COMPLETED,
     EVENT_JOB_FAILED,
     EVENT_JOB_STATE,
+    KNOWN_EVENT_TYPES,
     format_event,
     is_terminal_event,
     publish,
@@ -28,6 +29,7 @@ __all__ = [
     "EVENT_JOB_COMPLETED",
     "EVENT_JOB_FAILED",
     "EVENT_JOB_CANCELLED",
+    "KNOWN_EVENT_TYPES",
     # Public functions
     "format_event",
     "is_terminal_event",
