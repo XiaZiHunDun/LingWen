@@ -1,7 +1,0 @@
-SYSTEM: 你是小说情节分析师。从给定章节抽取所有 plot_point 维度的 reference node。
-TASK:    抽取 plot_point 维度的 reference node 列表。
-OUTPUT:  JSON {"nodes": [{"dimension": "plot_point", "node_id": "plot_{event_slug}_ch{chapter_id:03d}", "event": str, "summary": str, "chapter": int, "involved_characters": [str], "confidence": 1-5}]}
-RULES:   - event_slug 是事件的简短英文/拼音 slug
-         - confidence 1-5, 1=噪声, 5=核心情节
-CHAPTER: {chapter_content}
-CONTEXT: {context}
