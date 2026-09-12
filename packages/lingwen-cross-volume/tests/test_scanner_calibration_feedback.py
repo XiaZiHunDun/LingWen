@@ -86,6 +86,9 @@ class TestCalibrationFeedback:
         assert f"was {cal.node_write_threshold}" in yaml_text
 
     def test_calibrate_cli_includes_per_dimension(self, capsys):
+        # Phase 56c: cwd-independence — fixtures dir is sibling of test file.
+        # Use Path(__file__).resolve().parent for cwd-independence (Phase 56b2 lesson).
+        _fixtures_dir = Path(__file__).resolve().parent / "fixtures"
         opts = RippleScanOptions(
             range=[],
             parallel=1,
@@ -93,8 +96,8 @@ class TestCalibrationFeedback:
             dry_run=False,
             calibrate=True,
             yaml_example=True,
-            gold_path=Path("tests/cross_volume/fixtures/scanner_calibration_gold.yaml"),
-            fixture_dir=Path("tests/cross_volume/fixtures/llm_responses"),
+            gold_path=_fixtures_dir / "scanner_calibration_gold.yaml",
+            fixture_dir=_fixtures_dir / "llm_responses",
             calibration=None,
             chapter=1,
         )
