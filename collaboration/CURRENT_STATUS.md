@@ -1,8 +1,8 @@
 # 灵文项目状态看板
 
-> **最后更新**: 2026-09-13 (Phase 53d infra/event_sourcing/ cleanup, v54.5, branch `phase-57-p3-archdebt-reading-power`)
-> **更新者**: 协调者（Phase 53d P3-ARCHDEBT infra/event_sourcing/ 删除 — 992 LOC / 3 files + tests/test_infra_init_no_deferred_re_exports.py orphan FORBIDDEN_PATTERN cleanup + I074 扩展为 5 目录 + 7 regression guards; 4 atomic commits on `phase-57-p3-archdebt-reading-power` = C0 spec `1072210c` / C1 git rm `6aab27e4` / C2 meta-test cleanup `64b5300e` (amended) / C3 guards `86c6b541`）
-> **下一协作**: Phase 53d ready for ff-merge to master。完成后进 Phase 53e (其他 infra/ 残余 — 7 个 active-consumer subdirs + novel-factory 空目录) 或 产品 brainstorm。详见 `docs/superpowers/handoffs/2026-09-13-phase-53d-event-sourcing-handoff.md`。
+> **最后更新**: 2026-09-13 (Phase 53e orphan runtime artifacts cleanup, v54.6, branch `phase-57-p3-archdebt-reading-power`)
+> **更新者**: 协调者（Phase 53e P3-ARCHDEBT orphan runtime artifacts cleanup — git rm infra/novel-factory/agent_system/social_engine/relationship_network.json 61 bytes (Phase 54 path drift) + git rm infra/.state/decisions.json.lock 0 bytes + .gitignore 2 new patterns + I074 扩展为 6 目录 + 4 regression guards + Phase 53d G5 fixup (N.14 v20); 6 atomic commits on `phase-57-p3-archdebt-reading-power` = C0 spec `8140f496` / C1 novel-factory `ef5ad401` / C2 gitignore+lock `8795081f` / C3 guards `499fba14` / C3.5 phase53d G5 fixup `e456813d` / C4 docs+v54.6）
+> **下一协作**: Phase 53e ready for ff-merge to master。完成后进 Phase 53f (其他 minor cleanups) 或 产品 brainstorm。详见 `docs/superpowers/handoffs/2026-09-13-phase-53e-orphan-runtime-artifacts-handoff.md`。
 
 ---
 
