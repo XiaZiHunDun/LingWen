@@ -36,6 +36,7 @@ members = [
     "lingwen-prose-judge",
     "lingwen-prose-snapshot",
     "lingwen-quality",
+    "lingwen-reading-power",
     "lingwen-result",
     "lingwen-schema",
     "lingwen-shared",
@@ -1123,6 +1124,23 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0" },
 ]
 provides-extras = ["test"]
+
+[[package]]
+name = "lingwen-reading-power"
+version = "0.1.0"
+source = { editable = "packages/lingwen-reading-power" }
+dependencies = [
+    { name = "lingwen-shared" },
+    { name = "lingwen-storage" },
+    { name = "pyyaml" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "lingwen-shared", editable = "packages/lingwen-shared" },
+    { name = "lingwen-storage", editable = "packages/lingwen-storage" },
+    { name = "pyyaml", specifier = ">=6.0" },
+]
 
 [[package]]
 name = "lingwen-result"

@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-reading-power"
+version = "0.1.0"
+description = "LingWen canonical reading_power package (Phase 57 P3-ARCHDEBT infra/reading_power relocation — 追读力系统: hooks + coolpoints + chapter summary + analysis log)"
+requires-python = ">=3.11"
+dependencies = [
+    "lingwen-shared",   # ConnectionPort protocol (Phase 36)
+    "lingwen-storage",  # SqliteStorageAdapter — runtime deferred in db._get_connection
+    "PyYAML>=6.0",
+]
+# NOT-LEAF — 2 workspace deps. Provides 8 public classes + 1 NamedTuple +
+# 1 dataclass + 3 module constants across 6 sub-modules (re-exported
+# transitively via __init__.py barrel). db.py uses parents[N] for
+# repo-root resolution; original infra/reading_power/db.py used
+# parents[2]. New location packages/lingwen-reading-power/src/
+# lingwen_reading_power/db.py needs parents[4] (Phase 40a C1.5 fixup
+# applied in Phase 57 C1.5).
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_reading_power"]
