@@ -240,3 +240,5 @@ novel-factory/
 production/session-state/
 logs/*
 !logs/.gitkeep
+# Phase 56c: package-local test logs (test artifacts from packages/*/tests/)
+packages/**/logs/
