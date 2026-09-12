@@ -10,7 +10,7 @@ def add_backfill_parser(subparsers: argparse._SubParsersAction) -> argparse.Argu
     用法:
         lingwen.py backfill --vol 1
         lingwen.py backfill --vol 3 --execute
-        lingwen.py backfill --rules infra/cross_volume/extraction_rules.yaml
+        lingwen.py backfill --rules lingwen_cross_volume/extraction_rules.yaml
     """
     parser = subparsers.add_parser(
         "backfill",
@@ -46,7 +46,7 @@ def add_backfill_parser(subparsers: argparse._SubParsersAction) -> argparse.Argu
         "--rules",
         type=str,
         default=None,
-        help="Extraction rules YAML path (default: infra/cross_volume/extraction_rules.yaml)",
+        help="Extraction rules YAML path (default: lingwen_cross_volume package)",
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="详细输出")
     # --- Phase 9.12 additive: LLM opt-in 4 flag -----------------------------

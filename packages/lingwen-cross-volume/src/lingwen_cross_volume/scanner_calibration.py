@@ -274,7 +274,7 @@ def format_calibration_report(
             f"  recommended node_write_threshold={recommended.threshold} "
             f"(F1={recommended.f1:.3f}, precision={recommended.precision:.3f}, "
             f"recall={recommended.recall:.3f}, delta={delta_s})",
-            "  (update infra/cross_volume/scanner_calibration.yaml to apply)",
+            "  (update packages/lingwen-cross-volume/src/lingwen_cross_volume/scanner_calibration.yaml to apply)",
         ]
     )
     if feedback.dimension_reports:

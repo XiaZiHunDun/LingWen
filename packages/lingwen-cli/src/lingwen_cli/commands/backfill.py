@@ -8,6 +8,7 @@ LLM path 走 LLMScanner + LLMCache + CostTracker; 真实 LLM scan-and-write 是 
 本 Task 7 仅完成 CLI 接线 + 组件实例化 dry-run/apply 开关.
 """
 
+import importlib.util
 import sys
 from pathlib import Path
 
@@ -15,7 +16,10 @@ from lingwen_cli.options import BackfillOptions
 
 from .base import Command
 
-DEFAULT_RULES_PATH = Path("infra/cross_volume/extraction_rules.yaml")
+DEFAULT_RULES_PATH = (
+    Path(importlib.util.find_spec("lingwen_cross_volume").origin).parent
+    / "extraction_rules.yaml"
+)
 
 
 class BackfillCommand(Command):

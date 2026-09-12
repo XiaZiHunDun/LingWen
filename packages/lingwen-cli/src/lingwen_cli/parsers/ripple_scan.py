@@ -36,7 +36,7 @@ def add_ripple_scan_parser(subparsers: argparse._SubParsersAction) -> argparse.A
         "--calibration",
         type=Path,
         default=None,
-        help="scanner_calibration.yaml path (default: infra/cross_volume/scanner_calibration.yaml)",
+        help="scanner_calibration.yaml path (default: lingwen_cross_volume package)",
     )
     parser.add_argument(
         "--chapter",

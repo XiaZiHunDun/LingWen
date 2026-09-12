@@ -35,7 +35,7 @@ After Phase 55 relocation to
 ``packages/lingwen-cross-volume/src/lingwen_cross_volume/``, the
 e2e_seed.py ``_DEFAULT_STATE_DIR`` uses ``parents[4]`` to reach the
 repo root for ``.state/cross_volume.db`` (was ``parents[2]`` from
-``infra/cross_volume/e2e_seed.py``).
+the Phase 55-relocated pre-package location).
 """
 
 from lingwen_cross_volume.cache import QueryImpactCache

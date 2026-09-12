@@ -41,7 +41,6 @@ ALLOWLIST.add("infra/creator_onboarding_digest_schedule.py")  # Phase 17
 ALLOWLIST.add("infra/creator_template_approvals.py")  # Phase 17
 ALLOWLIST.add("infra/creator_volume_plan.py")  # Phase 17
 ALLOWLIST.add("infra/creator_volume_templates.py")  # Phase 17
-ALLOWLIST.add("infra/cross_volume/storage.py")  # Phase 17
 ALLOWLIST.add("infra/event_sourcing/store.py")  # Phase 17
 ALLOWLIST.add("packages/lingwen-memory/src/lingwen_memory/gateway/query_engine.py")  # Phase 17.6
 ALLOWLIST.add("packages/lingwen-memory/src/lingwen_memory/vector/qdrant_client.py")  # Phase 17.6
