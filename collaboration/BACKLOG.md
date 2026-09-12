@@ -1,7 +1,7 @@
 # 待办事项列表
 
-> **最后更新**: 2026-09-12 (Phase 58 complete, v54.3 ready for ff-merge)
-> **更新者**: 协调者（Phase 58 cross_volume 16 failures fix 闭环：220/220 GREEN；4 atomic commits; v54.2 → v54.3）
+> **最后更新**: 2026-09-12 (Phase 53c tools/legacy/ cleanup, v54.4 ready for ff-merge)
+> **更新者**: 协调者（Phase 53c P3-ARCHDEBT 闭环：6149 LOC / 21 files deleted + I074 扩展为 4 目录 + 26 guards; 5 atomic commits; v54.3 → v54.4）
 > **优先级**: P0 > P1 > P2 > P3
 > **事实来源**: 本仓库当前版本在 `CLAUDE.md` v54.3；并行开发入口见根 `COORDINATION.md`
 

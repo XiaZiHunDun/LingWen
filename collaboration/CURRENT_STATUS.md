@@ -1,8 +1,8 @@
 # 灵文项目状态看板
 
-> **最后更新**: 2026-09-12 (Phase 58 cross_volume 16 failures fix, v54.3, branch `phase-57-p3-archdebt-reading-power`)
-> **更新者**: 协调者（Phase 58 cross_volume 16 failures fix：220/220 GREEN (was 204/220)；4 atomic commits on `phase-57-p3-archdebt-reading-power` = C1 fix(cli) lazy Command init `5d4d0d30` / C2 fix(cross-volume) test paths `d87a5a08` / C3 test(phase-58) 5 guards + v54.3 `d90e29d7` / C4 docs；2 root causes collapsed 16 fails = RC2 eager Command.__init__ (12) + RC1 dashboard.X test paths (4)）
-> **下一协作**: Phase 58 ready for ff-merge to master。完成后进 Phase 53c (infra/tools/ residual cleanup) 或 产品 brainstorm。详见 `docs/superpowers/handoffs/2026-09-12-phase-58-cross-volume-failures-handoff.md`。
+> **最后更新**: 2026-09-12 (Phase 53c tools/legacy/ cleanup, v54.4, branch `phase-57-p3-archdebt-reading-power`)
+> **更新者**: 协调者（Phase 53c P3-ARCHDEBT top-level tools/legacy/ 删除 — 6149 LOC / 21 files + infra/tools/__init__.py stale docstring + tooling/hygiene/check_file_size.py orphan ALLOWLIST 2 entries + I074 扩展为 4 目录 + 26 regression guards; 5 atomic commits on `phase-57-p3-archdebt-reading-power` = C0 spec `ffe4b559` / C1 git rm `93c70fce` / C2 cleanup `4bb250db` / C3 guards `c27c18f6` / C4 docs+v54.4）
+> **下一协作**: Phase 53c ready for ff-merge to master。完成后进 Phase 53d (其他 infra/ 子目录残余) 或 产品 brainstorm。详见 `docs/superpowers/handoffs/2026-09-12-phase-53c-tools-legacy-top-handoff.md`。
 
 ---
 
