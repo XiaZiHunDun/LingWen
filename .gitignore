@@ -166,6 +166,10 @@ infra/.state/creator_merge_preferences_global.json
 .state/state_history.log
 !state_history.log.sample
 
+# Phase 56c C5: JSON test artifacts (decisions.json + .lock from cross_volume/reading_power/ripple tests)
+.state/*.json
+.state/*.json.lock
+
 # Phase 8.12 followup: workflow.db de-track (cbca7b5 claimed but missed)
 infra/.state/workflow.db
 infra/.state/workflow.db-*
@@ -186,6 +190,11 @@ infra/.state/pilot_records/
 infra/agent_system/social_engine/relationship_network.db
 infra/agent_system/social_engine/relationship_network.db-*
 infra/agent_system/social_engine/relationship_network.json
+
+# Phase 56c C5: packages/ path after Phase 54 P3-ARCHDEBT migration (infra → packages)
+packages/lingwen-core/src/lingwen_core/agents/social_engine/relationship_network.db
+packages/lingwen-core/src/lingwen_core/agents/social_engine/relationship_network.db-*
+packages/lingwen-core/src/lingwen_core/agents/social_engine/relationship_network.json
 
 # Orphan agent_system/ from historical bug — should not be recreated
 /agent_system/

@@ -2,7 +2,7 @@
 
 **Date**: 2026-09-12
 **Branch**: `phase-57-p3-archdebt-reading-power`
-**Commits**: 4 atomic (C1 / C2 / C3 / C4)
+**Commits**: 5 atomic (C1 / C2 / C3 / C4 + C5 gitignore fixup added post-handoff)
 **New version**: v54.1 → v54.2 (test infra relocation, 32 files + 5 guards + 3 in-test fixes)
 **New invariants**: none (continues I078 from Phase 55)
 
@@ -21,14 +21,15 @@ This created a test infrastructure mismatch:
 Phase 56c completes the move Phase 55 left half-done. Mirrors Phase 56b
 pattern for `lingwen-world-db` (5 files) and Phase 35 for `lingwen-world-model`.
 
-## Commits (4 atomic)
+## Commits (5 atomic)
 
 | C | SHA | Description |
 |---|-----|-------------|
 | C1 | `2b9f31cb` | test(cross-volume): relocate 32 test files + conftest + fixtures to package (49 renames + 1 add + 1 modify) |
 | C2 | `d241f351` | fix(cross-volume): cwd-independent paths in 3 tests (Phase 56b2 lesson, R098/R086/R090) |
 | C3 | `bef73fdb` | test(cross-volume): 5 regression guards for Phase 56c move |
-| C4 | (this commit) | docs(phase-56c): handoff + CLAUDE.md sync + MEMORY update + v54.1 → v54.2 |
+| C4 | `199654cc` | docs(phase-56c): handoff + CLAUDE.md sync + MEMORY update + v54.1 → v54.2 |
+| C5 | (this commit) | chore(phase-56c): .gitignore fixup for runtime artifacts (C5 followup to lesson 5) |
 
 ## What moved (32 files + conftest + fixtures)
 
@@ -130,7 +131,7 @@ before move: same 16 failures, same 204 passing.
 | `pytest tests/test_phase55_p3_archdebt_cross_volume.py` | 27/27 GREEN (co-existence) |
 | ruff on changed files | (ruff not in venv — manual syntax check via `ast.parse`) |
 
-## Lessons (4)
+## Lessons (5)
 
 1. **`git commit -- pathspec` only commits pathspec paths; for rename preservation, BOTH old + new paths must be in pathspec** (Phase 56c C1 redo cost ~10 min). Without both, git shows new files as `A` instead of `R`, losing blame history. Use `git diff --name-status -z -M` for NUL-separated rename data + manual python parse to build pathspec.
 
@@ -139,6 +140,8 @@ before move: same 16 failures, same 204 passing.
 3. **Phase 55 half-migration pattern recurring** (Phase 56b world_db + Phase 56c cross_volume). When P3-ARCHDEBT deletes infra/* and scaffolds packages/*-db, test files left at `tests/X/` create orphan test infra. Phase 56b/56c are the **followup pattern** — must be planned for in original phase, not deferred.
 
 4. **Test guard source code references to deleted paths are false-positives for prior-phase guards** (Phase 56c C3 fixup cost ~5 min). Phase 55's `TestNoPathLiterals::test_no_repo_wide_path_literals` flagged my G3 source for containing `"infra/cross_volume"` literal. Build slash-variant path via `chr(47)` concat OR regex with raw string parts to avoid the literal in source.
+
+5. **P3-ARCHDEBT infra → packages migration MUST paired-update .gitignore paths** (Phase 56c C5 fixup). Phase 54 migrated `infra/agent_system/social_engine/relationship_network.db` → `packages/lingwen-core/src/lingwen_core/agents/social_engine/relationship_network.db` BUT only the new test artifacts were being created (Phase 54 left .gitignore rule on old infra path). Pattern for future P3-ARCHDEBT migrations: when adding new `packages/X/` rule, keep old `infra/X/` rule as safety net for partial migrations + audit both at C5/C7 phase.
 
 ## Carryover (Phase 58+)
 
