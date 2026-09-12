@@ -3,8 +3,8 @@
 Phase 53b (C2): migrated from stale tools.llm_quality_deep_check
 shim imports to canonical tools.llm_quality subpackage.
 
-Original test file (8 ERROR + 1 FAIL) used `patch("tools.llm_quality_deep_check.LLMService")`
-which:
+Original test file (8 ERROR + 1 FAIL) used mock.patch on a stale
+LLMService symbol which:
 1. Referenced a symbol that no longer exists (LLMService was renamed
    to LLMServiceAdapter during the Phase 5 LLM_QUALITY split)
 2. The shim no longer re-exports LLMService (Phase 53b C1)
