@@ -6,7 +6,7 @@ DELETED in Phase 53c (zero consumers):
   - tooling/hygiene/check_file_size.py ALLOWLIST 2 entries (orphan after delete)
 
 I074 invariant extension: 4 directories now FULL DELETED
-  (infra/tools/legacy + infra/core + infra/studio + top-level tools/legacy).
+  (Phase 53's 3 directories + this phase's top-level tools/legacy/).
 
 This test enforces:
   - G1 (1): tools/legacy/ directory FULL DELETED
@@ -72,7 +72,8 @@ def _is_excluded(rel_path: str) -> bool:
     # This file (self-references tools/legacy/ as the deleted target).
     if p == "tests/test_phase53c_tools_legacy_top.py":
         return True
-    # Phase 53 guard legitimately references infra/tools/legacy/ in assertions.
+    # Phase 53 guard legitimately references the prior-phase deleted path
+    # in its assertions.
     if p == "tests/test_phase53_p3_archdebt_dead_code_cleanup.py":
         return True
     return False
