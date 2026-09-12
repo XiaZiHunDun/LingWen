@@ -111,7 +111,7 @@ class TestChainedCascadeSpawn:
 
 class TestChainedCascadeAPIFields:
     def test_list_item_includes_parent_and_child_count(self, tmp_path):
-        from dashboard.app import _ripple_to_list_item
+        from apps.studio_api.app import _ripple_to_list_item
 
         storage = RippleStorage(db_path=tmp_path / "api.db")
         parent = CrossVolumeRipple(

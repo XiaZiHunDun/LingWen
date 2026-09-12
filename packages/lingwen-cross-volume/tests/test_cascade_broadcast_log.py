@@ -73,7 +73,7 @@ class TestCascadeBroadcastLogStorage:
 
     def test_append_ripple_persists_broadcast_log(self, graph_storage, monkeypatch):
         monkeypatch.setattr(
-            "dashboard.cascade_notifier.notify_cascade_update",
+            "apps.studio_api.cascade_notifier.notify_cascade_update",
             MagicMock(),
         )
         ripple = CrossVolumeRipple(

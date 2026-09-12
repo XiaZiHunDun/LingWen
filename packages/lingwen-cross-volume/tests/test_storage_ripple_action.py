@@ -112,12 +112,12 @@ class TestUpdateRippleStatus:
             def broadcast(self, event):
                 broadcast_called.append(event)
 
-        # Patch sys.modules because dashboard.cvg_ws is lazy-imported inside
+        # Patch sys.modules because apps.studio_api.cvg_ws is lazy-imported inside
         # _broadcast_ripple_event's try block; the import statement consults
         # sys.modules before falling back to filesystem lookup.
-        mock_module = type(sys)("dashboard.cvg_ws")
+        mock_module = type(sys)("apps.studio_api.cvg_ws")
         mock_module.broadcast = _MockManager().broadcast
-        sys.modules["dashboard.cvg_ws"] = mock_module
+        sys.modules["apps.studio_api.cvg_ws"] = mock_module
 
         r = _make_ripple()
         storage.append_ripple(r)
@@ -137,9 +137,9 @@ class TestAppendNodesAtomicBroadcast:
             def broadcast(self, event):
                 broadcast_called.append(event)
 
-        mock_module = type(sys)("dashboard.cvg_ws")
+        mock_module = type(sys)("apps.studio_api.cvg_ws")
         mock_module.broadcast = _MockManager().broadcast
-        sys.modules["dashboard.cvg_ws"] = mock_module
+        sys.modules["apps.studio_api.cvg_ws"] = mock_module
 
         storage.append_nodes_atomic([])
 
@@ -153,9 +153,9 @@ class TestAppendNodesAtomicBroadcast:
             def broadcast(self, event):
                 broadcast_called.append(event)
 
-        mock_module = type(sys)("dashboard.cvg_ws")
+        mock_module = type(sys)("apps.studio_api.cvg_ws")
         mock_module.broadcast = _MockManager().broadcast
-        sys.modules["dashboard.cvg_ws"] = mock_module
+        sys.modules["apps.studio_api.cvg_ws"] = mock_module
 
         node = ReferenceNode(
             id="node-1",
