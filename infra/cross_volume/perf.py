@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from infra.cross_volume.reference_graph import CrossVolumeReferenceGraph
+from lingwen_cross_volume.reference_graph import CrossVolumeReferenceGraph
 
 logger = logging.getLogger(__name__)
 

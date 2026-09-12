@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 def main() -> None:
-    from infra.cross_volume.e2e_seed import ensure_e2e_fixtures
+    from lingwen_cross_volume.e2e_seed import ensure_e2e_fixtures
 
     ensure_e2e_fixtures()
 

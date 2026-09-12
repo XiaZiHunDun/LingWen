@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import pytest
 
-from infra.cross_volume.chained_cascade import spawn_child_ripples
-from infra.cross_volume.reference_graph import (
+from lingwen_cross_volume.chained_cascade import spawn_child_ripples
+from lingwen_cross_volume.reference_graph import (
     CrossVolumeReferenceGraph,
     ReferenceEdge,
     ReferenceNode,
 )
-from infra.cross_volume.ripple import CrossVolumeRipple
-from infra.cross_volume.storage import RippleStorage
+from lingwen_cross_volume.ripple import CrossVolumeRipple
+from lingwen_cross_volume.storage import RippleStorage
 
 
 @pytest.fixture

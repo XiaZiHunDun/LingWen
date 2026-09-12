@@ -11,7 +11,7 @@ from lingwen_core.agents.decision_queue import HumanDecisionQueue
 
 from apps.studio_api.app import create_app
 from apps.studio_api.protocols import MasterControllerAdapter, _workflow_result_to_dict
-from infra.cross_volume.backfill import BackfillStats
+from lingwen_cross_volume.backfill import BackfillStats
 
 
 @dataclass

@@ -33,7 +33,7 @@ class RippleScanCommand(Command):
         return self._run_calibrate(options)
 
     def _run_calibrate(self, options: RippleScanOptions) -> int:
-        from infra.cross_volume.scanner_calibration import (
+        from lingwen_cross_volume.scanner_calibration import (
             build_calibration_feedback,
             format_calibration_report,
             format_calibration_yaml_example,
@@ -71,8 +71,8 @@ class RippleScanCommand(Command):
     @staticmethod
     def _scan_chapter_from_fixtures(fixture_dir: Path, chapter_id: int) -> list:
         """Build nodes via LLMScanner + mock router (0 real LLM)."""
-        from infra.cross_volume.llm_cache import LLMCache
-        from infra.cross_volume.llm_scanner import LLMScanner
+        from lingwen_cross_volume.llm_cache import LLMCache
+        from lingwen_cross_volume.llm_scanner import LLMScanner
 
         suffix = f"ch{chapter_id:03d}"
         names = [n.replace("ch001", suffix) for n in FIXTURE_NAMES]

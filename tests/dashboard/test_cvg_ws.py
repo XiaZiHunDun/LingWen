@@ -22,7 +22,7 @@ from apps.studio_api.cvg_ws import (
     CvgConnectionManager,
     broadcast,
 )
-from infra.cross_volume.storage import RippleStorage
+from lingwen_cross_volume.storage import RippleStorage
 
 
 def _make_mock_ws() -> MagicMock:

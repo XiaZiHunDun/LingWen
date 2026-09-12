@@ -613,7 +613,7 @@ class TestInternalHelpers:
 
     def test_maybe_incremental_backfill_returns_none_when_enabled_unset(self, monkeypatch) -> None:
         """_incremental_backfill_enabled 未设时返 None, 传 enabled=None 到 maybe_after_workflow."""
-        import infra.cross_volume.incremental_backfill as cv_backfill
+        import lingwen_cross_volume.incremental_backfill as cv_backfill
         captured = []
         def fake_after(workflow_name, initial_inputs, executions, summary, *, enabled=None):
             captured.append({

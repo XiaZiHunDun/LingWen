@@ -30,7 +30,7 @@ from apps.studio_api.ws import ConnectionManager
 from lingwen_reading_power.db import ReadingPowerDB
 
 if TYPE_CHECKING:
-    from infra.cross_volume.storage import RippleStorage
+    from lingwen_cross_volume.storage import RippleStorage
 
 
 @dataclass

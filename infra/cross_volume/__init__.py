@@ -14,18 +14,18 @@
 
 from lingwen_llm.providers.model_tiers import ModelTier  # re-export for convenience
 
-from infra.cross_volume.cache import QueryImpactCache
-from infra.cross_volume.edge_inferrer import EdgeInferrer
+from lingwen_cross_volume.cache import QueryImpactCache
+from lingwen_cross_volume.edge_inferrer import EdgeInferrer
 
 # Phase 9.12 additive (LLM scanner + edge inferrer):
-from infra.cross_volume.llm_cache import LLMCache
-from infra.cross_volume.llm_scanner import LLMScanner
-from infra.cross_volume.reference_graph import (
+from lingwen_cross_volume.llm_cache import LLMCache
+from lingwen_cross_volume.llm_scanner import LLMScanner
+from lingwen_cross_volume.reference_graph import (
     CrossVolumeReferenceGraph,
     ReferenceEdge,
     ReferenceNode,
 )
-from infra.cross_volume.ripple import CrossVolumeRipple
+from lingwen_cross_volume.ripple import CrossVolumeRipple
 
 __all__ = [
     # Phase 9.10+ (existing, unchanged):

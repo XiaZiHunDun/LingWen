@@ -7,15 +7,15 @@ from lingwen_cli.commands.cascade import CascadeCommand
 from lingwen_cli.options import CascadeOptions
 from lingwen_cli.parsers import create_parser
 
-from infra.cross_volume.cascade_migration import migrate_v1_cascade_runs
-from infra.cross_volume.reference_graph import (
+from lingwen_cross_volume.cascade_migration import migrate_v1_cascade_runs
+from lingwen_cross_volume.reference_graph import (
     CascadedRipple,
     CrossVolumeReferenceGraph,
     ReferenceEdge,
     ReferenceNode,
 )
-from infra.cross_volume.ripple import CrossVolumeRipple
-from infra.cross_volume.storage import RippleStorage
+from lingwen_cross_volume.ripple import CrossVolumeRipple
+from lingwen_cross_volume.storage import RippleStorage
 
 
 def _seed_graph_storage(tmp_path) -> RippleStorage:

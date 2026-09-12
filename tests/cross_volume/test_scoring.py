@@ -6,9 +6,9 @@ from datetime import datetime, timezone
 
 import pytest
 
-from infra.cross_volume.reference_graph import CascadedRipple, ReferenceEdge, ReferenceNode
-from infra.cross_volume.ripple import CrossVolumeRipple
-from infra.cross_volume.scoring import compute_impact_score
+from lingwen_cross_volume.reference_graph import CascadedRipple, ReferenceEdge, ReferenceNode
+from lingwen_cross_volume.ripple import CrossVolumeRipple
+from lingwen_cross_volume.scoring import compute_impact_score
 
 
 def _ripple(**kwargs) -> CrossVolumeRipple:

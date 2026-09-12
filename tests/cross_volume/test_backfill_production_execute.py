@@ -8,9 +8,9 @@ from lingwen_cli.commands.backfill import BackfillCommand
 from lingwen_cli.options import BackfillOptions
 from lingwen_cli.parsers import create_parser
 
-from infra.cross_volume.backfill import Backfiller
-from infra.cross_volume.reference_graph import CrossVolumeReferenceGraph
-from infra.cross_volume.storage import RippleStorage
+from lingwen_cross_volume.backfill import Backfiller
+from lingwen_cross_volume.reference_graph import CrossVolumeReferenceGraph
+from lingwen_cross_volume.storage import RippleStorage
 
 RULES_YAML = """
 character:
@@ -135,10 +135,10 @@ class TestBackfillProductionExecute:
             cache_path=None,
             llm_confidence_threshold=3,
         )
-        with patch("infra.cross_volume.backfill.Backfiller") as mock_cls:
+        with patch("lingwen_cross_volume.backfill.Backfiller") as mock_cls:
             mock_cls.return_value.run.return_value.summary.return_value = "[DRY-RUN] total=1"
             mock_cls.return_value.run.return_value = mock_cls.return_value.run.return_value
-            from infra.cross_volume.backfill import BackfillStats
+            from lingwen_cross_volume.backfill import BackfillStats
 
             mock_cls.return_value.run.return_value = BackfillStats(
                 character_count=1,

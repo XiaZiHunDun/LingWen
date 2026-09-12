@@ -6,12 +6,12 @@ import logging
 import uuid
 from typing import TYPE_CHECKING
 
-from infra.cross_volume.reference_graph import CascadedRipple, ReferenceNode
-from infra.cross_volume.ripple import CrossVolumeRipple
+from lingwen_cross_volume.reference_graph import CascadedRipple, ReferenceNode
+from lingwen_cross_volume.ripple import CrossVolumeRipple
 
 if TYPE_CHECKING:
-    from infra.cross_volume.reference_graph import CrossVolumeReferenceGraph
-    from infra.cross_volume.storage import RippleStorage
+    from lingwen_cross_volume.reference_graph import CrossVolumeReferenceGraph
+    from lingwen_cross_volume.storage import RippleStorage
 
 logger = logging.getLogger(__name__)
 

@@ -9,7 +9,7 @@ from .base import Command
 
 
 def _get_storage():
-    from infra.cross_volume.storage import RippleStorage
+    from lingwen_cross_volume.storage import RippleStorage
 
     # Phase 13.0 T4 M4: resolve via $LINGWEN_PROJECT_ROOT (preferred) or CWD fallback
     return RippleStorage(db_path=resolve_project_db_path())
@@ -32,7 +32,7 @@ class CascadeCommand(Command):
         """Phase 9.45 F34: retention cleanup for cascade_runs."""
         import sys
 
-        from infra.cross_volume.cascade_retention import (
+        from lingwen_cross_volume.cascade_retention import (
             parse_older_than,
             purge_cascade_runs_older_than,
         )
@@ -54,7 +54,7 @@ class CascadeCommand(Command):
 
     def _execute_migrate(self, options: CascadeOptions) -> int:
         """Phase 9.36 F21: v1 → v2_weighted cascade_runs migration (opt-in)."""
-        from infra.cross_volume.cascade_migration import migrate_v1_cascade_runs
+        from lingwen_cross_volume.cascade_migration import migrate_v1_cascade_runs
 
         storage = _get_storage()
         if storage._graph is None:

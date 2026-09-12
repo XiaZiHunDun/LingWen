@@ -34,8 +34,8 @@ from typing import Iterator
 
 from lingwen_shared.ports.storage import ConnectionPort
 
-from infra.cross_volume.reference_graph import CascadedRipple, ReferenceEdge, ReferenceNode
-from infra.cross_volume.ripple import CrossVolumeRipple
+from lingwen_cross_volume.reference_graph import CascadedRipple, ReferenceEdge, ReferenceNode
+from lingwen_cross_volume.ripple import CrossVolumeRipple
 from lingwen_persistence.sqlite_config import apply_sqlite_pragmas
 
 logger = logging.getLogger(__name__)
@@ -373,7 +373,7 @@ class RippleStorage:
         # Phase 9.64 F55: depth ≥ 2 → spawn child ripples (top-level only)
         if cascaded is not None and ripple.parent_ripple_id is None:
             try:
-                from infra.cross_volume.chained_cascade import spawn_child_ripples
+                from lingwen_cross_volume.chained_cascade import spawn_child_ripples
 
                 spawn_child_ripples(self, self._graph, ripple, cascaded)
             except Exception as e:
@@ -931,7 +931,7 @@ class RippleStorage:
                 ripple_ids,
             ).fetchall()
         ripples_by_id = {row["id"]: self._row_to_ripple(row) for row in rows}
-        from infra.cross_volume.scoring import compute_impact_score
+        from lingwen_cross_volume.scoring import compute_impact_score
 
         out: dict[str, float] = {}
         for rid in ripple_ids:
@@ -963,7 +963,7 @@ class RippleStorage:
             KeyError: ripple not found
             ValueError: max_nodes_cap out of range
         """
-        from infra.cross_volume.reference_graph import DEFAULT_MAX_NODES_CAP
+        from lingwen_cross_volume.reference_graph import DEFAULT_MAX_NODES_CAP
 
         ripple = self.get_ripple_by_id(ripple_id)
         if ripple is None:

@@ -6,9 +6,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from apps.studio_api.app import create_app
-from infra.cross_volume.reference_graph import CascadedRipple, ReferenceNode
-from infra.cross_volume.ripple import CrossVolumeRipple
-from infra.cross_volume.storage import RippleStorage
+from lingwen_cross_volume.reference_graph import CascadedRipple, ReferenceNode
+from lingwen_cross_volume.ripple import CrossVolumeRipple
+from lingwen_cross_volume.storage import RippleStorage
 
 
 @pytest.fixture

@@ -18,9 +18,9 @@ from apps.studio_api.protocols import (
     RippleDetailResponse,
     RippleListItemResponse,
 )
-from infra.cross_volume.ripple import CrossVolumeRipple
-from infra.cross_volume.scoring import compute_impact_score
-from infra.cross_volume.storage import AuditEntry, RippleStorage
+from lingwen_cross_volume.ripple import CrossVolumeRipple
+from lingwen_cross_volume.scoring import compute_impact_score
+from lingwen_cross_volume.storage import AuditEntry, RippleStorage
 
 # Phase 9.13: CVG WebSocket connection manager (跟 /api/ws/workflows ConnectionManager 1:1 模式)
 cvg_manager = CvgConnectionManager()
@@ -304,7 +304,7 @@ def _validate_max_nodes_cap(max_nodes_cap: int | None) -> int:
     None → DEFAULT_MAX_NODES_CAP (100, backward compat).
     Raises HTTPException 400 if out of range.
     """
-    from infra.cross_volume.reference_graph import DEFAULT_MAX_NODES_CAP, MAX_NODES_CAP_UPPER
+    from lingwen_cross_volume.reference_graph import DEFAULT_MAX_NODES_CAP, MAX_NODES_CAP_UPPER
 
     if max_nodes_cap is None:
         return DEFAULT_MAX_NODES_CAP

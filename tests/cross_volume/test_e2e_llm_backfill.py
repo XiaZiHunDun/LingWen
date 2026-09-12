@@ -18,7 +18,7 @@ import pytest
 from lingwen_cli.commands.backfill import BackfillCommand
 from lingwen_cli.options import BackfillOptions
 
-from infra.cross_volume.reference_graph import ReferenceNode
+from lingwen_cross_volume.reference_graph import ReferenceNode
 
 
 def make_options(tmp_path, **overrides) -> BackfillOptions:
@@ -134,11 +134,11 @@ class TestE2ELLMBackfill:
         mock_scanner.scan_chapter.side_effect = fake_scan
 
         with (
-            patch("infra.cross_volume.backfill._load_chapters", return_value=mock_chapters, create=True),
-            patch("infra.cross_volume.llm_scanner.LLMScanner", return_value=mock_scanner),
-            patch("infra.cross_volume.storage.RippleStorage", return_value=mock_storage),
+            patch("lingwen_cross_volume.backfill._load_chapters", return_value=mock_chapters, create=True),
+            patch("lingwen_cross_volume.llm_scanner.LLMScanner", return_value=mock_scanner),
+            patch("lingwen_cross_volume.storage.RippleStorage", return_value=mock_storage),
             patch("lingwen_llm.providers.cost_tracker.CostTracker"),
-            patch("infra.cross_volume.backfill._default_storage", return_value=mock_storage, create=True),
+            patch("lingwen_cross_volume.backfill._default_storage", return_value=mock_storage, create=True),
             patch("lingwen_llm.providers.tiered_router.TieredRouter") as mock_router_cls,
         ):
             result = cmd.execute(options)
@@ -188,11 +188,11 @@ class TestE2ELLMBackfill:
         )
 
         with (
-            patch("infra.cross_volume.backfill._load_chapters", return_value=mock_chapters, create=True),
-            patch("infra.cross_volume.llm_scanner.LLMScanner", return_value=mock_scanner),
+            patch("lingwen_cross_volume.backfill._load_chapters", return_value=mock_chapters, create=True),
+            patch("lingwen_cross_volume.llm_scanner.LLMScanner", return_value=mock_scanner),
             patch("lingwen_llm.providers.cost_tracker.CostTracker"),
             patch("lingwen_llm.providers.tiered_router.TieredRouter"),
-            patch("infra.cross_volume.storage.RippleStorage") as mock_storage,
+            patch("lingwen_cross_volume.storage.RippleStorage") as mock_storage,
         ):
             result = cmd.execute(options)
 
@@ -224,11 +224,11 @@ class TestE2ELLMBackfill:
         mock_storage = MagicMock()
 
         with (
-            patch("infra.cross_volume.backfill._load_chapters", return_value=mock_chapters, create=True),
-            patch("infra.cross_volume.llm_scanner.LLMScanner", return_value=mock_scanner),
-            patch("infra.cross_volume.storage.RippleStorage", return_value=mock_storage),
+            patch("lingwen_cross_volume.backfill._load_chapters", return_value=mock_chapters, create=True),
+            patch("lingwen_cross_volume.llm_scanner.LLMScanner", return_value=mock_scanner),
+            patch("lingwen_cross_volume.storage.RippleStorage", return_value=mock_storage),
             patch("lingwen_llm.providers.cost_tracker.CostTracker"),
-            patch("infra.cross_volume.backfill._default_storage", return_value=mock_storage, create=True),
+            patch("lingwen_cross_volume.backfill._default_storage", return_value=mock_storage, create=True),
             patch("lingwen_llm.providers.tiered_router.TieredRouter"),
         ):
             result = cmd.execute(options)

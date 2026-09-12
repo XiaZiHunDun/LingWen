@@ -71,9 +71,9 @@ from apps.studio_api.ws import (
     ConnectionManager,
     start_broadcast_task,
 )
-from infra.cross_volume.ripple import CrossVolumeRipple
-from infra.cross_volume.scoring import compute_impact_score
-from infra.cross_volume.storage import AuditEntry, ConflictError, RippleStorage
+from lingwen_cross_volume.ripple import CrossVolumeRipple
+from lingwen_cross_volume.scoring import compute_impact_score
+from lingwen_cross_volume.storage import AuditEntry, ConflictError, RippleStorage
 
 # ==================== Middleware / Rate Limiter ====================
 # Phase 13.0 T2 H2: slowapi Limiter singleton (module-level, key=IP, default 100/min)
@@ -145,7 +145,7 @@ def _default_storage() -> "RippleStorage":
     register_all()  # idempotent
     storage = _reg_get("ripple", db_path=str(_DEFAULT_CVG_DB_PATH))
     if getattr(storage, "_graph", None) is None:
-        from infra.cross_volume.reference_graph import (
+        from lingwen_cross_volume.reference_graph import (
             CrossVolumeReferenceGraph,
         )
 
@@ -306,7 +306,7 @@ if __name__ == "__main__":
     )
     if dev_mode:
         from apps.studio_api.e2e_stub_controller import E2EStubController
-        from infra.cross_volume.e2e_seed import ensure_e2e_fixtures
+        from lingwen_cross_volume.e2e_seed import ensure_e2e_fixtures
 
         ensure_e2e_fixtures()
         state_dir = Path(__file__).resolve().parent.parent / "infra" / ".state"

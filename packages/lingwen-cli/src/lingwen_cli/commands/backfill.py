@@ -53,7 +53,7 @@ class BackfillCommand(Command):
             return self._execute_llm_path(options)
 
         # Phase 9.11: rule-based 路径 (backward compat 100% 保)
-        from infra.cross_volume.backfill import Backfiller  # lazy import
+        from lingwen_cross_volume.backfill import Backfiller  # lazy import
 
         rules_path = Path(options.rules) if options.rules else DEFAULT_RULES_PATH
         corpus_root = Path(options.corpus_root) if options.corpus_root else None
@@ -93,13 +93,13 @@ class BackfillCommand(Command):
         from lingwen_llm.providers.cost_tracker import CostTracker
         from lingwen_llm.providers.tiered_router import TieredRouter
 
-        from infra.cross_volume.backfill import (
+        from lingwen_cross_volume.backfill import (
             _default_storage,
             _load_chapters,
         )
-        from infra.cross_volume.llm_cache import LLMCache
-        from infra.cross_volume.llm_scanner import LLMScanner
-        from infra.cross_volume.scanner_calibration import load_scanner_calibration
+        from lingwen_cross_volume.llm_cache import LLMCache
+        from lingwen_cross_volume.llm_scanner import LLMScanner
+        from lingwen_cross_volume.scanner_calibration import load_scanner_calibration
 
         cal = load_scanner_calibration(getattr(options, "calibration_path", None))
         write_threshold = (

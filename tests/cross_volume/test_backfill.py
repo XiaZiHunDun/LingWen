@@ -9,15 +9,15 @@ from pathlib import Path
 import pytest
 import yaml
 
-from infra.cross_volume import ReferenceNode
-from infra.cross_volume.extractors import (
+from lingwen_cross_volume import ReferenceNode
+from lingwen_cross_volume.extractors import (
     CharacterExtractor,
     ForeshadowExtractor,
     PlotPointExtractor,
     SettingExtractor,
 )
-from infra.cross_volume.reference_graph import CrossVolumeReferenceGraph
-from infra.cross_volume.storage import RippleStorage
+from lingwen_cross_volume.reference_graph import CrossVolumeReferenceGraph
+from lingwen_cross_volume.storage import RippleStorage
 
 # ============ 4 Extractor unit tests (8 tests) ============
 
@@ -191,7 +191,7 @@ plot_point:
 
     def test_backfill_dry_run_does_not_write(self, rules_yaml, corpus, tmp_path):
         """Phase 9.11: --dry-run 0 写库, 仅 print 统计."""
-        from infra.cross_volume.backfill import Backfiller
+        from lingwen_cross_volume.backfill import Backfiller
 
         storage = RippleStorage(db_path=tmp_path / "ripple.db")
         graph = CrossVolumeReferenceGraph(storage=storage)
@@ -204,7 +204,7 @@ plot_point:
 
     def test_backfill_execute_writes_via_append_nodes_atomic(self, rules_yaml, corpus, tmp_path):
         """Phase 9.11: --execute 走 storage.append_nodes_atomic 1 commit."""
-        from infra.cross_volume.backfill import Backfiller
+        from lingwen_cross_volume.backfill import Backfiller
 
         storage = RippleStorage(db_path=tmp_path / "ripple.db")
         graph = CrossVolumeReferenceGraph(storage=storage)
@@ -222,7 +222,7 @@ plot_point:
 
     def test_backfill_volume_filter_restricts_scan(self, rules_yaml, corpus, tmp_path):
         """Phase 9.11: --vol 1 抽样式, 仅扫 vol 1 章."""
-        from infra.cross_volume.backfill import Backfiller
+        from lingwen_cross_volume.backfill import Backfiller
 
         storage = RippleStorage(db_path=tmp_path / "ripple.db")
         graph = CrossVolumeReferenceGraph(storage=storage)
@@ -239,7 +239,7 @@ plot_point:
 class TestBackfillIntegration:
     def test_backfill_execute_commits_atomically(self, rules_yaml, corpus, tmp_path):
         """Phase 9.11: --execute 走 append_nodes_atomic, 0 partial write."""
-        from infra.cross_volume.backfill import Backfiller
+        from lingwen_cross_volume.backfill import Backfiller
 
         storage = RippleStorage(db_path=tmp_path / "ripple.db")
         graph = CrossVolumeReferenceGraph(storage=storage)
@@ -252,7 +252,7 @@ class TestBackfillIntegration:
 
     def test_backfill_dry_run_creates_no_db(self, rules_yaml, corpus, tmp_path):
         """Phase 9.11: dry-run 跑后, ripple.db 0 创建 / 0 创建后 0 nodes."""
-        from infra.cross_volume.backfill import Backfiller
+        from lingwen_cross_volume.backfill import Backfiller
 
         non_existent_db = tmp_path / "ripple_dry.db"
         storage = RippleStorage(db_path=non_existent_db)
@@ -270,7 +270,7 @@ class TestBackfillE2E:
     def test_backfill_runs_on_10_chapter_fixture(self, tmp_path):
         """Phase 9.11 E2E: 走 10 章真实 fixture, 验证 4 维 N nodes 范围合理 0 crash."""
         # fixture dir 在 tests/cross_volume/fixtures/
-        from infra.cross_volume.backfill import (
+        from lingwen_cross_volume.backfill import (
             Backfiller,  # Phase 9.11: Task 6 cleanup (remove namespace hack)
         )
         from tests.cross_volume.fixtures.sample_corpus import SAMPLE_CORPUS_ROOT, SAMPLE_RULES_YAML

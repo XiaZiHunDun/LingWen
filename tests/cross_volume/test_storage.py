@@ -5,8 +5,8 @@ import json
 
 import pytest
 
-from infra.cross_volume import CrossVolumeRipple, ReferenceEdge, ReferenceNode
-from infra.cross_volume.storage import RippleStorage
+from lingwen_cross_volume import CrossVolumeRipple, ReferenceEdge, ReferenceNode
+from lingwen_cross_volume.storage import RippleStorage
 
 
 @pytest.fixture
@@ -131,7 +131,7 @@ class TestRippleStorage:
 class TestAppendNodesAtomic:
     def test_append_nodes_atomic_commits_all_on_success(self, tmp_path):
         """Phase 9.11: append_nodes_atomic 写 N=100 nodes 1 call, 0 partial commit."""
-        from infra.cross_volume.reference_graph import ReferenceNode
+        from lingwen_cross_volume.reference_graph import ReferenceNode
 
         storage = RippleStorage(db_path=tmp_path / "ripple.db")
         nodes = [
@@ -155,7 +155,7 @@ class TestAppendNodesAtomic:
 
     def test_append_nodes_atomic_rollback_on_duplicate_id(self, tmp_path):
         """Phase 9.11: append_nodes_atomic 异常时 0 partial commit (atomic_batch 兜底)."""
-        from infra.cross_volume.reference_graph import ReferenceNode
+        from lingwen_cross_volume.reference_graph import ReferenceNode
 
         storage = RippleStorage(db_path=tmp_path / "ripple.db")
         nodes = [

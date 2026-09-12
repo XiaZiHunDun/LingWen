@@ -175,7 +175,7 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
         """Phase 9.13: 应用 ripple (PENDING → APPLIED)。
         Phase 9.14: 加 Optional body (RippleActionRequest), 不传 body 仍 work (backward compat)。
         """
-        from infra.cross_volume.storage import ConflictError
+        from lingwen_cross_volume.storage import ConflictError
 
         storage = _app_module._default_storage()
         actor = body.actor if body and body.actor else "user"
@@ -203,7 +203,7 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
         """Phase 9.13: 拒绝 ripple (PENDING → REJECTED)。
         Phase 9.14: 加 Optional body (RippleActionRequest), 不传 body 仍 work (backward compat)。
         """
-        from infra.cross_volume.storage import ConflictError
+        from lingwen_cross_volume.storage import ConflictError
 
         storage = _app_module._default_storage()
         actor = body.actor if body and body.actor else "user"

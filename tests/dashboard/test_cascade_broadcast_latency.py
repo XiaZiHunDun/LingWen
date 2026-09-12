@@ -13,13 +13,13 @@ import pytest
 
 from apps.studio_api import cascade_notifier
 from apps.studio_api.protocols import CascadeUpdatePayload
-from infra.cross_volume.reference_graph import (
+from lingwen_cross_volume.reference_graph import (
     CrossVolumeReferenceGraph,
     ReferenceEdge,
     ReferenceNode,
 )
-from infra.cross_volume.ripple import CrossVolumeRipple
-from infra.cross_volume.storage import RippleStorage
+from lingwen_cross_volume.ripple import CrossVolumeRipple
+from lingwen_cross_volume.storage import RippleStorage
 
 
 @pytest.fixture(autouse=True)

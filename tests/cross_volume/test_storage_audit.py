@@ -5,8 +5,8 @@ from datetime import datetime, timezone
 
 import pytest
 
-from infra.cross_volume.ripple import CrossVolumeRipple
-from infra.cross_volume.storage import AuditEntry, RippleStorage
+from lingwen_cross_volume.ripple import CrossVolumeRipple
+from lingwen_cross_volume.storage import AuditEntry, RippleStorage
 
 
 @pytest.fixture

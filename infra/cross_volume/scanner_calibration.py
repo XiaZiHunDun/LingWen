@@ -8,7 +8,7 @@ from typing import Iterable, Literal
 
 import yaml
 
-from infra.cross_volume.reference_graph import ReferenceNode
+from lingwen_cross_volume.reference_graph import ReferenceNode
 
 DEFAULT_CALIBRATION_PATH = Path(__file__).parent / "scanner_calibration.yaml"
 

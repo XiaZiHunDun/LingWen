@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from infra.cross_volume import CrossVolumeReferenceGraph, ReferenceEdge, ReferenceNode
-from infra.cross_volume.perf import load_volume_slice
-from infra.cross_volume.storage import RippleStorage
+from lingwen_cross_volume import CrossVolumeReferenceGraph, ReferenceEdge, ReferenceNode
+from lingwen_cross_volume.perf import load_volume_slice
+from lingwen_cross_volume.storage import RippleStorage
 
 
 class TestLazyVolumeLoad:

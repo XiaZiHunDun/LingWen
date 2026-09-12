@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from infra.cross_volume.llm_cache import LLMCache
+from lingwen_cross_volume.llm_cache import LLMCache
 
 
 class TestLLMCache:

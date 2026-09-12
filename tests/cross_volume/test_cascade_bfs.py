@@ -2,13 +2,13 @@
 
 import pytest
 
-from infra.cross_volume.reference_graph import (
+from lingwen_cross_volume.reference_graph import (
     CascadedRipple,
     CrossVolumeReferenceGraph,
     ReferenceEdge,
     ReferenceNode,
 )
-from infra.cross_volume.ripple import CrossVolumeRipple
+from lingwen_cross_volume.ripple import CrossVolumeRipple
 
 
 @pytest.fixture
@@ -17,7 +17,7 @@ def graph_with_chain():
     import tempfile
     from pathlib import Path
 
-    from infra.cross_volume.storage import RippleStorage
+    from lingwen_cross_volume.storage import RippleStorage
 
     with tempfile.TemporaryDirectory() as tmp:
         storage = RippleStorage(db_path=Path(tmp) / "cascade.db")
@@ -86,7 +86,7 @@ class TestTriggerCascadeBFS:
         import tempfile
         from pathlib import Path
 
-        from infra.cross_volume.storage import RippleStorage
+        from lingwen_cross_volume.storage import RippleStorage
 
         with tempfile.TemporaryDirectory() as tmp:
             storage = RippleStorage(db_path=Path(tmp) / "cycle.db")

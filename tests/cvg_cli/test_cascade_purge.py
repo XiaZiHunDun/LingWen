@@ -9,15 +9,15 @@ from lingwen_cli.commands.cascade import CascadeCommand
 from lingwen_cli.options import CascadeOptions
 from lingwen_cli.parsers import create_parser
 
-from infra.cross_volume.cascade_retention import parse_older_than, purge_cascade_runs_older_than
-from infra.cross_volume.reference_graph import (
+from lingwen_cross_volume.cascade_retention import parse_older_than, purge_cascade_runs_older_than
+from lingwen_cross_volume.reference_graph import (
     CascadedRipple,
     CrossVolumeReferenceGraph,
     ReferenceEdge,
     ReferenceNode,
 )
-from infra.cross_volume.ripple import CrossVolumeRipple
-from infra.cross_volume.storage import RippleStorage
+from lingwen_cross_volume.ripple import CrossVolumeRipple
+from lingwen_cross_volume.storage import RippleStorage
 
 
 def _make_cascaded(ripple_id: str) -> CascadedRipple:

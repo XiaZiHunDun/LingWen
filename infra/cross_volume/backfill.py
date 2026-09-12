@@ -16,13 +16,13 @@ from typing import Iterator
 
 import yaml
 
-from infra.cross_volume.extractors import (
+from lingwen_cross_volume.extractors import (
     CharacterExtractor,
     ForeshadowExtractor,
     PlotPointExtractor,
     SettingExtractor,
 )
-from infra.cross_volume.reference_graph import (
+from lingwen_cross_volume.reference_graph import (
     CrossVolumeReferenceGraph,
     DimensionT,
     ReferenceNode,
@@ -323,7 +323,7 @@ class Backfiller:
 
 def _default_storage():
     """Phase 9.11: 默认 storage 走 infra/.state/ripple.db (跟 Phase 9.10 pattern)."""
-    from infra.cross_volume.storage import RippleStorage
+    from lingwen_cross_volume.storage import RippleStorage
 
     return RippleStorage(db_path=Path("infra/.state/ripple.db"))
 

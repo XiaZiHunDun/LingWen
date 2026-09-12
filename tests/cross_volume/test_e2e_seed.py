@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from lingwen_core.agents.decision_queue import HumanDecisionQueue
 
-from infra.cross_volume.e2e_seed import (
+from lingwen_cross_volume.e2e_seed import (
     E2E_DECISION_ID,
     E2E_PENDING_RIPPLE_ID,
     ensure_e2e_decision,
@@ -18,12 +18,12 @@ class TestE2ERippleSeed:
     def test_ensure_e2e_ripples_idempotent(self, tmp_path, monkeypatch):
         db = tmp_path / "cross_volume.db"
         monkeypatch.setattr(
-            "infra.cross_volume.e2e_seed._cvg_db_path",
+            "lingwen_cross_volume.e2e_seed._cvg_db_path",
             lambda state_dir=None: db,
         )
         ensure_e2e_ripples()
         ensure_e2e_ripples()
-        from infra.cross_volume.storage import RippleStorage
+        from lingwen_cross_volume.storage import RippleStorage
 
         storage = RippleStorage(db_path=db, graph=None)
         assert storage.get_ripple_by_id(E2E_PENDING_RIPPLE_ID) is not None
@@ -32,11 +32,11 @@ class TestE2ERippleSeed:
     def test_reset_e2e_ripple_clears_applied_at(self, tmp_path, monkeypatch):
         db = tmp_path / "cross_volume.db"
         monkeypatch.setattr(
-            "infra.cross_volume.e2e_seed._cvg_db_path",
+            "lingwen_cross_volume.e2e_seed._cvg_db_path",
             lambda state_dir=None: db,
         )
         ensure_e2e_ripples()
-        from infra.cross_volume.storage import RippleStorage
+        from lingwen_cross_volume.storage import RippleStorage
 
         storage = RippleStorage(db_path=db, graph=None)
         storage.update_ripple_status(E2E_PENDING_RIPPLE_ID, "applied", actor="t", origin="ui")
@@ -50,7 +50,7 @@ class TestE2EDecisionSeed:
     def test_ensure_and_reset_e2e_decision(self, tmp_path, monkeypatch):
         state_dir = tmp_path / "state"
         monkeypatch.setattr(
-            "infra.cross_volume.e2e_seed._state_dir",
+            "lingwen_cross_volume.e2e_seed._state_dir",
             lambda sd=None: state_dir,
         )
         ensure_e2e_decision()
@@ -65,17 +65,17 @@ class TestE2EDecisionSeed:
 
 class TestE2ECascadeRunSeed:
     def test_ensure_e2e_cascade_run_idempotent(self, tmp_path, monkeypatch):
-        from infra.cross_volume.e2e_seed import ensure_e2e_cascade_run
+        from lingwen_cross_volume.e2e_seed import ensure_e2e_cascade_run
 
         db = tmp_path / "cross_volume.db"
         monkeypatch.setattr(
-            "infra.cross_volume.e2e_seed._cvg_db_path",
+            "lingwen_cross_volume.e2e_seed._cvg_db_path",
             lambda state_dir=None: db,
         )
         first = ensure_e2e_cascade_run()
         second = ensure_e2e_cascade_run()
         assert first == second
-        from infra.cross_volume.storage import RippleStorage
+        from lingwen_cross_volume.storage import RippleStorage
 
         storage = RippleStorage(db_path=db, graph=None)
         runs = storage.get_cascade_runs(E2E_PENDING_RIPPLE_ID)
@@ -87,7 +87,7 @@ class TestE2ECvgGraphSeed:
     def test_ensure_e2e_cvg_graph_links_pending_ripple(self, tmp_path, monkeypatch):
         import json
 
-        from infra.cross_volume.e2e_seed import (
+        from lingwen_cross_volume.e2e_seed import (
             E2E_CVG_ROOT_NODE,
             E2E_PENDING_RIPPLE_ID,
             ensure_e2e_cvg_graph,
@@ -95,11 +95,11 @@ class TestE2ECvgGraphSeed:
 
         db = tmp_path / "cross_volume.db"
         monkeypatch.setattr(
-            "infra.cross_volume.e2e_seed._cvg_db_path",
+            "lingwen_cross_volume.e2e_seed._cvg_db_path",
             lambda state_dir=None: db,
         )
         ensure_e2e_cvg_graph()
-        from infra.cross_volume.storage import RippleStorage
+        from lingwen_cross_volume.storage import RippleStorage
 
         storage = RippleStorage(db_path=db, graph=None)
         ripple = storage.get_ripple_by_id(E2E_PENDING_RIPPLE_ID)

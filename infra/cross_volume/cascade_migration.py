@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 
-from infra.cross_volume.storage import RippleStorage
+from lingwen_cross_volume.storage import RippleStorage
 
 logger = logging.getLogger(__name__)
 

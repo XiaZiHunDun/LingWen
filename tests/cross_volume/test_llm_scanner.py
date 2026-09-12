@@ -18,8 +18,8 @@ import pytest
 from lingwen_llm.providers.cost_tracker import CostTracker
 from lingwen_llm.providers.model_tiers import ModelTier
 
-from infra.cross_volume.llm_cache import LLMCache
-from infra.cross_volume.llm_scanner import LLM_MAX_RETRIES, LLMScanner
+from lingwen_cross_volume.llm_cache import LLMCache
+from lingwen_cross_volume.llm_scanner import LLM_MAX_RETRIES, LLMScanner
 
 FIXTURES = Path(__file__).parent / "fixtures" / "llm_responses"
 
@@ -172,7 +172,7 @@ class TestLLMScannerCore:
 class TestLLMScannerCache:
     def test_cache_hit_skips_llm(self, tmp_path):
         """Pre-populate cache for 'character' → only 3 router calls (foreshadow/setting/plot)."""
-        from infra.cross_volume.llm_scanner import PROMPT_FILES
+        from lingwen_cross_volume.llm_scanner import PROMPT_FILES
 
         cache_path = tmp_path / "cache.json"
         cache = LLMCache(cache_path=cache_path)
@@ -263,7 +263,7 @@ class TestLLMScannerCache:
 class TestLLMScannerRetry:
     def test_retry_2_times_with_backoff(self, tmp_path):
         """2 timeout failures then success → time.sleep called 2 times."""
-        from infra.cross_volume.llm_scanner import PROMPT_FILES
+        from lingwen_cross_volume.llm_scanner import PROMPT_FILES
 
         router = MagicMock()
         # First 2 calls timeout (non-4xx), 3rd call succeeds
@@ -300,7 +300,7 @@ class TestLLMScannerRetry:
         fb = make_fallback_backfiller()
         scanner = LLMScanner(router, cache, fb, cost, model_tier=ModelTier.SONNET)
 
-        with patch("infra.cross_volume.llm_scanner.time.sleep") as mock_sleep:
+        with patch("lingwen_cross_volume.llm_scanner.time.sleep") as mock_sleep:
             scanner.scan_chapter(1, "test", context="ctx")
 
         # 2 timeouts → 2 sleeps
@@ -324,7 +324,7 @@ class TestLLMScannerRetry:
         fb = make_fallback_backfiller()
         scanner = LLMScanner(router, cache, fb, cost, model_tier=ModelTier.SONNET)
 
-        with patch("infra.cross_volume.llm_scanner.time.sleep") as mock_sleep:
+        with patch("lingwen_cross_volume.llm_scanner.time.sleep") as mock_sleep:
             nodes = scanner.scan_chapter(1, "test", context="ctx")
 
         assert mock_sleep.call_count == 0
@@ -348,7 +348,7 @@ class TestLLMScannerRetry:
         fb = make_fallback_backfiller()
         scanner = LLMScanner(router, cache, fb, cost, model_tier=ModelTier.SONNET)
 
-        with patch("infra.cross_volume.llm_scanner.time.sleep"):
+        with patch("lingwen_cross_volume.llm_scanner.time.sleep"):
             scanner.scan_chapter(1, "test", context="ctx")
 
         # Each dim exhausted retries → fallback

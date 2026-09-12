@@ -4,9 +4,9 @@ import sys
 
 import pytest
 
-from infra.cross_volume.reference_graph import ReferenceNode
-from infra.cross_volume.ripple import CrossVolumeRipple
-from infra.cross_volume.storage import ConflictError, RippleStorage
+from lingwen_cross_volume.reference_graph import ReferenceNode
+from lingwen_cross_volume.ripple import CrossVolumeRipple
+from lingwen_cross_volume.storage import ConflictError, RippleStorage
 
 
 def _make_ripple(status="pending", volume=1, chapter=1):

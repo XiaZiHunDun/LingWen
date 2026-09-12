@@ -6,8 +6,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from apps.studio_api.app import create_app
-from infra.cross_volume.reference_graph import CrossVolumeReferenceGraph, ReferenceEdge, ReferenceNode
-from infra.cross_volume.storage import RippleStorage
+from lingwen_cross_volume.reference_graph import CrossVolumeReferenceGraph, ReferenceEdge, ReferenceNode
+from lingwen_cross_volume.storage import RippleStorage
 
 
 @pytest.fixture

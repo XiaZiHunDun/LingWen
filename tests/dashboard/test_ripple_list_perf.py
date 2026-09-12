@@ -18,8 +18,8 @@ from fastapi.testclient import TestClient
 
 from apps.studio_api import app as app_module
 from apps.studio_api.app import create_app
-from infra.cross_volume.ripple import CrossVolumeRipple
-from infra.cross_volume.storage import RippleStorage
+from lingwen_cross_volume.ripple import CrossVolumeRipple
+from lingwen_cross_volume.storage import RippleStorage
 
 
 @pytest.fixture
@@ -71,7 +71,7 @@ class TestBulkImpactScores:
             "T3.2 missing: RippleStorage.get_ripple_impact_scores_bulk not defined"
         )
         bulk = storage.get_ripple_impact_scores_bulk(ids)
-        from infra.cross_volume.scoring import compute_impact_score
+        from lingwen_cross_volume.scoring import compute_impact_score
 
         for rid in ids:
             ripple = next(r for r in storage.get_ripples(limit=200) if r.id == rid)

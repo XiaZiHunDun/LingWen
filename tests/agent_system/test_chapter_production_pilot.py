@@ -19,7 +19,7 @@ from lingwen_core.agents.chapter_production_pilot import (
     validate_pilot_record,
 )
 
-from infra.cross_volume.backfill import BackfillStats
+from lingwen_cross_volume.backfill import BackfillStats
 
 
 class TestRealLlmGate:

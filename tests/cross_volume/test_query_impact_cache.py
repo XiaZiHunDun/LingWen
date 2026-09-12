@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 
-from infra.cross_volume.cache import QueryImpactCache
+from lingwen_cross_volume.cache import QueryImpactCache
 
 
 class TestQueryImpactCache:

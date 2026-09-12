@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from infra.cross_volume.reference_graph import CrossVolumeReferenceGraph
+from lingwen_cross_volume.reference_graph import CrossVolumeReferenceGraph
 
 
 class TestDefaultStorageGraph:

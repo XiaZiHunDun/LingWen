@@ -153,7 +153,7 @@ class TestRegistryIntegration:
     def test_get_ripple_storage(self):
         register_all()
         storage = get("ripple")
-        from infra.cross_volume.storage import RippleStorage
+        from lingwen_cross_volume.storage import RippleStorage
 
         assert isinstance(storage, RippleStorage)
 

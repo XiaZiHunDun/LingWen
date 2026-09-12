@@ -19,8 +19,8 @@ import pytest
 from lingwen_llm.providers.cost_tracker import CostTracker
 from lingwen_llm.providers.model_tiers import ModelTier
 
-from infra.cross_volume.llm_cache import LLMCache
-from infra.cross_volume.reference_graph import ReferenceNode
+from lingwen_cross_volume.llm_cache import LLMCache
+from lingwen_cross_volume.reference_graph import ReferenceNode
 
 FIXTURES = Path(__file__).parent / "fixtures" / "llm_responses"
 
@@ -92,7 +92,7 @@ def make_nodes_with_fixture_ids(confidences: list[int]) -> list[ReferenceNode]:
 class TestEdgeInferrerCore:
     def test_infer_edges_filters_by_confidence_threshold(self, tmp_path):
         """Nodes with conf<threshold (3) are NOT passed to LLM (prompt does not contain them)."""
-        from infra.cross_volume.edge_inferrer import EdgeInferrer
+        from lingwen_cross_volume.edge_inferrer import EdgeInferrer
 
         router = make_router("edge_inference_ch001.json")
         cache = LLMCache(cache_path=tmp_path / "cache.json")
@@ -122,7 +122,7 @@ class TestEdgeInferrerCore:
 
     def test_infer_edges_returns_8_relationship_types(self, tmp_path):
         """All 8 distinct relationship_types from the fixture pass through to ReferenceEdge."""
-        from infra.cross_volume.edge_inferrer import EdgeInferrer
+        from lingwen_cross_volume.edge_inferrer import EdgeInferrer
 
         router = make_router("edge_inference_ch001.json")
         cache = LLMCache(cache_path=tmp_path / "cache.json")
@@ -150,7 +150,7 @@ class TestEdgeInferrerCore:
 
     def test_infer_edges_passes_chapter_and_nodes(self, tmp_path):
         """Prompt must contain chapter_content and a node id from the passed nodes."""
-        from infra.cross_volume.edge_inferrer import EdgeInferrer
+        from lingwen_cross_volume.edge_inferrer import EdgeInferrer
 
         router = make_router("edge_inference_ch001.json")
         cache = LLMCache(cache_path=tmp_path / "cache.json")
@@ -170,7 +170,7 @@ class TestEdgeInferrerCore:
 
     def test_edges_have_weight_in_0_1(self, tmp_path):
         """All returned edges have weight in [0.0, 1.0]."""
-        from infra.cross_volume.edge_inferrer import EdgeInferrer
+        from lingwen_cross_volume.edge_inferrer import EdgeInferrer
 
         router = make_router("edge_inference_ch001.json")
         cache = LLMCache(cache_path=tmp_path / "cache.json")
@@ -194,7 +194,7 @@ class TestEdgeInferrerCore:
 class TestEdgeInferrerCache:
     def test_edge_cache_hit_skips_llm(self, tmp_path):
         """Pre-populate cache → 0 router calls, parsed edges returned from cache."""
-        from infra.cross_volume.edge_inferrer import EdgeInferrer
+        from lingwen_cross_volume.edge_inferrer import EdgeInferrer
 
         cache_path = tmp_path / "cache.json"
         cache = LLMCache(cache_path=cache_path)
@@ -243,7 +243,7 @@ class TestEdgeInferrerCache:
 
     def test_edge_cache_miss_calls_and_writes(self, tmp_path):
         """On cache miss: 1 LLM call, cache has 1 entry after."""
-        from infra.cross_volume.edge_inferrer import EdgeInferrer
+        from lingwen_cross_volume.edge_inferrer import EdgeInferrer
 
         router = make_router("edge_inference_ch001.json")
         cache = LLMCache(cache_path=tmp_path / "cache.json")
@@ -259,7 +259,7 @@ class TestEdgeInferrerCache:
 
     def test_edge_retry_2_times(self, tmp_path):
         """2 timeouts then success → time.sleep called 2 times (1s, 2s exponential)."""
-        from infra.cross_volume.edge_inferrer import EdgeInferrer
+        from lingwen_cross_volume.edge_inferrer import EdgeInferrer
 
         router = MagicMock()
         router.generate_with_usage.side_effect = [
@@ -276,7 +276,7 @@ class TestEdgeInferrerCache:
         nodes = make_nodes_with_fixture_ids([3, 3, 3, 3, 3, 3, 3])
         inferrer = EdgeInferrer(router, cache, cost, model_tier=ModelTier.SONNET, confidence_threshold=3)
 
-        with patch("infra.cross_volume.edge_inferrer.time.sleep") as mock_sleep:
+        with patch("lingwen_cross_volume.edge_inferrer.time.sleep") as mock_sleep:
             inferrer.infer_edges(1, "test content", nodes)
 
         # 2 timeouts → 2 sleeps (1s, 2s exponential backoff)
@@ -284,7 +284,7 @@ class TestEdgeInferrerCache:
 
     def test_edge_fail_skipped_nodes_still_written(self, tmp_path):
         """Edge LLM path exhausts retries → returns [], caller writes nodes separately."""
-        from infra.cross_volume.edge_inferrer import EdgeInferrer
+        from lingwen_cross_volume.edge_inferrer import EdgeInferrer
 
         router = MagicMock()
         router.generate_with_usage.side_effect = TimeoutError("persistent failure")
@@ -294,7 +294,7 @@ class TestEdgeInferrerCache:
         nodes = make_nodes_with_fixture_ids([3, 3, 3, 3, 3, 3, 3])
         inferrer = EdgeInferrer(router, cache, cost, model_tier=ModelTier.SONNET, confidence_threshold=3)
 
-        with patch("infra.cross_volume.edge_inferrer.time.sleep"):
+        with patch("lingwen_cross_volume.edge_inferrer.time.sleep"):
             edges = inferrer.infer_edges(1, "test content", nodes)
 
         # Edge inference failure is silent (returns []); caller writes nodes separately
@@ -311,7 +311,7 @@ class TestEdgeInferrerCache:
 class TestEdgeInferrerError:
     def test_empty_nodes_returns_empty(self, tmp_path):
         """Empty input nodes → [], 0 router calls."""
-        from infra.cross_volume.edge_inferrer import EdgeInferrer
+        from lingwen_cross_volume.edge_inferrer import EdgeInferrer
 
         router = make_router("edge_inference_ch001.json")
         cache = LLMCache(cache_path=tmp_path / "cache.json")
@@ -326,7 +326,7 @@ class TestEdgeInferrerError:
 
     def test_prompt_template_load_failure(self, tmp_path):
         """PROMPT_DIR points to nonexistent path → FileNotFoundError on __init__."""
-        from infra.cross_volume import edge_inferrer
+        from lingwen_cross_volume import edge_inferrer
 
         router = make_router()
         cache = LLMCache(cache_path=tmp_path / "cache.json")
@@ -345,7 +345,7 @@ class TestEdgeInferrerError:
 
     def test_edge_self_loop_rejected(self, tmp_path):
         """LLM returns self-loop edge (from=n_0, to=n_0) → ReferenceEdge rejects → edges == []."""
-        from infra.cross_volume.edge_inferrer import EdgeInferrer
+        from lingwen_cross_volume.edge_inferrer import EdgeInferrer
 
         # Mock router returns a self-loop edge
         self_loop_json = json.dumps(

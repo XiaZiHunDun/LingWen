@@ -15,7 +15,7 @@ from lingwen_core.agents.chapter_golden_path import (
 from lingwen_got.data_structures import NodeExecution, NodeStatus
 from lingwen_got.scheduler import ExecutionSummary
 
-from infra.cross_volume.incremental_backfill import maybe_after_workflow
+from lingwen_cross_volume.incremental_backfill import maybe_after_workflow
 
 
 class TestChapterGoldenPathModule:
@@ -61,7 +61,7 @@ class TestGoldenPathIncrementalBackfillOptional:
         }
         summary = ExecutionSummary(completed=7, failed=0, paused=False)
         with patch(
-            "infra.cross_volume.incremental_backfill.run_incremental_backfill",
+            "lingwen_cross_volume.incremental_backfill.run_incremental_backfill",
             return_value=type("S", (), {"summary": lambda self: {"nodes_written": 1}})(),
         ):
             stats = maybe_after_workflow(

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from infra.cross_volume.reference_graph import CascadedRipple
-from infra.cross_volume.ripple import CrossVolumeRipple
+from lingwen_cross_volume.reference_graph import CascadedRipple
+from lingwen_cross_volume.ripple import CrossVolumeRipple
 
 _DIRECT_NODE = 2.0
 _DIRECT_EDGE = 1.0

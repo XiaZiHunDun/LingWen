@@ -11,8 +11,8 @@ from lingwen_got.data_structures import NodeExecution, NodeStatus
 from lingwen_got.scheduler import ExecutionSummary
 from lingwen_pipeline.master_controller import MasterController
 
-from infra.cross_volume.backfill import Backfiller, BackfillStats
-from infra.cross_volume.incremental_backfill import (
+from lingwen_cross_volume.backfill import Backfiller, BackfillStats
+from lingwen_cross_volume.incremental_backfill import (
     EMIT_CHAPTER_NODE,
     backfill_stats_to_dict,
     describe_incremental_backfill_hook,
@@ -168,8 +168,8 @@ class TestIncrementalBackfillHelpers:
 
 class TestIncrementalBackfillRunChapters:
     def test_run_chapters_writes_single_chapter(self, rules_yaml, corpus, tmp_path):
-        from infra.cross_volume.reference_graph import CrossVolumeReferenceGraph
-        from infra.cross_volume.storage import RippleStorage
+        from lingwen_cross_volume.reference_graph import CrossVolumeReferenceGraph
+        from lingwen_cross_volume.storage import RippleStorage
 
         storage = RippleStorage(db_path=tmp_path / "ripple.db")
         graph = CrossVolumeReferenceGraph(storage=storage)
@@ -187,7 +187,7 @@ class TestIncrementalBackfillWorkflowHook:
         mock_stats.summary.return_value = "mock"
         mock_run = MagicMock(return_value=mock_stats)
         monkeypatch.setattr(
-            "infra.cross_volume.incremental_backfill.run_incremental_backfill",
+            "lingwen_cross_volume.incremental_backfill.run_incremental_backfill",
             mock_run,
         )
         executions = {EMIT_CHAPTER_NODE: _completed_emit_execution()}
@@ -205,7 +205,7 @@ class TestIncrementalBackfillWorkflowHook:
     def test_maybe_after_workflow_skipped_when_disabled(self, monkeypatch):
         mock_run = MagicMock()
         monkeypatch.setattr(
-            "infra.cross_volume.incremental_backfill.run_incremental_backfill",
+            "lingwen_cross_volume.incremental_backfill.run_incremental_backfill",
             mock_run,
         )
         executions = {EMIT_CHAPTER_NODE: _completed_emit_execution()}

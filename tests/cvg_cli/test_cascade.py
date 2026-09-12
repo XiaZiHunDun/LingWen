@@ -7,8 +7,8 @@ from lingwen_cli.commands.cascade import CascadeCommand
 from lingwen_cli.options import CascadeOptions
 from lingwen_cli.parsers import create_parser
 
-from infra.cross_volume.ripple import CrossVolumeRipple
-from infra.cross_volume.storage import RippleStorage
+from lingwen_cross_volume.ripple import CrossVolumeRipple
+from lingwen_cross_volume.storage import RippleStorage
 
 
 def parse_args(argv: list[str]):
@@ -26,7 +26,7 @@ def make_cascade_options(**overrides) -> CascadeOptions:
 @pytest.fixture
 def storage_with_ripple(tmp_path):
     storage = RippleStorage(db_path=tmp_path / "cascade.db")
-    from infra.cross_volume.reference_graph import CrossVolumeReferenceGraph, ReferenceEdge, ReferenceNode
+    from lingwen_cross_volume.reference_graph import CrossVolumeReferenceGraph, ReferenceEdge, ReferenceNode
 
     g = CrossVolumeReferenceGraph(storage)
     g.add_node(ReferenceNode(id="n1", volume=1, chapter=1, dimension="character"))
@@ -52,7 +52,7 @@ class TestCascadeCmd:
     def test_cascade_happy(self, tmp_path, monkeypatch):
         """cascade rip-1 → exit 0, prints summary."""
         storage = RippleStorage(db_path=tmp_path / "cascade.db")
-        from infra.cross_volume.reference_graph import CrossVolumeReferenceGraph, ReferenceEdge, ReferenceNode
+        from lingwen_cross_volume.reference_graph import CrossVolumeReferenceGraph, ReferenceEdge, ReferenceNode
 
         g = CrossVolumeReferenceGraph(storage)
         g.add_node(ReferenceNode(id="n1", volume=1, chapter=1, dimension="character"))

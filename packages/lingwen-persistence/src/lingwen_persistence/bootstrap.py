@@ -14,7 +14,7 @@ def register_all() -> dict[str, str]:
     from lingwen_core.agents.social_engine.relationship_tracker import RelationshipTracker
     from lingwen_pipeline.state.database import WorkflowDB
 
-    from infra.cross_volume.storage import RippleStorage
+    from lingwen_cross_volume.storage import RippleStorage
     from lingwen_reading_power.db import ReadingPowerDB
 
     results = {}

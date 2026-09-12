@@ -6,12 +6,12 @@ TDD: 这些测试在 step 1 阶段会全部 FAIL (ImportError), 在 Task 3 (CVG 
 
 import pytest
 
-from infra.cross_volume import (
+from lingwen_cross_volume import (
     CrossVolumeReferenceGraph,
     ReferenceEdge,
     ReferenceNode,
 )
-from infra.cross_volume.storage import RippleStorage
+from lingwen_cross_volume.storage import RippleStorage
 
 
 @pytest.fixture

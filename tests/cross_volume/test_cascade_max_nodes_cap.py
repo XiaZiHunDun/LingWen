@@ -5,15 +5,15 @@ from pathlib import Path
 
 import pytest
 
-from infra.cross_volume.reference_graph import (
+from lingwen_cross_volume.reference_graph import (
     DEFAULT_MAX_NODES_CAP,
     MAX_NODES_CAP_UPPER,
     CrossVolumeReferenceGraph,
     ReferenceEdge,
     ReferenceNode,
 )
-from infra.cross_volume.ripple import CrossVolumeRipple
-from infra.cross_volume.storage import RippleStorage
+from lingwen_cross_volume.ripple import CrossVolumeRipple
+from lingwen_cross_volume.storage import RippleStorage
 
 
 def _star_graph(storage: RippleStorage, neighbor_count: int = 150) -> CrossVolumeReferenceGraph:

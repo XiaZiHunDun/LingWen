@@ -9,8 +9,8 @@ from datetime import datetime, timezone
 from typing import Any, Literal
 from uuid import uuid4
 
-from infra.cross_volume.cache import QueryImpactCache
-from infra.cross_volume.ripple import CrossVolumeRipple
+from lingwen_cross_volume.cache import QueryImpactCache
+from lingwen_cross_volume.ripple import CrossVolumeRipple
 
 logger = logging.getLogger(__name__)
 
@@ -136,7 +136,7 @@ class CrossVolumeReferenceGraph:
 
     def ensure_volume_loaded(self, volume: int) -> None:
         """Phase 9.42 F31: hydrate one volume slice when lazy=True."""
-        from infra.cross_volume.perf import ensure_volume_loaded
+        from lingwen_cross_volume.perf import ensure_volume_loaded
 
         ensure_volume_loaded(self, volume)
 

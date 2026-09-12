@@ -15,13 +15,13 @@ from __future__ import annotations
 
 import pytest
 
-from infra.cross_volume import (
+from lingwen_cross_volume import (
     CrossVolumeReferenceGraph,
     ReferenceEdge,
     ReferenceNode,
 )
-from infra.cross_volume.reference_graph import ReferenceEdge as _RawEdge  # noqa: F401  # type-hint alias
-from infra.cross_volume.storage import RippleStorage
+from lingwen_cross_volume.reference_graph import ReferenceEdge as _RawEdge  # noqa: F401  # type-hint alias
+from lingwen_cross_volume.storage import RippleStorage
 
 
 @pytest.fixture
@@ -82,7 +82,7 @@ class TestAdjacencyIndex:
 
     def test_adjacency_lookup_used_by_trigger_cascade(self, graph):
         """trigger_cascade 优先用 _adjacency_by_node, 不走 _index_by_node_edges 线性扫"""
-        from infra.cross_volume.ripple import CrossVolumeRipple
+        from lingwen_cross_volume.ripple import CrossVolumeRipple
 
         class SpyDict(dict):
             """记录所有 .get() 调用。dict 实例的 .get 是 read-only 属性, 用子类记录。"""

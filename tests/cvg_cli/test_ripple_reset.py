@@ -17,8 +17,8 @@ from lingwen_cli.commands.ripple_reset import RippleResetCommand
 from lingwen_cli.options import RippleResetOptions
 from lingwen_cli.parsers import create_parser
 
-from infra.cross_volume.ripple import CrossVolumeRipple
-from infra.cross_volume.storage import RippleStorage
+from lingwen_cross_volume.ripple import CrossVolumeRipple
+from lingwen_cross_volume.storage import RippleStorage
 
 
 def parse_args(argv: list[str]):

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from infra.cross_volume.e2e_seed import E2E_COMPANION_SLUG, ensure_e2e_companion_project
+from lingwen_cross_volume.e2e_seed import E2E_COMPANION_SLUG, ensure_e2e_companion_project
 
 
 @pytest.fixture

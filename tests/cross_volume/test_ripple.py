@@ -8,9 +8,9 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from infra.cross_volume import CrossVolumeReferenceGraph, CrossVolumeRipple
-from infra.cross_volume.reference_graph import CascadedRipple
-from infra.cross_volume.storage import RippleStorage
+from lingwen_cross_volume import CrossVolumeReferenceGraph, CrossVolumeRipple
+from lingwen_cross_volume.reference_graph import CascadedRipple
+from lingwen_cross_volume.storage import RippleStorage
 
 
 @pytest.fixture

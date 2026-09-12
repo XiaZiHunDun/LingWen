@@ -10,7 +10,7 @@ from typing import Any, Mapping
 from lingwen_got.data_structures import NodeStatus
 from lingwen_got.scheduler import ExecutionSummary
 
-from infra.cross_volume.backfill import Backfiller, BackfillStats
+from lingwen_cross_volume.backfill import Backfiller, BackfillStats
 
 logger = logging.getLogger(__name__)
 

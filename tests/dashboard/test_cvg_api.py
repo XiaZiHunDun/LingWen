@@ -14,8 +14,8 @@ from apps.studio_api.protocols import (
     RippleListItemResponse,
     RippleStatsResponse,
 )
-from infra.cross_volume.ripple import CrossVolumeRipple
-from infra.cross_volume.storage import ConflictError, RippleStorage
+from lingwen_cross_volume.ripple import CrossVolumeRipple
+from lingwen_cross_volume.storage import ConflictError, RippleStorage
 
 
 @pytest.fixture

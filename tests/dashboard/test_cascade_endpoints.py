@@ -4,16 +4,16 @@ import pytest
 from fastapi.testclient import TestClient
 
 from apps.studio_api.app import create_app
-from infra.cross_volume.reference_graph import CrossVolumeReferenceGraph, ReferenceEdge, ReferenceNode
-from infra.cross_volume.ripple import CrossVolumeRipple
-from infra.cross_volume.storage import RippleStorage
+from lingwen_cross_volume.reference_graph import CrossVolumeReferenceGraph, ReferenceEdge, ReferenceNode
+from lingwen_cross_volume.ripple import CrossVolumeRipple
+from lingwen_cross_volume.storage import RippleStorage
 
 
 @pytest.fixture
 def cvg_storage(tmp_path):
     """Storage with ripple + multi-hop graph + persisted cascade."""
     storage = RippleStorage(db_path=tmp_path / "cvg.db")
-    from infra.cross_volume.reference_graph import CrossVolumeReferenceGraph
+    from lingwen_cross_volume.reference_graph import CrossVolumeReferenceGraph
 
     g = CrossVolumeReferenceGraph(storage)
     # Chain: n1 → n2 → n3 (n3 is 2-hop from n1)

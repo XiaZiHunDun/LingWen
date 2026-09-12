@@ -301,7 +301,7 @@ class MasterControllerAdapter:
             build_production_summary_from_controller,
         )
 
-        from infra.cross_volume.incremental_backfill import backfill_stats_to_dict
+        from lingwen_cross_volume.incremental_backfill import backfill_stats_to_dict
 
         production_summary = build_production_summary_from_controller(self._controller)
         incremental_backfill = backfill_stats_to_dict(
@@ -591,7 +591,7 @@ def _workflow_result_to_dict(result: dict[str, Any]) -> dict[str, Any]:
     summary_dict = _summary_to_dict(summary) if summary is not None else None
     executions = result.get("executions") or {}
     executions_dict = {nid: _execution_to_dict(ex) for nid, ex in executions.items()}
-    from infra.cross_volume.incremental_backfill import backfill_stats_to_dict
+    from lingwen_cross_volume.incremental_backfill import backfill_stats_to_dict
 
     return {
         "summary": summary_dict,

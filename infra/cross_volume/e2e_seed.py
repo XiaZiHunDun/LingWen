@@ -16,8 +16,8 @@ from lingwen_core.agents.decision_queue import (
     create_decision,
 )
 
-from infra.cross_volume.ripple import CrossVolumeRipple
-from infra.cross_volume.storage import RippleStorage
+from lingwen_cross_volume.ripple import CrossVolumeRipple
+from lingwen_cross_volume.storage import RippleStorage
 
 E2E_PENDING_RIPPLE_ID = "rip-pending-1"
 E2E_REJECTED_RIPPLE_ID = "rip-rejected-1"
@@ -229,7 +229,7 @@ def ensure_e2e_cvg_graph(db_path: Path | None = None) -> None:
     """Minimal CVG nodes + link rip-pending-1 for live cascade replay BFS."""
     import json
 
-    from infra.cross_volume.reference_graph import (
+    from lingwen_cross_volume.reference_graph import (
         CrossVolumeReferenceGraph,
         ReferenceEdge,
         ReferenceNode,
@@ -287,7 +287,7 @@ def ensure_e2e_cascade_run(db_path: Path | None = None) -> int:
     path = db_path or _cvg_db_path()
     ensure_e2e_cvg_graph(path)
     storage = RippleStorage(db_path=path, graph=None)
-    from infra.cross_volume.reference_graph import CrossVolumeReferenceGraph
+    from lingwen_cross_volume.reference_graph import CrossVolumeReferenceGraph
 
     graph = CrossVolumeReferenceGraph(storage)
     storage._graph = graph

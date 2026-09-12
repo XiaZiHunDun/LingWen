@@ -75,7 +75,7 @@ class TestCLINewFlags:
         """--apply without --use-llm → exit code 1 with stderr error message."""
         options = make_options(use_llm=False, apply=True, vol=1, dry_run=True)
         cmd = BackfillCommand()
-        with patch("infra.cross_volume.backfill.Backfiller") as mock_backfiller:
+        with patch("lingwen_cross_volume.backfill.Backfiller") as mock_backfiller:
             result = cmd.execute(options)
         # Per spec: 友好错误 → exit 1, 0 调 Backfiller
         assert result == 1
@@ -89,8 +89,8 @@ class TestCLINewFlags:
         # Per spec: 真实 LLM scan-and-write 是 Task 9 的活; Task 7 仅验证
         # LLM 路径被触发, components 实例化成功.
         with (
-            patch("infra.cross_volume.llm_scanner.LLMScanner") as mock_scanner,
-            patch("infra.cross_volume.llm_cache.LLMCache"),
+            patch("lingwen_cross_volume.llm_scanner.LLMScanner") as mock_scanner,
+            patch("lingwen_cross_volume.llm_cache.LLMCache"),
             patch("lingwen_llm.providers.cost_tracker.CostTracker"),
         ):
             options = make_options(use_llm=True, apply=True, vol=1, dry_run=False)
@@ -110,12 +110,12 @@ class TestCLINewFlags:
         写真实 scan 后的 additive 行为.
         """
         with (
-            patch("infra.cross_volume.llm_scanner.LLMScanner") as mock_scanner,
-            patch("infra.cross_volume.llm_cache.LLMCache"),
+            patch("lingwen_cross_volume.llm_scanner.LLMScanner") as mock_scanner,
+            patch("lingwen_cross_volume.llm_cache.LLMCache"),
             patch("lingwen_llm.providers.cost_tracker.CostTracker"),
             patch("lingwen_llm.providers.tiered_router.TieredRouter"),
-            patch("infra.cross_volume.backfill._load_chapters", return_value=[], create=True),
-            patch("infra.cross_volume.storage.RippleStorage") as mock_storage,
+            patch("lingwen_cross_volume.backfill._load_chapters", return_value=[], create=True),
+            patch("lingwen_cross_volume.storage.RippleStorage") as mock_storage,
         ):
             options = make_options(use_llm=True, apply=False, vol=1)
             cmd = BackfillCommand()
@@ -133,10 +133,10 @@ class TestCLINewFlags:
         """--cache-path is passed through to LLMCache constructor."""
         cache_path = tmp_path / "custom_cache.json"
         with (
-            patch("infra.cross_volume.llm_cache.LLMCache") as mock_cache,
-            patch("infra.cross_volume.llm_scanner.LLMScanner"),
+            patch("lingwen_cross_volume.llm_cache.LLMCache") as mock_cache,
+            patch("lingwen_cross_volume.llm_scanner.LLMScanner"),
             patch("lingwen_llm.providers.cost_tracker.CostTracker"),
-            patch("infra.cross_volume.storage.RippleStorage"),
+            patch("lingwen_cross_volume.storage.RippleStorage"),
         ):
             options = make_options(use_llm=True, apply=True, vol=1, cache_path=cache_path)
             cmd = BackfillCommand()
@@ -166,8 +166,8 @@ class TestCLINewFlags:
     def test_backward_compat_no_new_flags_still_works(self):
         """Phase 9.11 default (no new flags) → rule path, Backfiller called, 0 break."""
         with (
-            patch("infra.cross_volume.backfill.Backfiller") as mock_backfiller,
-            patch("infra.cross_volume.storage.RippleStorage"),
+            patch("lingwen_cross_volume.backfill.Backfiller") as mock_backfiller,
+            patch("lingwen_cross_volume.storage.RippleStorage"),
         ):
             # 模拟 Phase 9.11 default: --dry-run (no --execute)
             options = make_options(vol=1, dry_run=True)

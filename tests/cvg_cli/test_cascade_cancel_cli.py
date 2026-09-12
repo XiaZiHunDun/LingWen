@@ -10,13 +10,13 @@ import pytest
 from lingwen_cli.commands.cascade import CascadeCommand
 from lingwen_cli.options import CascadeOptions
 
-from infra.cross_volume.reference_graph import (
+from lingwen_cross_volume.reference_graph import (
     CrossVolumeReferenceGraph,
     ReferenceEdge,
     ReferenceNode,
 )
-from infra.cross_volume.ripple import CrossVolumeRipple
-from infra.cross_volume.storage import RippleStorage
+from lingwen_cross_volume.ripple import CrossVolumeRipple
+from lingwen_cross_volume.storage import RippleStorage
 
 
 def make_cascade_options(**overrides) -> CascadeOptions:

@@ -7,10 +7,10 @@
 - PlotPointExtractor: plot_point 维 (大纲 ## 标题抽取)
 """
 
-from infra.cross_volume.extractors.character_extractor import CharacterExtractor
-from infra.cross_volume.extractors.foreshadow_extractor import ForeshadowExtractor
-from infra.cross_volume.extractors.plot_point_extractor import PlotPointExtractor
-from infra.cross_volume.extractors.setting_extractor import SettingExtractor
+from lingwen_cross_volume.extractors.character_extractor import CharacterExtractor
+from lingwen_cross_volume.extractors.foreshadow_extractor import ForeshadowExtractor
+from lingwen_cross_volume.extractors.plot_point_extractor import PlotPointExtractor
+from lingwen_cross_volume.extractors.setting_extractor import SettingExtractor
 
 __all__ = [
     "CharacterExtractor",

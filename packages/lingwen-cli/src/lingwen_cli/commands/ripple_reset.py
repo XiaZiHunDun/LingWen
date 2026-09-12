@@ -24,7 +24,7 @@ DEFAULT_RIPPLE_DB = Path(".state/ripple.db")
 
 def _get_storage():
     """Phase 9.18: 1:1 with Phase 9.14 ripple_rollback pattern (lazy import)."""
-    from infra.cross_volume.storage import RippleStorage
+    from lingwen_cross_volume.storage import RippleStorage
 
     return RippleStorage(db_path=DEFAULT_RIPPLE_DB)
 

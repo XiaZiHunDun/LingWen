@@ -7,8 +7,8 @@ from lingwen_cli.commands.ripple_scan import RippleScanCommand
 from lingwen_cli.options import RippleScanOptions
 from lingwen_cli.parsers import create_parser
 
-from infra.cross_volume.reference_graph import ReferenceNode
-from infra.cross_volume.scanner_calibration import (
+from lingwen_cross_volume.reference_graph import ReferenceNode
+from lingwen_cross_volume.scanner_calibration import (
     ScannerCalibration,
     build_calibration_feedback,
     build_dimension_reports,

@@ -27,7 +27,7 @@ def _get_storage():
     Phase 13.0 T4 M4: db path resolves via $LINGWEN_PROJECT_ROOT (preferred)
     or CWD fallback with WARNING (1-version deprecation).
     """
-    from infra.cross_volume.storage import RippleStorage
+    from lingwen_cross_volume.storage import RippleStorage
 
     return RippleStorage(db_path=resolve_project_db_path())
 
@@ -51,7 +51,7 @@ class RippleAuditCommand(Command):
 
     def _execute_purge(self, options: UnifiedOptions) -> int:
         """Phase 9.61 F52: retention cleanup for ripple_audit."""
-        from infra.cross_volume.audit_retention import (
+        from lingwen_cross_volume.audit_retention import (
             parse_older_than,
             purge_audit_entries_older_than,
         )

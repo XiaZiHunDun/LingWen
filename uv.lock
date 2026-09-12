@@ -14,6 +14,7 @@ members = [
     "lingwen-core",
     "lingwen-coverage-gate",
     "lingwen-creator",
+    "lingwen-cross-volume",
     "lingwen-errors",
     "lingwen-full-check-report",
     "lingwen-got",
@@ -724,6 +725,25 @@ dependencies = [
 requires-dist = [
     { name = "lingwen-shared", editable = "packages/lingwen-shared" },
     { name = "pydantic", specifier = ">=2.5" },
+]
+
+[[package]]
+name = "lingwen-cross-volume"
+version = "0.1.0"
+source = { editable = "packages/lingwen-cross-volume" }
+dependencies = [
+    { name = "lingwen-core" },
+    { name = "lingwen-llm" },
+    { name = "lingwen-shared" },
+    { name = "pyyaml" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "lingwen-core", editable = "packages/lingwen-core" },
+    { name = "lingwen-llm", editable = "packages/lingwen-llm" },
+    { name = "lingwen-shared", editable = "packages/lingwen-shared" },
+    { name = "pyyaml", specifier = ">=6.0" },
 ]
 
 [[package]]

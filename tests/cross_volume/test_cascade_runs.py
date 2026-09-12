@@ -6,13 +6,13 @@ status filter) / get_cascade_run_by_id (None for missing).
 
 import pytest
 
-from infra.cross_volume.reference_graph import (
+from lingwen_cross_volume.reference_graph import (
     CrossVolumeReferenceGraph,
     ReferenceEdge,
     ReferenceNode,
 )
-from infra.cross_volume.ripple import CrossVolumeRipple
-from infra.cross_volume.storage import CascadeRun, RippleStorage
+from lingwen_cross_volume.ripple import CrossVolumeRipple
+from lingwen_cross_volume.storage import CascadeRun, RippleStorage
 
 
 @pytest.fixture

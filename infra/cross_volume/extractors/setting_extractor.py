@@ -4,7 +4,7 @@ import logging
 import re
 from pathlib import Path
 
-from infra.cross_volume.reference_graph import ReferenceNode
+from lingwen_cross_volume.reference_graph import ReferenceNode
 
 logger = logging.getLogger(__name__)
 

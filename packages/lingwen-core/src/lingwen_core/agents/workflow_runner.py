@@ -211,7 +211,7 @@ class WorkflowRunner:
         summary: Any,
     ) -> Any:
         """Phase 9.63 F54: optional incremental CVG backfill after emit_chapter."""
-        from infra.cross_volume.incremental_backfill import maybe_after_workflow
+        from lingwen_cross_volume.incremental_backfill import maybe_after_workflow
         return maybe_after_workflow(
             workflow_name,
             initial_inputs,

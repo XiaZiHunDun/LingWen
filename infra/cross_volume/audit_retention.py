@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
-from infra.cross_volume.cascade_retention import PurgeResult, parse_older_than
+from lingwen_cross_volume.cascade_retention import PurgeResult, parse_older_than
 
 __all__ = ["PurgeResult", "parse_older_than", "purge_audit_entries_older_than"]
 
