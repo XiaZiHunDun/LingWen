@@ -38,7 +38,7 @@ def test_world_routes_registered():
 
 def test_proposal_post_and_accept(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    from infra.world_db.schema import get_connection, init_schema
+    from lingwen_world_db.schema import get_connection, init_schema
 
     db_path = tmp_path / "w.db"
     conn = get_connection(db_path)
@@ -125,7 +125,7 @@ class _StubLLM:
 def test_agent_extract_from_chapters_happy_path(tmp_path, monkeypatch):
     """POST /api/world/agent/extract-from-chapters inserts proposals."""
     monkeypatch.chdir(tmp_path)
-    import infra.world_db.agent_extractors as aext
+    import lingwen_world_db.agent_extractors as aext
 
     aext._default_llm_service = lambda: _StubLLM(
         response=(
@@ -158,7 +158,7 @@ def test_agent_extract_from_chapters_happy_path(tmp_path, monkeypatch):
 
 def test_agent_extract_from_chapters_missing_slug_400(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    import infra.world_db.agent_extractors as aext
+    import lingwen_world_db.agent_extractors as aext
 
     aext._default_llm_service = lambda: _StubLLM()
 
@@ -175,7 +175,7 @@ def test_agent_extract_from_chapters_missing_slug_400(tmp_path, monkeypatch):
 
 def test_agent_extract_from_prompt_happy_path(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    import infra.world_db.agent_extractors as aext
+    import lingwen_world_db.agent_extractors as aext
 
     aext._default_llm_service = lambda: _StubLLM(
         response=(
@@ -200,7 +200,7 @@ def test_agent_extract_from_prompt_happy_path(tmp_path, monkeypatch):
 def test_agent_extract_rate_limit(tmp_path, monkeypatch):
     """After 5 calls the 6th must return HTTP 429."""
     monkeypatch.chdir(tmp_path)
-    import infra.world_db.agent_extractors as aext
+    import lingwen_world_db.agent_extractors as aext
 
     aext._default_llm_service = lambda: _StubLLM()
 
