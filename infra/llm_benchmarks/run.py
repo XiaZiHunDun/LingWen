@@ -22,8 +22,8 @@ from infra.llm_benchmarks.metrics import (
 )
 from infra.llm_benchmarks.providers import get_provider_llm
 from infra.llm_benchmarks.results import write_call_result
-from infra.world_db.agent_extractors import SYSTEM_PROMPT
-from infra.world_db.agent_schemas import ProposalResponse, parse_proposals_json
+from lingwen_world_db.agent_extractors import SYSTEM_PROMPT
+from lingwen_world_db.agent_schemas import ProposalResponse, parse_proposals_json
 
 logger = logging.getLogger(__name__)
 
