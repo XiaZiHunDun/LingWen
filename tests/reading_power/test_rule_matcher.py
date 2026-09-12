@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from infra.reading_power.rule_matcher import RuleMatcher, SuspectedSegment
+from lingwen_reading_power.rule_matcher import RuleMatcher, SuspectedSegment
 
 
 @pytest.fixture

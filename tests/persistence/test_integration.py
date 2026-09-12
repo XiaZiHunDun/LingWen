@@ -100,7 +100,7 @@ class TestEndToEnd:
             import tempfile
             from pathlib import Path
 
-            from infra.reading_power.db import ReadingPowerDB
+            from lingwen_reading_power.db import ReadingPowerDB
 
             with tempfile.TemporaryDirectory() as tmp:
                 db_path = Path(tmp) / "shim_e2e.db"

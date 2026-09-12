@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
 import pytest
 
-from infra.reading_power.db import ReadingPowerDB
+from lingwen_reading_power.db import ReadingPowerDB
 
 
 @pytest.fixture

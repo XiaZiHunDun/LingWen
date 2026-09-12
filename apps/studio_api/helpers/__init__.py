@@ -29,7 +29,7 @@ from apps.studio_api.helpers.workflow import (
     _list_workflow_yamls,
     _workflow_result_to_response,
 )
-from infra.reading_power.db import ReadingPowerDB
+from lingwen_reading_power.db import ReadingPowerDB
 
 __all__ = [
     "_parse_time_window",

@@ -2,7 +2,7 @@
 
 import pytest
 
-from infra.reading_power.db import ReadingPowerDB
+from lingwen_reading_power.db import ReadingPowerDB
 
 
 class TestReadingPowerDB:

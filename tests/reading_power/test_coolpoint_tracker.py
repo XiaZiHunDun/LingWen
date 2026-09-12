@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from infra.reading_power.coolpoint_tracker import CoolPointTracker
+from lingwen_reading_power.coolpoint_tracker import CoolPointTracker
 
 
 def test_track_and_get_coolpoints() -> None:

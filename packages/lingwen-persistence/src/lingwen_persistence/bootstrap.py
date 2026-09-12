@@ -15,7 +15,7 @@ def register_all() -> dict[str, str]:
     from lingwen_pipeline.state.database import WorkflowDB
 
     from infra.cross_volume.storage import RippleStorage
-    from infra.reading_power.db import ReadingPowerDB
+    from lingwen_reading_power.db import ReadingPowerDB
 
     results = {}
     register("ripple", RippleStorage, RIPPLE_DB)

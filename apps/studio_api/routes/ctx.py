@@ -27,7 +27,7 @@ from slowapi import Limiter
 
 from apps.studio_api.protocols import MasterControllerLike
 from apps.studio_api.ws import ConnectionManager
-from infra.reading_power.db import ReadingPowerDB
+from lingwen_reading_power.db import ReadingPowerDB
 
 if TYPE_CHECKING:
     from infra.cross_volume.storage import RippleStorage

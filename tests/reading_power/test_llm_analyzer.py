@@ -12,7 +12,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from infra.reading_power.llm_analyzer import AnalysisResult, LLMAnalyzer, SuspectedSegment
+from lingwen_reading_power.llm_analyzer import AnalysisResult, LLMAnalyzer, SuspectedSegment
 
 
 @pytest.fixture

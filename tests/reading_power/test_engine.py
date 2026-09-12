@@ -2,14 +2,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from infra.reading_power.engine import ReadingPowerEngine
+from lingwen_reading_power.engine import ReadingPowerEngine
 
 
 def test_analyze_chapter_with_rule_matcher():
     mock_db = MagicMock()
     mock_db.get_chapter_summary.return_value = None
 
-    with patch("infra.reading_power.rule_matcher.RuleMatcher") as MockMatcher:
+    with patch("lingwen_reading_power.rule_matcher.RuleMatcher") as MockMatcher:
         mock_matcher = MagicMock()
         mock_matcher.scan.return_value = [
             MagicMock(

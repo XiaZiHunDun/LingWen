@@ -27,7 +27,7 @@ class ReadingPowerCommand(Command):
         try:
             from pathlib import Path
 
-            from infra.reading_power import ReadingPowerEngine
+            from lingwen_reading_power import ReadingPowerEngine
         except ImportError as e:
             print(f"[错误] 追读力模块不可用: {e}")
             return 1

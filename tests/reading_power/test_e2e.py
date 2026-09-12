@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from infra.reading_power import (
+from lingwen_reading_power import (
     ReadingPowerDB,
     ReadingPowerEngine,
 )

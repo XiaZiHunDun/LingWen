@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from infra.reading_power.hook_tracker import HookTracker
+from lingwen_reading_power.hook_tracker import HookTracker
 
 
 def test_track_and_get_hooks() -> None:

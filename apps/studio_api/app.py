@@ -112,7 +112,7 @@ from apps.studio_api.models import *  # noqa: F401,F403
 # dependencies (db, master_controller, manager, limiter, production_records_root,
 # cvg_storage).
 from apps.studio_api.routes import RoutesContext, register_all_routes  # noqa: E402
-from infra.reading_power.db import ReadingPowerDB  # noqa: F401
+from lingwen_reading_power.db import ReadingPowerDB  # noqa: F401
 
 # Phase 15.0 T1.3: CVG storage singleton stays module-level in dashboard.app so tests
 # can monkeypatch app_module._default_storage / _default_storage_instance / _DEFAULT_CVG_DB_PATH
