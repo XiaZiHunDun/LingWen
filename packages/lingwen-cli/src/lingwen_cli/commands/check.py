@@ -164,7 +164,7 @@ class CheckCommand(Command):
     def _check_llm(self, chapters: List[int], options: UnifiedOptions) -> int:
         """Run LLM-based quality check"""
         try:
-            from tools.llm_quality_deep_check import LLMQualityChecker
+            from tools.llm_quality import LLMQualityChecker
 
             print(f"执行LLM深度检查: {len(chapters)} 个章节")
 
