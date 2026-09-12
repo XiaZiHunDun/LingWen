@@ -115,7 +115,7 @@ def test_events_route_replay_emits_chapter_history(client):
     job = _job(job_id="j9", status="completed")
     with (
         patch("lingwen_studio_batch_runner._load_job", return_value=job),
-        patch("lingwen_studio_batch_runner._completed_chapter_nums", return_value=[2, 3]),
+        patch("lingwen_studio_batch_runner.service._completed_chapter_nums", return_value=[2, 3]),
     ):
         resp = client.get("/api/studio/batch/j9/events", params={"replay": 1})
     assert resp.status_code == 200
