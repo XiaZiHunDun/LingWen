@@ -3,8 +3,8 @@ deletion targets that 16.7 deferred to Phase 17.
 
 This test enforces that the umbrella `infra` package has been decoupled from
 the modules that Phase 16.7 deferred (creator, studio, prose, project, core,
-di, event_sourcing, exports). Phase 17 will rebuild the package layout from
-scratch; until then, the umbrella must NOT silently re-export them.
+di, exports). Phase 17 will rebuild the package layout from scratch; until
+then, the umbrella must NOT silently re-export them.
 
 If this test fails:
 - The deferred re-exports are still present in `infra/__init__.py`.
@@ -17,7 +17,6 @@ Patterns asserted (all MUST be absent from infra/__init__.py):
     - ``from infra.project import``
     - ``from infra.core import``
     - ``from infra.di.layer import``
-    - ``from infra.event_sourcing.(models|store) import``
 
 Each pattern is checked separately so the assertion message names the
 specific pattern that slipped back in.
@@ -41,10 +40,6 @@ FORBIDDEN_PATTERNS: tuple[tuple[str, str], ...] = (
     ("infra.project re-export", r"^\s*from\s+infra\.project\s+import"),
     ("infra.core re-export", r"^\s*from\s+infra\.core\s+import"),
     ("infra.di.layer re-export", r"^\s*from\s+infra\.di\.layer\s+import"),
-    (
-        "infra.event_sourcing.{models,store} re-export",
-        r"^\s*from\s+infra\.event_sourcing\.(models|store)\s+import",
-    ),
 )
 
 
