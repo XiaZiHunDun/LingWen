@@ -116,6 +116,7 @@ python lingwen.py doctor
 | I074 | `infra/tools/legacy/` `infra/core/` `infra/studio/` 3 个零消费者目录已删；其下任何子目录或文件路径非法 (Phase 53 P3-ARCHDEBT legacy + core + studio 残留清理，~5727 LOC dead code) |
 | I075 | `packages/lingwen-persistence/` 是 SQLite 持久化层（24 symbols: connection + paths + registry + schemas + sqlite_config + write_chapter + write_workspace_api + sqlite_storage_adapter shim）的唯一实包；`infra.persistence.*` 和 `infra/persistence/`` 路径非法 (Phase 54 P3-ARCHDEBT infra/persistence 全量迁移) |
 | I076 | `packages/lingwen-world-db/` 是 World DB（character + faction + relationship + lore + timeline + proposal 表 + queries 子目录 6 query 模块）的唯一实包；`infra.world_db.*` 和 `infra/world_db/`` 路径非法 (Phase 56 P3-ARCHDEBT infra/world_db 全量迁移) |
+| I077 | `packages/lingwen-reading-power/` 是 Reading Power System（追读力：hooks + coolpoints + chapter_summary + analysis_log SQLite 持久化 + ReadingPowerEngine 编排器 + RuleMatcher 规则匹配 + LLMAnalyzer LLM 深度分析 + HookTracker/CoolPointTracker 持久化包装 + 8 个 public classes + SuspectedSegment NamedTuple + AnalysisResult dataclass + DB_PATH + HOOKS_RULES_PATH + COOLPOINTS_RULES_PATH + ANALYZE_HOOKS_PROMPT 4 个 module constants 共 13 public symbols）的唯一实包；`infra.reading_power.*` 和 `infra/reading_power/`` 路径非法 (Phase 57 P3-ARCHDEBT infra/reading_power 全量迁移，1006 LOC + 16 consumer sites + 2 workspace deps: lingwen-shared + lingwen-storage) |
 
 > 完整不变量与设计原则 DP-01..06 见 `.lingwen/architecture.yml`；提交纪律与反模式见 `.lingwen/constraints.yml`。
 
