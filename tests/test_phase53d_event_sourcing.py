@@ -5,8 +5,8 @@ DELETED in Phase 53d (zero consumers):
   - meta-test FORBIDDEN_PATTERNS event_sourcing entry (orphan watch)
 
 I074 invariant extension: 5 directories now FULL DELETED
-  (infra/tools/legacy + infra/event_sourcing + infra/core + infra/studio
-   + top-level tools/legacy).
+  (Phase 53's original 3 + Phase 53c's top-level tools/legacy/ + this phase's
+   infra/event_sourcing/). See CLAUDE.md I074 invariant for the full list.
 
 This test enforces:
   - G1 (1): infra/event_sourcing/ directory FULL DELETED
