@@ -1,8 +1,8 @@
 # 灵文项目状态看板
 
-> **最后更新**: 2026-09-10 (v40.0 asset sidebar icons 闭环, ff-merged at `be5e73d1`)
-> **更新者**: 协调者（v40.0 asset sidebar icons 闭环：11 emoji → 12 Phosphor-duotone SVG (含 Pilot follow-up)；5 quality gates 全过；8 commits ff-merge at `be5e73d1`）
-> **下一协作**: v40.0 asset sidebar icons 已闭环：12 SVG icons (11 plan + 1 Pilot follow-up discover gap closure) — `apps/dashboard/src/components/icons/sidebar/` 新增 (12 SFC + `index.js` barrel + spec)；`--lingwen-icon-accent` CSS var（`oklch(70% 0.18 280)`）主题化霓虹紫蓝；App.vue nav 配置 `.map()` 优雅集成。**P3-ARCHDEBT 5/5b + v40.0 双闭环**。详见 `docs/superpowers/specs/2026-09-09-asset-sidebar-icons-design.md`。
+> **最后更新**: 2026-09-12 (Phase 58 cross_volume 16 failures fix, v54.3, branch `phase-57-p3-archdebt-reading-power`)
+> **更新者**: 协调者（Phase 58 cross_volume 16 failures fix：220/220 GREEN (was 204/220)；4 atomic commits on `phase-57-p3-archdebt-reading-power` = C1 fix(cli) lazy Command init `5d4d0d30` / C2 fix(cross-volume) test paths `d87a5a08` / C3 test(phase-58) 5 guards + v54.3 `d90e29d7` / C4 docs；2 root causes collapsed 16 fails = RC2 eager Command.__init__ (12) + RC1 dashboard.X test paths (4)）
+> **下一协作**: Phase 58 ready for ff-merge to master。完成后进 Phase 53c (infra/tools/ residual cleanup) 或 产品 brainstorm。详见 `docs/superpowers/handoffs/2026-09-12-phase-58-cross-volume-failures-handoff.md`。
 
 ---
 
