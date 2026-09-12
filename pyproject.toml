@@ -326,7 +326,7 @@ forbidden_modules = [
 # Scope note: source_modules is restricted to `lingwen_creator` only (not
 # `apps`). Rationale: `apps/studio_api/routes/*` is the FastAPI HTTP adapter
 # and legitimately composes `infra/*` modules that use sqlite3 (e.g.,
-# `infra.world_db.*`, `infra.cross_volume.storage`, `infra.reading_power.db`).
+# `infra.world_db.*`, `infra.cross_volume.storage`).
 # import-linter's `forbidden` contract follows transitive imports, so any
 # `apps` route that touches `infra` storage would be flagged. The DP-02
 # (LLMServicePort) contract worked because port_adapter broke the chain via

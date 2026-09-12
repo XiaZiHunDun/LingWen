@@ -637,11 +637,11 @@ class TieredRouter:
 
 | 模块 | 文件 | 职责 |
 |------|------|------|
-| ReadingPowerEngine | `infra/reading_power/engine.py` | 阅读力引擎 |
-| HookTracker | `infra/reading_power/hook_tracker.py` | 钩子（悬念）追踪 |
-| CoolpointTracker | `infra/reading_power/coolpoint_tracker.py` | 酷点追踪 |
-| LLMAnalyzer | `infra/reading_power/llm_analyzer.py` | LLM 阅读力分析 |
-| RuleMatcher | `infra/reading_power/rule_matcher.py` | 规则匹配器 |
+| ReadingPowerEngine | `packages/lingwen-reading-power/src/lingwen_reading_power/engine.py` | 阅读力引擎 |
+| HookTracker | `packages/lingwen-reading-power/src/lingwen_reading_power/hook_tracker.py` | 钩子（悬念）追踪 |
+| CoolpointTracker | `packages/lingwen-reading-power/src/lingwen_reading_power/coolpoint_tracker.py` | 酷点追踪 |
+| LLMAnalyzer | `packages/lingwen-reading-power/src/lingwen_reading_power/llm_analyzer.py` | LLM 阅读力分析 |
+| RuleMatcher | `packages/lingwen-reading-power/src/lingwen_reading_power/rule_matcher.py` | 规则匹配器 |
 
 ### 11.2 质量检查协调
 

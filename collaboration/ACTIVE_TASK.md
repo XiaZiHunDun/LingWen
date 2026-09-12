@@ -55,7 +55,7 @@
 - 兜底: 直接构造 (防止 import 链失败)
 
 ### T2.7 — 删除 reading_power_db.py 截断副本 (1 commit) ✅ 已完成（保守做法）
-- 改 `dashboard/helpers/reading_power_db.py` 为兼容 shim，继承自 `infra.reading_power.db.ReadingPowerDB`
+- 改 `dashboard/helpers/reading_power_db.py` 为兼容 shim，继承自 `lingwen_reading_power.db.ReadingPowerDB`
 - 保留 `init_if_missing` 签名以兼容 `dashboard/app.py:250` 调用方
 - 发出 DeprecationWarning 引导 caller 切到 infra 版
 - 4 tests in `tests/persistence/test_reading_power_shim.py`

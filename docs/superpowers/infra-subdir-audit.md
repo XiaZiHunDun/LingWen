@@ -12,7 +12,7 @@
 | 4493 | 23 | `infra/cross_volume/` | 业务子系统, NOT-LEAF, 多包消费 |
 | 1578 | 18 | `infra/persistence/` | 数据持久化, NOT-LEAF |
 | 1291 | 13 | `infra/world_db/` | Phase 117 World DB 已有独立路由 → **可能冗余** |
-| 1006 | 7 | `infra/reading_power/` | 单包消费? |
+| 1006 | 7 | `packages/lingwen-reading-power/src/lingwen_reading_power/` | 单包消费? |
 | 992 | 3 | `infra/event_sourcing/` | 事件溯源 |
 | 848 | 7 | `infra/story_contracts/` | 契约 |
 | 751 | 7 | `infra/llm_benchmarks/` | 基准测试 |

@@ -281,7 +281,7 @@ Dashboard完成后，后续可扩展：
 | 文件 | 说明 |
 |------|------|
 | `reference/webnovel-writer/.../dashboard/` | webnovel-writer完整Dashboard参考 |
-| `novel-factory/infra/reading_power/` | 阶段1追读力系统 |
+| `novel-factory/packages/lingwen-reading-power/src/lingwen_reading_power/` | 阶段1追读力系统 |
 
 ---
 

@@ -72,12 +72,12 @@ webnovel-writer 的追读力系统提供了完整的钩子/爽点/伏笔债务�
 
 | 组件 | 位置 | 职责 |
 |------|------|------|
-| `ReadingPowerEngine` | `infra/reading_power/engine.py` | 主编排器，协调规则匹配和LLM分析 |
-| `RuleMatcher` | `infra/reading_power/rule_matcher.py` | YAML规则初筛，快速过滤疑似段落 |
-| `LLMAnalyzer` | `infra/reading_power/llm_analyzer.py` | 调用LLM做深度结构化分析 |
-| `HookTracker` | `infra/reading_power/hook_tracker.py` | 钩子数据持久化 |
-| `CoolPointTracker` | `infra/reading_power/coolpoint_tracker.py` | 爽点数据持久化 |
-| `ReadingPowerDB` | `infra/reading_power/db.py` | SQLite数据库操作 |
+| `ReadingPowerEngine` | `packages/lingwen-reading-power/src/lingwen_reading_power/engine.py` | 主编排器，协调规则匹配和LLM分析 |
+| `RuleMatcher` | `packages/lingwen-reading-power/src/lingwen_reading_power/rule_matcher.py` | YAML规则初筛，快速过滤疑似段落 |
+| `LLMAnalyzer` | `packages/lingwen-reading-power/src/lingwen_reading_power/llm_analyzer.py` | 调用LLM做深度结构化分析 |
+| `HookTracker` | `packages/lingwen-reading-power/src/lingwen_reading_power/hook_tracker.py` | 钩子数据持久化 |
+| `CoolPointTracker` | `packages/lingwen-reading-power/src/lingwen_reading_power/coolpoint_tracker.py` | 爽点数据持久化 |
+| `ReadingPowerDB` | `packages/lingwen-reading-power/src/lingwen_reading_power/db.py` | SQLite数据库操作 |
 
 ---
 

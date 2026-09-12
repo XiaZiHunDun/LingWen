@@ -76,10 +76,10 @@
 
 3. **🔴 CRITICAL — T2.7 reading_power_db shim regression（198 dashboard test errors）**
    - `dashboard/helpers/reading_power_db.py` shim 调用 `super().__init__(db_path=resolved_path)`，**丢弃 init_if_missing=False**
-   - `infra/reading_power/db.py` 无 `init_if_missing` 参数，总会调用 `_init_db()`
+   - `packages/lingwen-reading-power/src/lingwen_reading_power/db.py` 无 `init_if_missing` 参数，总会调用 `_init_db()`
    - 后果: dashboard 测试用 tempfile 临时 db_path 时，因 parent dir 不存在 → `sqlite3.OperationalError: unable to open database file`
    - 影响范围: `tests/dashboard/test_studio_endpoints.py` 大量 ERROR（25+ 个 TestStudioEndpoints test）
-   - 警告: `Phase 15.0 T2.7: dashboard.helpers.reading_power_db 是历史 shim, 请改用 from infra.reading_power.db import ReadingPowerDB. init_if_missing 参数被忽略`
+   - 警告: `Phase 15.0 T2.7: dashboard.helpers.reading_power_db 是历史 shim, 请改用 from lingwen_reading_power.db import ReadingPowerDB. init_if_missing 参数被忽略`
 
 4. **🟡 MEDIUM — persistence 测试 8/49 失败（41 passed）**
    - 5 个 `test_bootstrap.py::TestRegisterAll` 测试 fail（budget 找不到 + :memory: 未处理）
@@ -118,7 +118,7 @@
 - [infra/persistence/bootstrap.py](file:///home/ailearn/projects/AI-Incursion/domains/IP创作/projects/LingWen/infra/persistence/bootstrap.py#L47) — BudgetPersistence 导入
 - [infra/agent_system/budget_persistence.py](file:///home/ailearn/projects/AI-Incursion/domains/IP创作/projects/LingWen/infra/agent_system/budget_persistence.py) — 实际类名 (BudgetService)
 - [dashboard/helpers/reading_power_db.py](file:///home/ailearn/projects/AI-Incursion/domains/IP创作/projects/LingWen/dashboard/helpers/reading_power_db.py) — shim 丢弃 init_if_missing
-- [infra/reading_power/db.py](file:///home/ailearn/projects/AI-Incursion/domains/IP创作/projects/LingWen/infra/reading_power/db.py) — 无 init_if_missing 参数
+- [packages/lingwen-reading-power/src/lingwen_reading_power/db.py](file:///home/ailearn/projects/AI-Incursion/domains/IP创作/projects/LingWen/packages/lingwen-reading-power/src/lingwen_reading_power/db.py) — 无 init_if_missing 参数
 - [infra/cross_volume/storage.py:184](file:///home/ailearn/projects/AI-Incursion/domains/IP创作/projects/LingWen/infra/cross_volume/storage.py#L184) — :memory: 不支持
 
 ---
