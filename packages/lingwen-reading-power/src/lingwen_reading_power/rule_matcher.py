@@ -113,31 +113,25 @@ class RuleMatcher:
 
     def _determine_position(self, text: str) -> str:
         """
-        Determine if match is at beginning, middle, or end of text.
+        Coarse chapter-level position classification.
 
-        Args:
-            text: The text to analyze
+        Phase 57 C1.5 fixup: the prior implementation had an unreachable
+        ``return "中段"`` at the end and an always-true ``if length > 20``
+        branch that returned ``"开头"`` for every chapter >= 100 chars.
+        Worse, the rules YAML at ``rules/reading_power_hooks.yaml`` uses
+        position keys ``"开篇" / "中段" / "结尾"`` (NOT ``"开头"``), so the
+        prior code's "开头" never matched any pos_weight — pos_weight always
+        fell through to its default (1.0). Behavior was effectively a no-op.
+
+        Without a per-match ``offset`` parameter, this function can only do
+        a coarse text-length-based classification. Match-level position
+        would require refactoring ``scan()`` to plumb the offset through.
 
         Returns:
-            Position category: "开头", "中段", or "结尾"
+            Position category: always ``"中段"`` (the only key guaranteed to
+            exist in pos_weight lookups; 开篇/结尾 need match offset).
         """
         length = len(text)
-        if length == 0:
+        if length == 0 or length < 100:
             return "中段"
-
-        # Use character-based position for Chinese text
-        if length > 0:
-            # Simple thirds-based approach
-            first_third = length // 3
-            length - first_third
-
-            # For short texts, use more nuanced approach
-            if length < 100:
-                return "中段"
-
-            # Check first 20% for "开头"
-            if length > 20:
-                # Check first third
-                return "开头"
-
-        return "中段"
+        return "中段"  # coarse — no offset, default to middle

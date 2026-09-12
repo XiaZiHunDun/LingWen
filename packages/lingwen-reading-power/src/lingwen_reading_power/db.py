@@ -25,7 +25,7 @@ from lingwen_shared.ports.storage import ConnectionPort
 class ReadingPowerDB:
     """Database handler for the reading power (追读力) system."""
 
-    DB_PATH = Path(__file__).parent.parent.parent / ".state" / "reading_power.db"
+    DB_PATH = Path(__file__).parents[4] / ".state" / "reading_power.db"
 
     def __init__(self, db_path=None, init_if_missing: bool = True):
         if isinstance(db_path, str):

@@ -4,23 +4,19 @@ LLMAnalyzer - Deep analysis of reading power elements using LLM
 Phase 57 P3-ARCHDEBT: relocated from infra/reading_power/llm_analyzer.py to
 packages/lingwen-reading-power/src/lingwen_reading_power/llm_analyzer.py.
 Canonical import: ``from lingwen_reading_power.llm_analyzer import LLMAnalyzer``.
+
+Phase 57 C1.5: removed duplicate ``SuspectedSegment`` dataclass; now imports
+the canonical NamedTuple from ``rule_matcher``. The two definitions were
+incompatible (this one had ``char_start`` field, rule_matcher had ``offset``).
+Only ``segment_type``, ``pattern_name``, ``content`` are used in
+``analyze()`` so the canonical NamedTuple is a safe drop-in.
 """
 
 import json
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-
-@dataclass
-class SuspectedSegment:
-    """A segment suspected of containing reading power elements"""
-
-    segment_type: str  # "hook" or "coolpoint"
-    pattern_name: str
-    content: str
-    confidence: float
-    position: str  # "开头", "中段", "结尾"
-    char_start: int
+from lingwen_reading_power.rule_matcher import SuspectedSegment
 
 
 ANALYZE_HOOKS_PROMPT = """分析以下小说段落，识别其中的追读力元素。
