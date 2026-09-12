@@ -5,5 +5,4 @@
 子模块:
 - consistency/ — 一致性检查工具
 - workflow/ — 工作流管理工具
-- legacy/ — 遗留工具（逐步迁移中）
 """

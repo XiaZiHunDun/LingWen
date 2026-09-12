@@ -49,8 +49,6 @@ ALLOWLIST.add(
 )  # Phase 17.8 (was infra/state_machine.py)
 ALLOWLIST.add("infra/tool.py")  # Phase 17
 ALLOWLIST.add("tools/comprehensive_quality_check.py")  # Phase 17
-ALLOWLIST.add("tools/legacy/llm_outline_quality_check.py")  # Phase 17
-ALLOWLIST.add("tools/legacy/minimax_chapter_review.py")  # Phase 17
 
 # === Phase 19.1 (frontend refactor) — apps/dashboard/src ===
 ALLOWLIST.add("apps/dashboard/src/App.vue")  # Phase 19.1
