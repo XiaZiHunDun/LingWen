@@ -1,8 +1,8 @@
 # 灵文项目状态看板
 
-> **最后更新**: 2026-09-13 (Phase 53e orphan runtime artifacts cleanup, v54.6, branch `phase-57-p3-archdebt-reading-power`)
-> **更新者**: 协调者（Phase 53e P3-ARCHDEBT orphan runtime artifacts cleanup — git rm infra/novel-factory/agent_system/social_engine/relationship_network.json 61 bytes (Phase 54 path drift) + git rm infra/.state/decisions.json.lock 0 bytes + .gitignore 2 new patterns + I074 扩展为 6 目录 + 4 regression guards + Phase 53d G5 fixup (N.14 v20); 6 atomic commits on `phase-57-p3-archdebt-reading-power` = C0 spec `8140f496` / C1 novel-factory `ef5ad401` / C2 gitignore+lock `8795081f` / C3 guards `499fba14` / C3.5 phase53d G5 fixup `e456813d` / C4 docs+v54.6）
-> **下一协作**: Phase 53e ready for ff-merge to master。完成后进 Phase 53f (其他 minor cleanups) 或 产品 brainstorm。详见 `docs/superpowers/handoffs/2026-09-13-phase-53e-orphan-runtime-artifacts-handoff.md`。
+> **最后更新**: 2026-09-13 (Phase 57b reading_power tests restoration, v54.7, branch `phase-57-p3-archdebt-reading-power`)
+> **更新者**: 协调者（Phase 57b critical bug fix — 闭环 Phase 57 C3 (e5fccfdb) 误删的 8 个 reading_power 测试文件 (e5fccfdb^:tests/reading_power/ → packages/lingwen-reading-power/tests/) + conftest.py 移除 sys.path hack (Phase 56b lesson 1) + test_llm_analyzer.py 移除 parent.parent.parent cwd-relative (Phase 56b2 lesson 2) + 7 regression guards (含 functional pytest gate 44/44); 4 atomic commits on `phase-57-p3-archdebt-reading-power` = C0 spec `57a0dcce` / C1 scaffold `f4e11edb` / C2 restore+migrate `7ac66e3a` / C3 guards `8774a8d4`）
+> **下一协作**: Phase 57b ready for ff-merge to master。**Critical**: 闭环 reading_power 零测试覆盖 bug — `packages/lingwen-reading-power/` 从 v53.0 (2026-09-12) 起至 2026-09-13 一直无 tests；本 phase 修复。详见 `docs/superpowers/handoffs/2026-09-13-phase-57b-reading-power-tests-restore-handoff.md`。
 
 ---
 

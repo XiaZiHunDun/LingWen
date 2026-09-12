@@ -1,7 +1,7 @@
 # 待办事项列表
 
-> **最后更新**: 2026-09-13 (Phase 53e orphan runtime artifacts cleanup, v54.6 ready for ff-merge)
-> **更新者**: 协调者（Phase 53e P3-ARCHDEBT 闭环：2 orphan runtime artifacts git-tracked deleted (61+0 bytes) + 2 .gitignore patterns + I074 扩展为 6 目录 + 4 guards; 6 atomic commits; v54.5 → v54.6）
+> **最后更新**: 2026-09-13 (Phase 57b reading_power tests restoration, v54.7 ready for ff-merge)
+> **更新者**: 协调者（Phase 57b critical bug fix 闭环：8 reading_power 测试文件 restored (855 LOC) + 2 sys.path hacks fixed (conftest + test_llm_analyzer) + 7 guards (含 functional pytest gate 44/44); 4 atomic commits; v54.6 → v54.7）
 > **优先级**: P0 > P1 > P2 > P3
 > **事实来源**: 本仓库当前版本在 `CLAUDE.md` v54.3；并行开发入口见根 `COORDINATION.md`
 
