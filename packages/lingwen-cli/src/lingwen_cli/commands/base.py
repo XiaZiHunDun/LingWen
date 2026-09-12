@@ -23,10 +23,38 @@ class Command(ABC):
     description: str = ""
 
     def __init__(self):
-        self.paths = ProjectPaths.get()
-        max_ch = project_max_chapter(self.paths)
-        self.range_parser = RangeParser(all_chapters=max_ch)
-        self.formatter = OutputFormatter()
+        # Phase 58: lazy-init paths/range_parser/formatter. Constructing a Command
+        # should not require a valid project layout (chapters dir + ProjectPaths.get
+        # validation); only executing a command should. Production code accesses
+        # these via self.paths.X etc. which triggers resolution on first access.
+        # Tests that mock the inner work (BackfillCommand/RippleScanCommand with
+        # fully-mocked LLMScanner/Backfiller/storage) can construct without a
+        # real project.
+        self._paths: ProjectPaths | None = None
+        self._range_parser: RangeParser | None = None
+        self._formatter: OutputFormatter | None = None
+
+    @property
+    def paths(self) -> ProjectPaths:
+        """Lazy ProjectPaths singleton (resolved on first access)."""
+        if self._paths is None:
+            self._paths = ProjectPaths.get()
+        return self._paths
+
+    @property
+    def range_parser(self) -> RangeParser:
+        """Lazy RangeParser (depends on project max chapter)."""
+        if self._range_parser is None:
+            max_ch = project_max_chapter(self.paths)
+            self._range_parser = RangeParser(all_chapters=max_ch)
+        return self._range_parser
+
+    @property
+    def formatter(self) -> OutputFormatter:
+        """Lazy OutputFormatter (no dependencies)."""
+        if self._formatter is None:
+            self._formatter = OutputFormatter()
+        return self._formatter
 
     @abstractmethod
     def execute(self, options: UnifiedOptions) -> int:
