@@ -33,7 +33,7 @@ grep -rn "tools\.legacy\|tools/legacy" --include="*.py" --include="*.sh" --inclu
 - `tooling/hygiene/check_file_size.py:52` ALLOWLIST entry `tools/legacy/llm_outline_quality_check.py`
 - `tooling/hygiene/check_file_size.py:53` ALLOWLIST entry `tools/legacy/minimax_chapter_review.py`
 
-## 3. 提交结构（5 atomic commits on `phase-57-p3-archdebt-reading-power`）
+## 3. 提交结构（6 atomic commits on `phase-57-p3-archdebt-reading-power`）
 
 | Commit | SHA | Subject | Files | +/- |
 |--------|-----|---------|-------|-----|
@@ -41,9 +41,10 @@ grep -rn "tools\.legacy\|tools/legacy" --include="*.py" --include="*.sh" --inclu
 | C1 | 93c70fce | chore(tools): FULL DELETE legacy/ (Phase 53c P3-ARCHDEBT) | 21 files | -6149 |
 | C2 | 4bb250db | fix(infra-tools,tooling): remove stale tools/legacy/ refs | 2 | -3 lines |
 | C3 | c27c18f6 | test(phase-53c): 26 regression guards for tools/legacy/ cleanup | 1 | +244 |
-| C4 | (this commit) | docs(phase-53c): I074 extension + v54.4 + handoff + sync | 4 | +200 |
+| C3.5 | cede0222 | fix(test-phase-53c): drop literal prior-phase path refs (N.14 lesson 1 v18) | 1 | +3/-2 |
+| C4 | ab9f49d1 | docs(phase-53c): I074 extension + v54.4 + handoff + sync | 4 | +109/-7 |
 
-**Net**: -6149 LOC dead code, -3 stale lines, +26 guards, v54.3 → v54.4, I074 4 目录.
+**Net**: -6149 LOC dead code, -3 stale lines, +26 guards, +1 N.14 fixup, v54.3 → v54.4, I074 4 目录.
 
 ## 4. 验证 gates (all GREEN)
 
@@ -84,7 +85,7 @@ grep -rn "tools\.legacy\|tools/legacy" --include="*.py" --include="*.sh" --inclu
 2. **历史 spec 提到的 stale ref 不一定还存在**：Phase 52 audit spec 提到 `pyproject.toml` `extend-exclude` 含 `tools/legacy/*`，但实际 pyproject.toml 早已清理。验证以 current state 为准，不要照搬历史 spec。(N.14 lesson 4 变体)
 3. **Phase 53b §6 deferred followup 必须按 plan 走**：Phase 53b 设计时已明确把 `tools/legacy/` 19 old scripts 标记为 "独立 Phase 53c"。本 phase 闭环这个 carryover，避免 deferred 项目永不被处理。(Phase 56b + 56c 教训复现)
 4. **Stale docstring 与 orphan ALLOWLIST 是 P3-ARCHDEBT 的常见搭档**：删文件后必查 (1) `__init__.py` docstring 子目录列表 (2) `*.py` 中的 `ALLOWLIST.add("deleted/path")` 静态列表 (3) 任何代码生成的元数据（pytest plugin 列表、ruff config、mypy exclude 等）。Phase 53c C2 一次清掉 3 处。
-5. **测试 guard 自身的 docstring 例外要明示**：Phase 53c guards 自己的 module docstring + G1 错误消息都含 `tools/legacy` 字面量，G3 必须 self-exclude。模式：`_is_excluded()` helper + 在 G3/G4 grep 后调用 filter。这是 Phase 32/53 模式的延续。
+5. **Test guard 的 docstring/comment 引用 prior-phase deleted path = N.14 lesson 1 第 18 次变体**：Phase 53c test 文件 docstring + comment 引用 `infra/tools/legacy` 字面量，触发 Phase 53 自家的 `test_no_runtime_legacy_path_references` false-positive。修复：避免 literal 改用描述性表达（"Phase 53's 3 directories" / "the prior-phase deleted path"）。已用 C3.5 fixup commit 处理。这与 Phase 56c lesson 4 (`chr(47)` 拼接) 是同一模式的两种解。
 
 ## 8. Carryover
 
