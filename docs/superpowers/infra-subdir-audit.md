@@ -138,8 +138,8 @@
 - 类似 P45 utilities batch 模式
 
 **Phase 55** (业务迁移, 1 周):
-- `infra/cross_volume/` → 拆 2 包 (`lingwen-cross-volume` + `lingwen-ripple-storage`)
-- 类似 P40a studio_registry 模式 (NOT-LEAF + workspace deps)
+- ✅ **CLOSED 2026-09-12**: `infra/cross_volume/` → `packages/lingwen-cross-volume/` (单包,4493 LOC / 23 files / 92 consumer files / 255 import sites + I078)
+- 原计划拆 2 包但 e2e_seed / chained_cascade / backfill circular dep 不可行, 改单包统一迁移
 
 **Phase 56** (审计 + 可能删):
 - `infra/world_db/` 是否被 Phase 117 替代
