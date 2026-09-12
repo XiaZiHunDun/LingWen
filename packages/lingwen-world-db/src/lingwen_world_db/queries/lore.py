@@ -4,7 +4,7 @@ import json
 
 from lingwen_shared.ports.storage import ConnectionPort
 
-from infra.world_db.queries._helpers import (
+from lingwen_world_db.queries._helpers import (
     RevisionConflict,
     now_iso,
     row_to_dict,

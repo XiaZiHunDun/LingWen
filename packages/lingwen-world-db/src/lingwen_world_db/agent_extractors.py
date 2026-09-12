@@ -18,7 +18,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Iterable, Protocol
 
-from infra.world_db.agent_schemas import (
+from lingwen_world_db.agent_schemas import (
     ProposalResponse,
     parse_proposals_json,
 )
@@ -73,7 +73,7 @@ def _build_prompt_user_prompt(character_slug: str, user_prompt: str) -> str:
 
 def _to_proposal_dict(proposal: ProposalResponse) -> dict:
     """Convert a validated ProposalResponse into the dict shape accepted
-    by ``infra.world_db.queries.proposals.create_proposal``.
+    by ``lingwen_world_db.queries.proposals.create_proposal``.
     """
     return {
         "kind": proposal.kind,

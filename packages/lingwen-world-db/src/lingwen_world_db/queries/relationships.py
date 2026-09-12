@@ -2,7 +2,7 @@
 
 from lingwen_shared.ports.storage import ConnectionPort
 
-from infra.world_db.queries._helpers import now_iso
+from lingwen_world_db.queries._helpers import now_iso
 
 
 def create_relationship(conn: ConnectionPort, data: dict) -> int:

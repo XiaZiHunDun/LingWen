@@ -319,7 +319,7 @@ def import_project_markdown(
             try:
                 md = md_path.read_text(encoding="utf-8")
                 parsed = parse_character_markdown(md)
-                from infra.world_db.queries.characters import (
+                from lingwen_world_db.queries.characters import (
                     create_character,
                     get_character_by_slug,
                 )
@@ -334,7 +334,7 @@ def import_project_markdown(
 
     if faction_path and faction_path.is_file():
         try:
-            from infra.world_db.queries.factions import (
+            from lingwen_world_db.queries.factions import (
                 create_faction,
                 get_faction_by_slug,
             )
@@ -349,7 +349,7 @@ def import_project_markdown(
 
     if lore_path and lore_path.is_file():
         try:
-            from infra.world_db.queries.lore import create_lore, list_lore
+            from lingwen_world_db.queries.lore import create_lore, list_lore
 
             md = lore_path.read_text(encoding="utf-8")
             parsed = parse_lore_markdown(md)
