@@ -12,7 +12,12 @@ from lingwen_world_db.markdown_roundtrip import (
     serialize_timeline_markdown,
 )
 
-SAMPLE_DIR = Path("docs/character-bible")
+# Resolve fixture paths relative to repo root (cwd-independent — pytest
+# collection runs may have any cwd). Layout:
+#   tests/ → lingwen-world-db/ → packages/ → <repo_root>
+REPO_ROOT = Path(__file__).resolve().parents[3]
+DOCS_DIR = REPO_ROOT / "docs"
+SAMPLE_DIR = DOCS_DIR / "character-bible"
 
 
 def test_parse_lin_ye():
@@ -38,7 +43,7 @@ def test_round_trip_preserves_sections():
 
 
 def test_faction_round_trip():
-    src = Path("docs/faction-design.md").read_text(encoding="utf-8")
+    src = (DOCS_DIR / "faction-design.md").read_text(encoding="utf-8")
     parsed = parse_faction_markdown(src)
     assert parsed["name"]
     out = serialize_faction_markdown(parsed)
@@ -46,7 +51,7 @@ def test_faction_round_trip():
 
 
 def test_lore_round_trip():
-    src = Path("docs/lore-registry.md").read_text(encoding="utf-8")
+    src = (DOCS_DIR / "lore-registry.md").read_text(encoding="utf-8")
     parsed = parse_lore_markdown(src)
     assert parsed["title"]
     out = serialize_lore_markdown(parsed)
@@ -75,7 +80,7 @@ def test_import_project_markdown(tmp_path):
     conn = get_connection(tmp_path / "w.db")
     init_schema(conn)
 
-    src_dir = Path("docs")
+    src_dir = DOCS_DIR
     summary = import_project_markdown(
         conn,
         character_dir=src_dir / "character-bible",
