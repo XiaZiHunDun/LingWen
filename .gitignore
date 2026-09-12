@@ -190,6 +190,7 @@ infra/.state/pilot_records/
 infra/agent_system/social_engine/relationship_network.db
 infra/agent_system/social_engine/relationship_network.db-*
 infra/agent_system/social_engine/relationship_network.json
+infra/novel-factory/
 
 # Phase 56c C5: packages/ path after Phase 54 P3-ARCHDEBT migration (infra → packages)
 packages/lingwen-core/src/lingwen_core/agents/social_engine/relationship_network.db
@@ -215,6 +216,7 @@ logs/lingwen.json
 # Phase 15.0 T1: dashboard + project .state directories are runtime artifacts
 dashboard/.state/
 infra/.state/*.json
+infra/.state/*.json.lock
 projects/**/.state/*.json
 projects/e2e-live-companion/.state/
 
