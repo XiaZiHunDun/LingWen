@@ -1,8 +1,8 @@
 # 灵文项目状态看板
 
-> **最后更新**: 2026-09-12 (Phase 53c tools/legacy/ cleanup, v54.4, branch `phase-57-p3-archdebt-reading-power`)
-> **更新者**: 协调者（Phase 53c P3-ARCHDEBT top-level tools/legacy/ 删除 — 6149 LOC / 21 files + infra/tools/__init__.py stale docstring + tooling/hygiene/check_file_size.py orphan ALLOWLIST 2 entries + I074 扩展为 4 目录 + 26 regression guards; 5 atomic commits on `phase-57-p3-archdebt-reading-power` = C0 spec `ffe4b559` / C1 git rm `93c70fce` / C2 cleanup `4bb250db` / C3 guards `c27c18f6` / C4 docs+v54.4）
-> **下一协作**: Phase 53c ready for ff-merge to master。完成后进 Phase 53d (其他 infra/ 子目录残余) 或 产品 brainstorm。详见 `docs/superpowers/handoffs/2026-09-12-phase-53c-tools-legacy-top-handoff.md`。
+> **最后更新**: 2026-09-13 (Phase 53d infra/event_sourcing/ cleanup, v54.5, branch `phase-57-p3-archdebt-reading-power`)
+> **更新者**: 协调者（Phase 53d P3-ARCHDEBT infra/event_sourcing/ 删除 — 992 LOC / 3 files + tests/test_infra_init_no_deferred_re_exports.py orphan FORBIDDEN_PATTERN cleanup + I074 扩展为 5 目录 + 7 regression guards; 4 atomic commits on `phase-57-p3-archdebt-reading-power` = C0 spec `1072210c` / C1 git rm `6aab27e4` / C2 meta-test cleanup `64b5300e` (amended) / C3 guards `86c6b541`）
+> **下一协作**: Phase 53d ready for ff-merge to master。完成后进 Phase 53e (其他 infra/ 残余 — 7 个 active-consumer subdirs + novel-factory 空目录) 或 产品 brainstorm。详见 `docs/superpowers/handoffs/2026-09-13-phase-53d-event-sourcing-handoff.md`。
 
 ---
 
