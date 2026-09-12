@@ -1,0 +1,51 @@
+# Phase 9.11: 4-dim rule-based extraction config
+# 主公后续改规则: 0 改 Python, 仅改本 YAML
+
+character:
+  name_pattern: "[\\u4e00-\\u9fff]{2,4}(?:[·•][\\u4e00-\\u9fff]{2,4})?"
+  alias_map:
+    "星尘": "星尘剑客"
+    "尘": "星尘剑客"
+    "林凡": "林凡"
+    "凡": "林凡"
+  blacklist:
+    - "那个"
+    - "什么"
+    - "怎么"
+    - "这里"
+    - "那里"
+    - "如此"
+    - "这般"
+    - "此时"
+    - "此刻"
+  occurrence_threshold: 2
+
+foreshadow:
+  keywords:
+    - "伏笔"
+    - "暗示"
+    - "铺垫"
+    - "暗藏"
+    - "留下"
+    - "埋下"
+    - "未曾"
+  pattern: "(?P<content>[\\u4e00-\\u9fff]{6,30}?(?:伏笔|暗示|铺垫|暗藏|留下|埋下))"
+  chapter_window: 5
+
+setting:
+  name_pattern: "[\\u4e00-\\u9fff]{2,6}(?:学院|山门|大陆|帝国|秘境|洞府|遗迹|海域|城|宗|派|观|谷)"
+  blacklist:
+    - "这个"
+    - "那个"
+    - "此时"
+    - "此刻"
+  occurrence_threshold: 1
+
+plot_point:
+  pattern: "^##\\s+(.+)$"
+  min_length: 8
+  max_length: 50
+  blacklist:
+    - "^## 简介$"
+    - "^## 备注$"
+    - "^## 元数据$"

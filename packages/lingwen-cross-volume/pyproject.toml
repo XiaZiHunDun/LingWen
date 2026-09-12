@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-cross-volume"
+version = "0.1.0"
+description = "LingWen canonical cross_volume package (Phase 55 P3-ARCHDEBT infra/cross_volume relocation — 跨卷涟漪: graph + ripple + scanner + persistence)"
+requires-python = ">=3.11"
+dependencies = [
+    "lingwen-shared",   # ConnectionPort protocol
+    "lingwen-llm",      # ModelTier + LLMServiceAdapter
+    "lingwen-core",     # decision_queue (for e2e_seed)
+    "PyYAML>=6.0",
+]
+# NOT-LEAF — 3 workspace deps. Provides cross-volume ripple engine
+# (graph + scanner) + persistence (storage + backfill + cascade).
+# Originally 23 .py + 2 YAML across infra/cross_volume/. The e2e_seed
+# + chained_cascade modules link engine (graph/ripple) and storage,
+# making a 2-package split (lingwen-cross-volume + lingwen-ripple-storage)
+# infeasible without circular deps.
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_cross_volume"]
