@@ -1,8 +1,8 @@
 # 灵文项目状态看板
 
-> **最后更新**: 2026-09-13 (Phase 66 WriteChatContextInjector + CharacterCard tests, v54.8, branch `phase-57-p3-archdebt-reading-power`)
-> **更新者**: 协调者（Phase 66 frontend test coverage batch — 13 vitest tests for 2 components: WriteChatContextInjector (6 tests, conditional chip rendering) + CharacterCard (7 tests with it.each parametrize for 3 canon_level variants); 1922 vitest tests +13 (vs 1909 from Phase 65) = +13 new; 0 regressions; 1 atomic commit on `phase-57-p3-archdebt-reading-power` = C1 specs `(HEAD)`）
-> **下一协作**: Phase 66 ready for ff-merge to master。累计所有 ARCHDEBT (53c/53d/53e/57b/60/61/62) + Phase 63/64/65/66 共 41 commits ahead — 用户 ff-merge 后可选继续 6 个 untested components (characters/* 4 remaining + factions/* 3)。详见 `docs/superpowers/handoffs/2026-09-13-phase-66-writechat-context-character-card-tests-handoff.md` (in this commit)。
+> **最后更新**: 2026-09-13 (Phase 67 FactionDetail.vue tests, v54.8, branch `phase-57-p3-archdebt-reading-power`)
+> **更新者**: 协调者（Phase 67 frontend test coverage — 6 vitest tests for apps/dashboard/src/components/world/factions/FactionDetail.vue (closeable faction sidebar, Phase 117 Task 16, simple pure-presentational 无 composables); 1928 vitest tests +6 (vs 1922 from Phase 66) = +6 new; 0 regressions; 1 atomic commit on `phase-57-p3-archdebt-reading-power` = C1 spec `(HEAD)`）
+> **下一协作**: Phase 67 ready for ff-merge to master。累计所有 ARCHDEBT (53c/53d/53e/57b/60/61/62) + Phase 63/64/65/66/67 共 43 commits ahead — 用户 ff-merge 后可选继续 6 个 untested components (CharacterDetail/CharacterEditor/CharacterList/CharacterRelationships + FactionGraph/FactionGraphCanvas)。详见 `docs/superpowers/handoffs/2026-09-13-phase-67-faction-detail-tests-handoff.md` (in this commit)。
 
 ---
 
