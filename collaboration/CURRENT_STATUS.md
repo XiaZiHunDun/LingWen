@@ -1,8 +1,8 @@
 # 灵文项目状态看板
 
-> **最后更新**: 2026-09-13 (Phase 61 Phase 58 docs backfill, v54.8, branch `phase-57-p3-archdebt-reading-power`)
-> **更新者**: 协调者（Phase 61 cleanup-only — commit 2 个 Phase 58 untracked docs (cross-volume-failures design + plan, 867 LOC, 漏 commit 24+ 小时) + 2 regression guards (G1 no untracked phase docs / G2 handoff has matching design) + @template header for Phase 60 I079 compliance; 3 atomic commits on `phase-57-p3-archdebt-reading-power` = C1 docs backfill `b82402b1` / C2 guards `cf054a8d` / C2.5 @template fixup）
-> **下一协作**: Phase 61 ready for ff-merge to master。完成后所有 ARCHDEBT 工作 (53c/53d/53e/57b/60/61) 总计 29 commits ahead — 等用户 ff-merge 一并推到 origin/master，或产品 brainstorm。详见 `docs/superpowers/handoffs/2026-09-13-phase-61-phase-58-docs-backfill-handoff.md` (in this commit) 或 Phase 60 handoff。
+> **最后更新**: 2026-09-13 (Phase 62 dead script cleanup, v54.8, branch `phase-57-p3-archdebt-reading-power`)
+> **更新者**: 协调者（Phase 62 trivial cleanup — git rm scripts/migrate_checkers_to_registry.py (137 LOC, hardcoded `infra/consistency/checkers/` path which Phase 53 已删，会立即 FileNotFoundError) + 1 regression guard + @template header fixup for Phase 60 I079 compliance; 3 atomic commits on `phase-57-p3-archdebt-reading-power` = C1 git rm `4a6104bb` / C2 guard `57b7f1ab` / C2.5 @template fixup）
+> **下一协作**: Phase 62 ready for ff-merge to master。完成后所有 ARCHDEBT 工作 (53c/53d/53e/57b/60/61/62) 总计 33 commits ahead — 用户 ff-merge 后开始产品 brainstorm。详见 `docs/superpowers/handoffs/2026-09-13-phase-62-dead-script-cleanup-handoff.md` (in this commit)。
 
 ---
 
