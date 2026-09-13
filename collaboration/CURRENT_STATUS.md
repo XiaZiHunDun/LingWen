@@ -1,8 +1,8 @@
 # 灵文项目状态看板
 
-> **最后更新**: 2026-09-13 (Phase 62 dead script cleanup, v54.8, branch `phase-57-p3-archdebt-reading-power`)
-> **更新者**: 协调者（Phase 62 trivial cleanup — git rm scripts/migrate_checkers_to_registry.py (137 LOC, hardcoded `infra/consistency/checkers/` path which Phase 53 已删，会立即 FileNotFoundError) + 1 regression guard + @template header fixup for Phase 60 I079 compliance; 3 atomic commits on `phase-57-p3-archdebt-reading-power` = C1 git rm `4a6104bb` / C2 guard `57b7f1ab` / C2.5 @template fixup）
-> **下一协作**: Phase 62 ready for ff-merge to master。完成后所有 ARCHDEBT 工作 (53c/53d/53e/57b/60/61/62) 总计 33 commits ahead — 用户 ff-merge 后开始产品 brainstorm。详见 `docs/superpowers/handoffs/2026-09-13-phase-62-dead-script-cleanup-handoff.md` (in this commit)。
+> **最后更新**: 2026-09-13 (Phase 63 Reading Power frontend tests, v54.8, branch `phase-57-p3-archdebt-reading-power`)
+> **更新者**: 协调者（Phase 63 product improvement — 7 vitest tests for apps/dashboard/src/utils/creationModeHint.js (Reading Power frontend surface — `resolveTodayPrimaryAction` "查看追读力洞察" fallback + `creationModeMeta` mode lookup); backend reading_power (Phase 57b) 8 tests restored earlier, this phase closes frontend gap; 1898 vitest tests +1 (vs 1891 baseline) = 7 new; 0 regressions; 1 atomic commit on `phase-57-p3-archdebt-reading-power` = C1 spec `(HEAD)`）
+> **下一协作**: Phase 63 ready for ff-merge to master。累计所有 ARCHDEBT (53c/53d/53e/57b/60/61/62) + Phase 63 共 35 commits ahead。详见 `docs/superpowers/handoffs/2026-09-13-phase-63-reading-power-frontend-tests-handoff.md` (in this commit)。
 
 ---
 
