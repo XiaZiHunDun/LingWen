@@ -1,7 +1,7 @@
 # 待办事项列表
 
-> **最后更新**: 2026-09-13 (Phase 60 P3-ARCHDEBT spec template, v54.8 ready for ff-merge)
-> **更新者**: 协调者（Phase 60 process improvement 闭环：spec template doc + I079 invariant + 6 guards; 3 atomic commits; v54.7 → v54.8; 防止 Phase 56b/56c/57b 三次 half-migration 复现）
+> **最后更新**: 2026-09-13 (Phase 61 Phase 58 docs backfill, v54.8 ready for ff-merge)
+> **更新者**: 协调者（Phase 61 cleanup-only 闭环：2 untracked Phase 58 docs committed (867 LOC) + 2 guards + @template fixup; 3 atomic commits; no version bump per Phase 56b2 1-line doc fix precedent）
 > **优先级**: P0 > P1 > P2 > P3
 > **事实来源**: 本仓库当前版本在 `CLAUDE.md` v54.3；并行开发入口见根 `COORDINATION.md`
 

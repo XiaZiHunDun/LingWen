@@ -1,8 +1,8 @@
 # 灵文项目状态看板
 
-> **最后更新**: 2026-09-13 (Phase 60 P3-ARCHDEBT spec template, v54.8, branch `phase-57-p3-archdebt-reading-power`)
-> **更新者**: 协调者（Phase 60 process improvement — 创建 `docs/superpowers/specs/_P3_ARCHDEBT_TEMPLATE.md` 带 mandatory §A. test files migration plan 子章节 (Phase 57b lesson 3 third occurrence prevention) + I079 invariant in architecture.yml + CLAUDE.md + 6 regression guards (G1 template exists / G2 references Phase 56b/56c/57b / G3 has §A section / G4 I079 in architecture.yml / G5 I079 in CLAUDE.md / G6 phase test files aware of template); 3 atomic commits on `phase-57-p3-archdebt-reading-power` = C0 template `7afbe20a` / C1 I079 + guards (this commit) / C2 handoff sync）
-> **下一协作**: Phase 60 ready for ff-merge to master。完成后所有 ARCHDEBT 工作 (53/53c/53d/53e/57b/60) 总计 24 commits ahead — 等用户 ff-merge 一并推到 origin/master，或产品 brainstorm。详见 `docs/superpowers/handoffs/2026-09-13-phase-60-p3-archdebt-template-handoff.md`。
+> **最后更新**: 2026-09-13 (Phase 61 Phase 58 docs backfill, v54.8, branch `phase-57-p3-archdebt-reading-power`)
+> **更新者**: 协调者（Phase 61 cleanup-only — commit 2 个 Phase 58 untracked docs (cross-volume-failures design + plan, 867 LOC, 漏 commit 24+ 小时) + 2 regression guards (G1 no untracked phase docs / G2 handoff has matching design) + @template header for Phase 60 I079 compliance; 3 atomic commits on `phase-57-p3-archdebt-reading-power` = C1 docs backfill `b82402b1` / C2 guards `cf054a8d` / C2.5 @template fixup）
+> **下一协作**: Phase 61 ready for ff-merge to master。完成后所有 ARCHDEBT 工作 (53c/53d/53e/57b/60/61) 总计 29 commits ahead — 等用户 ff-merge 一并推到 origin/master，或产品 brainstorm。详见 `docs/superpowers/handoffs/2026-09-13-phase-61-phase-58-docs-backfill-handoff.md` (in this commit) 或 Phase 60 handoff。
 
 ---
 
