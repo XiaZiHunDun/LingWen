@@ -1,8 +1,8 @@
 # 灵文项目状态看板
 
-> **最后更新**: 2026-09-13 (Phase 63 Reading Power frontend tests, v54.8, branch `phase-57-p3-archdebt-reading-power`)
-> **更新者**: 协调者（Phase 63 product improvement — 7 vitest tests for apps/dashboard/src/utils/creationModeHint.js (Reading Power frontend surface — `resolveTodayPrimaryAction` "查看追读力洞察" fallback + `creationModeMeta` mode lookup); backend reading_power (Phase 57b) 8 tests restored earlier, this phase closes frontend gap; 1898 vitest tests +1 (vs 1891 baseline) = 7 new; 0 regressions; 1 atomic commit on `phase-57-p3-archdebt-reading-power` = C1 spec `(HEAD)`）
-> **下一协作**: Phase 63 ready for ff-merge to master。累计所有 ARCHDEBT (53c/53d/53e/57b/60/61/62) + Phase 63 共 35 commits ahead。详见 `docs/superpowers/handoffs/2026-09-13-phase-63-reading-power-frontend-tests-handoff.md` (in this commit)。
+> **最后更新**: 2026-09-13 (Phase 64 WorldTabs.vue tests, v54.8, branch `phase-57-p3-archdebt-reading-power`)
+> **更新者**: 协调者（Phase 64 frontend test coverage — 6 vitest tests for apps/dashboard/src/components/world/WorldTabs.vue (top-level World page tab navigation, Phase 117); 1904 vitest tests +6 (vs 1898 from Phase 63) = +6 new; 0 regressions; 1 atomic commit on `phase-57-p3-archdebt-reading-power` = C1 spec `(HEAD)`）
+> **下一协作**: Phase 64 ready for ff-merge to master。累计所有 ARCHDEBT (53c/53d/53e/57b/60/61/62) + Phase 63/64 共 37 commits ahead — 用户 ff-merge 后可选继续 9 个 untested components (WriteChatContextInjector + WorldImportExport + characters/* 5 + factions/* 3)。详见 `docs/superpowers/handoffs/2026-09-13-phase-64-worldtabs-frontend-tests-handoff.md` (in this commit)。
 
 ---
 
