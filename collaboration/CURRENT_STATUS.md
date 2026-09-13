@@ -1,8 +1,8 @@
 # 灵文项目状态看板
 
-> **最后更新**: 2026-09-13 (Phase 57b reading_power tests restoration, v54.7, branch `phase-57-p3-archdebt-reading-power`)
-> **更新者**: 协调者（Phase 57b critical bug fix — 闭环 Phase 57 C3 (e5fccfdb) 误删的 8 个 reading_power 测试文件 (e5fccfdb^:tests/reading_power/ → packages/lingwen-reading-power/tests/) + conftest.py 移除 sys.path hack (Phase 56b lesson 1) + test_llm_analyzer.py 移除 parent.parent.parent cwd-relative (Phase 56b2 lesson 2) + 7 regression guards (含 functional pytest gate 44/44); 4 atomic commits on `phase-57-p3-archdebt-reading-power` = C0 spec `57a0dcce` / C1 scaffold `f4e11edb` / C2 restore+migrate `7ac66e3a` / C3 guards `8774a8d4`）
-> **下一协作**: Phase 57b ready for ff-merge to master。**Critical**: 闭环 reading_power 零测试覆盖 bug — `packages/lingwen-reading-power/` 从 v53.0 (2026-09-12) 起至 2026-09-13 一直无 tests；本 phase 修复。详见 `docs/superpowers/handoffs/2026-09-13-phase-57b-reading-power-tests-restore-handoff.md`。
+> **最后更新**: 2026-09-13 (Phase 60 P3-ARCHDEBT spec template, v54.8, branch `phase-57-p3-archdebt-reading-power`)
+> **更新者**: 协调者（Phase 60 process improvement — 创建 `docs/superpowers/specs/_P3_ARCHDEBT_TEMPLATE.md` 带 mandatory §A. test files migration plan 子章节 (Phase 57b lesson 3 third occurrence prevention) + I079 invariant in architecture.yml + CLAUDE.md + 6 regression guards (G1 template exists / G2 references Phase 56b/56c/57b / G3 has §A section / G4 I079 in architecture.yml / G5 I079 in CLAUDE.md / G6 phase test files aware of template); 3 atomic commits on `phase-57-p3-archdebt-reading-power` = C0 template `7afbe20a` / C1 I079 + guards (this commit) / C2 handoff sync）
+> **下一协作**: Phase 60 ready for ff-merge to master。完成后所有 ARCHDEBT 工作 (53/53c/53d/53e/57b/60) 总计 24 commits ahead — 等用户 ff-merge 一并推到 origin/master，或产品 brainstorm。详见 `docs/superpowers/handoffs/2026-09-13-phase-60-p3-archdebt-template-handoff.md`。
 
 ---
 

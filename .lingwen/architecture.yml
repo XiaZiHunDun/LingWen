@@ -127,6 +127,10 @@ invariants:
   - id: I070   # ★ Phase 50 NEW
     rule: "packages/lingwen-health/ 是 HealthCheck + HealthStatus + 5 check classes（Composite/Database/LLM/VectorDB/Cache）+ HealthManager + 4 functions（get_health_manager + register_health_check + health_status + health_endpoint）的唯一实包；infra.health.* 路径非法 (Phase 50 P3-ARCHDEBT utilities batch health)"
     severity: error
+  - id: I079   # ★ Phase 60 NEW
+    rule: "每个 P3-ARCHDEBT spec doc 必须 (1) 在文件头声明 '@template: docs/superpowers/specs/_P3_ARCHDEBT_TEMPLATE.md' 引用本模板 + (2) 包含完整 §A. test files migration plan 子章节 (Phase 57b lesson 3 third occurrence prevention — Phase 56b world_db + Phase 56c cross_volume + Phase 57 reading_power 三次复现)。enforcement: tests/test_phase60_p3_archdebt_template.py 扫所有 spec 文件验证模板引用 + §A 章节存在"
+    severity: error
+    scope: "all future P3-ARCHDEBT specs; template file lives at docs/superpowers/specs/_P3_ARCHDEBT_TEMPLATE.md"
     scope: "all new health code; enforcement via tests/test_phase50_lingwen_utilities_batch.py + grep -rln \"infra\\.health\\b\" --include=\"*.py\" packages/ apps/ tests/ infra/ → 0 行"
 
 # 模块边界（明确每个模块的公共 API 和依赖）
