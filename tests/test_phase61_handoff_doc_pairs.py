@@ -1,5 +1,9 @@
 """Phase 61 — handoff doc pair completeness regression guard.
 
+@template: docs/superpowers/specs/_P3_ARCHDEBT_TEMPLATE.md (Phase 60 I079)
+
+ENFORCEMENT: Every handoff doc in docs/superpowers/handoffs/ should be
+
 ENFORCEMENT: Every handoff doc in docs/superpowers/handoffs/ should be
 preceded by a matching design doc in docs/superpowers/specs/. This
 prevents the pattern where Phase 58 (2026-09-12) shipped handoff +
