@@ -1,8 +1,8 @@
 # 灵文项目状态看板
 
-> **最后更新**: 2026-09-13 (Phase 65 WorldImportExport.vue tests, v54.8, branch `phase-57-p3-archdebt-reading-power`)
-> **更新者**: 协调者（Phase 65 frontend test coverage — 5 vitest tests for apps/dashboard/src/components/world/WorldImportExport.vue (markdown import/export panel, Phase 117 Task 21); 1909 vitest tests +5 (vs 1904 from Phase 64) = +5 new; 0 regressions; 1 atomic commit on `phase-57-p3-archdebt-reading-power` = C1 spec `(HEAD)`）
-> **下一协作**: Phase 65 ready for ff-merge to master。累计所有 ARCHDEBT (53c/53d/53e/57b/60/61/62) + Phase 63/64/65 共 39 commits ahead — 用户 ff-merge 后可选继续 8 个 untested components (WriteChatContextInjector + characters/* 5 + factions/* 3)。详见 `docs/superpowers/handoffs/2026-09-13-phase-65-world-import-export-frontend-tests-handoff.md` (in this commit)。
+> **最后更新**: 2026-09-13 (Phase 66 WriteChatContextInjector + CharacterCard tests, v54.8, branch `phase-57-p3-archdebt-reading-power`)
+> **更新者**: 协调者（Phase 66 frontend test coverage batch — 13 vitest tests for 2 components: WriteChatContextInjector (6 tests, conditional chip rendering) + CharacterCard (7 tests with it.each parametrize for 3 canon_level variants); 1922 vitest tests +13 (vs 1909 from Phase 65) = +13 new; 0 regressions; 1 atomic commit on `phase-57-p3-archdebt-reading-power` = C1 specs `(HEAD)`）
+> **下一协作**: Phase 66 ready for ff-merge to master。累计所有 ARCHDEBT (53c/53d/53e/57b/60/61/62) + Phase 63/64/65/66 共 41 commits ahead — 用户 ff-merge 后可选继续 6 个 untested components (characters/* 4 remaining + factions/* 3)。详见 `docs/superpowers/handoffs/2026-09-13-phase-66-writechat-context-character-card-tests-handoff.md` (in this commit)。
 
 ---
 
