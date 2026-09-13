@@ -1,5 +1,7 @@
 """Phase 62 — dead script deletion regression guard.
 
+@template: docs/superpowers/specs/_P3_ARCHDEBT_TEMPLATE.md (Phase 60 I079)
+
 ENFORCEMENT: Phase 62 deleted scripts/migrate_checkers_to_registry.py
 because it operated on infra/consistency/checkers/ (Phase 53 deleted
 that directory). This guard prevents accidental re-addition of the
