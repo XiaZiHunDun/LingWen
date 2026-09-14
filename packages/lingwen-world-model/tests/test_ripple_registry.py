@@ -1,6 +1,6 @@
 """Tests for world_model.registry (Phase 1.5 — RippleRegistry).
 
-CRUD + 10-limit + JSON 持久化 (mirror infra/subplot/registry.py)。
+CRUD + 10-limit + JSON 持久化 (mirror lingwen_subplot.registry, formerly infra/subplot/registry.py — Phase 80 P3-ARCHDEBT relocation)。
 """
 
 from __future__ import annotations

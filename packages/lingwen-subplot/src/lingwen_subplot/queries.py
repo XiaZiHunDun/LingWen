@@ -15,7 +15,7 @@ from typing import Optional
 
 from lingwen_core.domain.subplot import MAX_ACTIVE_SUBPLOTS, PlotStatus, PlotType
 
-from infra.subplot.registry import PlotRegistry
+from lingwen_subplot.registry import PlotRegistry
 
 # 约束饱和: 未来 5 章内触发 ≥ 3 个 constraint
 _SATURATION_WINDOW = 5

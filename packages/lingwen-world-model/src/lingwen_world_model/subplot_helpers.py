@@ -7,6 +7,9 @@ Migration history:
 - Phase 19+ Sub1 (Task 5) moved them to ``infra/subplot/helpers.py``.
 - Phase 35 (v34.0) moved them into the canonical world model package at
   ``packages/lingwen-world-model/src/lingwen_world_model/subplot_helpers.py``.
+- Phase 80 (v54.12) P3-ARCHDEBT moved the related ``infra/subplot/`` package
+  to ``packages/lingwen-subplot/`` (canonical PlotRegistry + lifecycle + queries);
+  subplot_helpers stays in lingwen-world-model per Phase 35 scope.
 
 Implementation unchanged across all moves; only the import location changed.
 

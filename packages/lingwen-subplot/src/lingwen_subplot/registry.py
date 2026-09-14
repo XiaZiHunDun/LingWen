@@ -29,7 +29,7 @@ from lingwen_core.domain.subplot import (
     PlotType,
 )
 
-from infra.subplot.lifecycle import (
+from lingwen_subplot.lifecycle import (
     CLOSING_MIN_CHAPTERS,
     can_transition,
 )

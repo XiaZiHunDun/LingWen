@@ -25,8 +25,9 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, Any, Optional, Protocol
 
-# Note: 不导入 infra.subplot.lifecycle at module level — 保留 lazy pattern
-# (defensive: 减少 module-load 副作用,避免与 subplot package 的 import 时序耦合)
+# Note: 不导入 lingwen_subplot.lifecycle at module level — 保留 lazy pattern
+# (defensive: 减少 module-load 副作用,避免与 subplot package 的 import 时序耦合;
+# Phase 80 P3-ARCHDEBT 把 infra/subplot/ 迁移到 packages/lingwen-subplot/)
 
 if TYPE_CHECKING:
     from lingwen_core.domain.ripple import Ripple
@@ -35,10 +36,10 @@ if TYPE_CHECKING:
     from lingwen_world_model.registry import RippleRegistry
 
 
-# CLOSING_MIN_CHAPTERS 在 infra.subplot.lifecycle (值为 2)
+# CLOSING_MIN_CHAPTERS 在 lingwen_subplot.lifecycle (值为 2)
 # 在运行时 lazy import 读取
 def _get_closing_min_chapters() -> int:
-    from infra.subplot.lifecycle import CLOSING_MIN_CHAPTERS
+    from lingwen_subplot.lifecycle import CLOSING_MIN_CHAPTERS
 
     return CLOSING_MIN_CHAPTERS
 
