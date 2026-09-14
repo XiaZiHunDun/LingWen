@@ -63,8 +63,8 @@ class ContextBuilder:
         Returns:
             Story contract dict or None if not found.
 
-        Phase 17.0: decoupled from ``infra.story_contracts`` (deferred
-        deletion target). Falls back to None if the module is gone, so
+        Phase 17.0: decoupled from ``lingwen_story_contracts`` (Phase 79
+        migration target). Falls back to None if the module is gone, so
         downstream callers see no behavioral change.
         """
         from lingwen_core.agents.core.context_helpers import StoryContractEngine

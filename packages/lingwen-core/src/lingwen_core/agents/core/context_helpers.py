@@ -1,10 +1,10 @@
 """Phase 17.0 local stub for the story contract engine that
-``ContextBuilder._get_story_contract`` consumed via ``infra.story_contracts``.
+``ContextBuilder._get_story_contract`` consumed via ``lingwen_story_contracts``.
 
 This module preserves the same surface that ``context_builder`` expects
 (constructor + ``load()`` returning a payload with ``master_setting`` and
 ``anti_patterns``) so the rest of the agent_system keeps importing cleanly
-after the deferred ``infra.story_contracts`` module is removed.
+after the deferred ``lingwen_story_contracts`` module is removed.
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ class _StoryContractPayload:
 
 
 class StoryContractEngine:
-    """Local stub: tries upstream ``infra.story_contracts`` if importable,
+    """Local stub: tries upstream ``lingwen_story_contracts`` if importable,
     else returns an empty payload (no story contract injected).
 
     The upstream ``load()`` reads ``.story-system/`` from project_root and
@@ -37,8 +37,8 @@ class StoryContractEngine:
     def load(self) -> Optional[_StoryContractPayload]:
         # Try the upstream first (legacy still works during transition).
         try:
-            from infra.story_contracts import (
-                StoryContractEngine as _Upstream,  # type: ignore[import-not-found]
+            from lingwen_story_contracts import (
+                StoryContractEngine as _Upstream,
             )
 
             engine = _Upstream(project_root=self.project_root)

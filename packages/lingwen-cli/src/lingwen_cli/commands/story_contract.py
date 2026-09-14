@@ -34,7 +34,7 @@ class StoryContractCommand(Command):
         print(f"持久化: {story_opts.persist}")
 
         try:
-            from infra.story_contracts import StoryContractEngine
+            from lingwen_story_contracts import StoryContractEngine
 
             # Get project root - use current working directory
             project_root = Path.cwd()
