@@ -15,12 +15,12 @@ from pathlib import Path
 ALLOWED_COMPAT_IMPORTS = frozenset(
     {
         "infra.config",
-        "infra.util",
         "infra.tools",
         "lingwen_paths",  # Phase 37: was "infra.paths" (now deleted; canonicalized)
         "lingwen_errors",     # Phase 36: was "infra.errors" (now deleted; canonicalized)
         "lingwen_project_config",  # Phase 38: was "infra.project_config" (now deleted; canonicalized)
         "infra.hooks",
+        # Phase 82: "infra.util" removed (now lingwen_util; canonicalized)
     }
 )
 
