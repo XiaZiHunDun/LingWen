@@ -23,7 +23,7 @@ from lingwen_llm.port_adapter import LLMServiceAdapter
 from lingwen_quality.quality import Issue
 from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
-from infra.config.api_config_loader import get_api_config
+from lingwen_config.api_config_loader import get_api_config
 
 logger = logging.getLogger(__name__)
 

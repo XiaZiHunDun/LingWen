@@ -13,7 +13,7 @@
 
 from lingwen_errors import BaseError, ValidationError
 
-from infra.config import APIConfig
+from lingwen_config import APIConfig
 from lingwen_util import RetryConfig, retry, retry_async, with_retry
 
 __all__ = [
