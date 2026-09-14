@@ -159,6 +159,9 @@ invariants:
   - id: I080   # ★ Phase 79 NEW
     rule: "packages/lingwen-story-contracts/ 是 Story Contracts (genre routing + anti-pattern constraints + injection + paths + persister + engine, 10 symbols: StoryContractEngine + StoryContractPaths + GenreRouter + RouteResult + AntiPattern + AntiPatternAggregator + ContractPayload + ContractPersister + StoryContractInjector + inject_story_contract) 的唯一实包；infra.story_contracts.* 和 infra/story_contracts/ 路径非法 (Phase 79 P3-ARCHDEBT infra/story_contracts 全量迁移，848 LOC + 7 source files + 5 test files + 7 production consumer sites [2 function-body imports + 5 test imports] + LEAF package [0 workspace deps])"
     severity: error
+  - id: I081   # ★ Phase 80 NEW
+    rule: "packages/lingwen-subplot/ 是 Plot 模型 (Plot + PlotType + PlotPurpose + PlotStatus + MAX_ACTIVE_SUBPLOTS + PlotRegistry + 6 状态转换 + 7 阶段模型 + 3 queries can_open_new_subplot/suggest_subplot_to_close/detect_constraint_saturation, 15 symbols + 4 sub-modules: lifecycle + queries + registry + __init__) 的唯一实包；infra.subplot.* 和 infra/subplot/ 路径非法 (Phase 80 P3-ARCHDEBT infra/subplot 全量迁移，508 LOC + 4 source files + 4 test files [MIGRATE] + 3 in-place test imports [test_links + test_phase2_integration + test_phase35] + 1 cross-pkg production consumer [lingwen-world-model/links.py] + NOT-LEAF package [1 workspace dep: lingwen-core for lingwen_core.domain.subplot types])"
+    severity: error
 
 # 模块边界（明确每个模块的公共 API 和依赖）
 module_boundaries:
