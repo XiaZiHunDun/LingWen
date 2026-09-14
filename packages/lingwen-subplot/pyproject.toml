@@ -1,0 +1,16 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-subplot"
+version = "0.1.0"
+description = "LingWen canonical subplot module (Phase 80 P3-ARCHDEBT subplot)"
+requires-python = ">=3.11"
+dependencies = [
+    "lingwen-core",  # for lingwen_core.domain.subplot types (MAX_ACTIVE_SUBPLOTS, Plot, PlotStatus, PlotType, PlotPurpose)
+]
+# NOT-LEAF — 1 workspace dep: lingwen-core
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_subplot"]
