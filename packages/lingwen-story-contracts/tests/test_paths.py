@@ -3,7 +3,6 @@
 from pathlib import Path
 
 import pytest
-
 from lingwen_story_contracts.paths import StoryContractPaths
 
 

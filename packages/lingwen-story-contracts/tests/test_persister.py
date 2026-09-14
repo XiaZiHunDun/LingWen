@@ -5,7 +5,6 @@ import tempfile
 from pathlib import Path
 
 import pytest
-
 from lingwen_story_contracts.paths import StoryContractPaths
 from lingwen_story_contracts.persister import ContractPayload, ContractPersister
 

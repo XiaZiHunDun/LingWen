@@ -4,7 +4,6 @@ import csv
 from pathlib import Path
 
 import pytest
-
 from lingwen_story_contracts.router import GenreRouter, RouteResult
 
 

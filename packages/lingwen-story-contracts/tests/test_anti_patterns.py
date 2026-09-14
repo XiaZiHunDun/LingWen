@@ -1,7 +1,6 @@
 """Tests for AntiPatternAggregator."""
 
 import pytest
-
 from lingwen_story_contracts.anti_patterns import (
     AntiPattern,
     AntiPatternAggregator,
