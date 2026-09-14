@@ -123,6 +123,7 @@ members = [
     "packages/lingwen-subplot",   # ★ Phase 80 NEW (infra/subplot relocation)
     "packages/lingwen-di",   # ★ Phase 81 NEW (infra/di relocation)
     "packages/lingwen-util",   # ★ Phase 82 NEW (infra/util relocation)
+    "packages/lingwen-config",   # ★ Phase 83 NEW (infra/config relocation)
     "apps/studio_api",
 ]
 
@@ -170,6 +171,7 @@ lingwen-story-contracts = { workspace = true }   # ★ Phase 79 NEW (infra/story
 lingwen-subplot = { workspace = true }   # ★ Phase 80 NEW (infra/subplot relocation, NOT-LEAF)
 lingwen-di = { workspace = true }   # ★ Phase 81 NEW (infra/di relocation, TRUE LEAF)
 lingwen-util = { workspace = true }   # ★ Phase 82 NEW (infra/util relocation, NOT-LEAF: 1 dep lingwen-errors)
+lingwen-config = { workspace = true }   # ★ Phase 83 NEW (infra/config relocation, TRUE LEAF + pyyaml dep)
 
 # ---------------------------------------------------------------------------
 # Tool configs (pyproject.toml 集中配置,避免散在多个 ini/tox)

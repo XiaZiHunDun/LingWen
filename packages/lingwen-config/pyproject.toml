@@ -1,0 +1,17 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-config"
+version = "0.1.0"
+description = "LingWen canonical config module (Phase 83 P3-ARCHDEBT config)"
+requires-python = ">=3.11"
+dependencies = [
+    "pyyaml",  # for YAML config loading (infra/config/api_config_loader.py)
+]
+# TRUE LEAF — 0 workspace deps + 1 third-party dep (pyyaml)
+# Note: api_config_loader uses `import yaml` — must declare pyyaml in deps
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_config"]
