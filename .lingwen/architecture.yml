@@ -168,6 +168,9 @@ invariants:
   - id: I083   # ★ Phase 82 NEW
     rule: "packages/lingwen-util/ 是 Retry helper (opencode retry.ts 启发: RetryConfig + retry 同步装饰器 + retry_async 异步 + with_retry 包装 + is_transient_error 瞬时错误检测 + backoff_delay 退避计算, 6 symbols + 1 sub-module: retry) 的唯一实包；infra.util.* 和 infra/util/ 路径非法 (Phase 82 P3-ARCHDEBT infra/util 全量迁移，338 LOC + 2 source files + 0 test file MIGRATE + 2 in-place consumer fixups [infra/__init__.py:17 re-export + tests/test_phase18_10_stale_imports.py:18 allowlist removal] + NOT-LEAF package [1 workspace dep: lingwen-errors for error classes NetworkError/TimeoutError/ServiceUnavailableError + is_instance helper])"
     severity: error
+  - id: I084   # ★ Phase 83 NEW
+    rule: "packages/lingwen-config/ 是 API config singleton (PyYAML config loading from config/api_config.yaml + env var override + 4 API key properties [minimax_api_key/minimax_api_host/anthropic_api_key/openai_api_key] + get_api_config factory, 1 symbol: APIConfig) 的唯一实包；infra.config.* 和 infra/config/ 路径非法 (Phase 83 P3-ARCHDEBT infra/config 全量迁移，77 LOC + 2 source files + 0 test file MIGRATE + 4 in-place consumer fixups [tools/anti_trope_enhancer.py + tools/claude_key_chapter_polisher.py + tools/llm_quality_analyzer.py + infra/__init__.py:16 intra-infra re-export] + TRUE LEAF package [0 workspace deps + 1 third-party dep pyyaml])"
+    severity: error
 
 # 模块边界（明确每个模块的公共 API 和依赖）
 module_boundaries:
