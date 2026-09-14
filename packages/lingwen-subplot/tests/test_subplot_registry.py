@@ -23,7 +23,7 @@ from lingwen_core.domain.subplot import (
     PlotType,
 )
 
-from infra.subplot.registry import (
+from lingwen_subplot.registry import (
     DuplicatePlotIdError,
     PlotNotFoundError,
     PlotRegistry,

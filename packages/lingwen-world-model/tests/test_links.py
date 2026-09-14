@@ -34,7 +34,7 @@ from lingwen_world_model.links import (
 )
 from lingwen_world_model.registry import RippleNotFoundError, RippleRegistry
 
-from infra.subplot.registry import PlotRegistry
+from lingwen_subplot.registry import PlotRegistry
 
 # === Helpers ===
 

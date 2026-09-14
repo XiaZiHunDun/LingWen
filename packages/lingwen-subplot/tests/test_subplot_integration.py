@@ -29,12 +29,12 @@ from lingwen_world_model.subplot_helpers import (
     subplots_count,
 )
 
-from infra.subplot.queries import (
+from lingwen_subplot.queries import (
     can_open_new_subplot,
     detect_constraint_saturation,
     suggest_subplot_to_close,
 )
-from infra.subplot.registry import PlotRegistry, SubplotLimitExceeded
+from lingwen_subplot.registry import PlotRegistry, SubplotLimitExceeded
 
 
 def _lin_chen() -> KeyPoint:

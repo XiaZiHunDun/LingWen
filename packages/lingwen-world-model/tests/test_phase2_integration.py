@@ -40,7 +40,7 @@ from lingwen_world_model import (
 )
 from lingwen_world_model.snapshot_diff import ChangeKind, EntityKind
 
-from infra.subplot.registry import PlotRegistry
+from lingwen_subplot.registry import PlotRegistry
 
 # === Helpers ===
 

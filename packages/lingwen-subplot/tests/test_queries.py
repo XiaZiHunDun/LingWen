@@ -20,12 +20,12 @@ from lingwen_core.domain.subplot import (
     PlotType,
 )
 
-from infra.subplot.queries import (
+from lingwen_subplot.queries import (
     can_open_new_subplot,
     detect_constraint_saturation,
     suggest_subplot_to_close,
 )
-from infra.subplot.registry import PlotRegistry
+from lingwen_subplot.registry import PlotRegistry
 
 
 def _subplot(

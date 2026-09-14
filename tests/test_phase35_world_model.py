@@ -155,16 +155,16 @@ def test_no_infra_world_model_dotted_imports():
 
 
 def test_no_infra_subplot_helpers_dotted_imports():
-    """Pattern 1 (audit): no 'from infra.subplot.helpers' imports."""
+    """Pattern 1 (audit): no 'from lingwen_subplot.helpers' imports."""
     bad: list[tuple[str, int, str]] = []
     for p in _all_python_files_under("packages", "apps", "tests", "infra"):
         if "infra/subplot/" in str(p) or "packages/lingwen-world-model/" in str(p):
             continue
         text = p.read_text()
         for lineno, line in enumerate(text.splitlines(), 1):
-            if "from infra.subplot.helpers" in line:
+            if "from lingwen_subplot.helpers" in line:
                 bad.append((str(p.relative_to(REPO_ROOT)), lineno, line.strip()))
-    assert not bad, "Stale 'from infra.subplot.helpers' imports:\n" + "\n".join(
+    assert not bad, "Stale 'from lingwen_subplot.helpers' imports:\n" + "\n".join(
         f"  {f}:{ln}: {l}" for f, ln, l in bad
     )
 
@@ -277,7 +277,7 @@ def test_subplot_test_migrated():
     if not p.exists():
         return
     text = p.read_text()
-    assert "from infra.subplot.helpers" not in text, "test_subplot_integration.py still uses infra.subplot.helpers"
+    assert "from lingwen_subplot.helpers" not in text, "test_subplot_integration.py still uses infra.subplot.helpers"
     assert "from lingwen_world_model.subplot_helpers" in text, "test must import lingwen_world_model.subplot_helpers"
 
 
