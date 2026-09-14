@@ -148,8 +148,8 @@ def test_phase53d_meta_test_cleaned() -> None:
 
 def test_phase53d_infra_canonical_contents_preserved() -> None:
     """Phase 53d deleted infra/event_sourcing/ but must NOT have touched any
-    canonical infra/* subdir or __init__.py. Spot-check that all 2 remaining
-    subdirs (config / tools) still exist after deletion.
+    canonical infra/* subdir or __init__.py. Spot-check that all 1 remaining
+    subdir (tools) still exist after deletion.
 
     Note: infra/novel-factory/ was also deleted in Phase 53e C1 (orphan
     runtime artifact from Phase 54 path drift). infra/llm_benchmarks/ and
@@ -161,7 +161,9 @@ def test_phase53d_infra_canonical_contents_preserved() -> None:
     infra/di/ was deleted in Phase 81 C3 (P3-ARCHDEBT true migration to
     packages/lingwen-di/).
     infra/util/ was deleted in Phase 82 C3 (P3-ARCHDEBT true migration to
-    packages/lingwen-util/). All seven are asserted gone separately below.
+    packages/lingwen-util/).
+    infra/config/ was deleted in Phase 83 C3 (P3-ARCHDEBT true migration to
+    packages/lingwen-config/). All eight are asserted gone separately below.
     """
     infra_dir = REPO_ROOT / "infra"
     assert infra_dir.exists(), "infra/ directory must still exist"
@@ -170,7 +172,6 @@ def test_phase53d_infra_canonical_contents_preserved() -> None:
     )
 
     remaining_subdirs = [
-        "config",
         "tools",
     ]
     for name in remaining_subdirs:
@@ -179,7 +180,7 @@ def test_phase53d_infra_canonical_contents_preserved() -> None:
             f"Subdir infra/{name}/ must still exist post-Phase 53d"
         )
 
-    # And the deleted subdirs are gone (Phase 53d + Phase 53e + Phase 78 + Phase 79 + Phase 80 + Phase 81 + Phase 82).
+    # And the deleted subdirs are gone (Phase 53d + Phase 53e + Phase 78 + Phase 79 + Phase 80 + Phase 81 + Phase 82 + Phase 83).
     assert not (infra_dir / "event_sourcing").exists(), (
         "infra/event_sourcing/ must be gone (Phase 53d C1)"
     )
@@ -203,6 +204,9 @@ def test_phase53d_infra_canonical_contents_preserved() -> None:
     )
     assert not (infra_dir / "util").exists(), (
         "infra/util/ must be gone (Phase 82 C3 P3-ARCHDEBT)"
+    )
+    assert not (infra_dir / "config").exists(), (
+        "infra/config/ must be gone (Phase 83 C3 P3-ARCHDEBT)"
     )
     # Guard against __pycache__ residue making .exists() spuriously True
     # (Phase 79 lesson: cp-cached bytecode survives git rm —dir).
