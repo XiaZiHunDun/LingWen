@@ -50,7 +50,8 @@ from lingwen_core.domain.ripple import (
 # PlotStatus (lightweight enum, infra-local — not part of DDD aggregate)
 from lingwen_core.domain.subplot import PlotStatus
 
-# Phase 1.2 helpers — historical path: infra.subplot.helpers (Phase 19+ Sub1 Task 5),
+# Phase 1.2 helpers — historical path: lingwen_subplot.helpers (Phase 19+ Sub1 Task 5
+# → formerly infra/subplot/helpers.py before Phase 80 P3-ARCHDEBT relocation),
 # then packages/lingwen-world-model/src/lingwen_world_model/subplot_helpers.py
 # (Phase 35 / v34.0). Re-exported here for backward compat with existing consumers
 # (`from lingwen_world_model import add_subplot, ...`).
