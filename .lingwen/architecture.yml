@@ -162,6 +162,9 @@ invariants:
   - id: I081   # ★ Phase 80 NEW
     rule: "packages/lingwen-subplot/ 是 Plot 模型 (Plot + PlotType + PlotPurpose + PlotStatus + MAX_ACTIVE_SUBPLOTS + PlotRegistry + 6 状态转换 + 7 阶段模型 + 3 queries can_open_new_subplot/suggest_subplot_to_close/detect_constraint_saturation, 15 symbols + 4 sub-modules: lifecycle + queries + registry + __init__) 的唯一实包；infra.subplot.* 和 infra/subplot/ 路径非法 (Phase 80 P3-ARCHDEBT infra/subplot 全量迁移，508 LOC + 4 source files + 4 test files [MIGRATE] + 3 in-place test imports [test_links + test_phase2_integration + test_phase35] + 1 cross-pkg production consumer [lingwen-world-model/links.py] + NOT-LEAF package [1 workspace dep: lingwen-core for lingwen_core.domain.subplot types])"
     severity: error
+  - id: I082   # ★ Phase 81 NEW
+    rule: "packages/lingwen-di/ 是 Dependency Injection Layer 系统 (ZIO Layer 启发: Tag + Layer + Runtime + Layer组合/zip/flat_map/map + from_service/from_service_with_deps + make/make_with_deps + provide 装饰器 + get_runtime/reset_runtime 全局单例, 8 symbols + 1 sub-module: layer) 的唯一实包；infra.di.* 和 infra/di/ 路径非法 (Phase 81 P3-ARCHDEBT infra/di 全量迁移，309 LOC + 2 source files + 1 test file [MIGRATE] + 0 production consumer [only test consumers in tests/test_infra_modules.py] + 1 in-place docstring fixup [tests/test_infra_init_no_deferred_re_exports.py] + TRUE LEAF package [0 workspace deps, only stdlib: logging + dataclasses + typing])"
+    severity: error
 
 # 模块边界（明确每个模块的公共 API 和依赖）
 module_boundaries:
