@@ -453,7 +453,7 @@ class TestDI:
     """依赖注入系统测试"""
 
     def test_layer_basic(self):
-        from infra.di.layer import Layer, Runtime, Tag
+        from lingwen_di.layer import Layer, Runtime, Tag
 
         # 创建标签
         DbTag = Tag(str, "Database")
@@ -480,7 +480,7 @@ class TestDI:
         assert runtime.get(DbTag) == "Connected to: sqlite:///test.db"
 
     def test_layer_zip(self):
-        from infra.di.layer import Layer, Tag
+        from lingwen_di.layer import Layer, Tag
 
         TagA = Tag(str, "A")
         TagB = Tag(int, "B")

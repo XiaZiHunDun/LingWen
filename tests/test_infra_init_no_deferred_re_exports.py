@@ -16,7 +16,7 @@ Patterns asserted (all MUST be absent from infra/__init__.py):
     - ``from infra.prose import``
     - ``from infra.project import``
     - ``from infra.core import``
-    - ``from infra.di.layer import``
+    - ``from infra.di.layer import`` (Phase 81: ``di`` moved to packages/lingwen-di/ — pattern retained as defense in depth)
 
 Each pattern is checked separately so the assertion message names the
 specific pattern that slipped back in.
