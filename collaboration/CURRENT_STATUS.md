@@ -1,8 +1,8 @@
 # 灵文项目状态看板
 
-> **最后更新**: 2026-09-14 (Phase 69 CharacterDetail.vue tests, v54.8, branch `phase-57-p3-archdebt-reading-power`)
-> **更新者**: 协调者（Phase 69 frontend test coverage — 8 vitest tests for apps/dashboard/src/components/world/characters/CharacterDetail.vue (closeable character sidebar with embedded CharacterRelationships + editable via CharacterEditor, Phase 117 Task 14); 1942 vitest tests +8 (vs 1934 from Phase 68) = +8 new; 0 regressions; 1 atomic commit on `phase-57-p3-archdebt-reading-power` = C1 spec `(HEAD)`）
-> **下一协作**: Phase 69 ready for ff-merge to master。累计所有 ARCHDEBT (53c/53d/53e/57b/60/61/62) + Phase 63/64/65/66/67/68/69 共 47 commits ahead — 用户 ff-merge 后可选继续 4 个 untested components (CharacterEditor/CharacterRelationships + FactionGraph/FactionGraphCanvas)。详见 `docs/superpowers/handoffs/2026-09-14-phase-69-character-detail-tests-handoff.md` (in this commit)。
+> **最后更新**: 2026-09-14 (Phase 70 CharacterRelationships.vue tests, v54.8, branch `phase-57-p3-archdebt-reading-power`)
+> **更新者**: 协调者（Phase 70 frontend test coverage — 6 vitest tests for apps/dashboard/src/components/world/characters/CharacterRelationships.vue (embedded relationships list, Phase 117 Task 14, simple composable-based list rendering); 1948 vitest tests +6 (vs 1942 from Phase 69) = +6 new; 0 regressions; 1 atomic commit on `phase-57-p3-archdebt-reading-power` = C1 spec `(HEAD)`）
+> **下一协作**: Phase 70 ready for ff-merge to master。累计所有 ARCHDEBT (53c/53d/53e/57b/60/61/62) + Phase 63/64/65/66/67/68/69/70 共 49 commits ahead — 用户 ff-merge 后可选继续 3 个 untested components (CharacterEditor + FactionGraph + FactionGraphCanvas)。详见 `docs/superpowers/handoffs/2026-09-14-phase-70-character-relationships-tests-handoff.md` (in this commit)。
 
 ---
 
