@@ -1,7 +1,7 @@
 # LingWen 架构契约 — AI 可读的结构化模块边界定义
 # 此文件是 AGENTS.md 的机器可读版本，AI 开发工具应优先解析此文件
 
-version: "48.0"  # Phase 50 — P3-ARCHDEBT (utilities batch): 6-module mixed batch per ARCHDEBT-CANDIDATES.md. 2 MIGRATE (real consumers: schema → lingwen-schema with 6 tests + 1 intra-batch; health → lingwen-health with 1 apps consumer) + 4 DELETE (zero anchored consumers: types + tool + permission + llm_cache, 2454 LOC deleted). 2 NEW packages (lingwen-schema, lingwen-health) + 2 NEW invariants (#69 schema, #70 health). Total LOC processed: 3341 across 6 modules. Workspace deps: lingwen-errors (Phase 36) for both. 4 atomic commits (C0 spec+plan, C1 scaffold 2 + delete 4 + workspace-register, C2 bulk 2-site migration, C3 delete 2 files + I069-I070 + v48.0, C4 guards+handoff). P3-ARCHDEBT TOP 5 ARCHDEBT-CANDIDATES (project_init + llm_service + prose_calibration + filter + memory_service + utilities batch) ALL CLOSED. Long-tail modules (1-2 consumer trivial) remain in Phase 51+.
+version: "54.9"  # Phase 61 (2026-09-14) — CLAUDE.md ↔ architecture.yml invariant sync. Adds missing I071-I078 (8 invariants: prose-judge + prose-snapshot + project-characters + tools/legacy cluster + persistence + world-db + reading-power + cross-volume) that were declared in CLAUDE.md between Phase 50 and Phase 60 but never inserted into the machine-readable file. Fixes I079 duplicate scope key bug (Phase 60 sed/copy-paste error left an I070 scope line attached to I079 — PyYAML silently overwrites so test_phase60 didn't catch it). 4 regression guards in tests/test_phase61_architecture_invariant_sync.py enforce future drift prevention. v48.0 → v54.9 skips v49.0/v50.0/v51.0/v52.0/v53.0/v53.2/v54.0-v54.8 because intermediate phase commits updated CLAUDE.md invariant table but not this field — Phase 61 closeout bump reflects current state.
 
 # 模块分层（单向依赖：上层可依赖下层，下层禁止依赖上层）
 layers:
@@ -127,11 +127,35 @@ invariants:
   - id: I070   # ★ Phase 50 NEW
     rule: "packages/lingwen-health/ 是 HealthCheck + HealthStatus + 5 check classes（Composite/Database/LLM/VectorDB/Cache）+ HealthManager + 4 functions（get_health_manager + register_health_check + health_status + health_endpoint）的唯一实包；infra.health.* 路径非法 (Phase 50 P3-ARCHDEBT utilities batch health)"
     severity: error
+    scope: "all new health code; enforcement via tests/test_phase50_lingwen_utilities_batch.py + grep -rln \"infra\\.health\\b\" --include=\"*.py\" packages/ apps/ tests/ infra/ → 0 行"
+  - id: I071   # ★ Phase 51 NEW
+    rule: "packages/lingwen-prose-judge/ 是 prose rubric v2 judge reports + 校准 helpers（28 symbols: ACTIONS + DIMENSIONS + DIMENSION_LABELS + ISSUE_TYPE_TO_DIMENSION + JUDGE_REPORT_VERSION + JUDGE_SYSTEM_PROMPT + REPORT_FILENAME + report_path_for + golden_manifest_path + golden_chapter_path + load_golden_chapter_nums + load_judge_report + save_judge_report + map_issue_type_to_dimension + validate_judge_report + derive_offline_chapter_ratings + build_offline_judge_report + build_llm_judge_report + run_prose_judge + cross_reference_signals + summarize_judge_report + sample_calibration_pack + format_calibration_sample_markdown + suggest_calibration_verdict + fill_calibration_samples + compute_misreport_stats + build_calibration_round + render_calibration_log_document）的唯一实包；infra.prose_judge.* 路径非法 (Phase 51 P3-ARCHDEBT prose 簇)"
+    severity: error
+  - id: I072   # ★ Phase 51 NEW
+    rule: "packages/lingwen-prose-snapshot/ 是 prose revision snapshot + diff（8 symbols: SNAPSHOT_VERSION + SNAPSHOT_FILENAME + snapshot_path_for + build_snapshot + save_snapshot + load_snapshot + diff_snapshots + format_diff_report）的唯一实包；infra.prose_snapshot.* 路径非法 (Phase 51 P3-ARCHDEBT prose 簇)"
+    severity: error
+  - id: I073   # ★ Phase 51 NEW
+    rule: "packages/lingwen-project-characters/ 是项目角色名抽取（load_project_character_names + load_agency_target_characters）的唯一实包；infra.project_characters.* 路径非法 (Phase 51 P3-ARCHDEBT prose 簇)"
+    severity: error
+  - id: I074   # ★ Phase 53+53c+53d+53e NEW
+    rule: "infra/tools/legacy/ + 顶层 tools/legacy/ + infra/event_sourcing/ + infra/core/ + infra/studio/ + infra/novel-factory/ 6 个零消费者目录已删；其下任何子目录或文件路径非法 (Phase 53 + 53c + 53d + 53e P3-ARCHDEBT 残留清理，~12868 LOC dead code + 2 orphan runtime artifacts)"
+    severity: error
+  - id: I075   # ★ Phase 54 NEW
+    rule: "packages/lingwen-persistence/ 是 SQLite 持久化层（connection + paths + registry + schemas + sqlite_config + write_chapter + write_workspace_api + sqlite_storage_adapter shim 共 24 symbols）的唯一实包；infra.persistence.* 和 infra/persistence/ 路径非法 (Phase 54 P3-ARCHDEBT infra/persistence 全量迁移)"
+    severity: error
+  - id: I076   # ★ Phase 56 NEW
+    rule: "packages/lingwen-world-db/ 是 World DB（character + faction + relationship + lore + timeline + proposal 表 + queries 子目录 6 query 模块）的唯一实包；infra.world_db.* 和 infra/world_db/ 路径非法 (Phase 56 P3-ARCHDEBT infra/world_db 全量迁移)"
+    severity: error
+  - id: I077   # ★ Phase 57 NEW
+    rule: "packages/lingwen-reading-power/ 是 Reading Power System（追读力：hooks + coolpoints + chapter_summary + analysis_log SQLite 持久化 + ReadingPowerEngine 编排器 + RuleMatcher 规则匹配 + LLMAnalyzer LLM 深度分析 + HookTracker/CoolPointTracker 持久化包装 + 8 个 public classes + SuspectedSegment NamedTuple + AnalysisResult dataclass + DB_PATH + HOOKS_RULES_PATH + COOLPOINTS_RULES_PATH + ANALYZE_HOOKS_PROMPT 4 个 module constants 共 13 public symbols）的唯一实包；infra.reading_power.* 和 infra/reading_power/ 路径非法 (Phase 57 P3-ARCHDEBT infra/reading_power 全量迁移，1006 LOC + 16 consumer sites + 2 workspace deps: lingwen-shared + lingwen-storage)"
+    severity: error
+  - id: I078   # ★ Phase 55 NEW
+    rule: "packages/lingwen-cross-volume/ 是 Cross-Volume Ripple System（跨卷涟漪: graph + scanner + persistence + cascade + backfill + audit + e2e_seed + perf + llm_prompts/extractors 子包 + 2 YAML data files）的唯一实包；infra.cross_volume.* 和 infra/cross_volume/ 路径非法 (Phase 55 P3-ARCHDEBT infra/cross_volume 全量迁移，4493 LOC + 23 files + 92 consumer files + 255 import sites + 3 workspace deps: lingwen-shared + lingwen-llm + lingwen-core)"
+    severity: error
   - id: I079   # ★ Phase 60 NEW
     rule: "每个 P3-ARCHDEBT spec doc 必须 (1) 在文件头声明 '@template: docs/superpowers/specs/_P3_ARCHDEBT_TEMPLATE.md' 引用本模板 + (2) 包含完整 §A. test files migration plan 子章节 (Phase 57b lesson 3 third occurrence prevention — Phase 56b world_db + Phase 56c cross_volume + Phase 57 reading_power 三次复现)。enforcement: tests/test_phase60_p3_archdebt_template.py 扫所有 spec 文件验证模板引用 + §A 章节存在"
     severity: error
     scope: "all future P3-ARCHDEBT specs; template file lives at docs/superpowers/specs/_P3_ARCHDEBT_TEMPLATE.md"
-    scope: "all new health code; enforcement via tests/test_phase50_lingwen_utilities_batch.py + grep -rln \"infra\\.health\\b\" --include=\"*.py\" packages/ apps/ tests/ infra/ → 0 行"
 
 # 模块边界（明确每个模块的公共 API 和依赖）
 module_boundaries:
