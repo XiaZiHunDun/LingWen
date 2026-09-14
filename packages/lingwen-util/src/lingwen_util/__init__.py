@@ -11,7 +11,7 @@
 - backoff_delay — 退避延迟计算
 """
 
-from infra.util.retry import (
+from lingwen_util.retry import (
     RetryConfig,
     backoff_delay,
     is_transient_error,

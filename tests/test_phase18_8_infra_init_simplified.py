@@ -2,11 +2,12 @@
 
 Phase 18.8 目标:
 - infra/__init__.py 从 178 行 → < 30 行
-- 只保留核心 compat re-export（config / util / errors）
+- 只保留核心 compat re-export（config / errors）
 - 不再 export 已删除子系统（event_sourcing 等）
 - 注：story_contracts 于 Phase 79 P3-ARCHDEBT 全量迁移至 packages/lingwen-story-contracts/
 - 注：subplot 于 Phase 80 P3-ARCHDEBT 全量迁移至 packages/lingwen-subplot/
 - 注：di 于 Phase 81 P3-ARCHDEBT 全量迁移至 packages/lingwen-di/
+- 注：util 于 Phase 82 P3-ARCHDEBT 全量迁移至 packages/lingwen-util/
 """
 
 from __future__ import annotations
