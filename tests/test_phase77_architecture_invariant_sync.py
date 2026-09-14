@@ -85,7 +85,7 @@ def _get_invariant_ids_from_claude_md() -> set[str]:
 
 
 def test_phase77_g1_architecture_yml_has_expected_invariant_ids() -> None:
-    """I001-I005 + I048-I082 = 40 invariants expected in architecture.yml.
+    """I001-I005 + I048-I083 = 41 invariants expected in architecture.yml.
 
     The I006-I047 numbering gap is HISTORICAL (never declared in CLAUDE.md
     invariant table either — see G2). This guard prevents silently shrinking
@@ -93,12 +93,13 @@ def test_phase77_g1_architecture_yml_has_expected_invariant_ids() -> None:
     (lingwen-story-contracts canonical module) — bumped expected count
     37 → 38. Phase 80 added I081 (lingwen-subplot canonical module, NOT-LEAF)
     — bumped 38 → 39. Phase 81 added I082 (lingwen-di canonical module,
-    TRUE LEAF) — bumped 39 → 40.
+    TRUE LEAF) — bumped 39 → 40. Phase 82 added I083 (lingwen-util
+    canonical module, NOT-LEAF retry) — bumped 40 → 41.
     """
     ids = _get_invariant_ids_from_yaml()
     expected = (
         {f"I{n:03d}" for n in range(1, 6)}  # I001-I005
-        | {f"I{n:03d}" for n in range(48, 83)}  # I048-I082
+        | {f"I{n:03d}" for n in range(48, 84)}  # I048-I083
     )
     missing = expected - ids
     extra = ids - expected
@@ -110,7 +111,7 @@ def test_phase77_g1_architecture_yml_has_expected_invariant_ids() -> None:
         f"architecture.yml contains UNEXPECTED invariant IDs: {sorted(extra)}. "
         f"Either update G1 expected set OR investigate accidental additions."
     )
-    assert len(ids) == 40, f"Expected exactly 40 invariants, got {len(ids)}: {sorted(ids)}"
+    assert len(ids) == 41, f"Expected exactly 41 invariants, got {len(ids)}: {sorted(ids)}"
 
 
 # ---------------------------------------------------------------------------
