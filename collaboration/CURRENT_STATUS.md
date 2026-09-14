@@ -1,8 +1,8 @@
 # 灵文项目状态看板
 
-> **最后更新**: 2026-09-14 (Phase 72 FactionGraph.vue tests, v54.8, branch `phase-57-p3-archdebt-reading-power`)
-> **更新者**: 协调者（Phase 72 frontend test coverage — 8 vitest tests for apps/dashboard/src/components/world/factions/FactionGraph.vue (faction page view-mode toggle list/graph, Phase 117 Task 16, uses store.selectedCharacterId for faction selection per Phase 117 design quirk); 1964 vitest tests +8 (vs 1956 from Phase 71) = +8 new; 0 regressions; 1 atomic commit on `phase-57-p3-archdebt-reading-power` = C1 spec `(HEAD)`）
-> **下一协作**: Phase 72 ready for ff-merge to master。累计所有 ARCHDEBT (53c/53d/53e/57b/60/61/62) + Phase 63/64/65/66/67/68/69/70/71/72 共 53 commits ahead — 用户 ff-merge 后可选继续 1 个 untested component (FactionGraphCanvas — vis-network direct usage, per MEMORY Phase 118 lesson)。详见 `docs/superpowers/handoffs/2026-09-14-phase-72-faction-graph-tests-handoff.md` (in this commit)。
+> **最后更新**: 2026-09-14 (Phase 73 FactionGraphCanvas.vue tests, v54.8, branch `phase-57-p3-archdebt-reading-power`)
+> **更新者**: 协调者（Phase 73 frontend test coverage — FINAL component! 7 vitest tests for apps/dashboard/src/components/world/factions/FactionGraphCanvas.vue (vis-network graph viz, Phase 117 Task 17, mocks vis-network Network class per MEMORY Phase 118 lesson); 1971 vitest tests +7 (vs 1964 from Phase 72) = +7 new; 0 regressions; 1 atomic commit on `phase-57-p3-archdebt-reading-power` = C1 spec `(HEAD)`）
+> **下一协作**: Phase 73 ready for ff-merge to master。累计所有 ARCHDEBT (53c/53d/53e/57b/60/61/62) + Phase 63-73 共 55 commits ahead。**MILESTONE: 12/12 originally-untested components now covered (100%)**。详见 `docs/superpowers/handoffs/2026-09-14-phase-73-faction-graph-canvas-tests-handoff.md` (in this commit)。
 
 ---
 
