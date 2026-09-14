@@ -119,6 +119,7 @@ members = [
     "packages/lingwen-world-db",   # ★ Phase 56 NEW (infra/world_db relocation)
     "packages/lingwen-reading-power",   # ★ Phase 57 NEW (infra/reading_power relocation)
     "packages/lingwen-cross-volume",   # ★ Phase 55 NEW (infra/cross_volume relocation)
+    "packages/lingwen-story-contracts",   # ★ Phase 79 NEW (infra/story_contracts relocation)
     "apps/studio_api",
 ]
 
@@ -162,6 +163,7 @@ lingwen-persistence = { workspace = true }   # ★ Phase 54 NEW (infra/persisten
 lingwen-world-db = { workspace = true }   # ★ Phase 56 NEW (infra/world_db relocation)
 lingwen-reading-power = { workspace = true }   # ★ Phase 57 NEW (infra/reading_power relocation)
 lingwen-cross-volume = { workspace = true }   # ★ Phase 55 NEW (infra/cross_volume relocation)
+lingwen-story-contracts = { workspace = true }   # ★ Phase 79 NEW (infra/story_contracts relocation)
 
 # ---------------------------------------------------------------------------
 # Tool configs (pyproject.toml 集中配置,避免散在多个 ini/tox)

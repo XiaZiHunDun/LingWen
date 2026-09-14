@@ -1,0 +1,13 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-story-contracts"
+version = "0.1.0"
+description = "LingWen canonical story_contracts module (Phase 79 P3-ARCHDEBT story_contracts)"
+requires-python = ">=3.11"
+dependencies = []  # LEAF — zero workspace deps (only stdlib: dataclasses, datetime, pathlib, json, re, typing)
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_story_contracts"]
