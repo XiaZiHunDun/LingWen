@@ -121,6 +121,7 @@ members = [
     "packages/lingwen-cross-volume",   # ★ Phase 55 NEW (infra/cross_volume relocation)
     "packages/lingwen-story-contracts",   # ★ Phase 79 NEW (infra/story_contracts relocation)
     "packages/lingwen-subplot",   # ★ Phase 80 NEW (infra/subplot relocation)
+    "packages/lingwen-di",   # ★ Phase 81 NEW (infra/di relocation)
     "apps/studio_api",
 ]
 
@@ -166,6 +167,7 @@ lingwen-reading-power = { workspace = true }   # ★ Phase 57 NEW (infra/reading
 lingwen-cross-volume = { workspace = true }   # ★ Phase 55 NEW (infra/cross_volume relocation)
 lingwen-story-contracts = { workspace = true }   # ★ Phase 79 NEW (infra/story_contracts relocation)
 lingwen-subplot = { workspace = true }   # ★ Phase 80 NEW (infra/subplot relocation, NOT-LEAF)
+lingwen-di = { workspace = true }   # ★ Phase 81 NEW (infra/di relocation, TRUE LEAF)
 
 # ---------------------------------------------------------------------------
 # Tool configs (pyproject.toml 集中配置,避免散在多个 ini/tox)
