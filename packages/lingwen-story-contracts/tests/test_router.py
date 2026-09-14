@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from infra.story_contracts.router import GenreRouter, RouteResult
+from lingwen_story_contracts.router import GenreRouter, RouteResult
 
 
 @pytest.fixture

@@ -2,7 +2,7 @@
 
 import pytest
 
-from infra.story_contracts.anti_patterns import (
+from lingwen_story_contracts.anti_patterns import (
     AntiPattern,
     AntiPatternAggregator,
 )

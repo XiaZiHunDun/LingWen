@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from infra.story_contracts.engine import StoryContractEngine
-from infra.story_contracts.paths import StoryContractPaths
+from lingwen_story_contracts.engine import StoryContractEngine
+from lingwen_story_contracts.paths import StoryContractPaths
 
 
 class TestStoryContractEngine:

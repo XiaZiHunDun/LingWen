@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from infra.story_contracts.paths import StoryContractPaths
-from infra.story_contracts.persister import ContractPayload, ContractPersister
+from lingwen_story_contracts.paths import StoryContractPaths
+from lingwen_story_contracts.persister import ContractPayload, ContractPersister
 
 
 class TestContractPersister:
