@@ -1,4 +1,4 @@
-# Phase 61 Architecture Invariant Sync (CLAUDE.md ↔ architecture.yml) — Design
+# Phase 77 Architecture Invariant Sync (CLAUDE.md ↔ architecture.yml) — Design
 
 > **目标**: 闭环 v54.8 已知 carryover — CLAUDE.md 已声明 I001-I079 (79 个 invariant) 但 `.lingwen/architecture.yml` 仅 I001-I070 + I079 (71 个 invariant)，**缺 I071-I078 (8 个)**。本次 phase 修复此 machine-readable drift 并附 4 个 regression guards 防止再发生。
 > **承接**: v54.8 Phase 60 session 总结的 "Carried over to future sessions" 明确列出。
@@ -60,7 +60,7 @@ $ grep -cE "I079" .lingwen/architecture.yml
 3 类修复:
 1. **Insert**: 在 line 129 (I070 scope) 与 line 130 (I079 id) 之间插入 I071-I078 8 条 entries
 2. **Fix dup-key**: 删除 line 134 (I079 的错粘 scope — I079 应该只保留 I070-style enforcement scope 或更简单无 scope)
-3. **Guards**: 在 `tests/test_phase61_architecture_invariant_sync.py` 加 4 guards 防止未来 drift
+3. **Guards**: 在 `tests/test_phase77_architecture_invariant_sync.py` 加 4 guards 防止未来 drift
 
 ## 2. 9-pattern 审计 (2026-09-14)
 
@@ -82,8 +82,8 @@ $ grep -cE "I079" .lingwen/architecture.yml
 |--------|---------|-------|-----|
 | C0 | spec + plan handoff (this doc) | 1 | +200 |
 | C1 | `chore(architecture): add I071-I078 + fix I079 dup-scope` | 1 | +24 lines / -1 line |
-| C2 | `test(phase-61): 4 regression guards` | 1 | +120 |
-| C3 | `docs(phase-61): v54.8→v54.9 + handoff + MEMORY sync` | 4 | +150 |
+| C2 | `test(phase-77): 4 regression guards` | 1 | +120 |
+| C3 | `docs(phase-77): v54.8→v54.9 + handoff + MEMORY sync` | 4 | +150 |
 
 **Net**: +24 YAML lines, +1 dup-key fix, +120 test LOC, v54.8 → v54.9, 8 invariant drift 闭环。
 
@@ -127,7 +127,7 @@ $ grep -cE "I079" .lingwen/architecture.yml
     scope: "all future P3-ARCHDEBT specs; template file lives at docs/superpowers/specs/_P3_ARCHDEBT_TEMPLATE.md"
 ```
 
-### C2 详细: `tests/test_phase61_architecture_invariant_sync.py`
+### C2 详细: `tests/test_phase77_architecture_invariant_sync.py`
 
 | Guard | Assertion |
 |-------|-----------|
@@ -138,9 +138,9 @@ $ grep -cE "I079" .lingwen/architecture.yml
 
 ### C3 详细: docs sync
 
-1. `CLAUDE.md` line 1: `v54.8 (Phase 60 ...)` 之前插入 `v54.9 (Phase 61 architecture invariant sync — 补 I071-I078 8 个 invariant 进 architecture.yml + fix I079 dup-scope key + 4 regression guards 防止 CLAUDE.md ↔ architecture.yml drift 复发)` + 加 v54.9 phase-61 entry 到 "已知遗留" 列表
-2. `MEMORY.md`: 添加 `phase-61-architecture-invariant-sync.md` 指针 (under "Topic Files" → Phase 53c-60 系列扩展)
-3. `docs/superpowers/handoffs/2026-09-14-phase-61-architecture-invariant-sync-handoff.md`: 完整 handoff
+1. `CLAUDE.md` line 1: `v54.8 (Phase 60 ...)` 之前插入 `v54.9 (Phase 77 architecture invariant sync — 补 I071-I078 8 个 invariant 进 architecture.yml + fix I079 dup-scope key + 4 regression guards 防止 CLAUDE.md ↔ architecture.yml drift 复发)` + 加 v54.9 phase-77 entry 到 "已知遗留" 列表
+2. `MEMORY.md`: 添加 `phase-77-architecture-invariant-sync.md` 指针 (under "Topic Files" → Phase 53c-60 系列扩展)
+3. `docs/superpowers/handoffs/2026-09-14-phase-77-architecture-invariant-sync-handoff.md`: 完整 handoff
 4. `.lingwen/architecture.yml` line 1 注释: `version: v54.9` (如有 version field — 2026-09-14 fresh audit)
 
 ## 4. 验证 gates
@@ -150,7 +150,7 @@ $ grep -cE "I079" .lingwen/architecture.yml
 python -c "import yaml; yaml.safe_load(open('.lingwen/architecture.yml').read().split('invariants:')[1].split('#')[0])" 
 
 # 2. 新 guards 全过
-uv run pytest tests/test_phase61_architecture_invariant_sync.py -v
+uv run pytest tests/test_phase77_architecture_invariant_sync.py -v
 
 # 3. 既有 Phase 5x/6x guards 不回归 (no_false_neg)
 uv run pytest tests/test_phase5X_*.py tests/test_phase6X_*.py -v --tb=no -q
@@ -182,9 +182,9 @@ diff <(grep -oE "I0[0-9]{2}" .lingwen/architecture.yml | sort -u) \
 
 - [ ] C1: 8 个 invariant (I071-I078) 插入 line 129 与 line 130 之间
 - [ ] C1: I079 block 中 dup-scope (line 134) 删除, 只保留 I079 自身 scope
-- [ ] C2: `tests/test_phase61_architecture_invariant_sync.py` 4 guards 全过
+- [ ] C2: `tests/test_phase77_architecture_invariant_sync.py` 4 guards 全过
 - [ ] C3: CLAUDE.md version line 加 v54.9 + handoff 指针
-- [ ] C3: `docs/superpowers/handoffs/2026-09-14-phase-61-architecture-invariant-sync-handoff.md` 写完
+- [ ] C3: `docs/superpowers/handoffs/2026-09-14-phase-77-architecture-invariant-sync-handoff.md` 写完
 - [ ] C3: MEMORY.md +1 指针 (line count < 200)
 - [ ] Phase 5x/6x 既有 guards GREEN 不回归
 - [ ] 4 atomic commits + ff-merge to master

@@ -1,4 +1,4 @@
-"""Phase 61 — CLAUDE.md ↔ architecture.yml invariant sync regression guards.
+"""Phase 77 — CLAUDE.md ↔ architecture.yml invariant sync regression guards.
 
 @template: docs/superpowers/specs/_P3_ARCHDEBT_TEMPLATE.md  # referenced for I079 G6 awareness (see test_phase60 G6)
 
@@ -6,7 +6,7 @@ CLOSES THE DRIFT FROM v54.8 (Phase 60) SESSION SUMMARY:
 > Carried over to future sessions: infra/I071-I078 declared in CLAUDE.md but
 > missing from architecture.yml (machine-readable drift — minor)
 
-NOTE — Phase 61 is NOT a P3-ARCHDEBT migration (no infra/X → packages/X move);
+NOTE — Phase 77 is NOT a P3-ARCHDEBT migration (no infra/X → packages/X move);
 I079 P3-ARCHDEBT template §A (test files migration plan) is N/A. This test file
 references the template only to satisfy test_phase60 G6's "all test_phase6*_*.py
 files should be aware of template" lazy guard.
@@ -49,7 +49,7 @@ CLAUDE_MD = REPO_ROOT / "CLAUDE.md"
 def _load_invariants_from_yaml() -> list[dict]:
     """Parse architecture.yml and return the invariants list.
 
-    Raises pytest.skip if YAML doesn't parse (defensive — Phase 61+ invariant
+    Raises pytest.skip if YAML doesn't parse (defensive — Phase 77+ invariant
     additions shouldn't break older test runners).
     """
     text = ARCHITECTURE_YML.read_text(encoding="utf-8")
@@ -84,7 +84,7 @@ def _get_invariant_ids_from_claude_md() -> set[str]:
 # ---------------------------------------------------------------------------
 
 
-def test_phase61_g1_architecture_yml_has_expected_invariant_ids() -> None:
+def test_phase77_g1_architecture_yml_has_expected_invariant_ids() -> None:
     """I001-I005 + I048-I079 = 37 invariants expected in architecture.yml.
 
     The I006-I047 numbering gap is HISTORICAL (never declared in CLAUDE.md
@@ -100,7 +100,7 @@ def test_phase61_g1_architecture_yml_has_expected_invariant_ids() -> None:
     extra = ids - expected
     assert not missing, (
         f"architecture.yml missing expected invariant IDs: {sorted(missing)}. "
-        f"Phase 61 added I071-I078 explicitly; if more were lost, investigate."
+        f"Phase 77 added I071-I078 explicitly; if more were lost, investigate."
     )
     assert not extra, (
         f"architecture.yml contains UNEXPECTED invariant IDs: {sorted(extra)}. "
@@ -114,7 +114,7 @@ def test_phase61_g1_architecture_yml_has_expected_invariant_ids() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_phase61_g2_claude_md_and_architecture_yml_invariant_sets_match() -> None:
+def test_phase77_g2_claude_md_and_architecture_yml_invariant_sets_match() -> None:
     """Both files MUST declare the same invariant IDs. Catches drift in either
     direction (added to one but not the other, or removed from one but not other).
     """
@@ -130,7 +130,7 @@ def test_phase61_g2_claude_md_and_architecture_yml_invariant_sets_match() -> Non
     )
     assert not only_in_claude, (
         f"Invariants in CLAUDE.md but NOT in architecture.yml: {sorted(only_in_claude)}. "
-        f"This is the v54.8 carryover drift — Phase 61 closed I071-I078; if more "
+        f"This is the v54.8 carryover drift — Phase 77 closed I071-I078; if more "
         f"appear here, add them to architecture.yml OR remove from CLAUDE.md."
     )
 
@@ -140,7 +140,7 @@ def test_phase61_g2_claude_md_and_architecture_yml_invariant_sets_match() -> Non
 # ---------------------------------------------------------------------------
 
 
-def test_phase61_g3_i079_scope_is_correct_no_orphan() -> None:
+def test_phase77_g3_i079_scope_is_correct_no_orphan() -> None:
     """I079's parsed `scope` field must be the P3-ARCHDEBT template scope,
     NOT I070's health scope (which was orphaned in Phase 60's I079 insertion).
 
@@ -164,11 +164,11 @@ def test_phase61_g3_i079_scope_is_correct_no_orphan() -> None:
     )
 
 
-def test_phase61_g3b_i070_scope_is_correct() -> None:
+def test_phase77_g3b_i070_scope_is_correct() -> None:
     """Companion check: I070 must have its OWN health scope (not empty/missing).
 
     Phase 60 left I070 without a scope (the scope line was left dangling at
-    line 134 of the original file). Phase 61 restores it.
+    line 134 of the original file). Phase 77 restores it.
     """
     invariants = _load_invariants_from_yaml()
     i070 = next((inv for inv in invariants if inv.get("id") == "I070"), None)
@@ -177,7 +177,7 @@ def test_phase61_g3b_i070_scope_is_correct() -> None:
     scope = i070.get("scope", "")
     assert "health" in scope.lower(), (
         f"I070 scope is wrong: {scope!r}. Expected health-related scope "
-        f"(lingwen-health invariant). Phase 61 restored I070 scope."
+        f"(lingwen-health invariant). Phase 77 restored I070 scope."
     )
 
 
@@ -187,7 +187,7 @@ def test_phase61_g3b_i070_scope_is_correct() -> None:
 
 
 @pytest.mark.parametrize("invariant_id", [f"I{n:03d}" for n in range(71, 79)])
-def test_phase61_g4_i071_to_i078_rule_has_content_and_keywords(
+def test_phase77_g4_i071_to_i078_rule_has_content_and_keywords(
     invariant_id: str,
 ) -> None:
     """Each I071-I078 invariant must have a non-empty `rule` field AND that

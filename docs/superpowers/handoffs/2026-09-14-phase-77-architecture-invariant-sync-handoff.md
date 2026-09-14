@@ -1,4 +1,4 @@
-# Phase 61 Architecture Invariant Sync (CLAUDE.md ↔ architecture.yml) — Handoff
+# Phase 77 Architecture Invariant Sync (CLAUDE.md ↔ architecture.yml) — Handoff
 
 > **目标**: 闭环 v54.8 已知 carryover — 补 `.lingwen/architecture.yml` 缺失的 I071-I078 (8 个 invariant) + 修复 I079 scope 错位 bug + 4 regression guards 防止未来 drift 复发。
 > **承接**: v54.8 (Phase 60 P3-ARCHDEBT spec template) session 总结的 "Carried over to future sessions"。
@@ -45,7 +45,7 @@ PyYAML 在遇到 mapping 重复 key 时**静默取最后一个值**,所以 I079 
 
 ### 2.3 副发现: version field 长期 stale
 
-`.lingwen/architecture.yml` 的 `version: "48.0"` 字段从 Phase 50 后未更新(CLAUDE.md 已 v54.8)。本 phase 一并 bump 到 v54.9,long comment 简述 Phase 61 修复内容。
+`.lingwen/architecture.yml` 的 `version: "48.0"` 字段从 Phase 50 后未更新(CLAUDE.md 已 v54.8)。本 phase 一并 bump 到 v54.9,long comment 简述 Phase 77 修复内容。
 
 ## 3. 验证
 
@@ -75,7 +75,7 @@ I079: all future P3-ARCHDEBT specs; template file lives at docs/superpowers/spec
 
 ## 4. 4 regression guards (C2)
 
-`tests/test_phase61_architecture_invariant_sync.py` 4 guards:
+`tests/test_phase77_architecture_invariant_sync.py` 4 guards:
 
 | Guard | 断言 |
 |-------|------|
@@ -90,10 +90,10 @@ I079: all future P3-ARCHDEBT specs; template file lives at docs/superpowers/spec
 
 | Commit | Subject | Files | +/- |
 |--------|---------|-------|-----|
-| **C0** | `docs(phase-61): spec + handoff` | `docs/superpowers/specs/2026-09-14-phase-61-architecture-invariant-sync-design.md` + `docs/superpowers/handoffs/2026-09-14-phase-61-architecture-invariant-sync-handoff.md` | +400 |
+| **C0** | `docs(phase-77): spec + handoff` | `docs/superpowers/specs/2026-09-14-phase-77-architecture-invariant-sync-design.md` + `docs/superpowers/handoffs/2026-09-14-phase-77-architecture-invariant-sync-handoff.md` | +400 |
 | **C1** | `chore(architecture): add I071-I078 + restore I070 scope + bump v54.9` | `.lingwen/architecture.yml` | +24 / -2 |
-| **C2** | `test(phase-61): 4 regression guards for CLAUDE.md ↔ architecture.yml sync` | `tests/test_phase61_architecture_invariant_sync.py` | +120 |
-| **C3** | `docs(phase-61): CLAUDE.md v54.9 + MEMORY pointer` | `CLAUDE.md` + `MEMORY.md` | +5 |
+| **C2** | `test(phase-77): 4 regression guards for CLAUDE.md ↔ architecture.yml sync` | `tests/test_phase77_architecture_invariant_sync.py` | +120 |
+| **C3** | `docs(phase-77): CLAUDE.md v54.9 + MEMORY pointer` | `CLAUDE.md` + `MEMORY.md` | +5 |
 
 ## 6. Lessons
 
@@ -111,7 +111,7 @@ CLAUDE.md narrative 显示 I001-I079 (79 个),实际 invariant table 只有 37 �
 
 ### 6.4 Lesson 4: CLAUDE.md ↔ architecture.yml 应该有双向 sync guard
 
-CLAUDE.md 是 narrative(人类阅读 + grep-friendly),architecture.yml 是 machine-readable(AI 工具读)。两者的 invariant set 必须完全一致 — 但**只有 G2 set diff guard** 能 enforce。Phase 61 引入此 guard 后,未来添加 invariant 时如果忘了 sync 任一侧,pytest 会 fail。
+CLAUDE.md 是 narrative(人类阅读 + grep-friendly),architecture.yml 是 machine-readable(AI 工具读)。两者的 invariant set 必须完全一致 — 但**只有 G2 set diff guard** 能 enforce。Phase 77 引入此 guard 后,未来添加 invariant 时如果忘了 sync 任一侧,pytest 会 fail。
 
 ## 7. Future carryovers
 
@@ -121,9 +121,9 @@ CLAUDE.md 是 narrative(人类阅读 + grep-friendly),architecture.yml 是 machi
 
 ```
 .lingwen/architecture.yml                                       | +24 / -2
-docs/superpowers/specs/2026-09-14-phase-61-architecture-invariant-sync-design.md | NEW (+200)
-docs/superpowers/handoffs/2026-09-14-phase-61-architecture-invariant-sync-handoff.md | NEW (+180)
-tests/test_phase61_architecture_invariant_sync.py               | NEW (+120)
+docs/superpowers/specs/2026-09-14-phase-77-architecture-invariant-sync-design.md | NEW (+200)
+docs/superpowers/handoffs/2026-09-14-phase-77-architecture-invariant-sync-handoff.md | NEW (+180)
+tests/test_phase77_architecture_invariant_sync.py               | NEW (+120)
 CLAUDE.md                                                       | +5
 MEMORY.md                                                        | +1
 ```
