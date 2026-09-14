@@ -108,7 +108,7 @@ def inject_story_contract(context: Dict[str, Any], project_root: str | Path | No
     """Standalone function for hooks.yaml integration.
 
     This is the function called by the hooks.yaml trigger:
-        module: "infra.story_contracts.injector"
+        module: "lingwen_story_contracts.injector"
         method: "inject_story_contract"
 
     Args:
