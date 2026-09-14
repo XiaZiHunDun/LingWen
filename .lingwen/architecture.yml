@@ -165,6 +165,9 @@ invariants:
   - id: I082   # ★ Phase 81 NEW
     rule: "packages/lingwen-di/ 是 Dependency Injection Layer 系统 (ZIO Layer 启发: Tag + Layer + Runtime + Layer组合/zip/flat_map/map + from_service/from_service_with_deps + make/make_with_deps + provide 装饰器 + get_runtime/reset_runtime 全局单例, 8 symbols + 1 sub-module: layer) 的唯一实包；infra.di.* 和 infra/di/ 路径非法 (Phase 81 P3-ARCHDEBT infra/di 全量迁移，309 LOC + 2 source files + 1 test file [MIGRATE] + 0 production consumer [only test consumers in tests/test_infra_modules.py] + 1 in-place docstring fixup [tests/test_infra_init_no_deferred_re_exports.py] + TRUE LEAF package [0 workspace deps, only stdlib: logging + dataclasses + typing])"
     severity: error
+  - id: I083   # ★ Phase 82 NEW
+    rule: "packages/lingwen-util/ 是 Retry helper (opencode retry.ts 启发: RetryConfig + retry 同步装饰器 + retry_async 异步 + with_retry 包装 + is_transient_error 瞬时错误检测 + backoff_delay 退避计算, 6 symbols + 1 sub-module: retry) 的唯一实包；infra.util.* 和 infra/util/ 路径非法 (Phase 82 P3-ARCHDEBT infra/util 全量迁移，338 LOC + 2 source files + 0 test file MIGRATE + 2 in-place consumer fixups [infra/__init__.py:17 re-export + tests/test_phase18_10_stale_imports.py:18 allowlist removal] + NOT-LEAF package [1 workspace dep: lingwen-errors for error classes NetworkError/TimeoutError/ServiceUnavailableError + is_instance helper])"
+    severity: error
 
 # 模块边界（明确每个模块的公共 API 和依赖）
 module_boundaries:
