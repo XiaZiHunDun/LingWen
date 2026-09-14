@@ -137,8 +137,8 @@ invariants:
   - id: I073   # ★ Phase 51 NEW
     rule: "packages/lingwen-project-characters/ 是项目角色名抽取（load_project_character_names + load_agency_target_characters）的唯一实包；infra.project_characters.* 路径非法 (Phase 51 P3-ARCHDEBT prose 簇)"
     severity: error
-  - id: I074   # ★ Phase 53+53c+53d+53e NEW
-    rule: "infra/tools/legacy/ + 顶层 tools/legacy/ + infra/event_sourcing/ + infra/core/ + infra/studio/ + infra/novel-factory/ 6 个零消费者目录已删；其下任何子目录或文件路径非法 (Phase 53 + 53c + 53d + 53e P3-ARCHDEBT 残留清理，~12868 LOC dead code + 2 orphan runtime artifacts)"
+  - id: I074   # ★ Phase 53+53c+53d+53e+78 NEW
+    rule: "infra/tools/legacy/ + 顶层 tools/legacy/ + infra/event_sourcing/ + infra/core/ + infra/studio/ + infra/novel-factory/ + infra/llm_benchmarks/ + infra/poc/ 8 个零消费者目录已删；其下任何子目录或文件路径非法 (Phase 53 + 53c + 53d + 53e + 78 P3-ARCHDEBT 残留清理，~14722 LOC dead code + 2 orphan runtime artifacts)"
     severity: error
   - id: I075   # ★ Phase 54 NEW
     rule: "packages/lingwen-persistence/ 是 SQLite 持久化层（connection + paths + registry + schemas + sqlite_config + write_chapter + write_workspace_api + sqlite_storage_adapter shim 共 24 symbols）的唯一实包；infra.persistence.* 和 infra/persistence/ 路径非法 (Phase 54 P3-ARCHDEBT infra/persistence 全量迁移)"
@@ -277,14 +277,6 @@ module_boundaries:
     purpose: "Characters, factions, lore, timeline, proposals (SQLite)"
     exports: ["init_schema", "get_connection", "queries.*", "markdown_roundtrip.*", "agent_extractors.extract_proposals_from_chapters"]
     consumers: ["apps.studio_api.routes.world"]
-  llm_benchmarks:
-    purpose: "Phase 120 LLM provider benchmark tool (dev/CI only, NOT production code path)"
-    path: infra/llm_benchmarks/
-    exports: ["run_benchmark", "get_provider_llm", "MockLLMService", "CallResult", "ProviderMetrics", "compute_metrics", "consistency_score", "quality_composite", "recommend_priority"]
-    consumers: ["(manual CLI only; benchmark results gitignored under infra/llm_benchmarks/results/)"]
-    notes:
-      - "Bypasses infra.llm_service.LLMService (plugin_manager discovery is broken)"
-      - "Direct instantiation via lingwen_llm.providers.get_provider_class"
   lingwen_shared:
     purpose: "Phase 124 v16.1 + Phase 126 v16.5 #N.7 — Single source of truth for cross-context DTO contracts (Pydantic v2 → TS codegen)"
     path: packages/lingwen-shared/src/lingwen_shared/contracts/
