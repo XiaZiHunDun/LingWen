@@ -1,12 +1,15 @@
 <script setup>
+import { computed } from 'vue'
+
 const props = defineProps({
   asset: { type: Object, required: true },
-  projectSlug: { type: String, required: true },
 })
 
 const emit = defineEmits(['regenerate', 'delete'])
 
-const label = props.asset.type === 'cover' ? '封面' : `第 ${props.asset.chapter_num} 章`
+const label = computed(() =>
+  props.asset.type === 'cover' ? '封面' : `第 ${props.asset.chapter_num} 章`
+)
 </script>
 
 <template>
@@ -14,7 +17,7 @@ const label = props.asset.type === 'cover' ? '封面' : `第 ${props.asset.chapt
     <img
       :src="asset.url"
       :alt="label"
-      class="thumb"
+      class="thumb illustration-thumb"
       data-testid="illustration-thumb"
       loading="lazy"
     />
@@ -23,8 +26,18 @@ const label = props.asset.type === 'cover' ? '封面' : `第 ${props.asset.chapt
       <span class="style">{{ asset.style_preset }}</span>
     </div>
     <div class="actions">
-      <button data-testid="regenerate-btn" @click="emit('regenerate', asset.id)">↻ 重生</button>
-      <button data-testid="delete-btn" @click="emit('delete', asset.id)">🗑 删除</button>
+      <button
+        class="regenerate-btn"
+        data-testid="regenerate-btn"
+        :aria-label="`重生 ${label}`"
+        @click="emit('regenerate', asset.id)"
+      >↻ 重生</button>
+      <button
+        class="delete-btn"
+        data-testid="delete-btn"
+        :aria-label="`删除 ${label}`"
+        @click="emit('delete', asset.id)"
+      >🗑 删除</button>
     </div>
   </div>
 </template>
@@ -33,10 +46,10 @@ const label = props.asset.type === 'cover' ? '封面' : `第 ${props.asset.chapt
 .illustration-card {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--color-border, #2a2a3a);
+  border: 1px solid var(--border-color, #e5e7eb);
   border-radius: 8px;
   overflow: hidden;
-  background: var(--color-surface, #14141e);
+  background: var(--surface-elevated, #ffffff);
 }
 .thumb {
   width: 100%;
@@ -49,6 +62,7 @@ const label = props.asset.type === 'cover' ? '封面' : `第 ${props.asset.chapt
   justify-content: space-between;
   padding: 8px;
   font-size: 12px;
+  color: var(--text-muted, #4b5563);
 }
 .actions {
   display: flex;
@@ -59,13 +73,17 @@ const label = props.asset.type === 'cover' ? '封面' : `第 ${props.asset.chapt
   flex: 1;
   font-size: 12px;
   padding: 6px 8px;
-  border: 1px solid var(--color-border, #2a2a3a);
+  border: 1px solid var(--border-color, #e5e7eb);
   border-radius: 4px;
   background: transparent;
-  color: var(--color-text, #d0d0e0);
+  color: inherit;
   cursor: pointer;
 }
 .actions button:hover {
-  background: var(--color-hover, #2a2a3a);
+  background: var(--bg-elevated, #f0ede6);
+}
+.actions button:focus-visible {
+  outline: 2px solid var(--color-accent, #7c3aed);
+  outline-offset: 2px;
 }
 </style>
