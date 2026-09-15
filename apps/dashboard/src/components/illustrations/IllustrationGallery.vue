@@ -35,7 +35,7 @@ function onDelete(id) {
 
 <template>
   <div class="illustration-gallery" data-testid="illustration-gallery">
-    <div v-if="filtered.length === 0" class="empty illustration-gallery-empty" data-testid="empty-state" role="status">
+    <div v-if="filtered.length === 0" class="illustration-gallery-empty-state" data-testid="empty-state" role="status">
       尚未生成任何插图
     </div>
     <div v-else class="grid illustration-gallery-grid">
