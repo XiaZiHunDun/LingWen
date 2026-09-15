@@ -1,7 +1,7 @@
 # 待办事项列表
 
-> **最后更新**: 2026-09-14 (Phase 83 P3-ARCHDEBT infra/config → packages/lingwen-config 真迁移 (TRUE LEAF + pyyaml), v54.15 ready for ff-merge)
-> **更新者**: 协调者（Phase 83 真迁移第五例 闭环 — **ARCHDEBT-CANDIDATES.md Top 5 闭环** (5/5 真迁移 + 8 zero-consumer dirs): 7 atomic commits C0-C6; I084 NEW invariant; 11/11 NEW regression guards + 13/13 prior-phase preserved; cluster cumulative Phase 53-83 = ~19102 LOC dead code + 8 zero-consumer dirs + 5 真迁移 packages (LEAF + NOT-LEAF + TRUE LEAF + NOT-LEAF retry + TRUE LEAF config); v54.14 → v54.15）
+> **最后更新**: 2026-09-15 (Phase 84 P3-ARCHDEBT infra/tools/workflow/lib → packages/lingwen-workflow 真迁移 (NOT-LEAF, 2 workspace deps), v54.16 ready for ff-merge)
+> **更新者**: 协调者（Phase 84 真迁移第六例 闭环 — pattern verification across 6 package shapes [LEAF + NOT-LEAF + TRUE LEAF + NOT-LEAF retry + TRUE LEAF config + NOT-LEAF workflow]: 7 atomic commits C0-C6; I085 NEW invariant; 11/11 NEW regression guards GREEN at C5 (G9 closed at C6); 42/43 C5 tests PASS; 65/66 functional pytest gate at packages/lingwen-workflow/tests/ [1 pre-existing failure per Phase 81 lesson]; cluster cumulative Phase 53-84 = ~20114 LOC dead code + 8 zero-consumer dirs + 6 真迁移 packages; v54.15 → v54.16）
 > **优先级**: P0 > P1 > P2 > P3
 > **事实来源**: 本仓库当前版本在 `CLAUDE.md` v54.10；并行开发入口见根 `COORDINATION.md`
 

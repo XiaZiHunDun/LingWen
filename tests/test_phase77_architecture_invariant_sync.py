@@ -85,7 +85,7 @@ def _get_invariant_ids_from_claude_md() -> set[str]:
 
 
 def test_phase77_g1_architecture_yml_has_expected_invariant_ids() -> None:
-    """I001-I005 + I048-I084 = 42 invariants expected in architecture.yml.
+    """I001-I005 + I048-I085 = 43 invariants expected in architecture.yml.
 
     The I006-I047 numbering gap is HISTORICAL (never declared in CLAUDE.md
     invariant table either — see G2). This guard prevents silently shrinking
@@ -96,12 +96,16 @@ def test_phase77_g1_architecture_yml_has_expected_invariant_ids() -> None:
     TRUE LEAF) — bumped 39 → 40. Phase 82 added I083 (lingwen-util
     canonical module, NOT-LEAF retry) — bumped 40 → 41. Phase 83 added I084
     (lingwen-config canonical module, TRUE LEAF + pyyaml) — bumped 41 → 42.
-    **MILESTONE**: ARCHDEBT-CANDIDATES.md Top 5 闭环 (5/5 真迁移 完成).
+    Phase 84 added I085 (lingwen-workflow canonical module, NOT-LEAF + 2 deps
+    lingwen-storage + lingwen-pipeline forward-only) — bumped 42 → 43.
+    **MILESTONE**: ARCHDEBT-REAL cycle 第六例 (Phase 84 workflow) — 6 真迁移 packages
+    pattern verification across [LEAF + NOT-LEAF + TRUE LEAF + NOT-LEAF retry + TRUE LEAF
+    config + NOT-LEAF workflow].
     """
     ids = _get_invariant_ids_from_yaml()
     expected = (
         {f"I{n:03d}" for n in range(1, 6)}  # I001-I005
-        | {f"I{n:03d}" for n in range(48, 85)}  # I048-I084
+        | {f"I{n:03d}" for n in range(48, 86)}  # I048-I085
     )
     missing = expected - ids
     extra = ids - expected
@@ -113,7 +117,7 @@ def test_phase77_g1_architecture_yml_has_expected_invariant_ids() -> None:
         f"architecture.yml contains UNEXPECTED invariant IDs: {sorted(extra)}. "
         f"Either update G1 expected set OR investigate accidental additions."
     )
-    assert len(ids) == 42, f"Expected exactly 42 invariants, got {len(ids)}: {sorted(ids)}"
+    assert len(ids) == 43, f"Expected exactly 43 invariants, got {len(ids)}: {sorted(ids)}"
 
 
 # ---------------------------------------------------------------------------
