@@ -49,6 +49,10 @@
         <p class="empty-hint">调整全站字号，不影响正文排版宽度。</p>
         <TextScaleToggle />
       </div>
+
+      <div class="settings-block settings-block--divider illustration-prefs-panel" data-testid="illustration-prefs-panel">
+        <ProjectSettingsIllustration v-model="illustrationSettings" />
+      </div>
     </section>
 
     <details
@@ -215,6 +219,7 @@ import PageLeadBar from '../components/PageLeadBar.vue';
 import TextScaleToggle from '../components/TextScaleToggle.vue';
 import SidebarSystemStatusBody from '../components/SidebarSystemStatusBody.vue';
 import SidebarCostBanner from '../components/SidebarCostBanner.vue';
+import ProjectSettingsIllustration from '../components/illustrations/ProjectSettingsIllustration.vue';
 import { resolveNavCreationMode } from '../config/dashboardNavByMode.js';
 import { apiConnectivity } from '../api/connectivity.js';
 import { useStudioProject, useWorkflowSocket, useFilteredPageError } from '../composables/index.js';
@@ -267,6 +272,14 @@ const advancedBudgetLoaded = ref(false);
 const productionEnvVars = PRODUCTION_ENV_VARS;
 const apiKeyEnvVars = API_KEY_ENV_VARS;
 const editTargets = BUDGET_EDIT_TARGETS;
+
+// Phase 90 Task 17: 插图偏好 v1 stub — 内存态，v2 接 /api/projects/{slug}/settings 持久化
+const illustrationSettings = ref({
+  style_preset: 'ink',
+  auto_generate: false,
+  max_assets: 200,
+  confirm_before_generate: true,
+});
 
 const windowRows = computed(() => {
   const fromApi = formatWindowBudgetRows(budgetWindows.value || {});
