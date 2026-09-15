@@ -12,7 +12,7 @@
 | 范围 | 封面 + 章节插图（不含角色/地点头像） |
 | Provider | MiniMax multimodal（复用现有 `lingwen-llm-service`） |
 | 触发模式 | 混合：写栏手动按钮 + 项目设置可勾选"章节完成自动生成" |
-| Prompt 上下文 | 章节文本 + `load_project_character_names` 角色档案 |
+| Prompt 上下文 | 章节文本 + `load_agency_target_characters` 角色档案 |
 | 资产存储 | `<project_root>/assets/covers/` + `assets/illustrations/chapter-NNN/`，每图配 `.meta.json` sidecar |
 | UI 集成面 | `WriteWorkspacePage` (生成按钮) + `LibraryPage` (资产 tab) + `ProjectSettingsPage` (插图偏好) |
 | 风格预设 | 3 固定（古风水墨 / 现代写实 / 动漫厚涂）+ 自定义 prompt override |
@@ -92,7 +92,7 @@
     project_slug: str,
     type: "chapter" | "cover",
     chapter_num: int | null,   // cover 时为 null
-    style_preset: str,         // "ink" | "realistic" | "anime"
+    style_preset: "ink" | "realistic" | "anime",  // enum 严格
     custom_prompt: str | null  // 用户补充描述
   }
        │
@@ -118,7 +118,7 @@
 
 ### 2.2 自动生成流程（章节完成 hook）
 
-完全相同 pipeline，触发点 = `chapter_marked_complete` event → 后台 fire-and-forget 调用。失败仅写 log（不阻塞章节完成）。ProjectSettings 勾选启用。
+完全相同 pipeline，触发点 = `lingwen-persistence.write_chapter` 完成（章节 marked status=completed）→ 后台 task 调 `/api/illustrations/generate` 同步接口（不阻塞章节保存路径）。失败仅写 log（不阻塞章节完成）。ProjectSettings 勾选启用。后台 task 在 `apps/studio_api/background.py` 已有任务调度基础（沿用 P2-RESTART Phase 模式），新增 `illustrations_auto_generate_task` 注册。
 
 ### 2.3 错误处理（每阶段独立 error code）
 
@@ -151,7 +151,7 @@
 }
 ```
 
-`extraction_confidence < 0.5` 时前端弹"抽取置信度低"提示，用户可手动补充 prompt 触发重生。
+`extraction_confidence` 为 0-1 浮点数（LLM 自我评估），`< 0.5` 时前端弹"抽取置信度低"提示，用户可手动补充 prompt 触发重生。阈值 0.5 在 ProjectSettings 可配置（默认 0.5）。
 
 ### 2.5 资产文件结构
 
@@ -207,7 +207,7 @@
 
 ### 3.4 结果展示
 - 写栏右侧"↻ 重生" + "⤓ 下载" 按钮
-- 库资产 tab：3 列 grid，type 过滤（章节/资产/角色）
+- 库资产 tab：3 列 grid，按 `type=cover|chapter` 过滤（v1 仅这两种，角色类目 v2 再加）
 - 缩略图懒加载
 
 ### 3.5 项目设置 · 插图偏好
@@ -272,7 +272,7 @@
 ### 5.1 后端
 - [ ] `packages/lingwen-illustrations/` 完整包（5 子模块 + tests/ + pyproject.toml）
 - [ ] `apps/studio_api/routes/illustrations.py`（4 路由）
-- [ ] `pyproject.toml` workspace member + I052/I057/I073 间接通过 deps 引入
+- [ ] `pyproject.toml` workspace member 声明 + `dependencies = ["lingwen-llm-service", "lingwen-project-characters", "lingwen-paths"]`
 - [ ] `.lingwen/architecture.yml` I087 invariant
 
 ### 5.2 前端
