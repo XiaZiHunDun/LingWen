@@ -11,10 +11,12 @@ resolution-markers = [
 members = [
     "lingwen-cache",
     "lingwen-cli",
+    "lingwen-config",
     "lingwen-core",
     "lingwen-coverage-gate",
     "lingwen-creator",
     "lingwen-cross-volume",
+    "lingwen-di",
     "lingwen-errors",
     "lingwen-full-check-report",
     "lingwen-got",
@@ -42,11 +44,14 @@ members = [
     "lingwen-schema",
     "lingwen-shared",
     "lingwen-storage",
+    "lingwen-story-contracts",
     "lingwen-studio-api",
     "lingwen-studio-batch-runner",
     "lingwen-studio-batch-streamer",
     "lingwen-studio-batch-templates",
     "lingwen-studio-registry",
+    "lingwen-subplot",
+    "lingwen-util",
     "lingwen-world-db",
     "lingwen-world-model",
 ]
@@ -678,6 +683,17 @@ requires-dist = [
 provides-extras = ["test"]
 
 [[package]]
+name = "lingwen-config"
+version = "0.1.0"
+source = { editable = "packages/lingwen-config" }
+dependencies = [
+    { name = "pyyaml" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pyyaml" }]
+
+[[package]]
 name = "lingwen-core"
 version = "0.1.0"
 source = { editable = "packages/lingwen-core" }
@@ -745,6 +761,11 @@ requires-dist = [
     { name = "lingwen-shared", editable = "packages/lingwen-shared" },
     { name = "pyyaml", specifier = ">=6.0" },
 ]
+
+[[package]]
+name = "lingwen-di"
+version = "0.1.0"
+source = { editable = "packages/lingwen-di" }
 
 [[package]]
 name = "lingwen-errors"
@@ -1229,6 +1250,11 @@ requires-dist = [
 provides-extras = ["test"]
 
 [[package]]
+name = "lingwen-story-contracts"
+version = "0.1.0"
+source = { editable = "packages/lingwen-story-contracts" }
+
+[[package]]
 name = "lingwen-studio-api"
 version = "16.0.0"
 source = { editable = "apps/studio_api" }
@@ -1321,6 +1347,28 @@ requires-dist = [
     { name = "lingwen-paths", editable = "packages/lingwen-paths" },
     { name = "lingwen-project-config", editable = "packages/lingwen-project-config" },
 ]
+
+[[package]]
+name = "lingwen-subplot"
+version = "0.1.0"
+source = { editable = "packages/lingwen-subplot" }
+dependencies = [
+    { name = "lingwen-core" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "lingwen-core", editable = "packages/lingwen-core" }]
+
+[[package]]
+name = "lingwen-util"
+version = "0.1.0"
+source = { editable = "packages/lingwen-util" }
+dependencies = [
+    { name = "lingwen-errors" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "lingwen-errors", editable = "packages/lingwen-errors" }]
 
 [[package]]
 name = "lingwen-world-db"
