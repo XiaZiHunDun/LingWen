@@ -36,11 +36,20 @@ class IllustrationMetadata:
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> "IllustrationMetadata":
-        return cls(**d)
+        try:
+            return cls(**d)
+        except (KeyError, TypeError) as e:
+            from lingwen_illustrations.exceptions import LoadError
+            raise LoadError(f"invalid metadata dict: {e}") from e
 
     @classmethod
     def from_json(cls, raw: str) -> "IllustrationMetadata":
-        return cls.from_dict(json.loads(raw))
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError as e:
+            from lingwen_illustrations.exceptions import LoadError
+            raise LoadError(f"invalid metadata JSON: {e}") from e
+        return cls.from_dict(data)
 
 
 __all__ = ["IllustrationMetadata"]

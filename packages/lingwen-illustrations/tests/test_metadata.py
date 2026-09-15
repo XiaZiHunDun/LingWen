@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import json
+from dataclasses import FrozenInstanceError
 
+import pytest
+from lingwen_illustrations.exceptions import LoadError
 from lingwen_illustrations.metadata import IllustrationMetadata
 
 
@@ -53,9 +56,29 @@ def test_from_dict_roundtrip():
     meta = _sample_metadata()
     d = meta.to_dict()
     restored = IllustrationMetadata.from_dict(d)
-    assert restored.id == meta.id
-    assert restored.chapter_num == meta.chapter_num
-    assert restored.scene_json == meta.scene_json
+    assert restored == meta
+
+
+def test_from_dict_missing_field_raises_load_error():
+    d = _sample_metadata().to_dict()
+    del d["created_at"]
+    with pytest.raises(LoadError) as exc:
+        IllustrationMetadata.from_dict(d)
+    assert "invalid metadata dict" in str(exc.value).lower()
+
+
+def test_from_dict_extra_field_raises_load_error():
+    d = _sample_metadata().to_dict()
+    d["unknown_field"] = "oops"
+    with pytest.raises(LoadError) as exc:
+        IllustrationMetadata.from_dict(d)
+    assert "invalid metadata dict" in str(exc.value).lower()
+
+
+def test_from_json_invalid_json_raises_load_error():
+    with pytest.raises(LoadError) as exc:
+        IllustrationMetadata.from_json("not valid json{")
+    assert "invalid metadata json" in str(exc.value).lower()
 
 
 def test_from_json_roundtrip():
@@ -81,3 +104,9 @@ def test_chapter_num_optional_for_cover():
     )
     d = meta.to_dict()
     assert d["chapter_num"] is None
+
+
+def test_frozen_immutability():
+    meta = _sample_metadata()
+    with pytest.raises(FrozenInstanceError):
+        meta.id = "tampered"
