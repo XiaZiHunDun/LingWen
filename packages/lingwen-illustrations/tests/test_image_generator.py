@@ -48,6 +48,26 @@ async def test_generate_rate_limit_raises_with_retry_after(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_generate_rate_limit_http_date_retry_after_falls_back():
+    """IMPORTANT: non-numeric retry-after (HTTP-date form per RFC 7231) must not crash."""
+    fake_response = MagicMock()
+    fake_response.status_code = 429
+    fake_response.headers = {"retry-after": "Wed, 21 Oct 2026 07:28:00 GMT"}
+    fake_response.raise_for_status.side_effect = Exception("429")
+
+    mock_client = AsyncMock()
+    mock_client.post.return_value = fake_response
+    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_client.__aexit__ = AsyncMock(return_value=None)
+
+    with patch("lingwen_illustrations.image_generator.httpx.AsyncClient", return_value=mock_client):
+        with pytest.raises(GenerateError) as exc:
+            await generate(prompt="x", api_key="k", api_host="https://api.test")
+    assert exc.value.retryable is True
+    assert exc.value.retry_after == 60  # fallback for non-numeric header
+
+
+@pytest.mark.asyncio
 async def test_generate_network_error_raises(monkeypatch):
     mock_client = AsyncMock()
     mock_client.post.side_effect = ConnectionError("network down")

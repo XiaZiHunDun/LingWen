@@ -55,7 +55,13 @@ async def generate(
         raise GenerateError(f"image API network error: {e}") from e
 
     if resp.status_code == 429:
-        retry_after = int(resp.headers.get("retry-after", "30"))
+        # retry-after may be integer seconds OR HTTP-date (RFC 7231 §7.1.3).
+        # Fall back to 60s on non-numeric to keep uniform GenerateError contract.
+        raw = resp.headers.get("retry-after", "30")
+        try:
+            retry_after = int(raw)
+        except ValueError:
+            retry_after = 60
         raise GenerateError("rate limited", retry_after=retry_after)
 
     try:
