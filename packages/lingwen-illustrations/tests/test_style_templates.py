@@ -90,3 +90,48 @@ def test_compose_includes_all_characters():
     assert "苏婉儿" in prompt
     assert "黑发" in prompt
     assert "白衣" in prompt
+
+
+def test_compose_character_missing_name_raises():
+    scene = {
+        "subject": "x", "scene": "y", "mood": "z",
+        "characters_in_scene": [{"key_visual": "黑发"}],  # no name
+        "extraction_confidence": 0.5,
+    }
+    with pytest.raises(ComposeError) as exc:
+        compose("ink", scene_json=scene, custom_prompt=None)
+    assert "missing 'name'" in str(exc.value)
+
+
+def test_compose_character_missing_key_visual_raises():
+    scene = {
+        "subject": "x", "scene": "y", "mood": "z",
+        "characters_in_scene": [{"name": "林渊"}],  # no key_visual
+        "extraction_confidence": 0.5,
+    }
+    with pytest.raises(ComposeError) as exc:
+        compose("ink", scene_json=scene, custom_prompt=None)
+    assert "missing 'key_visual'" in str(exc.value)
+
+
+def test_compose_no_double_punctuation():
+    """MEDIUM fix: trailing punctuation in preset + join char produced 留白构图，。"""
+    scene = {
+        "subject": "x", "scene": "y", "mood": "z",
+        "characters_in_scene": [], "extraction_confidence": 0.5,
+    }
+    prompt = compose("ink", scene_json=scene, custom_prompt=None)
+    assert "，。" not in prompt
+    assert ", 。" not in prompt
+    assert ",。" not in prompt
+
+
+def test_compose_custom_prompt_optional():
+    """MINOR fix: custom_prompt now defaults to None."""
+    scene = {
+        "subject": "x", "scene": "y", "mood": "z",
+        "characters_in_scene": [], "extraction_confidence": 0.5,
+    }
+    # No custom_prompt arg — should work
+    prompt = compose("ink", scene_json=scene)
+    assert "附加" not in prompt

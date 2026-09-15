@@ -15,15 +15,15 @@ from lingwen_illustrations.exceptions import ComposeError
 _STYLE_TEMPLATES: dict[str, str] = {
     "ink": (
         "古风水墨画风格，宣纸质感，淡墨晕染，"
-        "留白构图，"
+        "留白构图"
     ),
     "realistic": (
         "Photorealistic digital painting, high detail, "
-        "cinematic lighting, 8k resolution, "
+        "cinematic lighting, 8k resolution"
     ),
     "anime": (
         "Anime illustration style, vibrant colors, "
-        "clean linework, expressive characters, "
+        "clean linework, expressive characters"
     ),
 }
 
@@ -37,7 +37,7 @@ def compose(
     preset: str,
     *,
     scene_json: dict[str, Any],
-    custom_prompt: str | None,
+    custom_prompt: str | None = None,
 ) -> str:
     """Compose final image generation prompt from preset + scene + override.
 
@@ -51,7 +51,7 @@ def compose(
         Final prompt string for image API.
 
     Raises:
-        ComposeError: If preset is unknown or scene_json is malformed.
+        ComposeError: If preset is unknown or scene_json/character is malformed.
     """
     if preset not in _STYLE_TEMPLATES:
         raise ComposeError(f"unknown preset '{preset}'; choose from {list_presets()}")
@@ -67,9 +67,11 @@ def compose(
     parts.append(f"氛围: {scene_json['mood']}")
 
     for char in scene_json["characters_in_scene"]:
-        name = char.get("name", "未命名")
-        visual = char.get("key_visual", "")
-        parts.append(f"角色 {name}: {visual}")
+        if "name" not in char:
+            raise ComposeError(f"character dict missing 'name': {char}")
+        if "key_visual" not in char:
+            raise ComposeError(f"character dict missing 'key_visual': {char}")
+        parts.append(f"角色 {char['name']}: {char['key_visual']}")
 
     if custom_prompt:
         parts.append(f"附加: {custom_prompt}")
