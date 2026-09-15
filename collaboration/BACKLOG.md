@@ -1,7 +1,7 @@
 # 待办事项列表
 
-> **最后更新**: 2026-09-15 (Phase 84 P3-ARCHDEBT infra/tools/workflow/lib → packages/lingwen-workflow 真迁移 (NOT-LEAF, 2 workspace deps), v54.16 ready for ff-merge)
-> **更新者**: 协调者（Phase 84 真迁移第六例 闭环 — pattern verification across 6 package shapes [LEAF + NOT-LEAF + TRUE LEAF + NOT-LEAF retry + TRUE LEAF config + NOT-LEAF workflow]: 7 atomic commits C0-C6; I085 NEW invariant; 11/11 NEW regression guards GREEN at C5 (G9 closed at C6); 42/43 C5 tests PASS; 65/66 functional pytest gate at packages/lingwen-workflow/tests/ [1 pre-existing failure per Phase 81 lesson]; cluster cumulative Phase 53-84 = ~20114 LOC dead code + 8 zero-consumer dirs + 6 真迁移 packages; v54.15 → v54.16）
+> **最后更新**: 2026-09-15 (Phase 85 P3-ARCHDEBT infra/tools/consistency → MERGE into lingwen-quality consistency/ (ARCHDEBT-MIXED 第 2 例), v54.17 ready for ff-merge)
+> **更新者**: 协调者（Phase 85 MERGE 闭环 — 1 file MIGRATE (run_quality_checks.py 185 LOC → packages/lingwen-quality/src/lingwen_quality/consistency/) + 8 supporting DELETE (-22KB) + 3 in-place consumer fixups + I086 NEW invariant (extends I063 cluster); 5 atomic commits C0-C4; 11/11 NEW regression guards GREEN at C5 (G9 closed at C6); 18/19 C5 tests PASS; cluster cumulative Phase 53-85 = ~20136 LOC dead code + 8 zero-consumer dirs + 6 真迁移 + 1 MERGE; v54.16 → v54.17）
 > **优先级**: P0 > P1 > P2 > P3
 > **事实来源**: 本仓库当前版本在 `CLAUDE.md` v54.10；并行开发入口见根 `COORDINATION.md`
 
