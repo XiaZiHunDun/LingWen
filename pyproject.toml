@@ -125,6 +125,7 @@ members = [
     "packages/lingwen-util",   # ★ Phase 82 NEW (infra/util relocation)
     "packages/lingwen-config",   # ★ Phase 83 NEW (infra/config relocation)
     "packages/lingwen-workflow",   # ★ Phase 84 NEW (infra/tools/workflow/lib relocation)
+    "packages/lingwen-illustrations",   # ★ Phase 90 NEW (REQ-002 multimodal)
     "apps/studio_api",
 ]
 
@@ -174,6 +175,7 @@ lingwen-di = { workspace = true }   # ★ Phase 81 NEW (infra/di relocation, TRU
 lingwen-util = { workspace = true }   # ★ Phase 82 NEW (infra/util relocation, NOT-LEAF: 1 dep lingwen-errors)
 lingwen-config = { workspace = true }   # ★ Phase 83 NEW (infra/config relocation, TRUE LEAF + pyyaml dep)
 lingwen-workflow = { workspace = true }   # ★ Phase 84 NEW (infra/tools/workflow/lib relocation, NOT-LEAF: 2 deps lingwen-storage + lingwen-pipeline)
+lingwen-illustrations = { workspace = true }   # ★ Phase 90 NEW
 
 # ---------------------------------------------------------------------------
 # Tool configs (pyproject.toml 集中配置,避免散在多个 ini/tox)

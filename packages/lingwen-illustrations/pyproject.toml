@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-illustrations"
+version = "0.1.0"
+description = "LingWen canonical illustrations module (Phase 90 REQ-002 multimodal)"
+requires-python = ">=3.11"
+dependencies = [
+    "lingwen-llm-service",        # I057 — Stage 1 LLM extraction
+    "lingwen-project-characters", # I073 — character bible
+    "lingwen-paths",              # I052 — project root resolution
+]
+# NOT-LEAF — 3 workspace deps
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_illustrations"]

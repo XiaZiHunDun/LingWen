@@ -177,6 +177,10 @@ invariants:
   - id: I086   # ★ Phase 85 NEW
     rule: "packages/lingwen-quality/src/lingwen_quality/consistency/run_quality_checks.py 是 RunQualityChecks (run_quality_checks 函数, file-level integrity check no-op stub from Phase 53 rewrite) 的唯一实包；infra.tools.consistency.* 和 infra/tools/consistency/ 路径非法 (Phase 85 P3-ARCHDEBT infra/tools/consistency MERGE into lingwen-quality consistency/ subdir, 185 LOC + 1 source file MIGRATE + 8 supporting files DELETE [check_naming.py 4903 + integrity_checker.py 8616 + run_consistency_check.sh + 5 docs/data orphan files, all zero consumers except run_quality_checks's 1 prod consumer] + 3 in-place consumer fixups [packages/lingwen-pipeline/hooks/actions/run_checker.py:148 production function-body import + tests/hooks/test_actions.py:222 docstring + tests/hooks/test_actions.py:234,241 monkeypatch indirection + tests/test_phase53_p3_archdebt_dead_code_cleanup.py:5,173 historical reference update] + extends I063 cluster [FalsePositiveFilter + ProblemClassifier + RunQualityChecks = lingwen-quality canonical home for quality + consistency checkers])"
     severity: error
+  - id: I087
+    rule: "packages/lingwen-illustrations/ 是图片生成（封面 + 章节插图）的唯一实包；infra.illustrations.* 路径非法"
+    severity: error
+    scope: all future REQ-002 multimodal code
 
 # 模块边界（明确每个模块的公共 API 和依赖）
 module_boundaries:
