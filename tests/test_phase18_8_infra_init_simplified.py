@@ -9,6 +9,7 @@ Phase 18.8 目标:
 - 注：di 于 Phase 81 P3-ARCHDEBT 全量迁移至 packages/lingwen-di/
 - 注：util 于 Phase 82 P3-ARCHDEBT 全量迁移至 packages/lingwen-util/
 - 注：config 于 Phase 83 P3-ARCHDEBT 全量迁移至 packages/lingwen-config/
+- 注：tools/workflow/lib 于 Phase 84 P3-ARCHDEBT 全量迁移至 packages/lingwen-workflow/
 """
 
 from __future__ import annotations

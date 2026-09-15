@@ -163,7 +163,9 @@ def test_phase53d_infra_canonical_contents_preserved() -> None:
     infra/util/ was deleted in Phase 82 C3 (P3-ARCHDEBT true migration to
     packages/lingwen-util/).
     infra/config/ was deleted in Phase 83 C3 (P3-ARCHDEBT true migration to
-    packages/lingwen-config/). All eight are asserted gone separately below.
+    packages/lingwen-config/).
+    infra/tools/workflow/ was deleted in Phase 84 C3 (P3-ARCHDEBT true migration
+    to packages/lingwen-workflow/). All nine are asserted gone separately below.
     """
     infra_dir = REPO_ROOT / "infra"
     assert infra_dir.exists(), "infra/ directory must still exist"
@@ -207,6 +209,9 @@ def test_phase53d_infra_canonical_contents_preserved() -> None:
     )
     assert not (infra_dir / "config").exists(), (
         "infra/config/ must be gone (Phase 83 C3 P3-ARCHDEBT)"
+    )
+    assert not (infra_dir / "tools" / "workflow" / "lib").exists(), (
+        "infra/tools/workflow/lib/ must be gone (Phase 84 C3 P3-ARCHDEBT)"
     )
     # Guard against __pycache__ residue making .exists() spuriously True
     # (Phase 79 lesson: cp-cached bytecode survives git rm —dir).
