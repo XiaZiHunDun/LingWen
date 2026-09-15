@@ -19,6 +19,7 @@ from apps.studio_api.routes.ctx import RoutesContext
 from apps.studio_api.routes.cvg import register_cvg
 from apps.studio_api.routes.decisions import register_decisions
 from apps.studio_api.routes.health import register_health
+from apps.studio_api.routes.illustrations import register_illustrations
 from apps.studio_api.routes.overview import register_overview
 from apps.studio_api.routes.studio import register_studio
 from apps.studio_api.routes.workflows import register_workflows
@@ -33,6 +34,7 @@ def register_all_routes(app: FastAPI, ctx: RoutesContext) -> None:
     decorators previously nested inside create_app's closure.
     """
     register_health(app, ctx)
+    register_illustrations(app, ctx)
     register_overview(app, ctx)
     register_decisions(app, ctx)
     register_cvg(app, ctx)
@@ -51,6 +53,7 @@ __all__ = [
     "RoutesContext",
     "register_all_routes",
     "register_health",
+    "register_illustrations",
     "register_overview",
     "register_decisions",
     "register_cvg",
