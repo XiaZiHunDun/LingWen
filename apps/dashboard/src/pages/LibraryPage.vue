@@ -22,6 +22,30 @@
           新建
         </button>
       </div>
+      <nav class="library-tab-bar tab-bar" data-testid="library-tab-bar">
+        <button
+          type="button"
+          class="tab-btn library-tab-btn library-tab-projects"
+          :class="{ 'tab-btn--active': activeTab === 'projects' }"
+          data-tab="projects"
+          data-testid="library-tab-projects"
+          @click="activeTab = 'projects'"
+        >
+          项目 ({{ projects.length }})
+        </button>
+        <button
+          type="button"
+          class="tab-btn library-tab-btn library-tab-assets"
+          :class="{ 'tab-btn--active': activeTab === 'assets' }"
+          data-tab="assets"
+          data-testid="library-tab-assets"
+          @click="activeTab = 'assets'"
+        >
+          资产
+        </button>
+      </nav>
+
+      <div v-if="activeTab === 'projects'">
       <div v-if="projects.length" class="library-page__grid library-grid" data-testid="library-grid">
         <button
           v-for="p in projects"
@@ -57,6 +81,12 @@
           新建第一本书
         </button>
       </div>
+      </div>
+
+      <div v-else class="library-assets-panel" data-testid="library-assets-panel">
+        <IllustrationGallery v-if="activeSlug" :project-slug="activeSlug" />
+        <p v-else class="meta-line">还没有可用的项目</p>
+      </div>
     </div>
   </div>
 </template>
@@ -64,6 +94,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
 import PageLeadBar from '../components/PageLeadBar.vue';
+import IllustrationGallery from '../components/illustrations/IllustrationGallery.vue';
 import { useStudioProject, useDashboardNav } from '../composables/index.js';
 import { getWriteResume } from '../utils/writeResumeStorage.js';
 import { formatDisplayLabel } from '../utils/displayProjectName.js';
@@ -75,6 +106,7 @@ const { navigateTo, setWizardDeepLink } = useDashboardNav();
 const loading = ref(false);
 const error = ref(null);
 const qualityLine = ref('');
+const activeTab = ref('projects');
 
 const projects = computed(() => studio.projects || []);
 const activeSlug = computed(() => studio.activeSlug);
