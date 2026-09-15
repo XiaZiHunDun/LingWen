@@ -132,7 +132,7 @@ class TestProseJudgeProjectIntegration:
     async def test_run_and_save_jinghai(self, tmp_path: Path, monkeypatch) -> None:
         import lingwen_studio_registry as registry
 
-        factory = Path(__file__).resolve().parents[1]
+        factory = Path(__file__).resolve().parents[3]  # Phase 56b2: parents[N] depends on file depth; tests/ → lingwen-prose-judge/ → packages/ → repo
         project = factory / "projects" / "jinghai-rizhi"
         if not project.is_dir():
             pytest.skip("jinghai-rizhi fixture missing")
@@ -153,7 +153,7 @@ class TestProseJudgeProjectIntegration:
         assert summary["weighted_avg"] > 0
 
     def test_load_jinghai_judge_report_if_present(self) -> None:
-        factory = Path(__file__).resolve().parents[1]
+        factory = Path(__file__).resolve().parents[3]  # Phase 56b2: parents[N] depends on file depth; tests/ → lingwen-prose-judge/ → packages/ → repo
         project = factory / "projects" / "jinghai-rizhi"
         path = report_path_for(project)
         if not path.is_file():
