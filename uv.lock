@@ -52,6 +52,7 @@ members = [
     "lingwen-studio-registry",
     "lingwen-subplot",
     "lingwen-util",
+    "lingwen-workflow",
     "lingwen-world-db",
     "lingwen-world-model",
 ]
@@ -1369,6 +1370,21 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [{ name = "lingwen-errors", editable = "packages/lingwen-errors" }]
+
+[[package]]
+name = "lingwen-workflow"
+version = "0.1.0"
+source = { editable = "packages/lingwen-workflow" }
+dependencies = [
+    { name = "lingwen-pipeline" },
+    { name = "lingwen-storage" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "lingwen-pipeline", editable = "packages/lingwen-pipeline" },
+    { name = "lingwen-storage", editable = "packages/lingwen-storage" },
+]
 
 [[package]]
 name = "lingwen-world-db"

@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-workflow"
+version = "0.1.0"
+description = "LingWen canonical workflow lib (Phase 84 P3-ARCHDEBT infra/tools/workflow/lib)"
+requires-python = ">=3.12"
+dependencies = [
+    "lingwen-storage",  # SqliteStorageAdapter for DB layer (db/state/tasks/checkpoints/migration)
+    "lingwen-pipeline",  # HookEngine + BlockProceedAction + LogStateChangeAction (events._get_hook_engine lazy import — function-body only, no module-level cycle)
+]
+# NOT-LEAF — 2 workspace deps + 0 third-party deps
+# Note: events.py has runtime lazy import of lingwen_pipeline.hooks.actions
+#       (block_proceed + log_state_change) inside _get_hook_engine() function body.
+#       This is a forward-only workspace dep (lingwen-pipeline does NOT declare
+#       lingwen-workflow back). Python deferred module init handles the runtime
+#       cycle safely because both imports are function-body.
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_workflow"]
