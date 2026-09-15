@@ -24,7 +24,6 @@ import pytest
 @pytest.fixture
 def mock_env(tmp_path, monkeypatch):
     """Setup mock environment with temporary paths for lib.py"""
-    import sys
 
     db_dir = tmp_path / ".state"
     db_dir.mkdir()
