@@ -16,7 +16,7 @@
 
 Phase 87 closed ARCHDEBT cycle ("ARCHDEBT cycle FINAL saturation" per handoff). However, post-Phase 87 audit (2026-09-15) revealed **two classes of filesystem residue** that the tracked-state cleanup left behind:
 
-1. **`infra/__pycache__/` bytecode residue** — 29 `__pycache__/` subdirectories, ~86 MB on disk. Origin: `git rm` during Phases 79-87 deletes source `.py` files but NOT gitignored `*.pyc` bytecode. The bytecode directories remained on disk because:
+1. **`infra/__pycache__/` bytecode residue** — 29 `__pycache__/` subdirectories, ~1.5 MB total pycache. Origin: `git rm` during Phases 79-87 deletes source `.py` files but NOT gitignored `*.pyc` bytecode. The bytecode directories remained on disk because:
    - `.gitignore` pattern `**/__pycache__/` + `**/*.pyc` matched them from commit time (when modules were first imported in this checkout)
    - `git rm -r infra/X/` only removes tracked files; ignored content untouched (N.14 lesson 23 v3, Phase 79 handoff)
 
@@ -24,7 +24,7 @@ Phase 87 closed ARCHDEBT cycle ("ARCHDEBT cycle FINAL saturation" per handoff). 
 
 **Tracked-state is clean**: `git ls-files infra/` returns 1 file (`__init__.py`). `git status` clean. ARCHDEBT cycle claim is accurate **with respect to git tracking**.
 
-**Filesystem state has 86 MB residue** of gitignored content.
+**Filesystem state**: `du -sh infra/` = 86M pre-Phase 88. Of this, **80M is `infra/.state/ripple.db` (runtime SQLite, preserved) + ~3-4M .state/ other runtime artifacts + ~1.5M pycache + ~0.5M .locks/ + __init__.py**. Phase 88 cleanup recovers the ~1.5M pycache + 61 bytes JSON.
 
 **Doc stale claim**: CLAUDE.md + CURRENT_STATUS.md + BACKLOG.md read "infra/ now contains only __init__.py" — technically correct (git tracking) but misleading without qualifier. Phase 88 also fixes this doc precision.
 
@@ -50,10 +50,12 @@ Phase 87 closed ARCHDEBT cycle ("ARCHDEBT cycle FINAL saturation" per handoff). 
 
 ## §3. Inventory + Cleanup targets
 
-### §3.1 `infra/__pycache__/` residue (29 subdirs, ~86 MB)
+### §3.1 `infra/__pycache__/` residue (29 subdirs, ~1-2 MB total)
 
-| Subdir | Size | Origin phase |
-|--------|------|--------------|
+> **Note (post-cleanup actual measurement)**: Original spec claimed "~86 MB" — this was a misread. The 86M figure was `du -sh infra/` which was dominated by `infra/.state/ripple.db` (80M SQLite, runtime artifact, **preserved**). Actual pycache residue per-subdir sums to **~1.5 MB**. Post-cleanup `du -sh infra/` = 85M (was 86M, ~1-2M recovered from pycache).
+
+| Subdir | Pycache size | Origin phase |
+|--------|--------------|--------------|
 | `infra/__pycache__/` | 616K | Top-level — accumulating across all phases |
 | `infra/cli/__pycache__/` | 244K | Phase 86 deleted `infra/cli/` shell scripts |
 | `infra/config/__pycache__/` | 24K | Phase 83 deleted `infra/config/` (config migration to packages/lingwen-config) |
@@ -74,6 +76,8 @@ Phase 87 closed ARCHDEBT cycle ("ARCHDEBT cycle FINAL saturation" per handoff). 
 | `infra/util/__pycache__/` | 36K | Phase 82 deleted `infra/util/` (full migration to packages/lingwen-util) |
 | `infra/world_db/__pycache__/` | 100K | Phase 56 deleted `infra/world_db/` (full migration to packages/lingwen-world-db) |
 | `infra/world_model/__pycache__/` | 104K | Phase 35 deleted `infra/world_model/` (full migration to packages/lingwen-world-model) |
+
+**Total pycache residue**: ~1.5 MB (per-subdir sum). Actual disk recovery after Phase 88 C1: 86M → 85M (the 1-2M delta).
 
 **Cleanup mechanism**: `find infra/ -type d -name __pycache__ -exec rm -rf {} +` (NOT `git rm` because `__pycache__/` is gitignored — `git rm` would refuse).
 
@@ -111,7 +115,7 @@ Phase 87 closed ARCHDEBT cycle ("ARCHDEBT cycle FINAL saturation" per handoff). 
 | Commit | Type | Subject | Files | +/- | Risk |
 |--------|------|---------|-------|-----|------|
 | C0 | docs | spec + 9-pattern audit | `docs/superpowers/specs/2026-09-15-phase-88-...md` (NEW) | +~200 | None |
-| C1 | chore | FULL DELETE infra/__pycache__/ (29 dirs) + infra/novel-factory/agent_system/social_engine/relationship_network.json + rm parent dir | filesystem only (gitignored content) | ~86 MB disk freed | MINIMAL (gitignored + regenerable) |
+| C1 | chore | FULL DELETE infra/__pycache__/ (29 dirs) + infra/novel-factory/agent_system/social_engine/relationship_network.json + rm parent dir | filesystem only (gitignored content) | ~1.5 MB disk freed | MINIMAL (gitignored + regenerable) |
 | C2 | test | 12 regression guards G1-G12 verifying cleanup + preservation | `tests/test_phase88_archdebt_pycache_residue.py` (NEW) | +~280 | None |
 | C3 | docs | doc precision fixup (CLAUDE.md v54.19→v54.20 + CURRENT_STATUS + BACKLOG + handoff) | 4 docs | +~30 | None |
 
@@ -190,11 +194,13 @@ Per §2 audit, 0 changes to canonical paths. 9-pattern clean.
 
 ```
 # Before C1:
-du -sh infra/  # 86M
+du -sh infra/  # 86M (80M ripple.db + ~3M .state/ + ~1.5M pycache + 0.5M misc)
 
 # After C1:
-du -sh infra/  # <1M (just __init__.py + .locks/ + .state/ runtime artifacts)
+du -sh infra/  # 85M (80M ripple.db + ~3M .state/ + 0.5M misc, pycache recovered)
 ```
+
+**Note**: Post-cleanup infra/ is still ~85M because the dominant content is `infra/.state/ripple.db` (80M SQLite runtime artifact, preserved). Phase 88 recovers only ~1.5M from pycache.
 
 ---
 
@@ -239,23 +245,30 @@ After Phase 88:
 
 ```
 $ ls -la infra/
-total 16
-drwxr-xr-x  6 ailearn ailearn  4096 Sep 15 XX:XX .
+total 96
+drwxr-xr-x 23 ailearn ailearn  4096 Sep 15 XX:XX .
 drwxr-xr-x 50 ailearn ailearn  4096 Sep 15 XX:XX ..
-drwxr-xr-x  2 ailearn ailearn  4096 Sep 15 XX:XX .locks       # runtime, preserved
-drwxr-xr-x  5 ailearn ailearn  4096 Sep 15 XX:XX .state       # runtime, preserved
--rw-rw-r--  1 ailearn ailearn   864 Sep 15 XX:XX __init__.py  # tracked, preserved
-drwxr-xr-x  2 ailearn ailearn  4096 Sep 15 XX:XX __pycache__/ # regenerable, ~616K top-level
+drwxr-xr-x  2 ailearn ailearn  4096 Jul 13 20:41 .locks           # runtime, preserved (4K)
+drwxr-xr-x  5 ailearn ailearn  4096 Sep 10 14:27 .state           # runtime, preserved (84M, dominated by ripple.db)
+-rw-rw-r--  1 ailearn ailearn   864 Sep 15 14:42 __init__.py      # tracked, preserved (864 bytes compat re-exports)
+drwxr-xr-x  X ailearn ailearn  4096 Sep 15 XX:XX cli/             # empty (was Phase 86 cleanup target)
+drwxr-xr-x  X ailearn ailearn  4096 Sep 15 XX:XX config/          # empty (was Phase 83)
+... (19 other empty subdirs, all gitignored)
 
 $ du -sh infra/
-~640K infra/   # Was 86M before Phase 88 C1
+85M infra/   # Was 86M before Phase 88 C1; recovered ~1.5M pycache
 ```
 
-**infra/ is now truly minimal**: 1 tracked file (`__init__.py`) + 2 runtime dirs (`.locks/`, `.state/`) + 1 regenerable pycache (~616K top-level from `__init__.py` import). ARCHDEBT cycle **physically complete**, not just tracking-complete.
+**infra/ is now genuinely clean of pycache + legacy JSON**: 1 tracked file (`__init__.py`) + 2 runtime dirs (`.locks/`, `.state/`) + 20 empty subdirs (gitignored, harmless). ARCHDEBT cycle **physically complete** for pycache + relationship_network residue.
 
-**Cluster cumulative**: Phase 53 + 53b + 53c + 53d + 53e + 78-88 = **16 phases / ~20464 LOC dead code + ~86 MB disk space recovered**.
+**Disk recovery**:
+- ~1.5 MB pycache residue (29 dirs)
+- 61 bytes relationship_network.json + 2 empty parent dirs (novel-factory/agent_system/social_engine + social_engine/agent_system)
+- **Total**: ~1.5 MB recovered (NOT 86 MB as initially estimated — most "infra/" size was runtime `.state/ripple.db`)
 
-**Future ARCHDEBT**: After Phase 88, ARCHDEBT cycle is complete in BOTH git tracking AND filesystem. No further ARCHDEBT work identified. Future work is non-ARCHDEBT features.
+**Cluster cumulative**: Phase 53 + 53b + 53c + 53d + 53e + 78-88 = **16 phases / ~20464 LOC dead code + ~1.5 MB disk space recovered (post-saturation disk cleanup)**.
+
+**Future ARCHDEBT**: After Phase 88, ARCHDEBT cycle is complete in BOTH git tracking AND filesystem (pycache + legacy JSON). No further ARCHDEBT-MINI work identified. Future work is non-ARCHDEBT features.
 
 ---
 
