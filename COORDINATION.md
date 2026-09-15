@@ -117,3 +117,40 @@ git worktree add -b track-b .worktrees/track-b origin/master   # Track B 后端
 | 前端门 | `pnpm test` · `pnpm lint` · `pnpm typecheck:app` · `pnpm knip` · `pnpm typecheck` |
 | 后端 dev | studio_api uvicorn，端口 `${DASHBOARD_PORT:-8765}` |
 | 后端门 | `.venv/bin/python -m pytest` · `ruff check` · `ruff format --check` · `mypy` |
+
+---
+
+## 8. 工作流变更 (2026-09-15) — 直接 master commit, 取消 worktree
+
+**变更**: 取消双会话 worktree + per-phase branch + 用户手动 ff-merge 机制。改为 **直接 master commit**。
+
+**原因**:
+- 22 个 worktrees 累积 (~3.7 GB 磁盘)
+- 每 phase 用户手动跑 `git checkout master && git merge --ff-only` 步骤摩擦高
+- Untracked 文件冲突需手动 rm 才能 ff-merge
+- 单作者 repo, branch 隔离收益小
+
+**新工作流** (单会话/单任务):
+```bash
+cd /home/ailearn/projects/LingWen  # 主仓 (不要 worktree)
+# ... edit ...
+git add -A
+git commit -m "..."   # 可选 atomic commit (C0/C1/C2/C3...)
+git push origin master
+```
+
+**双会话并行 (历史方案, 已废弃)**:
+- §1-7 的 track-a / track-b worktree 机制不再使用
+- 单作者场景无需并行会话, 直接顺序在 master commit 即可
+- 若未来真的需要多人并行, 重新引入 worktree (基于当前 master HEAD 创建 `git worktree add -b <branch> <path>`)
+
+**清理 (2026-09-15)**:
+- 删除 19 个 LingWen worktrees (Phase 43-88 stale)
+- 删除 30 个 merged 本地 branches
+- 删除 4 个相关脚本: `scripts/ff-merge-to-master.sh` / `scripts/lingwen-auto-merge.sh` / `scripts/lingwen-ensure-auto-merge.sh` / `/tmp/lingwen-auto-merge.{sh,pid,log}`
+- 释放 ~3.6 GB 磁盘
+- LingWen 当前 worktree 列表: 仅 1 个 (主仓 `/home/ailearn/projects/LingWen` on master)
+
+**保留**: phase 原子 commit 习惯 (C0 spec / C1 feat / C2 tests / C3 docs) 仍然推荐 — 便于回溯 + handoff 引用 + regression guards verification。
+
+详见: `docs/superpowers/handoffs/2026-09-15-phase-88-archdebt-pycache-residue-handoff.md` (Phase 88 cleanup phase, 同时 simplify workflow)。
