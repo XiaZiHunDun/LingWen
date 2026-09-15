@@ -160,9 +160,10 @@ def test_phase84_g6_new_test_file_exists(filename: str) -> None:
 
 def test_phase84_g7_no_infra_refs_in_production() -> None:
     """G7: 0 infra.tools.workflow refs in production code (packages/, tools/).
-    Excludes tests/ + __pycache__/ + infra/tools/workflow/{run_workflow.sh,logging.sh}
-    (which legitimately reference 'from infra.tools.workflow.lib import' as the
-    Python entry path — Phase 86 ARCHDEBT-MINI scope)."""
+    Excludes tests/ + __pycache__/. The grep pattern uses --include=*.py so
+    shell scripts in infra/tools/workflow/ are not matched anyway — after
+    Phase 86 + Phase 87 ARCHDEBT-MINI saturation, infra/tools/workflow/
+    is fully deleted and this exclusion is no longer needed."""
     result = subprocess.run(
         [
             "grep",
