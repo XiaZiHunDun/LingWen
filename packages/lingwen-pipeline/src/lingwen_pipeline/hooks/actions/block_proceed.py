@@ -56,7 +56,7 @@ class BlockProceedAction(BaseAction):
 
         # 记录阻止原因到状态
         try:
-            from infra.tools.workflow.lib import set_state
+            from lingwen_workflow import set_state
 
             set_state("blocked_reason", reason)
             set_state("blocked_at", context.get("event_name", "unknown"))

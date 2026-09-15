@@ -487,7 +487,7 @@ class TestBlockProceedAction(TestCase):
 
         from unittest.mock import patch
 
-        with patch("infra.tools.workflow.lib.set_state", fake_set_state, create=True):
+        with patch("lingwen_workflow.set_state", fake_set_state, create=True):
             result = self.action.execute(
                 params={"reason": "数据不达标"},
                 context={"event_name": "post_verify", "hook_name": "verify_check", "verify_result": None},
@@ -505,7 +505,7 @@ class TestBlockProceedAction(TestCase):
         def broken_set_state(*args, **kwargs):
             raise RuntimeError("db locked")
 
-        with patch("infra.tools.workflow.lib.set_state", broken_set_state, create=True):
+        with patch("lingwen_workflow.set_state", broken_set_state, create=True):
             result = self.action.execute(params={"reason": "test"}, context={"verify_result": None})
 
         # 即使 state 写入失败,仍然返回阻止结果

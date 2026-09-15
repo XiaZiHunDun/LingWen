@@ -1,4 +1,4 @@
-"""Tests for infra.tools.workflow.lib.db (init_sqlite, _acquire_lock).
+"""Tests for lingwen_workflow.db (init_sqlite, _acquire_lock).
 
 Lowest-layer tests: DB schema + flock lock. These exercise the foundation
 that state/tasks/checkpoints all depend on.
@@ -12,14 +12,14 @@ class TestInitSqlite:
 
     def test_init_creates_tables(self, mock_env):
         """Test that init_sqlite creates all required tables"""
-        from infra.tools.workflow.lib import init_sqlite
+        from lingwen_workflow import init_sqlite
 
         # 必须从 .db 子模块 import DB_PATH — lib/__init__.py 用
         # `from .db import DB_PATH` 在 import 时把值冻结,后续 monkeypatch
-        # 改的 infra.tools.workflow.lib.db.DB_PATH 不会反映到 lib.DB_PATH。
+        # 改的 lingwen_workflow.db.DB_PATH 不会反映到 lib.DB_PATH。
         # init_sqlite 函数自身在 db.py 内,会读 monkeypatch 后的 db.DB_PATH;
         # 但本测试需要从同一处读,才能连到 init 过的 tmp DB。
-        from infra.tools.workflow.lib.db import DB_PATH
+        from lingwen_workflow.db import DB_PATH
 
         init_sqlite()
 
@@ -38,17 +38,17 @@ class TestInitSqlite:
 
     def test_init_is_idempotent(self, init_db):
         """Test that calling init_sqlite multiple times doesn't error"""
-        from infra.tools.workflow.lib import init_sqlite
+        from lingwen_workflow import init_sqlite
 
         init_sqlite()
         init_sqlite()
 
     def test_init_creates_workflow_state_table(self, mock_env):
         """Test workflow_state table structure"""
-        from infra.tools.workflow.lib import init_sqlite
+        from lingwen_workflow import init_sqlite
 
         # 见 test_init_creates_tables — 从 .db 子模块 import 拿到 monkeypatch 后的值
-        from infra.tools.workflow.lib.db import DB_PATH
+        from lingwen_workflow.db import DB_PATH
 
         init_sqlite()
 
@@ -62,8 +62,8 @@ class TestInitSqlite:
 
     def test_init_creates_agent_tasks_table(self, mock_env):
         """Test agent_tasks table structure"""
-        from infra.tools.workflow.lib import init_sqlite
-        from infra.tools.workflow.lib.db import DB_PATH
+        from lingwen_workflow import init_sqlite
+        from lingwen_workflow.db import DB_PATH
 
         init_sqlite()
 
@@ -84,7 +84,7 @@ class TestAcquireLock:
 
     def test_acquire_lock_returns_bool(self, mock_env):
         """Test _acquire_lock returns a boolean"""
-        from infra.tools.workflow.lib import _acquire_lock
+        from lingwen_workflow import _acquire_lock
 
         result = _acquire_lock()
         assert isinstance(result, bool)

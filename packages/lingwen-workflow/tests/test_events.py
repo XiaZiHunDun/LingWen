@@ -1,4 +1,4 @@
-"""Tests for infra.tools.workflow.lib.events (trigger_event).
+"""Tests for lingwen_workflow.events (trigger_event).
 
 Events layer: decoupled pub/sub for workflow signals (STEP_COMPLETED, MANUAL_TRIGGER, etc).
 
@@ -12,12 +12,12 @@ class TestTriggerEvent:
 
     def test_trigger_event_does_not_raise(self, init_db):
         """Test trigger_event doesn't raise even when EventBus unavailable"""
-        from infra.tools.workflow.lib import trigger_event
+        from lingwen_workflow import trigger_event
 
         trigger_event("TEST_EVENT", source="test", data={"key": "value"})
 
     def test_trigger_event_accepts_kwargs(self, init_db):
         """Test trigger_event accepts keyword arguments"""
-        from infra.tools.workflow.lib import trigger_event
+        from lingwen_workflow import trigger_event
 
         trigger_event("TEST_EVENT", arg1="value1", arg2="value2")

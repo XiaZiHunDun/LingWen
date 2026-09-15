@@ -1,23 +1,24 @@
-"""Shared pytest fixtures for tests/tools/workflow/
+"""Shared pytest fixtures for packages/lingwen-workflow/tests/
+
+Phase 84 P3-ARCHDEBT: relocated from tests/tools/workflow/conftest.py.
+lingwen_workflow installed via uv workspace editable install — no
+sys.path hack needed (Phase 56b lesson 1 removed redundant PROJECT_ROOT
++ sys.path.insert block since uv workspace editable install makes
+lingwen_workflow importable as `import lingwen_workflow`).
 
 Provides 3 fixtures consumed by all 7 per-module test files:
-  - mock_env: tmp dirs + monkeypatched lib.db.* paths
+  - mock_env: tmp dirs + monkeypatched lingwen_workflow.db.* paths
   - init_db: init_sqlite() (depends on mock_env)
   - sample_workflow_json: writes a sample workflow_state.json for fallback tests
 
-The lib_module.sys = sys patch (lines 30-31) is a real workaround for the
-upstream bug where lib/state.py uses `sys.path.insert(...)` in advance_step
-without importing sys at module level.
+The lib_module.sys = sys patch is preserved as a defense-in-depth workaround
+for state.py's sys.path.insert usage in advance_step.
 """
 
 import json
 import sys
-from pathlib import Path
 
 import pytest
-
-PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
 
 
 @pytest.fixture
@@ -30,13 +31,13 @@ def mock_env(tmp_path, monkeypatch):
     locks_dir = tmp_path / ".locks"
     locks_dir.mkdir()
 
-    monkeypatch.setattr("infra.tools.workflow.lib.db.PROJECT_ROOT", tmp_path)
-    monkeypatch.setattr("infra.tools.workflow.lib.db.WORKFLOW_FILE", tmp_path / "workflow_state.json")
-    monkeypatch.setattr("infra.tools.workflow.lib.db.DB_DIR", db_dir)
-    monkeypatch.setattr("infra.tools.workflow.lib.db.DB_PATH", db_dir / "workflow.db")
-    monkeypatch.setattr("infra.tools.workflow.lib.db.LOCKFILE", locks_dir / "workflow.lock")
+    monkeypatch.setattr("lingwen_workflow.db.PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr("lingwen_workflow.db.WORKFLOW_FILE", tmp_path / "workflow_state.json")
+    monkeypatch.setattr("lingwen_workflow.db.DB_DIR", db_dir)
+    monkeypatch.setattr("lingwen_workflow.db.DB_PATH", db_dir / "workflow.db")
+    monkeypatch.setattr("lingwen_workflow.db.LOCKFILE", locks_dir / "workflow.lock")
 
-    import infra.tools.workflow.lib as lib_module
+    import lingwen_workflow as lib_module
 
     lib_module.sys = sys
 
@@ -46,7 +47,7 @@ def mock_env(tmp_path, monkeypatch):
 @pytest.fixture
 def init_db(mock_env):
     """Initialize database with schema"""
-    from infra.tools.workflow.lib import init_sqlite
+    from lingwen_workflow import init_sqlite
 
     init_sqlite()
     return mock_env
