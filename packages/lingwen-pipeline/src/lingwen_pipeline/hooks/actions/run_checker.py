@@ -145,7 +145,7 @@ class RunCheckerAction(BaseAction):
         self, chapter_range: str, threshold: str | None, context: Dict[str, Any]
     ) -> Dict[str, Any]:
         """运行质量门禁检查"""
-        from infra.tools.consistency.run_quality_checks import run_quality_checks
+        from lingwen_quality.consistency.run_quality_checks import run_quality_checks
 
         chapters_dir = self._get_chapters_dir(context)
 

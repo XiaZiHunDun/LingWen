@@ -219,7 +219,7 @@ class TestRunCheckerAction(TestCase):
         self.assertIn("Unknown checker", result.error)
 
     def test_run_quality_gate_uses_correct_import_path(self):
-        """质量门禁应走正确的 import path: infra.tools.consistency.run_quality_checks
+        """质量门禁应走正确的 import path: lingwen_quality.consistency.run_quality_checks
 
         原代码用 `from tools.consistency.run_quality_checks` — 但实际目录是
         `infra/tools/consistency/`,旧路径从来 import 不通。这是 P4-2 删
@@ -231,14 +231,14 @@ class TestRunCheckerAction(TestCase):
 
         fake_result = {"passed": True, "score": 0.95}
         with patch(
-            "infra.tools.consistency.run_quality_checks.run_quality_checks",
+            "lingwen_quality.consistency.run_quality_checks.run_quality_checks",
             return_value=fake_result,
             create=True,
         ) as mock_run:
             # 还需要让 import 走通 — patch 掉整个模块
             with patch.dict(
                 "sys.modules",
-                {"infra.tools.consistency.run_quality_checks": MagicMock(run_quality_checks=mock_run)},
+                {"lingwen_quality.consistency.run_quality_checks": MagicMock(run_quality_checks=mock_run)},
             ):
                 action = RunCheckerAction()
                 result = action.execute(

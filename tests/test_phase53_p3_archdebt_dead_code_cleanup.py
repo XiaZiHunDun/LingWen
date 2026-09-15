@@ -2,7 +2,7 @@
 
 DELETED in Phase 53 (zero consumers):
   - infra/tools/legacy/                    (4976 LOC / 28 files)
-  - infra/tools/consistency/run_quality_checks.py  (rewritten as no-op stub)
+  - infra/tools/consistency/run_quality_checks.py  (rewritten as no-op stub in Phase 53; **MERGED into packages/lingwen-quality/consistency/ in Phase 85**)
   - infra/core/__init__.py                  (Phase 39 logging_config residue)
   - infra/studio/__init__.py                (Phase 40 studio_registry residue)
 
@@ -170,7 +170,7 @@ def test_run_quality_checks_aggregator_still_exists() -> None:
     """
     import importlib
 
-    mod = importlib.import_module("infra.tools.consistency.run_quality_checks")
+    mod = importlib.import_module("lingwen_quality.consistency.run_quality_checks")
     assert hasattr(mod, "run_quality_checks"), (
         "run_quality_checks aggregator function MUST remain (back-compat shim)"
     )
