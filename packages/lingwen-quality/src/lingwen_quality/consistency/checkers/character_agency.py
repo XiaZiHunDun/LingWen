@@ -133,7 +133,6 @@ class CharacterAgencyChecker(BaseChecker):
 
         if "target_characters" not in context:
             from lingwen_paths import ProjectPaths
-
             from lingwen_project_characters import load_agency_target_characters
 
             target_characters = load_agency_target_characters(

@@ -29,7 +29,6 @@ from pathlib import Path
 
 import pytest
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -95,7 +94,7 @@ def test_phase85_g5_merged_file_has_run_quality_checks() -> None:
     p = REPO_ROOT / "packages" / "lingwen-quality" / "src" / "lingwen_quality" / "consistency" / "run_quality_checks.py"
     text = p.read_text(encoding="utf-8")
     assert "def run_quality_checks" in text, (
-        f"merged file must still define run_quality_checks function"
+        "merged file must still define run_quality_checks function"
     )
 
 

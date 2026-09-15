@@ -13,9 +13,10 @@ from __future__ import annotations
 
 from typing import List
 
+from lingwen_quality.problem_classifier import ProblemClassifier
+
 # Phase 46: sys.path hack REMOVED. Relative imports within lingwen_quality package.
 from lingwen_quality.quality import Issue
-from lingwen_quality.problem_classifier import ProblemClassifier
 
 
 class FalsePositiveFilter:

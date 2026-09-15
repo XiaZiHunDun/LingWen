@@ -11,7 +11,6 @@ import sys
 from datetime import datetime
 from typing import Dict, List
 
-
 # ---------------------------------------------------------------------------
 # Phase 53 shim: `run_quality_checks` aggregator function.
 #

@@ -150,9 +150,17 @@ def test_run_quality_checks_is_noop_stub() -> None:
 
     The `cli main()` body is also rewritten to skip calling each
     legacy `run_*` dispatcher (which would otherwise raise RuntimeError).
+    **Phase 85 update**: file moved to packages/lingwen-quality/src/lingwen_quality/consistency/
+    (Phase 85 P3-ARCHDEBT MERGE) — read from canonical location.
     """
     src = (
-        REPO_ROOT / "infra" / "tools" / "consistency" / "run_quality_checks.py"
+        REPO_ROOT
+        / "packages"
+        / "lingwen-quality"
+        / "src"
+        / "lingwen_quality"
+        / "consistency"
+        / "run_quality_checks.py"
     ).read_text(encoding="utf-8")
     assert "QUALITY_CHECKS_DELETED_IN_PHASE_53" in src, (
         "run_quality_checks.py should declare QUALITY_CHECKS_DELETED_IN_PHASE_53 "
