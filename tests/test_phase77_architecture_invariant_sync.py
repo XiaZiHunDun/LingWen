@@ -85,7 +85,7 @@ def _get_invariant_ids_from_claude_md() -> set[str]:
 
 
 def test_phase77_g1_architecture_yml_has_expected_invariant_ids() -> None:
-    """I001-I005 + I048-I085 = 43 invariants expected in architecture.yml.
+    """I001-I005 + I048-I086 = 44 invariants expected in architecture.yml.
 
     The I006-I047 numbering gap is HISTORICAL (never declared in CLAUDE.md
     invariant table either — see G2). This guard prevents silently shrinking
@@ -98,14 +98,17 @@ def test_phase77_g1_architecture_yml_has_expected_invariant_ids() -> None:
     (lingwen-config canonical module, TRUE LEAF + pyyaml) — bumped 41 → 42.
     Phase 84 added I085 (lingwen-workflow canonical module, NOT-LEAF + 2 deps
     lingwen-storage + lingwen-pipeline forward-only) — bumped 42 → 43.
-    **MILESTONE**: ARCHDEBT-REAL cycle 第六例 (Phase 84 workflow) — 6 真迁移 packages
-    pattern verification across [LEAF + NOT-LEAF + TRUE LEAF + NOT-LEAF retry + TRUE LEAF
-    config + NOT-LEAF workflow].
+    Phase 85 added I086 (lingwen-quality.consistency.run_quality_checks
+    MERGE into existing lingwen-quality consistency/ subdir — extends
+    I063 cluster [FalsePositiveFilter + ProblemClassifier + RunQualityChecks])
+    — bumped 43 → 44.
+    **MILESTONE**: ARCHDEBT-MIXED second example (Phase 50 was first) — 1 file
+    MIGRATE + 8 supporting DELETE + 11 invariant scope extended in single phase.
     """
     ids = _get_invariant_ids_from_yaml()
     expected = (
         {f"I{n:03d}" for n in range(1, 6)}  # I001-I005
-        | {f"I{n:03d}" for n in range(48, 86)}  # I048-I085
+        | {f"I{n:03d}" for n in range(48, 87)}  # I048-I086
     )
     missing = expected - ids
     extra = ids - expected
@@ -117,7 +120,7 @@ def test_phase77_g1_architecture_yml_has_expected_invariant_ids() -> None:
         f"architecture.yml contains UNEXPECTED invariant IDs: {sorted(extra)}. "
         f"Either update G1 expected set OR investigate accidental additions."
     )
-    assert len(ids) == 43, f"Expected exactly 43 invariants, got {len(ids)}: {sorted(ids)}"
+    assert len(ids) == 44, f"Expected exactly 44 invariants, got {len(ids)}: {sorted(ids)}"
 
 
 # ---------------------------------------------------------------------------

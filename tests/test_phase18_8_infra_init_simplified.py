@@ -10,6 +10,7 @@ Phase 18.8 目标:
 - 注：util 于 Phase 82 P3-ARCHDEBT 全量迁移至 packages/lingwen-util/
 - 注：config 于 Phase 83 P3-ARCHDEBT 全量迁移至 packages/lingwen-config/
 - 注：tools/workflow/lib 于 Phase 84 P3-ARCHDEBT 全量迁移至 packages/lingwen-workflow/
+- 注：tools/consistency/run_quality_checks.py 于 Phase 85 P3-ARCHDEBT MERGE 至 packages/lingwen-quality/consistency/
 """
 
 from __future__ import annotations
