@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "LingWen canonical illustrations module (Phase 90 REQ-002 multimodal)"
 requires-python = ">=3.11"
 dependencies = [
+    "httpx>=0.27",                # Stage 3 — MiniMax image API HTTP client
     "lingwen-llm-service",        # I057 — Stage 1 LLM extraction
     "lingwen-project-characters", # I073 — character bible
     "lingwen-paths",              # I052 — project root resolution
