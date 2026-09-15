@@ -4,10 +4,10 @@
 供 run_workflow.sh 调用的Python封装层。
 
 Usage:
-    from infra.tools.workflow.lib import get_state, set_state, advance_step
+    from lingwen_workflow import get_state, set_state, advance_step
     dispatch_task('write_chapter_001', 'writer-a', '撰写第1章')
 
-本包是从原 infra/tools/workflow/lib.py (814 行) 拆分而来:
+本包是从原 infra/tools/workflow/lib.py (814 行) 拆分而来 (Phase 84 P3-ARCHDEBT: 已迁至 packages/lingwen-workflow/):
     - db.py          数据库初始化 + flock 锁
     - state.py       get/set_state + advance_step
     - tasks.py       dispatch/verify/get_task_status/list_tasks
@@ -17,7 +17,7 @@ Usage:
     - migration.py   migrate_json_to_sqlite (一次性工具)
 
 公共 API 表面保持向后兼容: 所有原 lib.py 顶层符号仍然可从
-`from infra.tools.workflow.lib import ...` 访问。
+`from lingwen_workflow import ...` 访问。
 """
 
 # 路径常量（测试通过 monkeypatch 修改）
@@ -99,7 +99,7 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) < 2:
-        print("Usage: python -m infra.tools.workflow.lib <command> [args...]")
+        print("Usage: python -m lingwen_workflow <command> [args...]")
         print(
             "Commands: get_state, set_state, advance_step, dispatch_task, verify_task, checkpoint, restore, list_checkpoints, init"
         )
