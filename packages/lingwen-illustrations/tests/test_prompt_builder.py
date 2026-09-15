@@ -8,6 +8,7 @@ from unittest.mock import MagicMock
 import pytest
 from lingwen_illustrations.exceptions import ExtractError
 from lingwen_illustrations.prompt_builder import (
+    _MAX_CHAPTER_CHARS,
     build_extraction_prompt,
     extract_scene,
     parse_extraction_response,
@@ -85,3 +86,24 @@ def test_extract_scene_llm_failure_raises_extract_error(monkeypatch):
     with pytest.raises(ExtractError) as exc:
         extract_scene(chapter_text="x", character_bible=[])
     assert exc.value.retryable is True
+
+
+def test_build_extraction_prompt_truncates_long_chapter():
+    """IMPORTANT: >8000 chars must be truncated to avoid LLM context bloat."""
+    long_text = "x" * 10_000
+    prompt = build_extraction_prompt(chapter_text=long_text, character_bible=[])
+    # The full 10K string should NOT appear (truncation occurred)
+    assert long_text not in prompt
+    # The truncated version (8000 x's) SHOULD appear
+    assert "x" * _MAX_CHAPTER_CHARS in prompt
+    # And we should NOT have a run of more than _MAX_CHAPTER_CHARS x's
+    import re
+    runs = re.findall(r"x+", prompt)
+    longest_run = max(len(r) for r in runs)
+    assert longest_run <= _MAX_CHAPTER_CHARS
+
+
+def test_build_extraction_prompt_empty_character_bible_falls_back():
+    """IMPORTANT: empty character_bible must produce explicit fallback string."""
+    prompt = build_extraction_prompt(chapter_text="测试章节", character_bible=[])
+    assert "(无角色档案)" in prompt

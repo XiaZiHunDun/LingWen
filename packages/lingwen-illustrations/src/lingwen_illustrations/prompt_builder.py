@@ -17,6 +17,10 @@ from lingwen_illustrations.exceptions import ExtractError
 
 _REQUIRED_FIELDS = ("subject", "scene", "mood", "characters_in_scene", "extraction_confidence")
 
+# Truncate chapter text to ~2K zh tokens to avoid LLM context bloat.
+# Reusable constant; pattern matches `lingwen_world_db.MAX_CHAPTERS_DEFAULT`.
+_MAX_CHAPTER_CHARS = 8000
+
 
 def build_extraction_prompt(
     *,
@@ -29,8 +33,8 @@ def build_extraction_prompt(
         for c in character_bible
     ) or "(无角色档案)"
 
-    # Truncate chapter text to avoid token bloat (8K chars ~ 2K tokens zh)
-    truncated = chapter_text[:8000] if len(chapter_text) > 8000 else chapter_text
+    # Truncate chapter text to avoid LLM token bloat (~2K zh tokens).
+    truncated = chapter_text[:_MAX_CHAPTER_CHARS]
 
     return f"""你是小说场景抽取专家。从以下章节文本中抽取视觉化信息用于生成插图。
 
@@ -97,6 +101,10 @@ def extract_scene(
 
     try:
         service = get_llm_service()
+        # TaskType.STRUCTURED_EXTRACTION doesn't exist in lingwen-shared;
+        # QUALITY_ANALYSIS is the closest semantic fit (analytical JSON
+        # output, not text repair). v2 follow-up: add STRUCTURED_EXTRACTION
+        # to TaskType enum in lingwen-shared. See BACKLOG "P2-EXTRACT-ENUM".
         task = LLMTask(task_type=TaskType.QUALITY_ANALYSIS, prompt=prompt)
         response_raw = service.execute(task)
     except Exception as e:
