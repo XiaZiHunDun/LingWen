@@ -1,7 +1,7 @@
 # 待办事项列表
 
-> **最后更新**: 2026-09-15 (Phase 85 P3-ARCHDEBT infra/tools/consistency → MERGE into lingwen-quality consistency/ (ARCHDEBT-MIXED 第 2 例), v54.17 ready for ff-merge)
-> **更新者**: 协调者（Phase 85 MERGE 闭环 — 1 file MIGRATE (run_quality_checks.py 185 LOC → packages/lingwen-quality/src/lingwen_quality/consistency/) + 8 supporting DELETE (-22KB) + 3 in-place consumer fixups + I086 NEW invariant (extends I063 cluster); 5 atomic commits C0-C4; 11/11 NEW regression guards GREEN at C5 (G9 closed at C6); 18/19 C5 tests PASS; cluster cumulative Phase 53-85 = ~20136 LOC dead code + 8 zero-consumer dirs + 6 真迁移 + 1 MERGE; v54.16 → v54.17）
+> **最后更新**: 2026-09-15 (Phase 86 P3-ARCHDEBT-MINI infra/tools/ top-level cleanup (5 zero-consumer .py + 3 shell + tools/workflow/ 3 stale shell), v54.18 ready for ff-merge)
+> **更新者**: 协调者（Phase 86 ARCHDEBT-MINI 第 2 例 (Phase 78 was first): 4 atomic commits C0-C3; 12 files DELETE (-1670 bytes); 17/17 C3 regression guards GREEN (no expected-fail — NON-INVASIVE pattern); 13/13 prior-phase guards preserved without modification (only test_phase18_8 docstring updated); cluster cumulative Phase 53-86 = 14 phases / ~20138 LOC dead code + 8 zero-consumer dirs + 6 真迁移 + 1 MERGE; v54.17 → v54.18）
 > **优先级**: P0 > P1 > P2 > P3
 > **事实来源**: 本仓库当前版本在 `CLAUDE.md` v54.10；并行开发入口见根 `COORDINATION.md`
 
