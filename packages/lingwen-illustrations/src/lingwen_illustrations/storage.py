@@ -45,7 +45,7 @@ def save_asset(
     """Write image bytes + .meta.json sidecar. Returns image path."""
     jpg_path = asset_path(
         project_root,
-        type=meta.type,  # type: ignore[arg-type]
+        type=meta.type,
         id=meta.id,
         chapter_num=meta.chapter_num,
     )
@@ -74,7 +74,7 @@ def delete_asset(project_root: Path, meta: IllustrationMetadata) -> None:
     """Remove image + sidecar. Idempotent (missing files are OK)."""
     jpg_path = asset_path(
         project_root,
-        type=meta.type,  # type: ignore[arg-type]
+        type=meta.type,
         id=meta.id,
         chapter_num=meta.chapter_num,
     )

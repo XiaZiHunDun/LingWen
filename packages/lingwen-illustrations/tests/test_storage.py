@@ -91,3 +91,46 @@ def test_list_assets_empty_dir(tmp_path: Path):
 def test_asset_path_invalid_type_raises():
     with pytest.raises(StoreError):
         asset_path(Path("/tmp"), type="bogus", id="x")  # type: ignore[arg-type]
+
+
+def test_list_assets_sorts_by_created_at_desc(tmp_path: Path):
+    """MINOR fix: sort order not previously tested."""
+    import dataclasses
+
+    def meta_with_ts(id: str, ts: str) -> IllustrationMetadata:
+        return dataclasses.replace(_sample_meta(id=id), created_at=ts)
+
+    save_asset(tmp_path, b"a", meta_with_ts("oldest", "2026-09-15T08:00:00Z"))
+    save_asset(tmp_path, b"b", meta_with_ts("newest", "2026-09-15T10:00:00Z"))
+    save_asset(tmp_path, b"c", meta_with_ts("middle", "2026-09-15T09:00:00Z"))
+
+    assets = list_assets(tmp_path)
+    assert [a.id for a in assets] == ["newest", "middle", "oldest"]
+
+
+def test_list_assets_skips_corrupt_sidecars(tmp_path: Path):
+    """MINOR fix: behavior added in amend (LoadError catch) needs regression test."""
+    # Write one valid + one corrupt sidecar
+    save_asset(tmp_path, b"good", _sample_meta(id="good"))
+    corrupt = tmp_path / "assets" / "illustrations" / "chapter-017" / "corrupt.jpg.meta.json"
+    corrupt.parent.mkdir(parents=True, exist_ok=True)
+    corrupt.write_text("not valid json{", encoding="utf-8")
+
+    # And one with missing required field (would raise LoadError per Task 3 fixup)
+    missing = tmp_path / "assets" / "illustrations" / "chapter-017" / "missing.jpg.meta.json"
+    missing.write_text('{"id": "x"}', encoding="utf-8")  # only id, no other required fields
+
+    assets = list_assets(tmp_path)
+    # Only the valid one should be returned
+    assert len(assets) == 1
+    assert assets[0].id == "good"
+
+
+def test_delete_asset_idempotent(tmp_path: Path):
+    """MINOR fix: delete twice should not raise."""
+    meta = _sample_meta(id="twice")
+    save_asset(tmp_path, b"data", meta)
+    delete_asset(tmp_path, meta)  # first delete
+    delete_asset(tmp_path, meta)  # second delete on already-gone — no error
+    # Verify the files really are gone
+    assert not (tmp_path / "assets" / "illustrations" / "chapter-017" / "twice.jpg").exists()

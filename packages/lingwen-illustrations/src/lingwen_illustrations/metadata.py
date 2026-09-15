@@ -3,13 +3,17 @@
 Stored alongside every .jpg file at:
   <project>/assets/covers/<id>.jpg.meta.json
   <project>/assets/illustrations/chapter-NNN/<id>.jpg.meta.json
+
+Invariant: `created_at` is always an ISO 8601 string with trailing `Z`
+(UTC). This lets `storage.list_assets` sort by string comparison without
+timezone arithmetic. Callers that emit timestamps MUST format with `Z`.
 """
 
 from __future__ import annotations
 
 import json
 from dataclasses import asdict, dataclass
-from typing import Any
+from typing import Any, Literal
 
 
 @dataclass(frozen=True)
@@ -17,7 +21,7 @@ class IllustrationMetadata:
     """Immutable metadata for one generated illustration asset."""
 
     id: str
-    type: str  # "chapter" | "cover"
+    type: Literal["chapter", "cover"]
     project_slug: str
     chapter_num: int | None  # None for cover
     style_preset: str  # "ink" | "realistic" | "anime"
@@ -26,7 +30,7 @@ class IllustrationMetadata:
     final_prompt: str
     prompt_hash: str
     model: str
-    created_at: str  # ISO 8601
+    created_at: str  # ISO 8601 with trailing Z (UTC)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
