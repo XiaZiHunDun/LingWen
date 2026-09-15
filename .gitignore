@@ -9,6 +9,9 @@ Thumbs.db
 *.swo
 *~
 
+# Superpowers (brainstorming + visual companion artifacts)
+.superpowers/
+
 # Python - Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
