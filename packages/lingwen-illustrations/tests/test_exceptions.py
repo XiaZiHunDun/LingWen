@@ -38,3 +38,6 @@ def test_subclass_default_retryable():
 def test_subclass_inherits_stage():
     assert LoadError("x").stage == Stage.LOAD
     assert ExtractError("x").stage == Stage.EXTRACT
+    assert ComposeError("x").stage == Stage.COMPOSE
+    assert GenerateError("x").stage == Stage.GENERATE
+    assert StoreError("x").stage == Stage.STORE
