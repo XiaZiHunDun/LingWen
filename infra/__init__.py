@@ -11,9 +11,8 @@
 注：util (RetryConfig + retry + retry_async + with_retry + is_transient_error + backoff_delay) 于 Phase 82 P3-ARCHDEBT 全量迁移至 packages/lingwen-util/，已不属于本 compat re-export。
 """
 
-from lingwen_errors import BaseError, ValidationError
-
 from lingwen_config import APIConfig
+from lingwen_errors import BaseError, ValidationError
 from lingwen_util import RetryConfig, retry, retry_async, with_retry
 
 __all__ = [

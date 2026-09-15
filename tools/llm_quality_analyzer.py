@@ -19,11 +19,10 @@ from typing import Dict, List, Optional
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from lingwen_config.api_config_loader import get_api_config
 from lingwen_llm.port_adapter import LLMServiceAdapter
 from lingwen_quality.quality import Issue
 from lingwen_shared.contracts.python.llm import LLMTask, TaskType
-
-from lingwen_config.api_config_loader import get_api_config
 
 logger = logging.getLogger(__name__)
 
