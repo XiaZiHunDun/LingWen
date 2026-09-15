@@ -516,10 +516,9 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
         req: StudioBatchTemplateCreateRequest,
     ) -> StudioBatchTemplate:
         """Create a saved batch-run preset (Track B batch templates)."""
-        from lingwen_studio_registry import get_project_by_slug
-
         from lingwen_studio_batch_streamer import KNOWN_EVENT_TYPES
         from lingwen_studio_batch_templates import create_batch_template
+        from lingwen_studio_registry import get_project_by_slug
 
         slug = req.slug or _require_project(ctx).slug
         if get_project_by_slug(slug) is None:

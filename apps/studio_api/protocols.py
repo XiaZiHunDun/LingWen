@@ -300,7 +300,6 @@ class MasterControllerAdapter:
         from lingwen_core.agents.production_summary import (
             build_production_summary_from_controller,
         )
-
         from lingwen_cross_volume.incremental_backfill import backfill_stats_to_dict
 
         production_summary = build_production_summary_from_controller(self._controller)

@@ -23,11 +23,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Optional
 
 from fastapi import HTTPException
+from lingwen_reading_power.db import ReadingPowerDB
 from slowapi import Limiter
 
 from apps.studio_api.protocols import MasterControllerLike
 from apps.studio_api.ws import ConnectionManager
-from lingwen_reading_power.db import ReadingPowerDB
 
 if TYPE_CHECKING:
     from lingwen_cross_volume.storage import RippleStorage

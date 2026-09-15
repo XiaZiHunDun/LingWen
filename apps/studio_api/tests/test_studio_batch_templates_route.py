@@ -5,9 +5,9 @@ from unittest.mock import patch
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from lingwen_studio_batch_templates import BatchTemplate
 
 from apps.studio_api.routes.studio import register_studio
-from lingwen_studio_batch_templates import BatchTemplate
 
 
 @pytest.fixture

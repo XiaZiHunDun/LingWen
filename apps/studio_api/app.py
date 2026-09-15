@@ -27,6 +27,9 @@ load_project_env()
 from fastapi import FastAPI, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
+from lingwen_cross_volume.ripple import CrossVolumeRipple
+from lingwen_cross_volume.scoring import compute_impact_score
+from lingwen_cross_volume.storage import AuditEntry, ConflictError, RippleStorage
 from pydantic import BaseModel, Field
 
 # Phase 13.0 T2 H2: middleware — CORS + GZip + slowapi 限流 (100/min default, 10/min mutation)
@@ -71,9 +74,6 @@ from apps.studio_api.ws import (
     ConnectionManager,
     start_broadcast_task,
 )
-from lingwen_cross_volume.ripple import CrossVolumeRipple
-from lingwen_cross_volume.scoring import compute_impact_score
-from lingwen_cross_volume.storage import AuditEntry, ConflictError, RippleStorage
 
 # ==================== Middleware / Rate Limiter ====================
 # Phase 13.0 T2 H2: slowapi Limiter singleton (module-level, key=IP, default 100/min)
@@ -84,6 +84,8 @@ limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
 # ==================== Helpers (Phase 15.0 T1.3: moved to dashboard/helpers/) ====================
 # app.py / create_app closure references these helpers — re-export them here
 # so the existing top-level call sites (e.g. _default_storage in tests) keep working.
+from lingwen_reading_power.db import ReadingPowerDB  # noqa: F401
+
 from apps.studio_api.helpers.cvg import (  # noqa: F401
     _audit_to_response,
     _build_reference_graph_response,
@@ -112,7 +114,6 @@ from apps.studio_api.models import *  # noqa: F401,F403
 # dependencies (db, master_controller, manager, limiter, production_records_root,
 # cvg_storage).
 from apps.studio_api.routes import RoutesContext, register_all_routes  # noqa: E402
-from lingwen_reading_power.db import ReadingPowerDB  # noqa: F401
 
 # Phase 15.0 T1.3: CVG storage singleton stays module-level in dashboard.app so tests
 # can monkeypatch app_module._default_storage / _default_storage_instance / _DEFAULT_CVG_DB_PATH
@@ -305,8 +306,9 @@ if __name__ == "__main__":
         "on",
     )
     if dev_mode:
-        from apps.studio_api.e2e_stub_controller import E2EStubController
         from lingwen_cross_volume.e2e_seed import ensure_e2e_fixtures
+
+        from apps.studio_api.e2e_stub_controller import E2EStubController
 
         ensure_e2e_fixtures()
         state_dir = Path(__file__).resolve().parent.parent / "infra" / ".state"

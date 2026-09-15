@@ -10,6 +10,9 @@ from datetime import datetime
 from typing import Any
 
 from fastapi import HTTPException
+from lingwen_cross_volume.ripple import CrossVolumeRipple
+from lingwen_cross_volume.scoring import compute_impact_score
+from lingwen_cross_volume.storage import AuditEntry, RippleStorage
 from lingwen_shared.contracts.python.cvg import ReferenceGraphResponse  # Phase 126 v16.5 #N.11.g
 
 from apps.studio_api.cvg_ws import CvgConnectionManager
@@ -18,9 +21,6 @@ from apps.studio_api.protocols import (
     RippleDetailResponse,
     RippleListItemResponse,
 )
-from lingwen_cross_volume.ripple import CrossVolumeRipple
-from lingwen_cross_volume.scoring import compute_impact_score
-from lingwen_cross_volume.storage import AuditEntry, RippleStorage
 
 # Phase 9.13: CVG WebSocket connection manager (跟 /api/ws/workflows ConnectionManager 1:1 模式)
 cvg_manager = CvgConnectionManager()

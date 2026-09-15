@@ -14,9 +14,6 @@ from typing import Any, Dict
 
 import psutil
 from fastapi import FastAPI
-
-from apps.studio_api.models import DatabaseStatus, HealthResponse, MemoryUsage
-from apps.studio_api.routes.ctx import RoutesContext
 from lingwen_health import (
     CacheHealthCheck,
     DatabaseHealthCheck,
@@ -27,6 +24,9 @@ from lingwen_health import (
     health_endpoint,
     register_health_check,
 )
+
+from apps.studio_api.models import DatabaseStatus, HealthResponse, MemoryUsage
+from apps.studio_api.routes.ctx import RoutesContext
 
 _START_TIME = datetime.now(timezone.utc)
 

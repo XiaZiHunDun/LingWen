@@ -6,12 +6,7 @@ Four endpoints under /api/illustrations/*:
 - DELETE /{asset_id}   — remove asset (image + sidecar)
 - GET  /{asset_id}/image — serve the .jpg file
 
-Errors map to specific HTTP statuses per stage:
-- LoadError     -> 404 (project/chapter/character-bible not found)
-- ExtractError  -> 502 (LLM service failure, retryable)
-- ComposeError  -> 400 (invalid style preset)
-- GenerateError -> 502 (image API failure, retryable; carries retry_after)
-- StoreError    -> 500 (filesystem write/delete failure)
+Errors map to specific HTTP statuses per stage (see STAGE_HTTP_CODES).
 """
 
 from __future__ import annotations
@@ -33,6 +28,16 @@ from lingwen_illustrations.exceptions import (
 from pydantic import BaseModel, Field, model_validator
 
 from apps.studio_api.routes.ctx import RoutesContext
+
+# Stage -> HTTP code dispatch table. Single source of truth for error mapping.
+STAGE_HTTP_CODES: dict[type[IllustrationError], int] = {
+    LoadError: 404,
+    ExtractError: 502,
+    ComposeError: 400,
+    GenerateError: 502,
+    StoreError: 500,
+}
+
 
 # --- Pydantic schemas ---
 
@@ -76,17 +81,11 @@ def _project_root_for(slug: str) -> Path:
     v1: scan `projects/` for the slug. Uses cwd-relative resolution so
     tests can `monkeypatch.chdir(tmp_path)` to isolate per-test.
     """
-    from lingwen_paths import resolve_project_root
-
     candidate = Path("projects") / slug
     if not candidate.exists():
         raise LoadError(f"project '{slug}' not found at {candidate}")
-    # ProjectPaths singleton root is set by env var / repo root. For
-    # slug-scoped illustration workspaces we only need the project root
-    # Path itself (pipeline reads from <root>/chapters/ and <root>/config/),
-    # so we return the candidate directly without forcing ProjectPaths
-    # canonical layout (see BACKLOG "P2-ILLUSTRATIONS-BIBLE-CANONICAL").
-    _ = resolve_project_root  # reserved for future canonical integration
+    # Note: lingwen-paths.ProjectPaths / resolve_project_root reserved
+    # for future canonical integration (see BACKLOG P2-ILLUSTRATIONS-BIBLE-CANONICAL).
     return candidate
 
 
@@ -108,6 +107,12 @@ def _err_detail(exc: IllustrationError) -> dict:
     return payload
 
 
+def _raise_stage_error(exc: IllustrationError) -> None:
+    """Convert a stage exception to the corresponding HTTPException."""
+    status = STAGE_HTTP_CODES.get(type(exc), 500)
+    raise HTTPException(status, detail=_err_detail(exc)) from exc
+
+
 # --- Router registration ---
 
 
@@ -117,12 +122,12 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.post("/api/illustrations/generate", response_model=GenerateResponse)
     async def generate_illustration(req: GenerateRequest = Body(...)) -> GenerateResponse:
-        # Stage 0: resolve project + credentials (LoadError here -> 404)
         try:
             project_root = _project_root_for(req.project_slug)
-            api_key, api_host = _api_credentials()
         except LoadError as e:
             raise HTTPException(404, detail=_err_detail(e)) from e
+
+        api_key, api_host = _api_credentials()
 
         # Lazy import to avoid loading pipeline deps at module import time
         from lingwen_illustrations.pipeline import generate_illustration as run_pipeline
@@ -138,16 +143,8 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
                 api_key=api_key,
                 api_host=api_host,
             )
-        except LoadError as e:
-            raise HTTPException(404, detail=_err_detail(e)) from e
-        except ExtractError as e:
-            raise HTTPException(502, detail=_err_detail(e)) from e
-        except ComposeError as e:
-            raise HTTPException(400, detail=_err_detail(e)) from e
-        except GenerateError as e:
-            raise HTTPException(502, detail=_err_detail(e)) from e
-        except StoreError as e:
-            raise HTTPException(500, detail=_err_detail(e)) from e
+        except IllustrationError as e:
+            _raise_stage_error(e)
 
         return GenerateResponse(
             id=meta.id,
@@ -159,7 +156,10 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
         )
 
     @app.get("/api/illustrations/list", response_model=ListResponse)
-    def list_assets(project_slug: str = Query(...), type: Optional[str] = Query(None)) -> ListResponse:
+    def list_assets(
+        project_slug: str = Query(...),
+        type: Optional[str] = Query(None),
+    ) -> ListResponse:
         try:
             project_root = _project_root_for(project_slug)
         except LoadError as e:
@@ -172,7 +172,10 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
         return ListResponse(assets=[a.to_dict() for a in assets])
 
     @app.delete("/api/illustrations/{asset_id}")
-    def delete_asset(asset_id: str, project_slug: str = Query(...)) -> dict:
+    def delete_asset(
+        asset_id: str,
+        project_slug: str = Query(...),
+    ) -> dict:
         try:
             project_root = _project_root_for(project_slug)
         except LoadError as e:
@@ -188,7 +191,10 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
         return {"deleted": asset_id}
 
     @app.get("/api/illustrations/{asset_id}/image")
-    def get_image(asset_id: str, project_slug: str = Query(...)) -> FileResponse:
+    def get_image(
+        asset_id: str,
+        project_slug: str = Query(...),
+    ) -> FileResponse:
         try:
             project_root = _project_root_for(project_slug)
         except LoadError as e:

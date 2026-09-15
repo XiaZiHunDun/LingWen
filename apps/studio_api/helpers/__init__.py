@@ -7,6 +7,8 @@ Direct attribute access (e.g. `from dashboard.helpers.time_window import _parse_
 is the canonical form; this __init__ exists for ergonomics only.
 """
 
+from lingwen_reading_power.db import ReadingPowerDB
+
 from apps.studio_api.helpers.cvg import (
     _audit_to_response,
     _build_reference_graph_response,
@@ -29,7 +31,6 @@ from apps.studio_api.helpers.workflow import (
     _list_workflow_yamls,
     _workflow_result_to_response,
 )
-from lingwen_reading_power.db import ReadingPowerDB
 
 __all__ = [
     "_parse_time_window",

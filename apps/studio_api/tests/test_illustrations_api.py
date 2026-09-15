@@ -192,3 +192,31 @@ def test_delete_asset(tmp_path, monkeypatch):
     resp = client.delete("/api/illustrations/del-id?project_slug=test")
     assert resp.status_code == 200
     assert resp.json()["deleted"] == "del-id"
+
+
+def test_get_image_returns_jpeg_bytes(illustrations_client, tmp_path):
+    """IMPORTANT: GET /image endpoint had zero coverage before this fix."""
+    client = illustrations_client
+    project_root = tmp_path / "projects" / "test"
+    # Create an asset with a real jpg byte sequence
+    from lingwen_illustrations.metadata import IllustrationMetadata
+    from lingwen_illustrations.storage import save_asset
+    meta = IllustrationMetadata(
+        id="img-id", type="chapter", project_slug="test", chapter_num=17,
+        style_preset="ink", custom_prompt=None, scene_json={},
+        final_prompt="x", prompt_hash="sha256:x", model="m",
+        created_at="2026-09-15T00:00:00Z",
+    )
+    save_asset(project_root, b"\xff\xd8\xff\xe0fake-jpeg-content", meta)
+
+    resp = client.get("/api/illustrations/img-id/image?project_slug=test")
+    assert resp.status_code == 200
+    assert resp.headers["content-type"] == "image/jpeg"
+    assert resp.content == b"\xff\xd8\xff\xe0fake-jpeg-content"
+
+
+def test_get_image_404_when_asset_not_found(illustrations_client):
+    """IMPORTANT: missing asset returns 404."""
+    client = illustrations_client
+    resp = client.get("/api/illustrations/missing-id/image?project_slug=test")
+    assert resp.status_code == 404
