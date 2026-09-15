@@ -15,6 +15,9 @@ Why direct paths instead of ProjectPaths:
     workspaces. load_agency_target_characters from lingwen-project-characters
     (I073) returns list[str] (names only) but prompt_builder needs list[dict]
     (with descriptions), so we read the bible JSON directly.
+
+    Tracked in BACKLOG.md as P2-ILLUSTRATIONS-BIBLE-CANONICAL (v2 follow-up:
+    add a bible_loader adapter with direct/canonical backends).
 """
 
 from __future__ import annotations
