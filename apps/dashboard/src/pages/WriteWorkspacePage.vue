@@ -17,12 +17,38 @@
       />
 
       <div class="workbench-root__center">
+        <div class="workbench-toolbar workbench-root__toolbar">
+          <button
+            type="button"
+            class="toolbar-btn generate-btn generate-illustration-btn"
+            data-testid="generate-illustration-btn"
+            @click="dialogOpen = true"
+          >✦ 生成插图</button>
+        </div>
         <WriteWorkspaceEditorPane
           :content="editorContent"
           :editable="true"
           @update:content="handleContentChange"
         />
       </div>
+
+      <aside
+        class="illustration-sidebar illustration-workspace-sidebar"
+        v-if="store.chapterId"
+        data-testid="illustration-sidebar"
+      >
+        <p class="label illustration-workspace-label">本章节插图</p>
+        <IllustrationCard
+          v-if="currentIllustration"
+          :asset="currentIllustration"
+          @regenerate="regenerateIllustration"
+          @delete="deleteIllustration"
+        />
+        <div
+          v-else
+          class="placeholder illustration-workspace-placeholder"
+        >尚未生成</div>
+      </aside>
 
       <WriteWorkspaceAIDrawer
         :open="store.aiDrawerOpen"
@@ -37,6 +63,14 @@
         />
       </WriteWorkspaceAIDrawer>
     </div>
+
+    <GenerateIllustrationDialog
+      v-model="dialogOpen"
+      :project-slug="projectSlug"
+      :chapter-num="store.chapterId || null"
+      type="chapter"
+      @generate="onGenerate"
+    />
 
     <WriteWorkspaceStatusBar :save-state="store.saveState" @retry="retrySave" />
 
@@ -86,6 +120,8 @@ import {
 } from '@/utils/writeWorkspace/conflictResolution.js'
 import { useTypewriterMode } from '@/composables/useTypewriterMode'
 import { useWriteQualityCheck } from '@/composables/useWriteQualityCheck'
+import { useIllustration } from '@/composables/useIllustration'
+import { useIllustrationStore } from '@/stores/useIllustrationStore'
 import WriteWorkspaceHeader from '@/components/writeWorkspace/WriteWorkspaceHeader.vue'
 import WriteWorkspaceOutlinePane from '@/components/writeWorkspace/WriteWorkspaceOutlinePane.vue'
 import WriteWorkspaceEditorPane from '@/components/writeWorkspace/WriteWorkspaceEditorPane.vue'
@@ -93,6 +129,8 @@ import WriteWorkspaceAIDrawer from '@/components/writeWorkspace/WriteWorkspaceAI
 import WriteWorkspaceStatusBar from '@/components/writeWorkspace/WriteWorkspaceStatusBar.vue'
 import WriteInlineAnnotationLayer from '@/components/writeWorkspace/WriteInlineAnnotationLayer.vue'
 import WriteWorkspaceConflictDialog from '@/components/writeWorkspace/WriteWorkspaceConflictDialog.vue'
+import GenerateIllustrationDialog from '@/components/illustrations/GenerateIllustrationDialog.vue'
+import IllustrationCard from '@/components/illustrations/IllustrationCard.vue'
 
 const MODE_KEY = 'lingwen.write_workspace.mode'
 
@@ -111,6 +149,29 @@ const conflictExternalMtime = ref(0)
 // 质量检查后端端点 `/quality/run` 尚未接入：调用会 404。诚实标注为「暂不可用」，
 // 不静默失败，也不误报未处理 rejection。
 const qualityUnavailable = ref(false)
+
+// Phase 90 Task 15 — illustration generation wiring.
+// projectSlug is tracked inside useIllustrationStore (loaded via the active project
+// path resolution at app boot — same source the Gallery page uses).
+const illustrationStore = useIllustrationStore()
+const projectSlug = computed(() => illustrationStore.projectSlug)
+const illustration = useIllustration(projectSlug)
+const dialogOpen = ref(false)
+const currentIllustration = computed(() =>
+  store.chapterId ? illustration.getForChapter(store.chapterId) : null,
+)
+
+async function onGenerate(params) {
+  await illustration.generate(params)
+}
+
+async function regenerateIllustration(assetId) {
+  await illustration.regenerate(assetId)
+}
+
+async function deleteIllustration(assetId) {
+  await illustration.deleteAsset(assetId)
+}
 
 const persist = useWriteWorkspacePersistence({
   saveFn: api.saveChapter,
@@ -303,5 +364,53 @@ onBeforeUnmount(() => {
   font-family: inherit;
   margin-top: 1rem;
   resize: vertical;
+}
+.workbench-root__toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--n-border-color);
+  background: var(--n-color);
+}
+.toolbar-btn {
+  font-size: 13px;
+  padding: 6px 12px;
+  border: 1px solid var(--n-border-color);
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.toolbar-btn:hover {
+  background: var(--n-button-color-2, rgba(124, 58, 237, 0.08));
+}
+.toolbar-btn:focus-visible {
+  outline: 2px solid var(--color-accent, #7c3aed);
+  outline-offset: 2px;
+}
+.generate-btn {
+  font-weight: 500;
+}
+.illustration-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--n-border-color);
+  padding: 0.75rem;
+  overflow-y: auto;
+  background: var(--n-color);
+}
+.illustration-sidebar .label {
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--n-text-color-2);
+  margin: 0 0 8px 0;
+}
+.illustration-sidebar .placeholder {
+  font-size: 12px;
+  color: var(--n-text-color-3);
+  text-align: center;
+  padding: 1rem 0;
+  border: 1px dashed var(--n-border-color);
+  border-radius: 4px;
 }
 </style>

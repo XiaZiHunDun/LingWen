@@ -69,6 +69,7 @@ export { useDashboardNav } from './useDashboardNav.js';
 export { useDecisionStore } from './useDecisionStore.js';
 export { useEffectiveCreationMode } from './useEffectiveCreationMode.js';
 export { useFilteredPageError } from './useFilteredPageError.js';
+export { useIllustration } from './useIllustration.js';
 export { useOverviewStore } from './useOverviewStore.js';
 export { usePageLeadDismiss } from './usePageLeadDismiss.js';
 export { usePilotBatch } from './usePilotBatch.js';
