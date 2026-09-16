@@ -11,6 +11,7 @@ from lingwen_illustrations.storage import (
     asset_path,
     delete_asset,
     list_assets,
+    replace_asset,
     save_asset,
 )
 
@@ -134,3 +135,98 @@ def test_delete_asset_idempotent(tmp_path: Path):
     delete_asset(tmp_path, meta)  # second delete on already-gone — no error
     # Verify the files really are gone
     assert not (tmp_path / "assets" / "illustrations" / "chapter-017" / "twice.jpg").exists()
+
+
+# ─── replace_asset tests (Phase 94 atomic regenerate) ──────────────
+
+
+def test_replace_asset_preserves_id_and_swaps_bytes(tmp_path: Path):
+    """replace_asset overwrites bytes in place; asset_id stays the same."""
+    meta = _sample_meta(id="regen-1")
+    save_asset(tmp_path, b"OLD-BYTES", meta)
+    jpg_path = asset_path(tmp_path, type="chapter", id="regen-1", chapter_num=17)
+    sidecar = jpg_path.with_suffix(jpg_path.suffix + ".meta.json")
+    assert jpg_path.read_bytes() == b"OLD-BYTES"
+
+    # Replace with new content + updated metadata.
+    new_meta = _sample_meta(id="regen-1")
+    new_meta_dict = dict(new_meta.to_dict())
+    new_meta_dict["created_at"] = "2026-09-16T12:00:00Z"  # timestamp changed
+    new_meta = IllustrationMetadata.from_dict(new_meta_dict)
+    new_meta_dict["final_prompt"] = "updated prompt v2"
+    new_meta = IllustrationMetadata.from_dict(new_meta_dict)
+
+    returned = replace_asset(tmp_path, b"NEW-BYTES", new_meta)
+    assert returned == jpg_path
+    assert jpg_path.read_bytes() == b"NEW-BYTES"
+
+    # Sidecar updated with new metadata (final_prompt, created_at).
+    import json
+    sidecar_data = json.loads(sidecar.read_text(encoding="utf-8"))
+    assert sidecar_data["id"] == "regen-1"
+    assert sidecar_data["final_prompt"] == "updated prompt v2"
+    assert sidecar_data["created_at"] == "2026-09-16T12:00:00Z"
+
+
+def test_replace_asset_no_temp_leftover_on_success(tmp_path: Path):
+    """Atomic rename must clean up the temp file (no .tmp leftovers)."""
+    meta = _sample_meta(id="clean-tmp")
+    save_asset(tmp_path, b"v1", meta)
+    replace_asset(tmp_path, b"v2", meta)
+    jpg_path = asset_path(tmp_path, type="chapter", id="clean-tmp", chapter_num=17)
+    # No .tmp siblings should remain.
+    siblings = list(jpg_path.parent.glob("*.tmp"))
+    assert siblings == [], f"leftover temp files: {siblings}"
+
+
+def test_replace_asset_falls_back_to_save_when_missing(tmp_path: Path):
+    """If no existing asset, replace_asset bootstraps via save_asset (no atomic target)."""
+    meta = _sample_meta(id="bootstrap")
+    # No prior save_asset call.
+    returned = replace_asset(tmp_path, b"NEW", meta)
+    jpg_path = asset_path(tmp_path, type="chapter", id="bootstrap", chapter_num=17)
+    assert returned == jpg_path
+    assert jpg_path.read_bytes() == b"NEW"
+
+
+def test_replace_asset_invalidates_listing_via_created_at(tmp_path: Path):
+    """After replace, list_assets returns updated metadata (created_at + final_prompt)."""
+    meta = _sample_meta(id="listable")
+    save_asset(tmp_path, b"OLD", meta)
+
+    # Replace with new metadata.
+    new_meta_dict = dict(meta.to_dict())
+    new_meta_dict["created_at"] = "2026-09-16T12:00:00Z"
+    new_meta_dict["final_prompt"] = "new prompt v2"
+    new_meta = IllustrationMetadata.from_dict(new_meta_dict)
+    replace_asset(tmp_path, b"NEW", new_meta)
+
+    listed = list_assets(tmp_path)
+    found = next((a for a in listed if a.id == "listable"), None)
+    assert found is not None
+    assert found.final_prompt == "new prompt v2"
+    assert found.created_at == "2026-09-16T12:00:00Z"
+
+
+def test_replace_asset_preserves_existing_on_failure(tmp_path: Path, monkeypatch):
+    """If atomic rename fails (disk full / permissions), original is preserved."""
+    meta = _sample_meta(id="preserve-on-fail")
+    save_asset(tmp_path, b"ORIGINAL", meta)
+    jpg_path = asset_path(tmp_path, type="chapter", id="preserve-on-fail", chapter_num=17)
+    assert jpg_path.read_bytes() == b"ORIGINAL"
+
+    # Force Path.replace to raise — simulates disk-full during atomic rename.
+    def _raise_replace(self, other):
+        raise OSError("simulated disk full during rename")
+
+    monkeypatch.setattr(Path, "replace", _raise_replace)
+
+    with pytest.raises(StoreError) as exc:
+        replace_asset(tmp_path, b"NEW-BYTES", meta)
+    assert "rename" in str(exc.value).lower() or "failed" in str(exc.value).lower()
+
+    # Original asset must still be readable.
+    assert jpg_path.read_bytes() == b"ORIGINAL"
+    # No .tmp leftover after rollback.
+    siblings = list(jpg_path.parent.glob("*.tmp"))
+    assert siblings == []

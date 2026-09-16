@@ -220,3 +220,157 @@ def test_get_image_404_when_asset_not_found(illustrations_client):
     client = illustrations_client
     resp = client.get("/api/illustrations/missing-id/image?project_slug=test")
     assert resp.status_code == 404
+
+
+# ─── PUT /{id}/regenerate (Phase 94 atomic regenerate) ───────────────
+
+
+def test_put_regenerate_preserves_asset_id(illustrations_client):
+    """PUT /{id}/regenerate preserves asset_id (atomic in-place swap)."""
+    client = illustrations_client
+
+    mock_service = MagicMock()
+    mock_service.execute.return_value = json.dumps({
+        "subject": "林渊", "scene": "幽冥谷", "mood": "紧张",
+        "characters_in_scene": [], "extraction_confidence": 0.9,
+    }, ensure_ascii=False)
+
+    # 1. Generate an asset.
+    with patch("lingwen_illustrations.prompt_builder.get_llm_service",
+               return_value=mock_service), \
+         patch("lingwen_illustrations.pipeline.image_generator.generate",
+               new=AsyncMock(return_value=b"\xff\xd8\xff\xe0OLD-jpeg")):
+        gen_resp = client.post("/api/illustrations/generate", json={
+            "project_slug": "test",
+            "type": "chapter",
+            "chapter_num": 17,
+            "style_preset": "ink",
+            "custom_prompt": None,
+        })
+    assert gen_resp.status_code == 200
+    original_id = gen_resp.json()["id"]
+
+    # 2. PUT regenerate — same id, new content.
+    with patch("lingwen_illustrations.prompt_builder.get_llm_service",
+               return_value=mock_service), \
+         patch("lingwen_illustrations.pipeline.image_generator.generate",
+               new=AsyncMock(return_value=b"\xff\xd8\xff\xe0NEW-jpeg")):
+        regen_resp = client.put(
+            f"/api/illustrations/{original_id}/regenerate?project_slug=test"
+        )
+
+    assert regen_resp.status_code == 200
+    regen_body = regen_resp.json()
+    assert regen_body["id"] == original_id, (
+        "PUT /regenerate must preserve asset_id — Phase 94 atomic contract."
+    )
+    assert regen_body["type"] == "chapter"
+    assert regen_body["chapter_num"] == 17
+    assert regen_body["style_preset"] == "ink"
+
+
+def test_put_regenerate_404_when_asset_not_found(illustrations_client):
+    """Regenerate for non-existent asset_id returns 404 (no destructive create)."""
+    client = illustrations_client
+    resp = client.put("/api/illustrations/nonexistent/regenerate?project_slug=test")
+    assert resp.status_code == 404
+
+
+def test_put_regenerate_extract_error_preserves_original(illustrations_client):
+    """If Stage 1 fails, the original asset is preserved (no destructive behavior)."""
+    client = illustrations_client
+
+    mock_service_ok = MagicMock()
+    mock_service_ok.execute.return_value = json.dumps({
+        "subject": "x", "scene": "y", "mood": "z",
+        "characters_in_scene": [], "extraction_confidence": 0.8,
+    }, ensure_ascii=False)
+
+    # 1. Generate an asset.
+    with patch("lingwen_illustrations.prompt_builder.get_llm_service",
+               return_value=mock_service_ok), \
+         patch("lingwen_illustrations.pipeline.image_generator.generate",
+               new=AsyncMock(return_value=b"\xff\xd8\xff\xe0ORIGINAL")):
+        gen_resp = client.post("/api/illustrations/generate", json={
+            "project_slug": "test",
+            "type": "chapter",
+            "chapter_num": 17,
+            "style_preset": "ink",
+            "custom_prompt": None,
+        })
+    original_id = gen_resp.json()["id"]
+
+    # 2. PUT regenerate with failing LLM service — must return 502, not destroy original.
+    mock_service_fail = MagicMock()
+    mock_service_fail.execute.side_effect = RuntimeError("LLM outage")
+
+    with patch("lingwen_illustrations.prompt_builder.get_llm_service",
+               return_value=mock_service_fail):
+        regen_resp = client.put(
+            f"/api/illustrations/{original_id}/regenerate?project_slug=test"
+        )
+    assert regen_resp.status_code == 502
+    detail = regen_resp.json()["detail"]
+    assert detail["stage"] == "extract"
+
+    # 3. Original asset must still be readable.
+    img_resp = client.get(
+        f"/api/illustrations/{original_id}/image?project_slug=test"
+    )
+    assert img_resp.status_code == 200
+    assert img_resp.content == b"\xff\xd8\xff\xe0ORIGINAL", (
+        "Original asset must be preserved when regenerate fails —"
+        " Phase 94 atomic contract (non-destructive)."
+    )
+
+
+def test_put_regenerate_load_error_for_missing_chapter_returns_404(tmp_path, monkeypatch):
+    """If underlying chapter is gone, regenerate returns 404 (LoadError → 404)."""
+    monkeypatch.chdir(tmp_path)
+    project_root = _make_project_dirs(tmp_path, "test")
+    (project_root / "chapters" / "017.md").write_text(
+        "# 第 17 章\n林渊踏入幽冥谷", encoding="utf-8"
+    )
+    (project_root / "config" / "characters.json").write_text(
+        json.dumps([{"name": "林渊", "description": "黑发青年"}], ensure_ascii=False),
+        encoding="utf-8",
+    )
+    client = _build_client(tmp_path)
+
+    mock_service_ok = MagicMock()
+    mock_service_ok.execute.return_value = json.dumps({
+        "subject": "x", "scene": "y", "mood": "z",
+        "characters_in_scene": [], "extraction_confidence": 0.8,
+    }, ensure_ascii=False)
+
+    # Generate an asset for chapter 17.
+    with patch("lingwen_illustrations.prompt_builder.get_llm_service",
+               return_value=mock_service_ok), \
+         patch("lingwen_illustrations.pipeline.image_generator.generate",
+               new=AsyncMock(return_value=b"\xff\xd8ORIG")):
+        gen_resp = client.post("/api/illustrations/generate", json={
+            "project_slug": "test",
+            "type": "chapter",
+            "chapter_num": 17,
+            "style_preset": "ink",
+            "custom_prompt": None,
+        })
+    original_id = gen_resp.json()["id"]
+
+    # Delete chapter file to force LoadError on regenerate.
+    chapter_path = project_root / "chapters" / "017.md"
+    assert chapter_path.exists()
+    chapter_path.unlink()
+
+    resp = client.put(
+        f"/api/illustrations/{original_id}/regenerate?project_slug=test"
+    )
+    assert resp.status_code == 404
+    assert resp.json()["detail"]["stage"] == "load"
+
+    # Original asset must still be readable (LoadError doesn't touch bytes).
+    img_resp = client.get(
+        f"/api/illustrations/{original_id}/image?project_slug=test"
+    )
+    assert img_resp.status_code == 200
+    assert img_resp.content == b"\xff\xd8ORIG"

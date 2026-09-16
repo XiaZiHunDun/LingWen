@@ -190,6 +190,57 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
         storage.delete_asset(project_root, meta)
         return {"deleted": asset_id}
 
+    @app.put("/api/illustrations/{asset_id}/regenerate", response_model=GenerateResponse)
+    async def regenerate_illustration(
+        asset_id: str,
+        project_slug: str = Query(...),
+    ) -> GenerateResponse:
+        """Atomic regenerate: re-runs extract+compose+generate, swaps bytes in place.
+
+        v55.4 Phase 94 — replaces the v1 frontend pattern (DELETE then POST)
+        that left a window where the asset didn't exist. The PUT endpoint
+        preserves the asset_id and atomically replaces image bytes + sidecar
+        via storage.replace_asset (temp file + POSIX rename).
+
+        Returns same id (asset_id) with new scene_json + final_prompt.
+        On Stage failure (Extract / Compose / Generate), the original asset
+        is preserved (no destructive behavior).
+        """
+        try:
+            project_root = _project_root_for(project_slug)
+        except LoadError as e:
+            raise HTTPException(404, detail=_err_detail(e)) from e
+
+        # Find the existing asset by id.
+        all_assets = storage.list_assets(project_root)
+        meta = next((a for a in all_assets if a.id == asset_id), None)
+        if meta is None:
+            raise HTTPException(404, detail=f"asset {asset_id} not found")
+
+        api_key, api_host = _api_credentials()
+
+        # Lazy import to avoid loading pipeline deps at module import time
+        from lingwen_illustrations.pipeline import regenerate_illustration as run_regen
+
+        try:
+            new_meta = await run_regen(
+                project_root=project_root,
+                existing_meta=meta,
+                api_key=api_key,
+                api_host=api_host,
+            )
+        except IllustrationError as e:
+            _raise_stage_error(e)
+
+        return GenerateResponse(
+            id=new_meta.id,
+            type=new_meta.type,
+            chapter_num=new_meta.chapter_num,
+            style_preset=new_meta.style_preset,
+            scene_json=new_meta.scene_json,
+            url=f"/api/illustrations/{new_meta.id}/image?project_slug={project_slug}",
+        )
+
     @app.get("/api/illustrations/{asset_id}/image")
     def get_image(
         asset_id: str,

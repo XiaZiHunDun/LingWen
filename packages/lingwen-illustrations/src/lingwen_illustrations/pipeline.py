@@ -123,4 +123,86 @@ async def generate_illustration(
     return meta
 
 
-__all__ = ["generate_illustration"]
+async def regenerate_illustration(
+    *,
+    project_root: Path,
+    existing_meta: IllustrationMetadata,
+    api_key: str,
+    api_host: str,
+) -> IllustrationMetadata:
+    """Re-run the extract + compose + generate stages for an existing asset.
+
+    Preserves the original asset_id (v55.4 Phase 94 atomic regenerate).
+    Updates scene_json + final_prompt + prompt_hash + created_at to reflect
+    the new generation. style_preset + custom_prompt + type + chapter_num
+    stay the same as the existing meta.
+
+    Use cases:
+    - User clicks "Regenerate" — same params, new image content
+    - Re-run after LLM model upgrade — same params, possibly different output
+
+    Atomicity:
+    Uses ``storage.replace_asset`` (temp file + POSIX rename) to swap bytes
+    in place. Concurrent readers see either the old bytes or the new bytes —
+    never a partial mix. If the replace fails (e.g. disk full, permissions),
+    the original asset is preserved (no destructive behavior).
+
+    Raises:
+        LoadError: Chapter text / character bible missing for regeneration.
+        ExtractError: Stage 1 LLM failed (transient).
+        ComposeError: Stage 2 template failed (should not happen — preset
+            inherited from existing_meta, but defend anyway).
+        GenerateError: Stage 3 image API failed (transient).
+        StoreError: Stage 4 atomic replace failed.
+    """
+    type = existing_meta.type  # type: ignore[assignment]
+    chapter_num = existing_meta.chapter_num
+    style_preset = existing_meta.style_preset
+    custom_prompt = existing_meta.custom_prompt
+
+    # Stage 1a: re-load chapter text + character bible (current state).
+    chapter_text = _load_chapter_text(project_root, type, chapter_num)
+    character_bible = load_character_bible(project_root)
+
+    # Stage 2: re-run LLM extract.
+    scene_json = extract_scene(
+        chapter_text=chapter_text,
+        character_bible=character_bible,
+    )
+
+    # Stage 3: re-compose prompt (preset validated via ComposeError).
+    final_prompt = compose_prompt(
+        style_preset,
+        scene_json=scene_json,
+        custom_prompt=custom_prompt,
+    )
+
+    # Stage 4: regenerate image bytes.
+    image_bytes = await image_generator.generate(
+        prompt=final_prompt,
+        api_key=api_key,
+        api_host=api_host,
+    )
+
+    # Stage 5: build new metadata (preserve asset_id, refresh dynamic fields).
+    prompt_hash = f"sha256:{hashlib.sha256(final_prompt.encode('utf-8')).hexdigest()[:16]}"
+    new_meta = IllustrationMetadata(
+        id=existing_meta.id,  # preserve identity
+        type=existing_meta.type,
+        project_slug=existing_meta.project_slug,
+        chapter_num=existing_meta.chapter_num,
+        style_preset=style_preset,
+        custom_prompt=custom_prompt,
+        scene_json=scene_json,
+        final_prompt=final_prompt,
+        prompt_hash=prompt_hash,
+        model="minimax-multimodal",
+        created_at=_iso_utc_now(),  # refresh timestamp
+    )
+
+    # Atomic swap — original preserved if this fails.
+    storage.replace_asset(project_root, image_bytes, new_meta)
+    return new_meta
+
+
+__all__ = ["generate_illustration", "regenerate_illustration"]

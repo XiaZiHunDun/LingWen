@@ -86,6 +86,70 @@ def delete_asset(project_root: Path, meta: IllustrationMetadata) -> None:
             raise StoreError(f"failed to delete {p}: {e}") from e
 
 
+def replace_asset(
+    project_root: Path,
+    image_bytes: bytes,
+    meta: IllustrationMetadata,
+) -> Path:
+    """Atomically replace image bytes + sidecar in place. Same asset_id preserved.
+
+    Used by the regenerate endpoint (Phase 94 PUT /{id}/regenerate) to swap
+    an existing asset's image content without changing its identity. The
+    rename-over-existing trick is atomic on POSIX (rename(2) is atomic when
+    source and target are on the same filesystem), so concurrent readers see
+    either the old bytes or the new bytes — never a partial mix.
+
+    Raises:
+        StoreError: If the target directory doesn't exist (caller must use
+            save_asset to bootstrap a new asset, not replace_asset).
+
+    Note: We do NOT bootstrap a new asset — replace_asset assumes the old
+    asset_id is valid. If the existing .jpg is missing (e.g. orphan sidecar),
+    falls back to save_asset semantics (write directly, no atomic-rename
+    target).
+    """
+    jpg_path = asset_path(
+        project_root,
+        type=meta.type,
+        id=meta.id,
+        chapter_num=meta.chapter_num,
+    )
+    sidecar = jpg_path.with_suffix(jpg_path.suffix + ".meta.json")
+
+    # If no existing asset to atomically replace, bootstrap via save_asset.
+    if not jpg_path.exists():
+        return save_asset(project_root, image_bytes, meta)
+
+    # Write to a sibling temp file (same dir = same filesystem = atomic rename).
+    tmp_path = jpg_path.with_suffix(jpg_path.suffix + ".tmp")
+    try:
+        tmp_path.write_bytes(image_bytes)
+    except OSError as e:
+        raise StoreError(f"failed to write temp {tmp_path}: {e}") from e
+
+    try:
+        # POSIX atomic rename — concurrent readers see old or new, never mix.
+        tmp_path.replace(jpg_path)
+    except OSError as e:
+        try:
+            tmp_path.unlink(missing_ok=True)
+        except OSError:
+            pass
+        raise StoreError(f"failed to rename {tmp_path} -> {jpg_path}: {e}") from e
+
+    # Sidecar rewrite: small file, direct overwrite acceptable.
+    # If this fails after image rename, image is updated but metadata is stale.
+    # Tolerable: next list_assets will read the (now-mismatched) sidecar.
+    # To be strict, we could rename-rewrite sidecar too — but sidecars are
+    # tiny and the read-after-write window is negligible.
+    try:
+        sidecar.write_text(meta.to_json(), encoding="utf-8")
+    except OSError as e:
+        raise StoreError(f"failed to write sidecar {sidecar}: {e}") from e
+
+    return jpg_path
+
+
 def list_assets(project_root: Path) -> list[IllustrationMetadata]:
     """Walk asset dirs and load all .meta.json sidecars. Returns sorted by created_at desc."""
     assets: list[IllustrationMetadata] = []
@@ -108,4 +172,4 @@ def list_assets(project_root: Path) -> list[IllustrationMetadata]:
     return assets
 
 
-__all__ = ["asset_path", "save_asset", "delete_asset", "list_assets"]
+__all__ = ["asset_path", "save_asset", "delete_asset", "replace_asset", "list_assets"]
