@@ -288,8 +288,98 @@ def _has_raw_resp_content_return(source: str) -> bool:
     # Strip docstrings to avoid false-positives on the v1 docstring mention.
     import re
 
-    stripped = re.sub(r'"""[\s\S]*?"""', "", source)
+    stripped = re.sub(r'"""[\s\S]*?""""', "", source)
     stripped = re.sub(r"'''[\s\S]*?'''", "", stripped)
     # Look for a top-level `return resp.content` that is the sole return path.
     # Tolerate presence in branches if a JSON-decode path also exists.
     return bool(re.search(r"return\s+resp\.content\s*$", stripped, re.MULTILINE))
+
+
+# ─── G12: atomic regenerate via PUT (Phase 94) ───────────────────────
+def test_regenerate_endpoint_uses_put_method() -> None:
+    """G12a: PUT /api/illustrations/{id}/regenerate endpoint must be registered.
+
+    v55.4 Phase 94 replaces v1 frontend pattern (DELETE then POST, non-atomic
+    window where asset doesn't exist). Backend now provides single-call atomic
+    swap via PUT.
+    """
+    import re
+
+    content = ROUTER.read_text(encoding="utf-8")
+    # Strip docstrings (N.14 v21) so the v1 narrative mention doesn't false-positive.
+    stripped = re.sub(r'"""[\s\S]*?""""', "", content)
+    assert (
+        re.search(
+            r'@app\.put\(["\']/api/illustrations/\{asset_id\}/regenerate["\']',
+            stripped,
+        )
+        is not None
+    ), "PUT /api/illustrations/{asset_id}/regenerate must be registered — Phase 94."
+
+
+def test_storage_has_replace_asset_for_atomic_swap() -> None:
+    """G12b: storage.replace_asset must exist (Phase 94 atomic swap helper)."""
+    import inspect
+
+    from lingwen_illustrations import storage
+
+    assert hasattr(storage, "replace_asset"), (
+        "storage.replace_asset missing — Phase 94 atomic regenerate requires"
+        " temp-file + rename helper."
+    )
+    sig = inspect.signature(storage.replace_asset)
+    # Must accept (project_root, image_bytes, meta) — Phase 94 signature contract.
+    params = list(sig.parameters)
+    assert "project_root" in params
+    assert "image_bytes" in params
+    assert "meta" in params
+
+
+def test_pipeline_has_regenerate_illustration() -> None:
+    """G12c: pipeline.regenerate_illustration must exist (Phase 94 stage re-run)."""
+    import inspect
+
+    from lingwen_illustrations import pipeline
+
+    assert hasattr(pipeline, "regenerate_illustration"), (
+        "pipeline.regenerate_illustration missing — Phase 94 must add a"
+        " pipeline variant that re-runs stages 1-4 + atomic swap."
+    )
+    sig = inspect.signature(pipeline.regenerate_illustration)
+    params = list(sig.parameters)
+    # Must take project_root + existing_meta + api_key + api_host (Phase 94 contract).
+    assert "project_root" in params
+    assert "existing_meta" in params
+    assert "api_key" in params
+    assert "api_host" in params
+
+
+def test_frontend_regenerate_uses_put_not_delete_then_post() -> None:
+    """G12d: frontend regenerate() must call PUT, not the v1 DELETE+POST pattern.
+
+    Catches regression if someone restores the v1 non-atomic pattern in the
+    store after Phase 94 closes the carryover.
+    """
+    STORE = REPO / "apps" / "dashboard" / "src" / "stores" / "useIllustrationStore.js"
+    content = STORE.read_text(encoding="utf-8")
+    # Find the regenerate function body.
+    import re
+
+    m = re.search(
+        r"async function regenerate\(slug, assetId\)\s*\{(.*?)\n  \}",
+        content,
+        re.DOTALL,
+    )
+    assert m is not None, "regenerate() function not found in store"
+    body = m.group(1)
+    # Strip docstring-ish narrative comments before assertions.
+    body_stripped = re.sub(r"//[^\n]*", "", body)
+    assert "method: 'PUT'" in body_stripped or 'method: "PUT"' in body_stripped, (
+        "frontend regenerate() must call PUT — Phase 94 atomic swap."
+    )
+    # v1 pattern: deleteAsset(slug, assetId) inside regenerate function.
+    # After Phase 94 this should NOT happen.
+    assert "deleteAsset(slug" not in body, (
+        "regenerate() still calls deleteAsset — v1 non-atomic pattern."
+        " Phase 94 should have removed the DELETE step."
+    )
