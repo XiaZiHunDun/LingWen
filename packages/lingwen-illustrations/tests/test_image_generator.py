@@ -60,7 +60,7 @@ async def test_generate_returns_decoded_jpeg_bytes():
     fake_response = _json_response(api_body)
     mock_client = _client_with_response(fake_response)
 
-    with patch("lingwen_illustrations.image_generator.httpx.AsyncClient", return_value=mock_client):
+    with patch("lingwen_illustrations.providers.minimax.httpx.AsyncClient", return_value=mock_client):
         result = await generate(
             prompt="测试 prompt", api_key="test-key", api_host="https://api.test"
         )
@@ -86,7 +86,7 @@ async def test_generate_picks_first_data_item_when_multiple():
     fake_response = _json_response(api_body)
     mock_client = _client_with_response(fake_response)
 
-    with patch("lingwen_illustrations.image_generator.httpx.AsyncClient", return_value=mock_client):
+    with patch("lingwen_illustrations.providers.minimax.httpx.AsyncClient", return_value=mock_client):
         result = await generate(prompt="x", api_key="k", api_host="https://api.test")
 
     assert result == b"\xff\xd8FIRST"
@@ -102,7 +102,7 @@ async def test_generate_malformed_json_raises_generate_error():
     fake_response.json.side_effect = json.JSONDecodeError("bad", "doc", 0)
     mock_client = _client_with_response(fake_response)
 
-    with patch("lingwen_illustrations.image_generator.httpx.AsyncClient", return_value=mock_client):
+    with patch("lingwen_illustrations.providers.minimax.httpx.AsyncClient", return_value=mock_client):
         with pytest.raises(GenerateError) as exc:
             await generate(prompt="x", api_key="k", api_host="https://api.test")
     assert exc.value.retryable is True
@@ -115,7 +115,7 @@ async def test_generate_missing_data_array_raises():
     fake_response = _json_response({"created": 1234, "no_data_here": []})
     mock_client = _client_with_response(fake_response)
 
-    with patch("lingwen_illustrations.image_generator.httpx.AsyncClient", return_value=mock_client):
+    with patch("lingwen_illustrations.providers.minimax.httpx.AsyncClient", return_value=mock_client):
         with pytest.raises(GenerateError) as exc:
             await generate(prompt="x", api_key="k", api_host="https://api.test")
     assert exc.value.retryable is True
@@ -128,7 +128,7 @@ async def test_generate_empty_data_array_raises():
     fake_response = _json_response({"data": []})
     mock_client = _client_with_response(fake_response)
 
-    with patch("lingwen_illustrations.image_generator.httpx.AsyncClient", return_value=mock_client):
+    with patch("lingwen_illustrations.providers.minimax.httpx.AsyncClient", return_value=mock_client):
         with pytest.raises(GenerateError) as exc:
             await generate(prompt="x", api_key="k", api_host="https://api.test")
     assert exc.value.retryable is True
@@ -140,7 +140,7 @@ async def test_generate_missing_b64_json_field_raises():
     fake_response = _json_response({"data": [{"url": "https://x"}]})
     mock_client = _client_with_response(fake_response)
 
-    with patch("lingwen_illustrations.image_generator.httpx.AsyncClient", return_value=mock_client):
+    with patch("lingwen_illustrations.providers.minimax.httpx.AsyncClient", return_value=mock_client):
         with pytest.raises(GenerateError) as exc:
             await generate(prompt="x", api_key="k", api_host="https://api.test")
     assert exc.value.retryable is True
@@ -153,7 +153,7 @@ async def test_generate_invalid_base64_raises_generate_error():
     fake_response = _json_response({"data": [{"b64_json": "!!!not-base64!!!"}]})
     mock_client = _client_with_response(fake_response)
 
-    with patch("lingwen_illustrations.image_generator.httpx.AsyncClient", return_value=mock_client):
+    with patch("lingwen_illustrations.providers.minimax.httpx.AsyncClient", return_value=mock_client):
         with pytest.raises(GenerateError) as exc:
             await generate(prompt="x", api_key="k", api_host="https://api.test")
     assert exc.value.retryable is True
@@ -172,7 +172,7 @@ async def test_generate_rate_limit_raises_with_retry_after(monkeypatch):
     mock_client.__aenter__ = AsyncMock(return_value=mock_client)
     mock_client.__aexit__ = AsyncMock(return_value=None)
 
-    with patch("lingwen_illustrations.image_generator.httpx.AsyncClient", return_value=mock_client):
+    with patch("lingwen_illustrations.providers.minimax.httpx.AsyncClient", return_value=mock_client):
         with pytest.raises(GenerateError) as exc:
             await generate(prompt="x", api_key="k", api_host="https://api.test")
     assert exc.value.retryable is True
@@ -192,7 +192,7 @@ async def test_generate_rate_limit_http_date_retry_after_falls_back():
     mock_client.__aenter__ = AsyncMock(return_value=mock_client)
     mock_client.__aexit__ = AsyncMock(return_value=None)
 
-    with patch("lingwen_illustrations.image_generator.httpx.AsyncClient", return_value=mock_client):
+    with patch("lingwen_illustrations.providers.minimax.httpx.AsyncClient", return_value=mock_client):
         with pytest.raises(GenerateError) as exc:
             await generate(prompt="x", api_key="k", api_host="https://api.test")
     assert exc.value.retryable is True
@@ -206,7 +206,7 @@ async def test_generate_network_error_raises(monkeypatch):
     mock_client.__aenter__ = AsyncMock(return_value=mock_client)
     mock_client.__aexit__ = AsyncMock(return_value=None)
 
-    with patch("lingwen_illustrations.image_generator.httpx.AsyncClient", return_value=mock_client):
+    with patch("lingwen_illustrations.providers.minimax.httpx.AsyncClient", return_value=mock_client):
         with pytest.raises(GenerateError) as exc:
             await generate(prompt="x", api_key="k", api_host="https://api.test")
     assert exc.value.retryable is True
@@ -220,7 +220,7 @@ async def test_generate_timeout_raises(monkeypatch):
     mock_client.__aenter__ = AsyncMock(return_value=mock_client)
     mock_client.__aexit__ = AsyncMock(return_value=None)
 
-    with patch("lingwen_illustrations.image_generator.httpx.AsyncClient", return_value=mock_client):
+    with patch("lingwen_illustrations.providers.minimax.httpx.AsyncClient", return_value=mock_client):
         with pytest.raises(GenerateError) as exc:
             await generate(prompt="x", api_key="k", api_host="https://api.test")
     assert exc.value.retryable is True
