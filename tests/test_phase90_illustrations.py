@@ -13,6 +13,7 @@ G7: .meta.json sidecar has 4 required fields
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -147,3 +148,34 @@ def test_g7_sidecar_required_fields(tmp_path):
     payload = json.loads(sidecar.read_text())
     for field in ("prompt_hash", "style_preset", "scene_json", "created_at"):
         assert field in payload, f"missing required sidecar field: {field}"
+
+
+# ─── G8: v1 dead path <root>/config/characters.json not in src/ ──
+# Phase 91 P2-ILLUSTRATIONS-BIBLE-CANONICAL closure: v1 path physically
+# removed. Strip docstrings before regex (N.14 lesson 1 v21 — module
+# docstring legitimately mentioned v1 path in narrative before deletion).
+def test_v1_path_not_referenced_in_src() -> None:
+    """G8: v1 <root>/config/characters.json must be gone from src/."""
+    illus_src = PKG / "src"
+    violations: list[str] = []
+    for py_file in illus_src.rglob("*.py"):
+        if py_file.name.startswith("test_"):
+            continue
+        text = py_file.read_text(encoding="utf-8")
+        # strip module/class/function docstrings (N.14 v21)
+        stripped = re.sub(r'"""[\s\S]*?"""', "", text)
+        stripped = re.sub(r"'''[\s\S]*?'''", "", stripped)
+        if re.search(r"config/characters\.json", stripped):
+            violations.append(
+                str(py_file.relative_to(REPO))
+            )
+    assert not violations, f"v1 path still referenced in: {violations}"
+
+
+# ─── G9: bible_loader.load_character_bible is public ────────────
+def test_bible_loader_public() -> None:
+    """G9: bible_loader submodule + load_character_bible public symbol."""
+    import lingwen_illustrations.bible_loader as bl
+
+    assert hasattr(bl, "load_character_bible")
+    assert "load_character_bible" in bl.__all__
