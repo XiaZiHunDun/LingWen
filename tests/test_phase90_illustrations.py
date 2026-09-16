@@ -238,32 +238,43 @@ def test_llm_service_task_configs_includes_structured_extraction() -> None:
 
 # ─── G11: image_generator real b64_json decode (Phase 93) ──────────
 def test_image_generator_uses_b64_json_decode_not_raw_content() -> None:
-    """G11a: image_generator.generate must base64-decode b64_json from JSON envelope.
+    """G11a: provider chain must base64-decode b64_json from JSON envelope.
 
     v55.3 Phase 93 closure: the MiniMax image API returns JSON of shape
     {"data": [{"b64_json": "<base64-jpeg>"}]} when response_format=b64_json
     is requested. The implementation must call resp.json() + base64.b64decode;
     NOT return resp.content raw (which was the v1 mock-only behavior).
+
+    Phase 96 retarget (Task 7 wrapper refactor): the b64_json logic was split
+    into providers/minimax.generate (request + delegation to helper) +
+    providers/_b64_decode.decode_b64_envelope (actual decode). The guard now
+    inspects both to verify the chain is intact.
     """
     import inspect
 
-    from lingwen_illustrations import image_generator
+    from lingwen_illustrations.providers import _b64_decode, minimax
 
-    source = inspect.getsource(image_generator.generate)
-    assert "base64" in source and "b64decode" in source, (
-        "image_generator.generate must base64-decode b64_json — Phase 93"
-        " closure replaces v1 raw resp.content behavior."
+    # Provider adapter: must request b64_json + delegate to decode helper
+    # (must NOT return resp.content raw — v1 behavior was the bug).
+    provider_source = inspect.getsource(minimax.generate)
+    assert "b64_json" in provider_source, (
+        "providers.minimax.generate must request response_format=b64_json —"
+        " Phase 93 closure preserved via providers abstraction (Phase 96)."
     )
-    assert "resp.json()" in source or ".json(" in source, (
-        "image_generator.generate must parse JSON response — real API"
-        " returns JSON envelope, not raw bytes."
+    assert not _has_raw_resp_content_return(provider_source), (
+        "providers.minimax.generate must NOT return resp.content raw —"
+        " must delegate to decode_b64_envelope for b64_json decoding."
     )
-    # Negative: must NOT keep the v1 behavior of returning resp.content raw.
-    # Strip docstrings + allow the body to be a strict subset (no stand-alone
-    # `return resp.content` as the only path).
-    assert not _has_raw_resp_content_return(source), (
-        "image_generator.generate must NOT return resp.content raw —"
-        " Phase 93 requires JSON-parse + base64-decode path."
+
+    # Decode helper: must do base64.b64decode + parse resp.json().
+    decode_source = inspect.getsource(_b64_decode.decode_b64_envelope)
+    assert "base64" in decode_source and "b64decode" in decode_source, (
+        "providers._b64_decode.decode_b64_envelope must base64-decode"
+        " b64_json — Phase 93 logic preserved via shared helper (Phase 96)."
+    )
+    assert "resp.json()" in decode_source or ".json(" in decode_source, (
+        "providers._b64_decode.decode_b64_envelope must parse JSON"
+        " response — real API returns JSON envelope, not raw bytes."
     )
 
 
@@ -272,14 +283,17 @@ def test_image_generator_request_format_is_b64_json() -> None:
 
     Without this, the API returns image URLs (b64_json absent) and decode
     raises GenerateError — silent contract drift.
+
+    Phase 96 retarget: Task 7 wrapper moved this into providers.minimax.generate.
     """
     import inspect
 
-    from lingwen_illustrations import image_generator
+    from lingwen_illustrations.providers import minimax
 
-    source = inspect.getsource(image_generator.generate)
+    source = inspect.getsource(minimax.generate)
     assert '"b64_json"' in source or "'b64_json'" in source, (
-        "image_generator must request response_format=b64_json — Phase 93."
+        "providers.minimax.generate must request response_format=b64_json —"
+        " Phase 93 closure preserved via providers abstraction (Phase 96)."
     )
 
 
