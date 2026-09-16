@@ -831,6 +831,7 @@ name = "lingwen-illustrations"
 version = "0.1.0"
 source = { editable = "packages/lingwen-illustrations" }
 dependencies = [
+    { name = "httpx" },
     { name = "lingwen-llm-service" },
     { name = "lingwen-paths" },
     { name = "lingwen-project-characters" },
@@ -838,6 +839,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "httpx", specifier = ">=0.27" },
     { name = "lingwen-llm-service", editable = "packages/lingwen-llm-service" },
     { name = "lingwen-paths", editable = "packages/lingwen-paths" },
     { name = "lingwen-project-characters", editable = "packages/lingwen-project-characters" },

@@ -101,11 +101,12 @@ def extract_scene(
 
     try:
         service = get_llm_service()
-        # TaskType.STRUCTURED_EXTRACTION doesn't exist in lingwen-shared;
-        # QUALITY_ANALYSIS is the closest semantic fit (analytical JSON
-        # output, not text repair). v2 follow-up: add STRUCTURED_EXTRACTION
-        # to TaskType enum in lingwen-shared. See BACKLOG "P2-EXTRACT-ENUM".
-        task = LLMTask(task_type=TaskType.QUALITY_ANALYSIS, prompt=prompt)
+        # v55.2 Phase 92 P2-EXTRACT-ENUM closure: STRUCTURED_EXTRACTION
+        # added to TaskType in lingwen-shared. Semantic fit is exact
+        # ("extract structured data" vs "analyze quality" or "repair text").
+        # TASK_CONFIGS in lingwen-llm-service supplies max_tokens=1500,
+        # temperature=0.3 for deterministic JSON output.
+        task = LLMTask(task_type=TaskType.STRUCTURED_EXTRACTION, prompt=prompt)
         response_raw = service.execute(task)
     except Exception as e:
         raise ExtractError(f"LLM call failed: {e}") from e

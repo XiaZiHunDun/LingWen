@@ -35,6 +35,11 @@ class TaskType(Enum):
     AI_TRACE_CHECK = "ai_trace_check"  # AI痕迹检测
     QUALITY_ANALYSIS = "quality_analysis"  # 质量综合分析
     REPAIR = "repair"  # 修复任务
+    # 结构化抽取（v55.2 Phase 92 P2-EXTRACT-ENUM closure）— 用于
+    # lingwen-illustrations.extract_scene 等需要 schema-bounded JSON 输出的场景。
+    # 语义上比 QUALITY_ANALYSIS 更精确（"extract structured data" 而非 "analyze quality"）。
+    # v1 时期用 QUALITY_ANALYSIS 作语义替代,本成员补齐 v2 偏差。
+    STRUCTURED_EXTRACTION = "structured_extraction"
 
 
 @dataclass

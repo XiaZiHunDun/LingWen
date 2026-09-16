@@ -65,6 +65,14 @@ class LLMService:
             "max_tokens": 3000,
             "temperature": 0.3,
         },
+        # v55.2 Phase 92 P2-EXTRACT-ENUM closure: STRUCTURED_EXTRACTION
+        # (schema-bounded JSON output, used by lingwen-illustrations.extract_scene).
+        # Lower temperature (0.3) for deterministic JSON; 1500 tokens covers a
+        # typical chapter scene with characters_in_scene array.
+        TaskType.STRUCTURED_EXTRACTION: {
+            "max_tokens": 1500,
+            "temperature": 0.3,
+        },
     }
 
     def __init__(self):

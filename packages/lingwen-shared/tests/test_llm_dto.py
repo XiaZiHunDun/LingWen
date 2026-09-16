@@ -13,13 +13,26 @@ from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
 
 def test_task_type_values_match_infra_baseline() -> None:
-    """TaskType enum must expose the six task kinds used by infra.llm_service."""
+    """TaskType enum must expose the six task kinds used by infra.llm_service
+    plus STRUCTURED_EXTRACTION (Phase 92 P2-EXTRACT-ENUM closure).
+    """
     assert TaskType.WORLDVIEW_CHECK.value == "worldview_check"
     assert TaskType.CHARACTER_CHECK.value == "character_check"
     assert TaskType.LOGIC_CHECK.value == "logic_check"
     assert TaskType.AI_TRACE_CHECK.value == "ai_trace_check"
     assert TaskType.QUALITY_ANALYSIS.value == "quality_analysis"
     assert TaskType.REPAIR.value == "repair"
+    assert TaskType.STRUCTURED_EXTRACTION.value == "structured_extraction"
+
+
+def test_task_type_structured_extraction_round_trip() -> None:
+    """STRUCTURED_EXTRACTION can be used to construct an LLMTask (Phase 92)."""
+    task = LLMTask(
+        task_type=TaskType.STRUCTURED_EXTRACTION,
+        prompt='{"subject": "x"}',
+    )
+    assert task.task_type is TaskType.STRUCTURED_EXTRACTION
+    assert task.task_type.value == "structured_extraction"
 
 
 def test_llm_task_required_fields() -> None:
