@@ -163,3 +163,19 @@ def test_oserror_wrapped_as_loaderror(
 
     with pytest.raises(LoadError, match="failed to load character bible"):
         load_character_bible(tmp_project)
+
+
+# ─── T14: parametrized non-str name cases (defensive) ─────────────
+@pytest.mark.parametrize("bad_name", [123, 1.5, True, None, [], {}])
+def test_item_non_str_name_raises_parametrized(
+    bible_dir: Path, tmp_project: Path, bad_name: Any
+) -> None:
+    """name must be str — int/float/bool/None/list/dict all rejected.
+
+    Note: `isinstance(True, int)` is True in Python, but the explicit
+    str check correctly rejects bool. This test ensures type defense
+    is robust across Python's loose type system.
+    """
+    _write_bible(bible_dir, f'[{{"name": {json.dumps(bad_name)}}}]')
+    with pytest.raises(LoadError, match="'name' must be str"):
+        load_character_bible(tmp_project)
