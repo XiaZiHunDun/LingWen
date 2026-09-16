@@ -54,22 +54,38 @@ export const useIllustrationStore = defineStore('illustrations', () => {
     assets.value = assets.value.filter(a => a.id !== assetId)
   }
 
-  // NOTE: regenerate is intentionally non-atomic (DELETE then POST). If the
-  // POST fails after the DELETE succeeds, the old asset is permanently lost.
-  // A confirmation dialog at the call site (Task 15-17) is the v1 mitigation.
-  // v2: backend could add a PUT /{id}/regenerate endpoint for atomic swap.
+  // v55.4 Phase 94 — atomic regenerate via PUT /{id}/regenerate.
+  // Replaces v1's DELETE+POST pattern (which left a window where the asset
+  // didn't exist and could lose the old asset if POST failed). Backend now
+  // preserves asset_id + atomically swaps bytes via temp file + POSIX rename.
+  // On Stage failure, the original asset is preserved (no destructive behavior).
   async function regenerate(slug, assetId) {
-    const original = assets.value.find(a => a.id === assetId)
-    if (!original) throw new Error(`asset ${assetId} not found`)
-
-    const params = {
-      type: original.type,
-      chapter_num: original.chapter_num,
-      style_preset: original.style_preset,
-      custom_prompt: original.custom_prompt,
+    loading.value = true
+    error.value = null
+    try {
+      const res = await $fetch(
+        `/api/illustrations/${assetId}/regenerate?project_slug=${slug}`,
+        { method: 'PUT' }
+      )
+      // Replace the existing entry in-place (same id, new content).
+      const idx = assets.value.findIndex(a => a.id === assetId)
+      if (idx >= 0) {
+        assets.value = [
+          ...assets.value.slice(0, idx),
+          res,
+          ...assets.value.slice(idx + 1),
+        ]
+      } else {
+        // Asset not in cache — prepend (defensive).
+        assets.value = [res, ...assets.value]
+      }
+      return res
+    } catch (e) {
+      error.value = e.data?.detail?.error || e.message || 'regenerate failed'
+      throw e
+    } finally {
+      loading.value = false
     }
-    await deleteAsset(slug, assetId)
-    return await generate(slug, params)
   }
 
   return {
