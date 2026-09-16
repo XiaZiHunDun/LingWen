@@ -53,7 +53,7 @@ def test_decode_missing_data_array_raises():
 
 def test_decode_empty_data_array_raises():
     resp = _json_response({"data": []})
-    with pytest.raises(GenerateError) as exc:  # noqa: F841
+    with pytest.raises(GenerateError):
         decode_b64_envelope(resp, provider="openai")
 
 
