@@ -41,3 +41,22 @@ def test_subclass_inherits_stage():
     assert ComposeError("x").stage == Stage.COMPOSE
     assert GenerateError("x").stage == Stage.GENERATE
     assert StoreError("x").stage == Stage.STORE
+
+
+def test_generate_error_accepts_provider_field():
+    """Phase 96: GenerateError must accept `provider` kwarg (default 'unknown')."""
+    err = GenerateError("rate limited", retry_after=30, provider="openai")
+    assert err.provider == "openai"
+    assert err.retry_after == 30
+    assert err.retryable is True  # default preserved from Phase 95
+
+
+def test_generate_error_default_provider_is_unknown():
+    err = GenerateError("network error")
+    assert err.provider == "unknown"
+
+
+def test_generate_error_provider_attribute_always_set():
+    err = GenerateError("timeout", retry_after=60)
+    assert hasattr(err, "provider")
+    assert err.provider == "unknown"

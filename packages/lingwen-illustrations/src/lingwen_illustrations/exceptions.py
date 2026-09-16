@@ -52,11 +52,18 @@ class ComposeError(IllustrationError):
 
 
 class GenerateError(IllustrationError):
-    """Stage 3 MiniMax API failure (rate limit / network / timeout)."""
+    """Stage 3 image API failure (rate limit / network / timeout)."""
 
-    def __init__(self, message: str, *, retry_after: int | None = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        retry_after: int | None = None,
+        provider: str = "unknown",
+    ) -> None:
         super().__init__(Stage.GENERATE, message, retryable=True)
         self.retry_after = retry_after
+        self.provider = provider
 
 
 class StoreError(IllustrationError):
