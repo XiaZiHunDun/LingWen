@@ -383,3 +383,76 @@ def test_frontend_regenerate_uses_put_not_delete_then_post() -> None:
         "regenerate() still calls deleteAsset — v1 non-atomic pattern."
         " Phase 94 should have removed the DELETE step."
     )
+
+
+# ─── G13: ProjectSettingsPage substitution (Phase 95) ────────────────
+def test_project_settings_illustration_mounted_in_settings_page() -> None:
+    """G13a: ProjectSettingsIllustration must be mounted in SettingsPage (not orphan).
+
+    v55.5 Phase 95 closure: Phase 90 spec mentioned a dedicated
+    ProjectSettingsPage.vue route. Actual implementation substituted this
+    with the component nested inside the global SettingsPage.vue (avoids
+    per-project URL overhead; preferences remain accessible via the global
+    Settings nav entry). This guard verifies the substitution holds:
+    the component is mounted in SettingsPage (not orphan, not absent).
+    """
+    settings_page = (
+        REPO / "apps" / "dashboard" / "src" / "pages" / "SettingsPage.vue"
+    )
+    content = settings_page.read_text(encoding="utf-8")
+    assert "ProjectSettingsIllustration" in content, (
+        "ProjectSettingsIllustration must be mounted in SettingsPage.vue —"
+        " Phase 95 substitution (component nested in global Settings)"
+    )
+    # Also verify it's rendered (not just imported).
+    assert "<ProjectSettingsIllustration" in content, (
+        "ProjectSettingsIllustration must be rendered in SettingsPage.vue template —"
+        " Phase 95 substitution (template, not import-only)."
+    )
+
+
+def test_no_dedicated_project_settings_page_route() -> None:
+    """G13b: No dedicated ProjectSettingsPage.vue page exists (substitution is complete).
+
+    This guard ENFORCES the v55.5 substitution: if someone later adds a
+    dedicated ProjectSettingsPage.vue route, they should ALSO move the
+    ProjectSettingsIllustration component out of SettingsPage (and update
+    Phase 95 docs). Until then, the substitution is the canonical pattern.
+    """
+    project_settings_page = (
+        REPO / "apps" / "dashboard" / "src" / "pages" / "ProjectSettingsPage.vue"
+    )
+    assert not project_settings_page.exists(), (
+        "pages/ProjectSettingsPage.vue must NOT exist — Phase 95 substitution"
+        " uses SettingsPage (global) as the host. If you intentionally want"
+        " a separate route, also move ProjectSettingsIllustration out of"
+        " SettingsPage and update G13a."
+    )
+
+
+def test_project_settings_illustration_has_its_own_spec() -> None:
+    """G13c: ProjectSettingsIllustration component has dedicated tests.
+
+    The component is tested independently even though it lives in SettingsPage —
+    verifies the substitution didn't drop test coverage.
+    """
+    spec = (
+        REPO
+        / "apps"
+        / "dashboard"
+        / "tests"
+        / "unit"
+        / "components"
+        / "illustrations"
+        / "ProjectSettingsIllustration.spec.js"
+    )
+    assert spec.exists(), (
+        "ProjectSettingsIllustration.spec.js must exist — Phase 90 Task 17"
+        " unit tests verify component behavior independent of mount location."
+    )
+    content = spec.read_text(encoding="utf-8")
+    # Sanity: at least 4 tests (renders 3 presets + selected + emit + max_assets + confirm).
+    assert content.count("it(") >= 4, (
+        "ProjectSettingsIllustration.spec.js must have ≥4 tests —"
+        " Phase 95 verifies test coverage was preserved during substitution."
+    )
