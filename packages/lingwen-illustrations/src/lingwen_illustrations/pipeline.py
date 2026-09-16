@@ -4,20 +4,20 @@ Single entry point for the 4-stage illustration generation pipeline.
 Each stage raises a stage-specific exception on failure; the orchestrator
 propagates without wrapping.
 
-Layout assumptions (tested + canonical for Phase 90):
-    <project_root>/chapters/<NNN>.md          — chapter markdown
-    <project_root>/config/characters.json     — character bible
-    <project_root>/assets/...                 — written by storage
+Layout assumptions (tested + canonical for Phase 90/91):
+    <project_root>/chapters/<NNN>.md                       — chapter markdown
+    <project_root>/config/illustrations/characters.json    — character bible (Phase 91)
+    <project_root>/assets/...                              — written by storage
 
-Why direct paths instead of ProjectPaths:
-    ProjectPaths enforces a canonical layout (03_内容仓库/04_正文 etc.)
-    that doesn't match the per-project structure we use for illustration
-    workspaces. load_agency_target_characters from lingwen-project-characters
-    (I073) returns list[str] (names only) but prompt_builder needs list[dict]
-    (with descriptions), so we read the bible JSON directly.
+Character bible (Phase 91, P2-ILLUSTRATIONS-BIBLE-CANONICAL):
+    Loaded via bible_loader.load_character_bible. Permissive schema:
+    list[{name, role, description}]. Missing file silently returns []
+    (LLM proceeds with empty character hint). Malformed file raises LoadError.
 
-    Tracked in BACKLOG.md as P2-ILLUSTRATIONS-BIBLE-CANONICAL (v2 follow-up:
-    add a bible_loader adapter with direct/canonical backends).
+    Why not ProjectPaths: ProjectPaths enforces canonical layout
+    (03_内容仓库/角色设定/character_profiles.json) which doesn't carry
+    visual descriptions. Bible is illustration-specific; independent
+    of character_profiles.json (no cross-ref, no I073 coupling).
 """
 
 from __future__ import annotations
@@ -31,6 +31,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from lingwen_illustrations import image_generator, storage
+from lingwen_illustrations.bible_loader import load_character_bible
 from lingwen_illustrations.exceptions import LoadError
 from lingwen_illustrations.metadata import IllustrationMetadata
 from lingwen_illustrations.prompt_builder import extract_scene
@@ -49,25 +50,6 @@ def _load_chapter_text(project_root: Path, type: _TYPE, chapter_num: int | None)
     if not chapter_file.exists():
         raise LoadError(f"chapter {chapter_num} not found at {chapter_file}")
     return chapter_file.read_text(encoding="utf-8")
-
-
-def _load_character_bible(project_root: Path) -> list[dict[str, Any]]:
-    """Load character bible from <root>/config/characters.json.
-
-    Missing file -> empty list (LLM still extracts without character hints).
-    Malformed JSON -> LoadError (operators must fix the bible, not silent skip).
-    """
-    bible_path = project_root / "config" / "characters.json"
-    if not bible_path.exists():
-        return []
-    try:
-        raw = bible_path.read_text(encoding="utf-8")
-        data = json.loads(raw)
-    except (OSError, json.JSONDecodeError) as e:
-        raise LoadError(f"failed to load character bible {bible_path}: {e}") from e
-    if not isinstance(data, list):
-        raise LoadError(f"character bible must be a list, got {type(data).__name__}")
-    return data
 
 
 def _iso_utc_now() -> str:
@@ -97,7 +79,7 @@ async def generate_illustration(
     """
     # Stage 1a: load chapter text + character bible.
     chapter_text = _load_chapter_text(project_root, type, chapter_num)
-    character_bible = _load_character_bible(project_root)
+    character_bible = load_character_bible(project_root)
 
     # Stage 2: LLM extract (raises ExtractError on failure).
     scene_json = extract_scene(
