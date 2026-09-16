@@ -52,7 +52,13 @@ class ComposeError(IllustrationError):
 
 
 class GenerateError(IllustrationError):
-    """Stage 3 image API failure (rate limit / network / timeout)."""
+    """Stage 3 image API failure (rate limit / network / timeout).
+
+    Phase 96 §5.4: ``retryable`` is now an explicit kwarg so adapters can
+    differentiate 5xx/network/timeout/429 (retryable) from 4xx user errors
+    (non-retryable). Default stays True for backward compat with existing
+    callers that don't pass retryable explicitly.
+    """
 
     def __init__(
         self,
@@ -60,8 +66,9 @@ class GenerateError(IllustrationError):
         *,
         retry_after: int | None = None,
         provider: str = "unknown",
+        retryable: bool = True,
     ) -> None:
-        super().__init__(Stage.GENERATE, message, retryable=True)
+        super().__init__(Stage.GENERATE, message, retryable=retryable)
         self.retry_after = retry_after
         self.provider = provider
 
