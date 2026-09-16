@@ -166,3 +166,52 @@ async def test_stability_network_error_raises():
             await generate(prompt="x", api_key="k", api_host="https://api.test")
     assert exc.value.provider == "stability"
     assert exc.value.retryable is True
+
+
+@pytest.mark.asyncio
+async def test_stability_uses_multipart_files_not_urlencoded_data():
+    """Phase 96 regression guard: Stability requires multipart/form-data.
+
+    httpx sends application/x-www-form-urlencoded when `data=` is used.
+    Stability v2beta requires multipart/form-data and rejects urlencoded
+    bodies with 4xx. This test captures the outgoing request and verifies
+    `files=` kwarg structure (with (None, value) tuples for text fields).
+
+    Per Phase 93 lesson 1: mock tests matching broken behavior mask
+    implementation bugs. The 8 happy/error tests don't catch wire-format
+    issues because they only inspect the mocked response, not the request.
+    """
+    captured = {}
+
+    async def fake_post(url, **kwargs):
+        captured["files"] = kwargs.get("files")
+        captured["data"] = kwargs.get("data")
+        m = MagicMock()
+        m.status_code = 200
+        m.content = PNG_MAGIC
+        m.headers = {}
+        m.raise_for_status = MagicMock()
+        return m
+
+    fake_client = AsyncMock()
+    fake_client.post = fake_post
+    fake_client.__aenter__ = AsyncMock(return_value=fake_client)
+    fake_client.__aexit__ = AsyncMock(return_value=None)
+
+    with patch(
+        "lingwen_illustrations.providers.stability.httpx.AsyncClient",
+        return_value=fake_client,
+    ):
+        result = await generate(
+            prompt="X", api_key="k", api_host="https://api.test"
+        )
+
+    assert captured["data"] is None, (
+        "Stability must use multipart files=, not urlencoded data="
+    )
+    assert captured["files"] is not None, "files= kwarg must be set"
+    assert captured["files"]["prompt"] == (None, "X"), (
+        "multipart text field requires (None, value) tuple"
+    )
+    assert captured["files"]["output_format"] == (None, "png")
+    assert result == PNG_MAGIC

@@ -46,12 +46,13 @@ async def generate(
         "Accept": "image/*",  # critical: tells Stability to return raw bytes
     }
     # Stability v2beta contract: multipart/form-data with text fields.
-    # httpx handles multipart when `data=` dict contains string values.
-    form_data = {"prompt": prompt, "output_format": "png"}
+    # httpx requires `files=` with (None, value) tuples for text fields in
+    # multipart mode. `data=` would send application/x-www-form-urlencoded.
+    files = {"prompt": (None, prompt), "output_format": (None, "png")}
 
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
-            resp = await client.post(url, headers=headers, data=form_data)
+            resp = await client.post(url, headers=headers, files=files)
     except httpx.TimeoutException as e:
         raise GenerateError(
             "Stability image API timeout", retry_after=60, provider=_PROVIDER_NAME
