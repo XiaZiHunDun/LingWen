@@ -117,7 +117,7 @@ def test_g5_no_infra_illustrations_refs(pattern, description):
              and "/test_phase73" not in l
              and "/test_phase62" not in l
              and "/test_phase60" not in l]
-    assert not lines, f"found infra.illustrations refs:\n" + "\n".join(lines[:5])
+    assert not lines, "found infra.illustrations refs:\n" + "\n".join(lines[:5])
 
 
 # --- G6: storage path pattern ---
@@ -133,8 +133,8 @@ def test_g6_storage_path_pattern():
 # --- G7: sidecar fields ---
 
 def test_g7_sidecar_required_fields(tmp_path):
-    from lingwen_illustrations.storage import save_asset
     from lingwen_illustrations.metadata import IllustrationMetadata
+    from lingwen_illustrations.storage import save_asset
 
     meta = IllustrationMetadata(
         id="x", type="chapter", project_slug="p", chapter_num=1,
@@ -179,3 +179,58 @@ def test_bible_loader_public() -> None:
 
     assert hasattr(bl, "load_character_bible")
     assert "load_character_bible" in bl.__all__
+
+
+# ─── G10: STRUCTURED_EXTRACTION enum + illustrations use it (Phase 92) ──
+def test_structured_extraction_enum_exists() -> None:
+    """G10a: TaskType.STRUCTURED_EXTRACTION must be added to lingwen-shared.
+
+    Phase 92 P2-EXTRACT-ENUM closure: v1 used QUALITY_ANALYSIS as a
+    semantic stand-in for schema-bounded JSON extraction. v55.2 adds
+    the dedicated enum member so prompts can declare intent precisely.
+    """
+    from lingwen_shared.contracts.python.llm import TaskType
+
+    assert hasattr(TaskType, "STRUCTURED_EXTRACTION"), (
+        "TaskType.STRUCTURED_EXTRACTION missing — Phase 92 P2-EXTRACT-ENUM"
+        " not closed. v55.2 should add this member."
+    )
+    assert TaskType.STRUCTURED_EXTRACTION.value == "structured_extraction"
+
+
+def test_extract_scene_uses_structured_extraction() -> None:
+    """G10b: extract_scene must pass TaskType.STRUCTURED_EXTRACTION, not the
+    legacy QUALITY_ANALYSIS stand-in.
+
+    Validates the call-site switched from the v1 fallback to the new enum.
+    """
+    import inspect
+
+    from lingwen_illustrations import prompt_builder
+
+    source = inspect.getsource(prompt_builder.extract_scene)
+    assert "TaskType.STRUCTURED_EXTRACTION" in source, (
+        "extract_scene still uses the v1 QUALITY_ANALYSIS fallback — "
+        "should switch to STRUCTURED_EXTRACTION in Phase 92."
+    )
+    assert "TaskType.QUALITY_ANALYSIS" not in source, (
+        "extract_scene must not reference QUALITY_ANALYSIS anymore — "
+        "STRUCTURED_EXTRACTION is the dedicated replacement."
+    )
+
+
+def test_llm_service_task_configs_includes_structured_extraction() -> None:
+    """G10c: LLMService.TASK_CONFIGS must include STRUCTURED_EXTRACTION.
+
+    Without an entry, the dict-based config lookup silently falls back to
+    LLMTask defaults (2000/0.3) — Phase 92 makes the choice explicit.
+    """
+    from lingwen_llm_service.service import LLMService
+    from lingwen_shared.contracts.python.llm import TaskType
+
+    assert TaskType.STRUCTURED_EXTRACTION in LLMService.TASK_CONFIGS, (
+        "LLMService.TASK_CONFIGS missing STRUCTURED_EXTRACTION entry — "
+        "Phase 92 should add max_tokens + temperature for deterministic JSON."
+    )
+    cfg = LLMService.TASK_CONFIGS[TaskType.STRUCTURED_EXTRACTION]
+    assert "max_tokens" in cfg and "temperature" in cfg
