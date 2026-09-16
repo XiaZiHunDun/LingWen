@@ -234,3 +234,62 @@ def test_llm_service_task_configs_includes_structured_extraction() -> None:
     )
     cfg = LLMService.TASK_CONFIGS[TaskType.STRUCTURED_EXTRACTION]
     assert "max_tokens" in cfg and "temperature" in cfg
+
+
+# ─── G11: image_generator real b64_json decode (Phase 93) ──────────
+def test_image_generator_uses_b64_json_decode_not_raw_content() -> None:
+    """G11a: image_generator.generate must base64-decode b64_json from JSON envelope.
+
+    v55.3 Phase 93 closure: the MiniMax image API returns JSON of shape
+    {"data": [{"b64_json": "<base64-jpeg>"}]} when response_format=b64_json
+    is requested. The implementation must call resp.json() + base64.b64decode;
+    NOT return resp.content raw (which was the v1 mock-only behavior).
+    """
+    import inspect
+
+    from lingwen_illustrations import image_generator
+
+    source = inspect.getsource(image_generator.generate)
+    assert "base64" in source and "b64decode" in source, (
+        "image_generator.generate must base64-decode b64_json — Phase 93"
+        " closure replaces v1 raw resp.content behavior."
+    )
+    assert "resp.json()" in source or ".json(" in source, (
+        "image_generator.generate must parse JSON response — real API"
+        " returns JSON envelope, not raw bytes."
+    )
+    # Negative: must NOT keep the v1 behavior of returning resp.content raw.
+    # Strip docstrings + allow the body to be a strict subset (no stand-alone
+    # `return resp.content` as the only path).
+    assert not _has_raw_resp_content_return(source), (
+        "image_generator.generate must NOT return resp.content raw —"
+        " Phase 93 requires JSON-parse + base64-decode path."
+    )
+
+
+def test_image_generator_request_format_is_b64_json() -> None:
+    """G11b: payload must request response_format=b64_json.
+
+    Without this, the API returns image URLs (b64_json absent) and decode
+    raises GenerateError — silent contract drift.
+    """
+    import inspect
+
+    from lingwen_illustrations import image_generator
+
+    source = inspect.getsource(image_generator.generate)
+    assert '"b64_json"' in source or "'b64_json'" in source, (
+        "image_generator must request response_format=b64_json — Phase 93."
+    )
+
+
+def _has_raw_resp_content_return(source: str) -> bool:
+    """Detect v1-style `return resp.content` as a final return (defense in depth)."""
+    # Strip docstrings to avoid false-positives on the v1 docstring mention.
+    import re
+
+    stripped = re.sub(r'"""[\s\S]*?"""', "", source)
+    stripped = re.sub(r"'''[\s\S]*?'''", "", stripped)
+    # Look for a top-level `return resp.content` that is the sole return path.
+    # Tolerate presence in branches if a JSON-decode path also exists.
+    return bool(re.search(r"return\s+resp\.content\s*$", stripped, re.MULTILINE))
