@@ -107,7 +107,7 @@ describe('useIllustrationStore', () => {
 
   // --- regenerate ---
 
-  it('regenerate deletes old then generates new (atomic-ish)', async () => {
+  it('regenerate replaces in-place via PUT (v55.4 atomic swap)', async () => {
     const store = useIllustrationStore()
     // Seed
     globalThis.$fetch.mockResolvedValueOnce({
@@ -115,23 +115,25 @@ describe('useIllustrationStore', () => {
     })
     await store.loadAssets('test')
 
-    // delete call
-    globalThis.$fetch.mockResolvedValueOnce({ deleted: 'old' })
-    // generate call
+    // Phase 94: PUT /{id}/regenerate preserves asset_id and atomically swaps
+    // bytes via temp file + POSIX rename on the backend. v1 DELETE+POST is gone.
+    globalThis.$fetch.mockResolvedValueOnce({
+      id: 'old', type: 'chapter', chapter_num: 17, style_preset: 'ink', custom_prompt: null, scene_json: {},
+    })
+    const result = await store.regenerate('test', 'old')
+    expect(result.id).toBe('old')
+    expect(store.assets.map(x => x.id)).toEqual(['old'])
+    expect(globalThis.$fetch).toHaveBeenCalledTimes(2)  // loadAssets + PUT regenerate
+  })
+
+  it('regenerate defensively prepends when asset not in local cache', async () => {
+    const store = useIllustrationStore()
     globalThis.$fetch.mockResolvedValueOnce({
       id: 'new', type: 'chapter', chapter_num: 17, style_preset: 'ink', custom_prompt: null, scene_json: {},
     })
-    const result = await store.regenerate('test', 'old')
+    const result = await store.regenerate('test', 'missing-id')
     expect(result.id).toBe('new')
     expect(store.assets.map(x => x.id)).toEqual(['new'])
-    expect(globalThis.$fetch).toHaveBeenCalledTimes(3)  // loadAssets + delete + generate
-  })
-
-  it('regenerate throws when asset not in local cache', async () => {
-    const store = useIllustrationStore()
-    await expect(store.regenerate('test', 'missing-id')).rejects.toThrow(
-      'asset missing-id not found'
-    )
   })
 
   // --- composable wrapper ---
