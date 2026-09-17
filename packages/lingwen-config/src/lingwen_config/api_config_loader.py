@@ -77,12 +77,31 @@ class APIConfig:
         return self.get("minimax_api_host", "https://api.minimaxi.com")
 
     @property
-    def anthropic_api_key(self) -> Optional[str]:
-        return self.get("anthropic_api_key")
-
-    @property
     def openai_api_key(self) -> Optional[str]:
         return self.get("openai_api_key")
+
+    @property
+    def openai_api_host(self) -> Optional[str]:
+        # Phase 96: forward-looking property for OpenAI DALL-E 3 adapter.
+        return self.get("openai_api_host", "https://api.openai.com")
+
+    @property
+    def stability_api_key(self) -> Optional[str]:
+        # Phase 96: new key for Stability AI SD3 adapter.
+        return self.get("stability_api_key")
+
+    @property
+    def stability_api_host(self) -> Optional[str]:
+        # Phase 96: forward-looking property for Stability SD3 adapter.
+        return self.get("stability_api_host", "https://api.stability.ai")
+
+    @property
+    def anthropic_api_key(self) -> Optional[str]:
+        # Phase 83 forward-looking; NOT used by Phase 96 (Anthropic has no
+        # native image API). Property retained for forward compat with
+        # future Anthropic-based image gen (e.g., Stable Diffusion XL via
+        # Anthropic prompt chain — not v1).
+        return self.get("anthropic_api_key")
 
 
 def get_api_config() -> APIConfig:
