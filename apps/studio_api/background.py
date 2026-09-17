@@ -1,10 +1,12 @@
-"""Phase 90 Task 10: background tasks for chapter completion hooks.
+"""Phase 90 Task 10 + Phase 96 Task 14: background tasks for chapter completion hooks.
 
 `illustrations_auto_generate_task`: fire-and-forget illustration generation
 triggered by chapter_marked_complete event (PUT /api/write/{chapter_id}).
 
-`_get_illustration_settings`: v1 stub returning default illustration settings
-(auto_generate OFF by default). v2 will read from project config.
+`_get_illustration_settings`: Phase 96 — reads default_provider from
+<project>/.lingwen/illustration_settings.yaml (populated by
+PUT /api/projects/{slug}/settings). Falls back to 'minimax' default when
+yaml is missing or corrupt.
 """
 
 from __future__ import annotations
@@ -24,6 +26,9 @@ async def illustrations_auto_generate_task(
 
     Triggered by chapter_marked_complete event when user has auto-generate
     enabled in project settings. Failures logged but never raised.
+
+    Phase 96: dispatches API credentials via per-project `default_provider`
+    (read by `_get_illustration_settings` from the project settings yaml).
     """
     # Lazy imports: avoid loading pipeline deps + avoid potential circular
     # import with apps.studio_api.routes.illustrations at module load time.
@@ -31,13 +36,12 @@ async def illustrations_auto_generate_task(
     from lingwen_illustrations.pipeline import generate_illustration
 
     from apps.studio_api.routes._project_helpers import project_root_for
-    from apps.studio_api.routes.illustrations import (
-        _api_credentials,
-    )
+    from apps.studio_api.routes.illustrations import _api_credentials_for
 
     try:
         project_root = project_root_for(project_slug)
-        api_key, api_host = _api_credentials()
+        provider = settings.get("default_provider", "minimax")
+        api_key, api_host = _api_credentials_for(provider)
         await generate_illustration(
             project_root=project_root,
             project_slug=project_slug,
@@ -47,23 +51,52 @@ async def illustrations_auto_generate_task(
             custom_prompt=None,
             api_key=api_key,
             api_host=api_host,
+            provider=provider,
         )
-        log.info(f"auto-generated illustration for {project_slug} ch.{chapter_num}")
+        log.info(
+            f"auto-generated illustration for {project_slug} ch.{chapter_num} "
+            f"(provider={provider})"
+        )
     except IllustrationError as e:
-        log.warning(f"auto-generate failed [{e.stage.value}]: {e.message}")
+        log.warning(
+            f"auto-generate failed [{e.stage.value}] "
+            f"provider={getattr(e, 'provider', 'unknown')}: {e.message}"
+        )
     except Exception as e:
         log.error(f"auto-generate unexpected error: {e}")
 
 
 def _get_illustration_settings(project_slug: str) -> dict[str, Any]:
-    """v1 stub: return default illustration settings.
+    """Read illustration settings for the project.
 
-    v2: read from <project>/.lingwen/illustration_settings.yaml or similar.
-    Default OFF — auto_generate must be explicitly enabled by v2 config.
+    Phase 96: reads from <project>/.lingwen/illustration_settings.yaml
+    (populated by PUT /api/projects/{slug}/settings). Falls back to
+    defaults (auto_generate OFF, style_preset 'ink', default_provider
+    'minimax') when yaml is missing or corrupt.
+
+    Future fields (max_assets, confirm_before_generate) will be added
+    here when ProjectSettings schema extends.
     """
+    from lingwen_illustrations.exceptions import LoadError
+
+    from apps.studio_api.routes._project_helpers import project_root_for
+    from apps.studio_api.routes.project_settings import _load_settings
+
+    try:
+        root = project_root_for(project_slug)
+        settings = _load_settings(root)
+    except LoadError:
+        # Project not found — silent no-op (matches existing Phase 90 behavior).
+        return {
+            "style_preset": "ink",
+            "auto_generate": False,
+            "default_provider": "minimax",
+        }
+
     return {
-        "style_preset": "ink",
-        "auto_generate": False,
+        "style_preset": "ink",  # TODO v2: add style_preset to ProjectSettings
+        "auto_generate": False,  # TODO v2: add auto_generate to ProjectSettings
+        "default_provider": settings.default_provider,
     }
 
 
