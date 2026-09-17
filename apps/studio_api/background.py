@@ -30,13 +30,13 @@ async def illustrations_auto_generate_task(
     from lingwen_illustrations.exceptions import IllustrationError
     from lingwen_illustrations.pipeline import generate_illustration
 
+    from apps.studio_api.routes._project_helpers import project_root_for
     from apps.studio_api.routes.illustrations import (
         _api_credentials,
-        _project_root_for,
     )
 
     try:
-        project_root = _project_root_for(project_slug)
+        project_root = project_root_for(project_slug)
         api_key, api_host = _api_credentials()
         await generate_illustration(
             project_root=project_root,

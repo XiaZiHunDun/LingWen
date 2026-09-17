@@ -11,7 +11,6 @@ Errors map to specific HTTP statuses per stage (see STAGE_HTTP_CODES).
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Optional
 
 from fastapi import Body, FastAPI, HTTPException, Query
@@ -27,6 +26,7 @@ from lingwen_illustrations.exceptions import (
 )
 from pydantic import BaseModel, Field, model_validator
 
+from apps.studio_api.routes._project_helpers import project_root_for
 from apps.studio_api.routes.ctx import RoutesContext
 
 # Stage -> HTTP code dispatch table. Single source of truth for error mapping.
@@ -75,18 +75,8 @@ class ListResponse(BaseModel):
 # --- Helpers ---
 
 
-def _project_root_for(slug: str) -> Path:
-    """Resolve project root from slug.
-
-    v1: scan `projects/` for the slug. Uses cwd-relative resolution so
-    tests can `monkeypatch.chdir(tmp_path)` to isolate per-test.
-    """
-    candidate = Path("projects") / slug
-    if not candidate.exists():
-        raise LoadError(f"project '{slug}' not found at {candidate}")
-    # Note: lingwen-paths.ProjectPaths / resolve_project_root reserved
-    # for future canonical integration (see BACKLOG P2-ILLUSTRATIONS-BIBLE-CANONICAL).
-    return candidate
+# Phase 96: _project_root_for extracted to _project_helpers.py (reused by
+# project_settings.py in Task 12 and background.py auto-gen task).
 
 
 def _api_credentials() -> tuple[str, str]:
@@ -123,7 +113,7 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
     @app.post("/api/illustrations/generate", response_model=GenerateResponse)
     async def generate_illustration(req: GenerateRequest = Body(...)) -> GenerateResponse:
         try:
-            project_root = _project_root_for(req.project_slug)
+            project_root = project_root_for(req.project_slug)
         except LoadError as e:
             raise HTTPException(404, detail=_err_detail(e)) from e
 
@@ -161,7 +151,7 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
         type: Optional[str] = Query(None),
     ) -> ListResponse:
         try:
-            project_root = _project_root_for(project_slug)
+            project_root = project_root_for(project_slug)
         except LoadError as e:
             raise HTTPException(404, detail=_err_detail(e)) from e
 
@@ -177,7 +167,7 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
         project_slug: str = Query(...),
     ) -> dict:
         try:
-            project_root = _project_root_for(project_slug)
+            project_root = project_root_for(project_slug)
         except LoadError as e:
             raise HTTPException(404, detail=_err_detail(e)) from e
 
@@ -207,7 +197,7 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
         is preserved (no destructive behavior).
         """
         try:
-            project_root = _project_root_for(project_slug)
+            project_root = project_root_for(project_slug)
         except LoadError as e:
             raise HTTPException(404, detail=_err_detail(e)) from e
 
@@ -247,7 +237,7 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
         project_slug: str = Query(...),
     ) -> FileResponse:
         try:
-            project_root = _project_root_for(project_slug)
+            project_root = project_root_for(project_slug)
         except LoadError as e:
             raise HTTPException(404, detail=_err_detail(e)) from e
 
