@@ -51,6 +51,7 @@ class GenerateRequest(BaseModel):
     # so the frontend can surface a retryable-with-different-input flow.
     style_preset: str
     custom_prompt: Optional[str] = None
+    provider: Optional[str] = None  # NEW (Phase 96). None → resolve via project settings yaml.
 
     @model_validator(mode="after")
     def _chapter_requires_num(self) -> "GenerateRequest":
@@ -80,20 +81,62 @@ class ListResponse(BaseModel):
 
 
 def _api_credentials() -> tuple[str, str]:
-    """Get MiniMax API key + host from APIConfig singleton."""
+    """Deprecated: use _api_credentials_for(provider)."""
+    return _api_credentials_for("minimax")
+
+
+def _api_credentials_for(provider: str) -> tuple[str, str]:
+    """Dispatch API key + host by provider name.
+
+    Phase 96: replaces _api_credentials() which only handled MiniMax.
+    Raises ValueError for unknown provider (caller should validate first
+    via providers.KNOWN_PROVIDERS).
+    """
     from lingwen_config import APIConfig
 
     cfg = APIConfig()
-    key = cfg.minimax_api_key or ""
-    host = cfg.minimax_api_host or "https://api.minimaxi.com"
-    return key, host
+    if provider == "minimax":
+        return cfg.minimax_api_key or "", cfg.minimax_api_host or "https://api.minimaxi.com"
+    if provider == "openai":
+        return cfg.openai_api_key or "", cfg.openai_api_host or "https://api.openai.com"
+    if provider == "stability":
+        return cfg.stability_api_key or "", cfg.stability_api_host or "https://api.stability.ai"
+    raise ValueError(f"unknown provider '{provider}'")
+
+
+def _resolve_provider_for_request(req_project_slug: str, body_provider: Optional[str]) -> str:
+    """Resolve provider with priority: body > project_settings > 'minimax'.
+
+    Phase 96 §3.7 single source of truth. If body_provider is provided
+    but not in KNOWN_PROVIDERS, raise HTTPException(400). If project
+    settings cannot be loaded, fall back to 'minimax' default.
+    """
+    from lingwen_illustrations.providers import KNOWN_PROVIDERS
+
+    from apps.studio_api.routes.project_settings import ProjectSettings, _load_settings
+
+    if body_provider is not None:
+        if body_provider not in KNOWN_PROVIDERS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"unknown provider '{body_provider}', expected one of {KNOWN_PROVIDERS}",
+            )
+        return body_provider
+    try:
+        root = project_root_for(req_project_slug)
+        settings = _load_settings(root)
+    except LoadError:
+        return "minimax"
+    return settings.default_provider
 
 
 def _err_detail(exc: IllustrationError) -> dict:
     """Build the standard error detail payload."""
     payload = {"stage": exc.stage.value, "error": exc.message, "retryable": exc.retryable}
-    if isinstance(exc, GenerateError) and exc.retry_after is not None:
-        payload["retry_after"] = exc.retry_after
+    if isinstance(exc, GenerateError):
+        if exc.retry_after is not None:
+            payload["retry_after"] = exc.retry_after
+        payload["provider"] = exc.provider  # NEW (Phase 96)
     return payload
 
 
@@ -117,7 +160,8 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
         except LoadError as e:
             raise HTTPException(404, detail=_err_detail(e)) from e
 
-        api_key, api_host = _api_credentials()
+        provider = _resolve_provider_for_request(req.project_slug, req.provider)
+        api_key, api_host = _api_credentials_for(provider)
 
         # Lazy import to avoid loading pipeline deps at module import time
         from lingwen_illustrations.pipeline import generate_illustration as run_pipeline
@@ -132,6 +176,7 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
                 custom_prompt=req.custom_prompt,
                 api_key=api_key,
                 api_host=api_host,
+                provider=provider,
             )
         except IllustrationError as e:
             _raise_stage_error(e)
@@ -184,6 +229,7 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
     async def regenerate_illustration(
         asset_id: str,
         project_slug: str = Query(...),
+        provider: Optional[str] = Query(None),  # NEW (Phase 96). None → existing_meta.provider.
     ) -> GenerateResponse:
         """Atomic regenerate: re-runs extract+compose+generate, swaps bytes in place.
 
@@ -191,6 +237,9 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
         that left a window where the asset didn't exist. The PUT endpoint
         preserves the asset_id and atomically replaces image bytes + sidecar
         via storage.replace_asset (temp file + POSIX rename).
+
+        Phase 96: provider query param overrides existing_meta.provider.
+        If None, reuse the original provider (most common case).
 
         Returns same id (asset_id) with new scene_json + final_prompt.
         On Stage failure (Extract / Compose / Generate), the original asset
@@ -207,7 +256,8 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
         if meta is None:
             raise HTTPException(404, detail=f"asset {asset_id} not found")
 
-        api_key, api_host = _api_credentials()
+        effective_provider = provider if provider is not None else meta.provider
+        api_key, api_host = _api_credentials_for(effective_provider)
 
         # Lazy import to avoid loading pipeline deps at module import time
         from lingwen_illustrations.pipeline import regenerate_illustration as run_regen
@@ -218,6 +268,7 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
                 existing_meta=meta,
                 api_key=api_key,
                 api_host=api_host,
+                provider=provider,  # None → pipeline reads existing_meta.provider
             )
         except IllustrationError as e:
             _raise_stage_error(e)

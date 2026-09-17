@@ -83,7 +83,7 @@ def test_post_generate_success(illustrations_client):
 
     with patch("lingwen_illustrations.prompt_builder.get_llm_service",
                return_value=mock_service), \
-         patch("lingwen_illustrations.pipeline.image_generator.generate",
+         patch("lingwen_illustrations.providers.minimax.generate",
                new=AsyncMock(return_value=b"\xff\xd8\xff\xe0fake-jpeg")):
         resp = client.post("/api/illustrations/generate", json={
             "project_slug": "test",
@@ -238,7 +238,7 @@ def test_put_regenerate_preserves_asset_id(illustrations_client):
     # 1. Generate an asset.
     with patch("lingwen_illustrations.prompt_builder.get_llm_service",
                return_value=mock_service), \
-         patch("lingwen_illustrations.pipeline.image_generator.generate",
+         patch("lingwen_illustrations.providers.minimax.generate",
                new=AsyncMock(return_value=b"\xff\xd8\xff\xe0OLD-jpeg")):
         gen_resp = client.post("/api/illustrations/generate", json={
             "project_slug": "test",
@@ -253,7 +253,7 @@ def test_put_regenerate_preserves_asset_id(illustrations_client):
     # 2. PUT regenerate — same id, new content.
     with patch("lingwen_illustrations.prompt_builder.get_llm_service",
                return_value=mock_service), \
-         patch("lingwen_illustrations.pipeline.image_generator.generate",
+         patch("lingwen_illustrations.providers.minimax.generate",
                new=AsyncMock(return_value=b"\xff\xd8\xff\xe0NEW-jpeg")):
         regen_resp = client.put(
             f"/api/illustrations/{original_id}/regenerate?project_slug=test"
@@ -289,7 +289,7 @@ def test_put_regenerate_extract_error_preserves_original(illustrations_client):
     # 1. Generate an asset.
     with patch("lingwen_illustrations.prompt_builder.get_llm_service",
                return_value=mock_service_ok), \
-         patch("lingwen_illustrations.pipeline.image_generator.generate",
+         patch("lingwen_illustrations.providers.minimax.generate",
                new=AsyncMock(return_value=b"\xff\xd8\xff\xe0ORIGINAL")):
         gen_resp = client.post("/api/illustrations/generate", json={
             "project_slug": "test",
@@ -346,7 +346,7 @@ def test_put_regenerate_load_error_for_missing_chapter_returns_404(tmp_path, mon
     # Generate an asset for chapter 17.
     with patch("lingwen_illustrations.prompt_builder.get_llm_service",
                return_value=mock_service_ok), \
-         patch("lingwen_illustrations.pipeline.image_generator.generate",
+         patch("lingwen_illustrations.providers.minimax.generate",
                new=AsyncMock(return_value=b"\xff\xd8ORIG")):
         gen_resp = client.post("/api/illustrations/generate", json={
             "project_slug": "test",
@@ -374,3 +374,260 @@ def test_put_regenerate_load_error_for_missing_chapter_returns_404(tmp_path, mon
     )
     assert img_resp.status_code == 200
     assert img_resp.content == b"\xff\xd8ORIG"
+
+
+# ─── Phase 96 Task 13: provider field on illustrations route ─────────────
+
+
+def test_generate_request_accepts_provider_field():
+    """Phase 96: provider is optional in body; defaults via project settings."""
+    from apps.studio_api.routes.illustrations import GenerateRequest
+
+    req = GenerateRequest(
+        project_slug="x",
+        type="chapter",
+        chapter_num=1,
+        style_preset="ink",
+        custom_prompt=None,
+        provider="openai",
+    )
+    assert req.provider == "openai"
+
+
+def test_generate_request_provider_optional():
+    """Phase 96: provider field defaults to None (resolve via project settings)."""
+    from apps.studio_api.routes.illustrations import GenerateRequest
+
+    req = GenerateRequest(
+        project_slug="x",
+        type="chapter",
+        chapter_num=1,
+        style_preset="ink",
+        custom_prompt=None,
+    )
+    assert req.provider is None
+
+
+def test_err_detail_includes_provider_for_generate_error():
+    """Phase 96 §5.2: HTTP error payload includes provider field on GenerateError."""
+    from lingwen_illustrations.exceptions import GenerateError
+
+    from apps.studio_api.routes.illustrations import _err_detail
+
+    err = GenerateError("test", retry_after=30, provider="openai")
+    detail = _err_detail(err)
+    assert detail["provider"] == "openai"
+    assert detail["retry_after"] == 30
+
+
+def test_err_detail_no_provider_for_non_generate_error():
+    """Non-GenerateError exceptions don't have provider field."""
+    from lingwen_illustrations.exceptions import LoadError
+
+    from apps.studio_api.routes.illustrations import _err_detail
+
+    err = LoadError("missing file")
+    detail = _err_detail(err)
+    assert "provider" not in detail
+
+
+def test_api_credentials_for_each_provider(monkeypatch):
+    """_api_credentials_for dispatches API key + host by provider name."""
+    from lingwen_config import APIConfig
+
+    from apps.studio_api.routes.illustrations import _api_credentials_for
+
+    # APIConfig uses properties backed by self._config dict + env vars.
+    # Patch the underlying dict to make properties return the mocked values.
+    cfg = APIConfig()
+    monkeypatch.setattr(cfg, "_config", {
+        "minimax_api_key": "minimax-key",
+        "openai_api_key": "openai-key",
+        "stability_api_key": "stability-key",
+    })
+
+    key, host = _api_credentials_for("minimax")
+    assert key == "minimax-key"
+    assert host == "https://api.minimaxi.com"
+
+    key, host = _api_credentials_for("openai")
+    assert key == "openai-key"
+    assert host == "https://api.openai.com"
+
+    key, host = _api_credentials_for("stability")
+    assert key == "stability-key"
+    assert host == "https://api.stability.ai"
+
+
+def test_api_credentials_for_unknown_raises():
+    """_api_credentials_for raises ValueError for unknown provider name."""
+    from apps.studio_api.routes.illustrations import _api_credentials_for
+
+    with pytest.raises(ValueError) as exc:
+        _api_credentials_for("anthropic")
+    assert "anthropic" in str(exc.value)
+
+
+def test_resolve_provider_for_request_body_overrides(monkeypatch):
+    """Body provider takes precedence over project settings."""
+    from apps.studio_api.routes.illustrations import _resolve_provider_for_request
+
+    # Even if settings say otherwise, body should win.
+    # Patch at source module (project_settings) since the import is lazy
+    # inside _resolve_provider_for_request.
+    monkeypatch.setattr(
+        "apps.studio_api.routes.project_settings._load_settings",
+        lambda root: type("S", (), {"default_provider": "openai"})(),
+    )
+    resolved = _resolve_provider_for_request("x", "stability")
+    assert resolved == "stability"
+
+
+def test_resolve_provider_for_request_falls_back_to_settings(monkeypatch):
+    """When body provider is None, use project_settings.default_provider."""
+    from pathlib import Path
+
+    from apps.studio_api.routes.illustrations import _resolve_provider_for_request
+
+    # Bypass project_root_for to avoid LoadError (no real project on disk).
+    monkeypatch.setattr(
+        "apps.studio_api.routes.illustrations.project_root_for",
+        lambda slug: Path("/tmp/projects/x"),
+    )
+    monkeypatch.setattr(
+        "apps.studio_api.routes.project_settings._load_settings",
+        lambda root: type("S", (), {"default_provider": "openai"})(),
+    )
+    resolved = _resolve_provider_for_request("x", None)
+    assert resolved == "openai"
+
+
+def test_resolve_provider_for_request_falls_back_to_minimax_on_load_error(monkeypatch):
+    """When project settings can't load, fall back to 'minimax' default."""
+    from apps.studio_api.routes.illustrations import _resolve_provider_for_request
+
+    def _raise(_root):
+        from lingwen_illustrations.exceptions import LoadError
+        raise LoadError("missing")
+
+    monkeypatch.setattr(
+        "apps.studio_api.routes.project_settings._load_settings",
+        _raise,
+    )
+    resolved = _resolve_provider_for_request("x", None)
+    assert resolved == "minimax"
+
+
+def test_resolve_provider_for_request_unknown_body_raises_400(monkeypatch):
+    """Unknown body provider returns HTTPException(400)."""
+    from fastapi import HTTPException
+
+    from apps.studio_api.routes.illustrations import _resolve_provider_for_request
+
+    with pytest.raises(HTTPException) as exc:
+        _resolve_provider_for_request("x", "fake_provider")
+    assert exc.value.status_code == 400
+    assert "fake_provider" in str(exc.value.detail)
+
+
+def test_post_generate_with_provider_dispatches_to_correct_adapter(illustrations_client):
+    """Phase 96 §3.7: body.provider overrides default + dispatches via provider adapter."""
+    client = illustrations_client
+
+    mock_service = MagicMock()
+    mock_service.execute.return_value = json.dumps({
+        "subject": "林渊",
+        "scene": "幽冥谷",
+        "mood": "紧张",
+        "characters_in_scene": [],
+        "extraction_confidence": 0.9,
+    }, ensure_ascii=False)
+
+    # Patch the openai adapter to verify dispatch. The pipeline calls
+    # get_provider("openai") which dynamically reads the module attribute.
+    with patch("lingwen_illustrations.prompt_builder.get_llm_service",
+               return_value=mock_service), \
+         patch("lingwen_illustrations.providers.openai.generate",
+               new=AsyncMock(return_value=b"\xff\xd8\xff\xe0OPENAI-jpeg")) as openai_mock:
+        resp = client.post("/api/illustrations/generate", json={
+            "project_slug": "test",
+            "type": "chapter",
+            "chapter_num": 17,
+            "style_preset": "ink",
+            "custom_prompt": None,
+            "provider": "openai",
+        })
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["type"] == "chapter"
+    assert openai_mock.called
+
+
+def test_post_generate_default_provider_uses_minimax(illustrations_client):
+    """Phase 96: When no provider field + no project settings, use minimax default."""
+    client = illustrations_client
+
+    mock_service = MagicMock()
+    mock_service.execute.return_value = json.dumps({
+        "subject": "x",
+        "scene": "y",
+        "mood": "z",
+        "characters_in_scene": [],
+        "extraction_confidence": 0.8,
+    }, ensure_ascii=False)
+
+    with patch("lingwen_illustrations.prompt_builder.get_llm_service",
+               return_value=mock_service), \
+         patch("lingwen_illustrations.providers.minimax.generate",
+               new=AsyncMock(return_value=b"\xff\xd8\xff\xe0DEFAULT-jpeg")) as minimax_mock:
+        resp = client.post("/api/illustrations/generate", json={
+            "project_slug": "test",
+            "type": "chapter",
+            "chapter_num": 17,
+            "style_preset": "ink",
+            "custom_prompt": None,
+        })
+
+    assert resp.status_code == 200
+    assert minimax_mock.called
+
+
+def test_put_regenerate_with_provider_override(illustrations_client):
+    """Phase 96: PUT regenerate accepts ?provider= query param to override."""
+    client = illustrations_client
+
+    mock_service = MagicMock()
+    mock_service.execute.return_value = json.dumps({
+        "subject": "林渊", "scene": "幽冥谷", "mood": "紧张",
+        "characters_in_scene": [], "extraction_confidence": 0.9,
+    }, ensure_ascii=False)
+
+    # 1. Generate with default provider.
+    with patch("lingwen_illustrations.prompt_builder.get_llm_service",
+               return_value=mock_service), \
+         patch("lingwen_illustrations.providers.minimax.generate",
+               new=AsyncMock(return_value=b"\xff\xd8ORIG")):
+        gen_resp = client.post("/api/illustrations/generate", json={
+            "project_slug": "test",
+            "type": "chapter",
+            "chapter_num": 17,
+            "style_preset": "ink",
+            "custom_prompt": None,
+        })
+    assert gen_resp.status_code == 200
+    original_id = gen_resp.json()["id"]
+
+    # 2. PUT regenerate with provider=openai override.
+    with patch("lingwen_illustrations.prompt_builder.get_llm_service",
+               return_value=mock_service), \
+         patch("lingwen_illustrations.providers.openai.generate",
+               new=AsyncMock(return_value=b"\xff\xd8OPENAI-REGEN")) as openai_mock:
+        regen_resp = client.put(
+            f"/api/illustrations/{original_id}/regenerate"
+            f"?project_slug=test&provider=openai"
+        )
+
+    assert regen_resp.status_code == 200
+    assert openai_mock.called
+    assert regen_resp.json()["id"] == original_id
