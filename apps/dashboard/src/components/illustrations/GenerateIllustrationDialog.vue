@@ -1,6 +1,7 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { NDialog, NButton, NInput } from 'naive-ui'
+import { useProjectSettingsStore } from '@/stores/useProjectSettings.js'
 
 const props = defineProps({
   projectSlug: { type: String, required: true },
@@ -17,8 +18,27 @@ const presets = [
   { id: 'anime', label: '动漫厚涂', icon: '🎨' },
 ]
 
+const providers = [
+  { id: 'minimax', label: 'MiniMax' },
+  { id: 'openai', label: 'OpenAI DALL-E 3' },
+  { id: 'stability', label: 'Stability SD3' },
+]
+
+const store = useProjectSettingsStore()
+
 const selectedPreset = ref('ink')
 const customPrompt = ref('')
+const selectedProvider = ref('minimax')  // NEW (Phase 96)
+
+// Preselect from project default on mount
+onMounted(async () => {
+  if (props.projectSlug) {
+    await store.fetch(props.projectSlug)
+    if (store.settings?.default_provider) {
+      selectedProvider.value = store.settings.default_provider
+    }
+  }
+})
 
 const isValid = computed(() => selectedPreset.value !== null)
 
@@ -33,12 +53,13 @@ function submit() {
     chapter_num: props.chapterNum,
     style_preset: selectedPreset.value,
     custom_prompt: customPrompt.value || null,
+    provider: selectedProvider.value,  // NEW (Phase 96). Per-call override.
   })
   close()
 }
 
 // Expose for tests
-defineExpose({ selectedPreset, customPrompt })
+defineExpose({ selectedPreset, customPrompt, selectedProvider, store })
 </script>
 
 <template>
@@ -62,6 +83,20 @@ defineExpose({ selectedPreset, customPrompt })
         >
           <span class="icon">{{ p.icon }}</span>
           <span class="name">{{ p.label }}</span>
+        </button>
+      </div>
+
+      <p class="label">图片生成器</p>
+      <div class="providers">
+        <button
+          v-for="p in providers"
+          :key="p.id"
+          type="button"
+          :class="['provider', 'provider-' + p.id, { selected: selectedProvider === p.id }]"
+          :data-testid="`illustration-provider-${p.id}`"
+          @click="selectedProvider = p.id"
+        >
+          {{ p.label }}
         </button>
       </div>
 
@@ -130,6 +165,24 @@ defineExpose({ selectedPreset, customPrompt })
 }
 .preset .icon { font-size: 24px; }
 .preset .name { font-size: 12px; }
+.providers {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.provider {
+  padding: 8px 14px;
+  border: 2px solid var(--border-color, #e5e7eb);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  color: inherit;
+  font-size: 13px;
+}
+.provider.selected {
+  border-color: var(--color-accent, #7c3aed);
+  background: var(--color-accent-soft, rgba(124, 58, 237, 0.08));
+}
 .context {
   font-size: 12px;
   color: var(--text-muted, #4b5563);

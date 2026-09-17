@@ -39,3 +39,86 @@ describe('GenerateIllustrationDialog', () => {
     })
   })
 })
+
+describe('GenerateIllustrationDialog (Phase 96: provider picker)', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    globalThis.fetch = vi.fn()
+  })
+
+  it('renders 3 provider options', () => {
+    const wrapper = mount(GenerateIllustrationDialog, {
+      props: { projectSlug: 'test', chapterNum: 17, type: 'chapter', modelValue: true },
+    })
+    const providers = wrapper.findAll('[data-testid^="illustration-provider-"]')
+    expect(providers.length).toBe(3)
+    const ids = providers.map(p => p.attributes('data-testid'))
+    expect(ids).toContain('illustration-provider-minimax')
+    expect(ids).toContain('illustration-provider-openai')
+    expect(ids).toContain('illustration-provider-stability')
+  })
+
+  it('defaults to minimax when no project default loaded', () => {
+    globalThis.fetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({}),
+    })
+    const wrapper = mount(GenerateIllustrationDialog, {
+      props: { projectSlug: 'test', chapterNum: 1, modelValue: true },
+    })
+    expect(wrapper.vm.selectedProvider).toBe('minimax')
+  })
+
+  it('preselects provider from project default', async () => {
+    globalThis.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ default_provider: 'openai' }),
+    })
+    const wrapper = mount(GenerateIllustrationDialog, {
+      props: { projectSlug: 'test', chapterNum: 1, modelValue: true },
+    })
+    // Wait for store.fetch to resolve
+    await new Promise(r => setTimeout(r, 10))
+    expect(wrapper.vm.selectedProvider).toBe('openai')
+  })
+
+  it('emits provider in generate payload', async () => {
+    globalThis.fetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({}),
+    })
+    const wrapper = mount(GenerateIllustrationDialog, {
+      props: { projectSlug: 'test', chapterNum: 1, modelValue: true },
+    })
+    wrapper.vm.selectedProvider = 'stability'
+    wrapper.vm.submit()
+    const generated = wrapper.emitted('generate')
+    expect(generated).toBeTruthy()
+    expect(generated[0][0].provider).toBe('stability')
+  })
+
+  it('user can override provider per call', async () => {
+    globalThis.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ default_provider: 'openai' }),
+    })
+    const wrapper = mount(GenerateIllustrationDialog, {
+      props: { projectSlug: 'test', chapterNum: 1, modelValue: true },
+    })
+    await new Promise(r => setTimeout(r, 10))
+    wrapper.vm.selectedProvider = 'stability'  // override
+    wrapper.vm.submit()
+    const generated = wrapper.emitted('generate')
+    expect(generated[0][0].provider).toBe('stability')
+    // Verify NOT persisted to store
+    expect(wrapper.vm.store.settings.default_provider).toBe('openai')
+  })
+
+  it('selects provider on click', async () => {
+    const wrapper = mount(GenerateIllustrationDialog, {
+      props: { projectSlug: 'test', chapterNum: 1, modelValue: true },
+    })
+    await wrapper.find('[data-testid="illustration-provider-openai"]').trigger('click')
+    expect(wrapper.vm.selectedProvider).toBe('openai')
+  })
+})
