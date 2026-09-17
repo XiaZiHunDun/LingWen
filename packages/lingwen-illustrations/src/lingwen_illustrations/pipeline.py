@@ -4,7 +4,11 @@ Single entry point for the 4-stage illustration generation pipeline.
 Each stage raises a stage-specific exception on failure; the orchestrator
 propagates without wrapping.
 
-Layout assumptions (tested + canonical for Phase 90/91):
+Phase 96: added `provider: str = "minimax"` parameter to dispatch via
+`providers.get_provider(name).generate(...)`. Existing callers without
+provider arg default to MiniMax (backwards compat with Phase 90-95).
+
+Layout assumptions (tested + canonical for Phase 90/91/96):
     <project_root>/chapters/<NNN>.md                       — chapter markdown
     <project_root>/config/illustrations/characters.json    — character bible (Phase 91)
     <project_root>/assets/...                              — written by storage
@@ -18,26 +22,40 @@ Character bible (Phase 91, P2-ILLUSTRATIONS-BIBLE-CANONICAL):
     (03_内容仓库/角色设定/character_profiles.json) which doesn't carry
     visual descriptions. Bible is illustration-specific; independent
     of character_profiles.json (no cross-ref, no I073 coupling).
+
+Phase 96: provider abstraction
+    Adapters in providers/ subpackage (minimax/openai/stability). Each
+    exposes async generate(*, prompt, api_key, api_host, timeout=60) -> bytes.
+    Pipeline calls get_provider(provider) for dispatch. The `provider`
+    field on IllustrationMetadata records which provider produced each
+    asset (for analytics + future per-provider regeneration).
 """
 
 from __future__ import annotations
 
 import hashlib
-import json
 import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
-from lingwen_illustrations import image_generator, storage
+from lingwen_illustrations import storage
 from lingwen_illustrations.bible_loader import load_character_bible
 from lingwen_illustrations.exceptions import LoadError
 from lingwen_illustrations.metadata import IllustrationMetadata
 from lingwen_illustrations.prompt_builder import extract_scene
+from lingwen_illustrations.providers import UnknownProviderError, get_provider
 from lingwen_illustrations.style_templates import compose as compose_prompt
 
 _TYPE = Literal["cover", "chapter"]
+
+# Per-provider model name for metadata.model field.
+_MODEL_FOR_PROVIDER: dict[str, str] = {
+    "minimax": "minimax-multimodal",
+    "openai": "dall-e-3",
+    "stability": "sd3-medium",
+}
 
 
 def _load_chapter_text(project_root: Path, type: _TYPE, chapter_num: int | None) -> str:
@@ -57,6 +75,14 @@ def _iso_utc_now() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
+def _resolve_model(provider: str) -> str:
+    if provider not in _MODEL_FOR_PROVIDER:
+        raise UnknownProviderError(
+            f"unknown provider '{provider}', expected one of {tuple(_MODEL_FOR_PROVIDER)}"
+        )
+    return _MODEL_FOR_PROVIDER[provider]
+
+
 async def generate_illustration(
     *,
     project_root: Path,
@@ -67,8 +93,12 @@ async def generate_illustration(
     custom_prompt: str | None,
     api_key: str,
     api_host: str,
+    provider: str = "minimax",  # NEW (Phase 96)
 ) -> IllustrationMetadata:
     """Run the full pipeline. Returns metadata of saved asset.
+
+    Phase 96: dispatches Stage 3 to the provider named by `provider`
+    (default "minimax" for backwards compat).
 
     Raises:
         LoadError: Project / chapter / character bible missing or malformed.
@@ -76,6 +106,7 @@ async def generate_illustration(
         ComposeError: Stage 2 template failed (invalid preset).
         GenerateError: Stage 3 image API failed.
         StoreError: Stage 4 file write failed.
+        UnknownProviderError: provider name not in providers.KNOWN_PROVIDERS.
     """
     # Stage 1a: load chapter text + character bible.
     chapter_text = _load_chapter_text(project_root, type, chapter_num)
@@ -94,8 +125,10 @@ async def generate_illustration(
         custom_prompt=custom_prompt,
     )
 
-    # Stage 4: image generation (raises GenerateError on API failure).
-    image_bytes = await image_generator.generate(
+    # Stage 4: provider dispatch (Phase 96). get_provider raises
+    # UnknownProviderError if name not in KNOWN_PROVIDERS.
+    provider_fn = get_provider(provider)
+    image_bytes = await provider_fn(
         prompt=final_prompt,
         api_key=api_key,
         api_host=api_host,
@@ -115,7 +148,8 @@ async def generate_illustration(
         scene_json=scene_json,
         final_prompt=final_prompt,
         prompt_hash=prompt_hash,
-        model="minimax-multimodal",
+        model=_resolve_model(provider),
+        provider=provider,  # NEW
         created_at=_iso_utc_now(),
     )
 
@@ -129,6 +163,7 @@ async def regenerate_illustration(
     existing_meta: IllustrationMetadata,
     api_key: str,
     api_host: str,
+    provider: str | None = None,  # NEW (Phase 96). None -> use existing_meta.provider.
 ) -> IllustrationMetadata:
     """Re-run the extract + compose + generate stages for an existing asset.
 
@@ -137,9 +172,8 @@ async def regenerate_illustration(
     the new generation. style_preset + custom_prompt + type + chapter_num
     stay the same as the existing meta.
 
-    Use cases:
-    - User clicks "Regenerate" — same params, new image content
-    - Re-run after LLM model upgrade — same params, possibly different output
+    Phase 96: `provider` parameter overrides existing_meta.provider.
+    If None, reuse the original provider (most common case).
 
     Atomicity:
     Uses ``storage.replace_asset`` (temp file + POSIX rename) to swap bytes
@@ -154,7 +188,10 @@ async def regenerate_illustration(
             inherited from existing_meta, but defend anyway).
         GenerateError: Stage 3 image API failed (transient).
         StoreError: Stage 4 atomic replace failed.
+        UnknownProviderError: provider name not in providers.KNOWN_PROVIDERS.
     """
+    effective_provider = provider if provider is not None else existing_meta.provider
+
     type = existing_meta.type  # type: ignore[assignment]
     chapter_num = existing_meta.chapter_num
     style_preset = existing_meta.style_preset
@@ -177,8 +214,9 @@ async def regenerate_illustration(
         custom_prompt=custom_prompt,
     )
 
-    # Stage 4: regenerate image bytes.
-    image_bytes = await image_generator.generate(
+    # Stage 4: regenerate image bytes via provider.
+    provider_fn = get_provider(effective_provider)
+    image_bytes = await provider_fn(
         prompt=final_prompt,
         api_key=api_key,
         api_host=api_host,
@@ -196,7 +234,8 @@ async def regenerate_illustration(
         scene_json=scene_json,
         final_prompt=final_prompt,
         prompt_hash=prompt_hash,
-        model="minimax-multimodal",
+        model=_resolve_model(effective_provider),
+        provider=effective_provider,
         created_at=_iso_utc_now(),  # refresh timestamp
     )
 

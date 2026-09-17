@@ -81,14 +81,14 @@ def _mock_llm_service(monkeypatch, response_payload: dict | None = None,
 
 def _mock_generate(monkeypatch, *, return_value: bytes | None = None,
                   side_effect: Exception | None = None) -> AsyncMock:
-    """Patch image_generator.generate."""
+    """Patch the MiniMax provider's generate (Phase 96 dispatch)."""
     mock = AsyncMock()
     if side_effect is not None:
         mock.side_effect = side_effect
     else:
         mock.return_value = return_value or b"\xff\xd8\xff\xe0fake"
     monkeypatch.setattr(
-        "lingwen_illustrations.pipeline.image_generator.generate",
+        "lingwen_illustrations.providers.minimax.generate",
         mock,
     )
     return mock
@@ -207,3 +207,87 @@ async def test_pipeline_store_failure_raises(monkeypatch, project_root, sample_c
             api_host="https://api.test",
         )
     assert exc.value.stage.value == "store"
+
+
+# --- Phase 96: provider dispatch tests ---
+
+
+@pytest.mark.asyncio
+async def test_generate_illustration_dispatches_to_specified_provider(
+    monkeypatch, project_root, sample_chapter, sample_characters
+):
+    """Phase 96: pipeline should call the named provider's generate()."""
+    _mock_llm_service(monkeypatch, response_payload={
+        "subject": "x", "scene": "y", "mood": "z",
+        "characters_in_scene": [], "extraction_confidence": 0.8,
+    })
+
+    called_providers = []
+
+    async def fake_minimax_generate(*, prompt, api_key, api_host, timeout=60.0):
+        called_providers.append("minimax")
+        return b"\xff\xd8\xff\xe0fake-jpeg"
+
+    async def fake_openai_generate(*, prompt, api_key, api_host, timeout=60.0):
+        called_providers.append("openai")
+        return b"\x89PNG\r\n\x1a\nfake-png"
+
+    monkeypatch.setattr(
+        "lingwen_illustrations.providers.minimax.generate",
+        fake_minimax_generate,
+    )
+    monkeypatch.setattr(
+        "lingwen_illustrations.providers.openai.generate",
+        fake_openai_generate,
+    )
+
+    meta = await generate_illustration(
+        project_root=project_root,
+        project_slug="test",
+        type="chapter",
+        chapter_num=17,
+        style_preset="ink",
+        custom_prompt=None,
+        api_key="k",
+        api_host="https://api.test",
+        provider="openai",
+    )
+
+    assert called_providers == ["openai"]
+    assert meta.provider == "openai"
+    assert meta.model == "dall-e-3"
+
+
+@pytest.mark.asyncio
+async def test_generate_illustration_default_provider_is_minimax(
+    monkeypatch, project_root, sample_chapter, sample_characters
+):
+    """Default provider (no arg) = 'minimax' (Phase 96 backwards compat)."""
+    _mock_llm_service(monkeypatch, response_payload={
+        "subject": "x", "scene": "y", "mood": "z",
+        "characters_in_scene": [], "extraction_confidence": 0.8,
+    })
+
+    called_providers = []
+
+    async def fake_minimax(*, prompt, api_key, api_host, timeout=60.0):
+        called_providers.append("minimax")
+        return b"\xff\xd8\xff\xe0"
+
+    monkeypatch.setattr(
+        "lingwen_illustrations.providers.minimax.generate", fake_minimax,
+    )
+
+    meta = await generate_illustration(
+        project_root=project_root,
+        project_slug="s",
+        type="chapter",
+        chapter_num=17,
+        style_preset="ink",
+        custom_prompt=None,
+        api_key="k",
+        api_host="https://t",
+    )
+    assert called_providers == ["minimax"]
+    assert meta.provider == "minimax"
+    assert meta.model == "minimax-multimodal"
