@@ -110,3 +110,97 @@ def test_frozen_immutability():
     meta = _sample_metadata()
     with pytest.raises(FrozenInstanceError):
         meta.id = "tampered"
+
+
+def test_metadata_provider_field_default():
+    """Phase 96: provider defaults to 'minimax' for backwards compat."""
+    meta = IllustrationMetadata(
+        id="x",
+        type="chapter",
+        project_slug="s",
+        chapter_num=1,
+        style_preset="ink",
+        custom_prompt=None,
+        scene_json={},
+        final_prompt="p",
+        prompt_hash="h",
+        model="minimax-multimodal",
+        created_at="2026-09-16T00:00:00Z",
+    )
+    assert meta.provider == "minimax"
+
+
+def test_metadata_provider_field_explicit():
+    meta = IllustrationMetadata(
+        id="x",
+        type="chapter",
+        project_slug="s",
+        chapter_num=1,
+        style_preset="ink",
+        custom_prompt=None,
+        scene_json={},
+        final_prompt="p",
+        prompt_hash="h",
+        model="dall-e-3",
+        provider="openai",
+        created_at="2026-09-16T00:00:00Z",
+    )
+    assert meta.provider == "openai"
+
+
+def test_metadata_from_dict_backwards_compat_missing_provider():
+    """Old .meta.json files lack provider field → from_dict injects 'minimax'."""
+    old_dict = {
+        "id": "x",
+        "type": "chapter",
+        "project_slug": "s",
+        "chapter_num": 1,
+        "style_preset": "ink",
+        "custom_prompt": None,
+        "scene_json": {},
+        "final_prompt": "p",
+        "prompt_hash": "h",
+        "model": "minimax-multimodal",
+        "created_at": "2026-09-16T00:00:00Z",
+        # NOTE: no "provider" key
+    }
+    meta = IllustrationMetadata.from_dict(old_dict)
+    assert meta.provider == "minimax"
+
+
+def test_metadata_from_dict_with_provider():
+    new_dict = {
+        "id": "x",
+        "type": "chapter",
+        "project_slug": "s",
+        "chapter_num": 1,
+        "style_preset": "ink",
+        "custom_prompt": None,
+        "scene_json": {},
+        "final_prompt": "p",
+        "prompt_hash": "h",
+        "model": "dall-e-3",
+        "provider": "openai",
+        "created_at": "2026-09-16T00:00:00Z",
+    }
+    meta = IllustrationMetadata.from_dict(new_dict)
+    assert meta.provider == "openai"
+
+
+def test_metadata_to_dict_includes_provider():
+    meta = IllustrationMetadata(
+        id="x",
+        type="cover",
+        project_slug="s",
+        chapter_num=None,
+        style_preset="realistic",
+        custom_prompt=None,
+        scene_json={},
+        final_prompt="p",
+        prompt_hash="h",
+        model="sd3-medium",
+        provider="stability",
+        created_at="2026-09-16T00:00:00Z",
+    )
+    d = meta.to_dict()
+    assert d["provider"] == "stability"
