@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-
 from lingwen_illustrations.bible_loader import load_character_bible
 from lingwen_illustrations.exceptions import LoadError
 
