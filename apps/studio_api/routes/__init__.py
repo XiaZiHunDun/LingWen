@@ -21,6 +21,7 @@ from apps.studio_api.routes.decisions import register_decisions
 from apps.studio_api.routes.health import register_health
 from apps.studio_api.routes.illustrations import register_illustrations
 from apps.studio_api.routes.overview import register_overview
+from apps.studio_api.routes.project_settings import register_project_settings
 from apps.studio_api.routes.studio import register_studio
 from apps.studio_api.routes.workflows import register_workflows
 from apps.studio_api.routes.world import register_world
@@ -35,6 +36,7 @@ def register_all_routes(app: FastAPI, ctx: RoutesContext) -> None:
     """
     register_health(app, ctx)
     register_illustrations(app, ctx)
+    register_project_settings(app, ctx)
     register_overview(app, ctx)
     register_decisions(app, ctx)
     register_cvg(app, ctx)
@@ -55,6 +57,7 @@ __all__ = [
     "register_health",
     "register_illustrations",
     "register_overview",
+    "register_project_settings",
     "register_decisions",
     "register_cvg",
     "register_workflows",
