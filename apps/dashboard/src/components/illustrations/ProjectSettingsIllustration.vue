@@ -1,20 +1,27 @@
 <!--
-  ProjectSettingsIllustration.vue — 插图偏好（Phase 90 Task 17, v1 stub）
+  ProjectSettingsIllustration.vue — 插图偏好（Phase 90 Task 17 + Phase 96 Task 16）
 
   包含：
   - 默认风格预设（古风水墨 / 现代写实 / 动漫厚涂）
   - 章节完成时自动生成插图 toggle
   - 资产数量上限 number
   - 生成前确认 toggle
+  - 默认图片生成器 dropdown（Phase 96：minimax / openai / stability，
+    变更后通过 useProjectSettingsStore.save 自动持久化到
+    /api/projects/{slug}/settings）
 
-  通过 v-model 双向绑定整组设置；持久化在 v2 走
-  /api/projects/{slug}/settings，本组件不直接调用。
+  通过 v-model 双向绑定整组设置；provider 字段额外触发 store.save。
 -->
 <script setup>
+import { useProjectSettingsStore } from '@/stores/useProjectSettings.js'
+
 const props = defineProps({
   modelValue: { type: Object, required: true },
+  slug: { type: String, required: true }, // Phase 96: required for provider auto-save
 })
 const emit = defineEmits(['update:modelValue'])
+
+const store = useProjectSettingsStore()
 
 const presets = [
   { id: 'ink', label: '古风水墨' },
@@ -22,8 +29,19 @@ const presets = [
   { id: 'anime', label: '动漫厚涂' },
 ]
 
+const providers = [
+  { id: 'minimax', label: 'MiniMax' },
+  { id: 'openai', label: 'OpenAI DALL-E 3' },
+  { id: 'stability', label: 'Stability SD3' },
+]
+
 function update(key, value) {
   emit('update:modelValue', { ...props.modelValue, [key]: value })
+}
+
+async function on_provider_change(value) {
+  update('default_provider', value)
+  await store.save(props.slug, { default_provider: value })
 }
 </script>
 
@@ -65,6 +83,23 @@ function update(key, value) {
         章节完成时自动生成插图
       </label>
       <p class="empty-hint project-settings-illustration-hint">每章约消耗 1 次 LLM 调用 + 1 次图片生成</p>
+    </div>
+
+    <div class="field project-settings-illustration-field">
+      <label class="project-settings-illustration-label" for="project-settings-illustration-default-provider">
+        默认图片生成器
+      </label>
+      <select
+        id="project-settings-illustration-default-provider"
+        class="project-settings-illustration-provider-select"
+        :value="modelValue.default_provider || 'minimax'"
+        data-testid="project-settings-illustration-default-provider"
+        @change="on_provider_change($event.target.value)"
+      >
+        <option v-for="p in providers" :key="p.id" :value="p.id">
+          {{ p.label }}
+        </option>
+      </select>
     </div>
 
     <div class="field project-settings-illustration-field">

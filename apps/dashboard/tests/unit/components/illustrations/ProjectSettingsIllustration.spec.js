@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
 import ProjectSettingsIllustration from '@/components/illustrations/ProjectSettingsIllustration.vue'
 
 const defaults = {
@@ -42,5 +43,88 @@ describe('ProjectSettingsIllustration', () => {
     })
     await wrapper.find('[data-testid="project-settings-illustration-auto-generate"]').setValue(true)
     expect(wrapper.emitted('update:modelValue')).toBeTruthy()
+  })
+})
+
+describe('ProjectSettingsIllustration (Phase 96: provider dropdown)', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    globalThis.fetch = vi.fn()
+  })
+
+  it('renders default_provider dropdown with three options', () => {
+    const wrapper = mount(ProjectSettingsIllustration, {
+      props: {
+        modelValue: {
+          ...defaults,
+          default_provider: 'minimax',
+        },
+        slug: 'test',
+      },
+    })
+    const select = wrapper.find('[data-testid="project-settings-illustration-default-provider"]')
+    expect(select.exists()).toBe(true)
+    const options = select.findAll('option')
+    expect(options.length).toBe(3)
+    expect(options.map(o => o.attributes('value'))).toEqual(['minimax', 'openai', 'stability'])
+  })
+
+  it('selects current default_provider value', () => {
+    const wrapper = mount(ProjectSettingsIllustration, {
+      props: {
+        modelValue: {
+          ...defaults,
+          default_provider: 'openai',
+        },
+        slug: 'test',
+      },
+    })
+    const select = wrapper.find('[data-testid="project-settings-illustration-default-provider"]')
+    expect(select.element.value).toBe('openai')
+  })
+
+  it('emits update:modelValue when provider changed', async () => {
+    globalThis.fetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ default_provider: 'stability' }),
+    })
+    const wrapper = mount(ProjectSettingsIllustration, {
+      props: {
+        modelValue: {
+          ...defaults,
+          default_provider: 'minimax',
+        },
+        slug: 'test',
+      },
+    })
+    const select = wrapper.find('[data-testid="project-settings-illustration-default-provider"]')
+    await select.setValue('stability')
+    expect(wrapper.emitted('update:modelValue')).toBeTruthy()
+    const last = wrapper.emitted('update:modelValue').at(-1)[0]
+    expect(last.default_provider).toBe('stability')
+  })
+
+  it('persists via store.save when provider changed', async () => {
+    globalThis.fetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ default_provider: 'openai' }),
+    })
+    const wrapper = mount(ProjectSettingsIllustration, {
+      props: {
+        modelValue: {
+          ...defaults,
+          default_provider: 'minimax',
+        },
+        slug: 'test-slug',
+      },
+    })
+    const select = wrapper.find('[data-testid="project-settings-illustration-default-provider"]')
+    await select.setValue('openai')
+    // Wait for async save to fire
+    await new Promise(r => setTimeout(r, 10))
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      '/api/projects/test-slug/settings',
+      expect.objectContaining({ method: 'PUT' }),
+    )
   })
 })

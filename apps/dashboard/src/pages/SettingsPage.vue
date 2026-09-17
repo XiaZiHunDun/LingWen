@@ -51,7 +51,7 @@
       </div>
 
       <div class="settings-block settings-block--divider illustration-prefs-panel" data-testid="illustration-prefs-panel">
-        <ProjectSettingsIllustration v-model="illustrationSettings" />
+        <ProjectSettingsIllustration v-model="illustrationSettings" :slug="currentProjectSlug" />
       </div>
     </section>
 
@@ -279,7 +279,10 @@ const illustrationSettings = ref({
   auto_generate: false,
   max_assets: 200,
   confirm_before_generate: true,
-});
+})
+
+// Phase 96: provider dropdown auto-save needs the active project slug
+const currentProjectSlug = computed(() => studio.activeSlug || '');
 
 const windowRows = computed(() => {
   const fromApi = formatWindowBudgetRows(budgetWindows.value || {});
