@@ -48,10 +48,6 @@ const perCallFile = ref(null)
 const modelCatalog = ref(null)  // { provider, models: string[], default_model: string } | null
 const selectedModel = ref('')
 
-const projectSupportsI2i = computed(() => {
-  return ['minimax', 'stability'].includes(selectedProvider.value)
-})
-
 const availableModels = computed(() => modelCatalog.value?.models || [])
 
 const projectDefaultHint = computed(() => {
