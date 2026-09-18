@@ -1,4 +1,4 @@
-"""Image generation provider registry (Phase 96 + Phase 97 adapter).
+"""Image generation provider registry (Phase 96 + Phase 97 adapter + Phase 100 catalog).
 
 Exposes KNOWN_PROVIDERS tuple + get_provider(name) lookup.
 Phase 97: get_provider returns a ProviderAdapter dataclass with 4 fields:
@@ -6,6 +6,10 @@ Phase 97: get_provider returns a ProviderAdapter dataclass with 4 fields:
 - generate: async callable (text-only, Phase 96)
 - generate_with_reference: async callable (i2i, Phase 97)
 - supports_i2i: bool capability declaration
+
+Phase 100: extends ProviderAdapter to 6 fields by adding model catalog:
+- models: tuple[str, ...] — catalog of supported model identifiers
+- default_model: str — provider's default model id (member of models)
 
 Dynamic module attribute lookup preserves Phase 96 monkeypatch compatibility:
 `monkeypatch.setattr("lingwen_illustrations.providers.minimax.generate", fake)`
@@ -29,18 +33,23 @@ class UnknownProviderError(ValueError):
 
 @dataclass(frozen=True)
 class ProviderAdapter:
-    """Adapter bundling text + i2i generation for one provider (Phase 97).
+    """Adapter bundling text + i2i generation + model catalog for one provider.
 
-    `generate` and `generate_with_reference` are looked up from the provider
-    module dynamically at adapter creation time, so test monkeypatching
-    (which mutates the module attribute) is reflected in subsequently-
-    created adapters.
+    Phase 97: original 4 fields.
+    Phase 100: adds `models` (catalog tuple) + `default_model` (provider default).
+
+    `generate`, `generate_with_reference`, `models`, and `default_model` are
+    looked up from the provider module dynamically at adapter creation time,
+    so test monkeypatching (which mutates the module attribute) is reflected
+    in subsequently-created adapters.
     """
 
     name: str
     generate: Callable[..., Awaitable[bytes]]
     generate_with_reference: Callable[..., Awaitable[bytes]]
     supports_i2i: bool
+    models: tuple[str, ...]        # NEW (Phase 100)
+    default_model: str              # NEW (Phase 100)
 
 
 def get_provider(name: str) -> ProviderAdapter:
@@ -50,7 +59,8 @@ def get_provider(name: str) -> ProviderAdapter:
         name: Provider name (must be one of KNOWN_PROVIDERS).
 
     Returns:
-        ProviderAdapter with all 4 fields populated.
+        ProviderAdapter with all 6 fields populated (4 from Phase 97 + 2
+        new model-catalog fields from Phase 100).
 
     Raises:
         UnknownProviderError: If name not in KNOWN_PROVIDERS.
@@ -65,6 +75,8 @@ def get_provider(name: str) -> ProviderAdapter:
         generate=module.generate,
         generate_with_reference=module.generate_with_reference,
         supports_i2i=module.SUPPORTS_I2I,
+        models=module.KNOWN_MODELS,         # NEW (Phase 100)
+        default_model=module.DEFAULT_MODEL,  # NEW (Phase 100)
     )
 
 
