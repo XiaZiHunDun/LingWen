@@ -45,6 +45,7 @@ dependencies = [
     "qdrant-client>=1.7",
     # Phase 13.0 T2 H2: FastAPI 中间件 — mutation 限流 + CORS + GZip
     "slowapi>=0.1.9",
+    "python-multipart>=0.0.32",
 ]
 
 [project.optional-dependencies]
