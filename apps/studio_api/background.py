@@ -90,12 +90,14 @@ def _get_illustration_settings(project_slug: str) -> dict[str, Any]:
         return {
             "style_preset": "ink",
             "auto_generate": False,
+            "max_assets": 20,
             "default_provider": "minimax",
         }
 
     return {
         "style_preset": "ink",  # TODO v2: add style_preset to ProjectSettings
-        "auto_generate": False,  # TODO v2: add auto_generate to ProjectSettings
+        "auto_generate": settings.auto_generate,  # NEW (Phase 98): read from persisted settings
+        "max_assets": settings.max_assets,  # NEW (Phase 98): read for LRU cleanup context
         "default_provider": settings.default_provider,
     }
 
