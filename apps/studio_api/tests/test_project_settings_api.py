@@ -73,3 +73,90 @@ def test_put_settings_unknown_project_404(client):
         json={"default_provider": "openai"},
     )
     assert resp.status_code == 404
+
+
+# Phase 98: schema migration tests (S1-S5)
+
+
+def test_old_yaml_defaults_fill(client, tmp_path):
+    """S1: old yaml with only default_provider gets other fields defaulted."""
+    yaml_path = tmp_path / "projects" / "test-slug" / ".lingwen"
+    yaml_path.mkdir(parents=True)
+    (yaml_path / "illustration_settings.yaml").write_text(
+        "default_provider: openai\n", encoding="utf-8"
+    )
+
+    resp = client.get("/api/projects/test-slug/settings")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["default_provider"] == "openai"
+    assert body["auto_generate"] is False
+    assert body["max_assets"] == 20
+    assert body["confirm_before_generate"] is False
+
+
+def test_partial_yaml_merges(client, tmp_path):
+    """S2: partial yaml (only max_assets) preserves other fields via defaults."""
+    yaml_path = tmp_path / "projects" / "test-slug" / ".lingwen"
+    yaml_path.mkdir(parents=True)
+    (yaml_path / "illustration_settings.yaml").write_text(
+        "max_assets: 5\n", encoding="utf-8"
+    )
+
+    resp = client.get("/api/projects/test-slug/settings")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["max_assets"] == 5
+    assert body["default_provider"] == "minimax"
+    assert body["auto_generate"] is False
+    assert body["confirm_before_generate"] is False
+
+
+def test_full_yaml_round_trip(client):
+    """S3: full yaml with all 4 fields preserves all on PUT then GET."""
+    resp = client.put(
+        "/api/projects/test-slug/settings",
+        json={
+            "default_provider": "stability",
+            "auto_generate": True,
+            "max_assets": 10,
+            "confirm_before_generate": True,
+        },
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["default_provider"] == "stability"
+    assert body["auto_generate"] is True
+    assert body["max_assets"] == 10
+    assert body["confirm_before_generate"] is True
+
+    resp = client.get("/api/projects/test-slug/settings")
+    assert resp.json() == body
+
+
+def test_malformed_yaml_defaults(client, tmp_path):
+    """S4: malformed yaml returns all defaults (existing test_get_settings_corrupt_yaml_returns_defaults also covers this)."""
+    yaml_path = tmp_path / "projects" / "test-slug" / ".lingwen"
+    yaml_path.mkdir(parents=True)
+    (yaml_path / "illustration_settings.yaml").write_text(
+        ":::bad yaml:::\n", encoding="utf-8"
+    )
+
+    resp = client.get("/api/projects/test-slug/settings")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["default_provider"] == "minimax"
+    assert body["auto_generate"] is False
+    assert body["max_assets"] == 20
+    assert body["confirm_before_generate"] is False
+
+
+def test_missing_yaml_defaults(client):
+    """S5: missing yaml returns all defaults (covered by test_get_settings_returns_defaults_when_yaml_missing — verify new fields)."""
+    resp = client.get("/api/projects/test-slug/settings")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["default_provider"] == "minimax"
+    assert body["auto_generate"] is False
+    assert body["max_assets"] == 20
+    assert body["confirm_before_generate"] is False
