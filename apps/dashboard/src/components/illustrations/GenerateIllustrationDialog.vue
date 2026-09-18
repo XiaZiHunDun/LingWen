@@ -1,7 +1,19 @@
+<!--
+  GenerateIllustrationDialog.vue — Phase 90 (cover/chapter illustration dialog)
+  + Phase 96 (provider dropdown) + Phase 97 (reference image toggle) +
+  Phase 98 (confirm_before_generate) + Phase 100 (model picker).
+
+  Phase 100 Task 9: model picker appears after provider selection.
+  Catalog fetched via fetchProviderModels(provider); options filtered by
+  provider; default selection = project default_models[provider] (if set
+  and in catalog) else adapter.default_model. Disabled when
+  use_project_reference=true (i2i path ignores model in v1).
+-->
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { NDialog, NButton, NInput } from 'naive-ui'
 import { useProjectSettingsStore } from '@/stores/useProjectSettings.js'
+import { fetchProviderModels } from '@/api/illustrations'
 
 const props = defineProps({
   projectSlug: { type: String, required: true },
@@ -32,8 +44,23 @@ const selectedProvider = ref('minimax')  // NEW (Phase 96)
 const useProjectReference = ref(true)
 const perCallFile = ref(null)
 
+// Phase 100 Task 9: model picker state.
+const modelCatalog = ref(null)  // { provider, models: string[], default_model: string } | null
+const selectedModel = ref('')
+
 const projectSupportsI2i = computed(() => {
   return ['minimax', 'stability'].includes(selectedProvider.value)
+})
+
+const availableModels = computed(() => modelCatalog.value?.models || [])
+
+const projectDefaultHint = computed(() => {
+  if (!modelCatalog.value) return ''
+  const projDefault = store.settings?.default_models?.[selectedProvider.value]
+  if (projDefault && projDefault !== selectedModel.value) {
+    return projDefault
+  }
+  return modelCatalog.value.default_model
 })
 
 watch(selectedProvider, (newVal) => {
@@ -41,6 +68,29 @@ watch(selectedProvider, (newVal) => {
     useProjectReference.value = false
   }
 })
+
+// Phase 100 Task 9: fetch catalog when provider changes; default selection =
+// project override (if in catalog) else adapter.default_model.
+watch(selectedProvider, async (newProvider) => {
+  if (!newProvider) {
+    modelCatalog.value = null
+    selectedModel.value = ''
+    return
+  }
+  try {
+    const catalog = await fetchProviderModels(newProvider)
+    modelCatalog.value = catalog
+    const projDefault = store.settings?.default_models?.[newProvider]
+    if (projDefault && catalog.models.includes(projDefault)) {
+      selectedModel.value = projDefault
+    } else {
+      selectedModel.value = catalog.default_model
+    }
+  } catch {
+    modelCatalog.value = null
+    selectedModel.value = ''
+  }
+}, { immediate: true })
 
 // Preselect from project default on mount
 onMounted(async () => {
@@ -82,6 +132,9 @@ function submit() {
     style_preset: selectedPreset.value,
     custom_prompt: customPrompt.value || null,
     provider: selectedProvider.value,  // NEW (Phase 96). Per-call override.
+    // Phase 100 Task 9: model selection. null when catalog not loaded or
+    // i2i path (backend falls back to adapter default).
+    model: selectedModel.value || null,
     use_project_reference: useProjectReference.value,
     per_call_reference: perCallFile.value,
   })
@@ -89,7 +142,7 @@ function submit() {
 }
 
 // Expose for tests
-defineExpose({ selectedPreset, customPrompt, selectedProvider, store, useProjectReference, perCallFile })
+defineExpose({ selectedPreset, customPrompt, selectedProvider, store, useProjectReference, perCallFile, selectedModel, modelCatalog })
 </script>
 
 <template>
@@ -128,6 +181,31 @@ defineExpose({ selectedPreset, customPrompt, selectedProvider, store, useProject
         >
           {{ p.label }}
         </button>
+      </div>
+
+      <!-- Phase 100 Task 9: model picker — filtered by selectedProvider. -->
+      <div
+        v-if="modelCatalog"
+        class="model-row generate-illustration-model-row"
+        data-testid="model-row"
+      >
+        <label for="model-select" class="model-label">模型</label>
+        <select
+          id="model-select"
+          data-testid="model-select"
+          v-model="selectedModel"
+          :disabled="useProjectReference"
+          class="model-select"
+        >
+          <option v-for="m in availableModels" :key="m" :value="m">{{ m }}</option>
+        </select>
+        <small
+          v-if="projectDefaultHint"
+          class="hint generate-illustration-model-hint"
+          data-testid="model-hint"
+        >
+          默认: {{ projectDefaultHint }}
+        </small>
       </div>
 
       <p class="label">参考图（可选）</p>
@@ -261,5 +339,38 @@ defineExpose({ selectedPreset, customPrompt, selectedProvider, store, useProject
   font-size: 12px;
   color: #dc2626;
   margin: 0;
+}
+
+/* Phase 100 Task 9: model picker. */
+.generate-illustration-model-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+.generate-illustration-model-row .model-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--text-muted, #4b5563);
+  min-width: 56px;
+}
+.generate-illustration-model-row .model-select {
+  padding: 6px 8px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font-size: 13px;
+  min-width: 200px;
+  font-family: var(--font-mono, monospace);
+}
+.generate-illustration-model-row .model-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.generate-illustration-model-hint {
+  font-size: 12px;
+  color: var(--text-muted, #4b5563);
 }
 </style>
