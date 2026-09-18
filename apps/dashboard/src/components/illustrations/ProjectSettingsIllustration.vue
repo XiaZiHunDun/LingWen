@@ -1,5 +1,5 @@
 <!--
-  ProjectSettingsIllustration.vue — 插图偏好（Phase 90 Task 17 + Phase 96 Task 16 + Phase 97 Task 10）
+  ProjectSettingsIllustration.vue — 插图偏好（Phase 90 Task 17 + Phase 96 Task 16 + Phase 97 Task 10 + Phase 98 Task 13）
 
   包含：
   - 默认风格预设（古风水墨 / 现代写实 / 动漫厚涂）
@@ -14,7 +14,9 @@
     provider 之前；放在 max_assets 之后以便字段视觉分组 [风格 / 自动 / 参考图 /
     provider / 上限 / 确认])
 
-  通过 v-model 双向绑定整组设置；provider 字段额外触发 store.save。
+  Phase 98 Task 13: update() 现在 emit + save (Phase 96 只对 provider save)。
+  三个新字段 (auto_generate / max_assets / confirm_before_generate) 现在持久化
+  到 backend。on_provider_change 简化为 update() 调用（去重复）。
 -->
 <script setup>
 import { useProjectSettingsStore } from '@/stores/useProjectSettings.js'
@@ -40,14 +42,12 @@ const providers = [
   { id: 'stability', label: 'Stability SD3' },
 ]
 
-function update(key, value) {
+async function update(key, value) {
   emit('update:modelValue', { ...props.modelValue, [key]: value })
+  await store.save(props.slug, { [key]: value })
 }
 
-async function on_provider_change(value) {
-  update('default_provider', value)
-  await store.save(props.slug, { default_provider: value })
-}
+const on_provider_change = (value) => update('default_provider', value)
 </script>
 
 <template>
