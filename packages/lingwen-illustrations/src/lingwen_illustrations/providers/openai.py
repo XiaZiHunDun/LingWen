@@ -8,11 +8,19 @@ from __future__ import annotations
 
 import httpx
 
-from lingwen_illustrations.exceptions import GenerateError
+from lingwen_illustrations.exceptions import GenerateError, UnknownModelError
 from lingwen_illustrations.providers._b64_decode import decode_b64_envelope
 
 _PROVIDER_NAME = "openai"
 SUPPORTS_I2I = False
+
+KNOWN_MODELS: tuple[str, ...] = (
+    "dall-e-3",           # current default; canonical v1 model
+    "dall-e-3-hd",        # HD quality variant
+    "dall-e-2",           # legacy / cheaper
+    "gpt-image-1",        # newest
+)
+DEFAULT_MODEL: str = "dall-e-3"
 
 
 async def generate(
@@ -20,6 +28,7 @@ async def generate(
     prompt: str,
     api_key: str,
     api_host: str,
+    model: str | None = None,    # NEW (Phase 100). None → DEFAULT_MODEL.
     timeout: float = 60.0,
 ) -> bytes:
     """Call OpenAI DALL-E 3 image generation API. Returns PNG bytes.
@@ -39,13 +48,17 @@ async def generate(
             4xx errors (except 429) are non-retryable (Phase 96 §5.4):
             content_policy_violation, billing_hard_limit_reached, model_not_found.
     """
+    effective_model = model if model is not None else DEFAULT_MODEL
+    if effective_model not in KNOWN_MODELS:
+        raise UnknownModelError(_PROVIDER_NAME, effective_model, KNOWN_MODELS)
+
     url = f"{api_host.rstrip('/')}/v1/images/generations"
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
     }
     payload = {
-        "model": "dall-e-3",
+        "model": effective_model,    # Phase 100: dynamic model (was hardcoded "dall-e-3")
         "prompt": prompt,
         "n": 1,
         "size": "1024x1024",
@@ -97,6 +110,7 @@ async def generate_with_reference(
     reference_image_bytes: bytes,
     api_key: str,
     api_host: str,
+    model: str | None = None,    # NEW (Phase 100). Accepted for API consistency; v1 ignores.
     strength: float = 0.0,
     timeout: float = 60.0,
 ) -> bytes:
@@ -108,4 +122,4 @@ async def generate_with_reference(
     )
 
 
-__all__ = ["generate", "generate_with_reference", "SUPPORTS_I2I"]
+__all__ = ["generate", "generate_with_reference", "SUPPORTS_I2I", "KNOWN_MODELS", "DEFAULT_MODEL"]
