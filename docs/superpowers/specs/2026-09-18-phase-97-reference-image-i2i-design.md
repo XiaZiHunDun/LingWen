@@ -233,11 +233,18 @@ class GenerateRequest(BaseModel):
     ...existing 6 fields...
     # NEW (Phase 97): per-call reference image override via multipart file=
     # 路由层用 python-multipart 读取 file 字段 → bytes 传给 pipeline
+    # JSON path 也接受 use_project_reference: bool = True, 控制是否使用项目默认参考图
+    use_project_reference: bool = True  # 用户可显式设为 False 跳过参考图
 ```
 
-**Multipart 处理**: `register_illustrations` 中 `generate_illustration` 接受 `file: UploadFile | None = File(None)` 参数. 当 `file` 不为 None 时, 读取 bytes 传给 pipeline; 当 `file` 为 None 但项目默认存在, pipeline 内部从 disk 读取.
+**Multipart 处理**: `register_illustrations` 中 `generate_illustration` 接受 `file: UploadFile | None = File(None)` 参数. 路由层语义:
 
-> **决策**: 不暴露独立的 `use_project_reference` boolean — 由 backend 自动检测: `reference_image_bytes is None AND project_settings has ref_image → load from disk`. 这避免了前后端字段重复 + 用户误传错值.
+1. 当 `file` 不为 None (multipart 上传) → 用 per-call bytes, 不读 disk
+2. 当 `file` 为 None 且 `use_project_reference=True` 且项目默认存在 → 从 disk 读 bytes
+3. 当 `file` 为 None 且 `use_project_reference=False` → 跳过参考图, 走纯文本路径
+4. 当 `file` 为 None 且项目无默认 → 走纯文本路径 (静默)
+
+> **为什么需要 `use_project_reference` 字段**: 用户可能显式取消勾选 "使用项目默认参考图" — 这是用户意图, 不是默认值. Backend 必须能区分 "用户想要用默认" vs "用户显式不想用默认".
 
 ## 4. 前端组件
 
