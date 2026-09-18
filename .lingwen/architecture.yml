@@ -193,6 +193,17 @@ invariants:
     rule: "packages/lingwen-illustrations/src/lingwen_illustrations/storage.py:lru_cleanup 是 illustration LRU 删除唯一入口（per-type+per-chapter scope，max_count>0 校验，best-effort 删除后 list_assets 结果）；audit_log.record_event 是 illustration 事件记录唯一入口（JSONL append-only，OSError swallow best-effort）；pipeline.generate_illustration / pipeline.regenerate_illustration / apps.studio_api/routes/cleanup_route.py 三处 caller 通过这两个入口；infra.illustrations.* / infra.illustration_settings.* / 任何绕过 lru_cleanup 的 illustration 删除路径非法 (Phase 98 REQ-002 v2 ProjectSettings extension + LRU archive)"
     severity: error
     scope: "all new illustration policy code; enforcement via tests/test_phase98_settings_extension_lru.py G1 (lru_cleanup exists) + G3 (record_event exists) + G4 (pipeline calls lru_cleanup after save_asset) + G11 (OSError swallowed) + G13 (per-type+per-chapter scope)"
+  - id: I091   # ★ Phase 99 NEW
+    rule: |
+      packages/lingwen-illustrations/src/lingwen_illustrations/notifications.py:publish
+      is the sole fan-out entry point for illustration events.
+      pipeline.generate_illustration, pipeline.regenerate_illustration, and
+      apps/studio_api/routes/cleanup_route.py double-write to BOTH
+      audit_log.record_event (I090) and notifications.publish with the SAME
+      ULID id. infra.notifications.* paths are illegal; any path bypassing
+      publish for illustration event fan-out is illegal.
+    severity: error
+    scope: "all new illustration notification fan-out code; enforcement via tests/test_phase99_notification_center.py G2/G2b/G2c (3 double-write sites) + G4 (publish non-blocking) + G12 (I091 declared) + G13 (e2e SSE + history)"
 
 # 模块边界（明确每个模块的公共 API 和依赖）
 module_boundaries:
