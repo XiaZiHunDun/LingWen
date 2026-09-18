@@ -42,3 +42,28 @@ def test_get_provider_unknown_still_raises_unknown_provider_error():
 
     with pytest.raises(UnknownProviderError):
         get_provider("nonexistent")
+
+
+def test_get_provider_dynamic_lookup_monkeypatch_compat_catalog(monkeypatch):
+    """Phase 100: monkeypatching KNOWN_MODELS + DEFAULT_MODEL must be reflected in adapter.
+
+    Extends the Phase 97 pattern (test_get_provider_dynamic_lookup_monkeypatch_compat
+    in test_providers_registry_adapter.py) to the NEW catalog fields. Same dynamic
+    importlib.import_module lookup — reads module attrs at adapter creation time.
+    Defensive guard against future refactors that break catalog monkeypatch compat.
+    """
+    from lingwen_illustrations import providers
+    from lingwen_illustrations.providers import get_provider
+
+    monkeypatch.setattr(
+        "lingwen_illustrations.providers.minimax.KNOWN_MODELS",
+        ("x-test", "y-test"),
+    )
+    monkeypatch.setattr(
+        "lingwen_illustrations.providers.minimax.DEFAULT_MODEL",
+        "y-test",
+    )
+
+    adapter = get_provider("minimax")
+    assert adapter.models == ("x-test", "y-test")
+    assert adapter.default_model == "y-test"
