@@ -34,9 +34,51 @@ export const useIllustrationStore = defineStore('illustrations', () => {
     loading.value = true
     error.value = null
     try {
+      // Phase 97 Task 11 — multipart vs JSON dispatch.
+      // When params.per_call_reference is a File (browser File object from
+      // <input type="file">), send multipart/form-data so the backend can
+      // read the per-call override via UploadFile. Otherwise stay on the
+      // Phase 96 JSON path and pass use_project_reference as a boolean so
+      // the backend can decide whether to read the project's default from
+      // disk. We strip per_call_reference from the JSON body because File
+      // is not JSON-serializable.
+      const useMultipart = params.per_call_reference instanceof File
+      let body
+      let headers
+      if (useMultipart) {
+        const formData = new FormData()
+        formData.append('project_slug', slug)
+        formData.append('type', params.type)
+        if (params.chapter_num != null) {
+          formData.append('chapter_num', String(params.chapter_num))
+        }
+        formData.append('style_preset', params.style_preset)
+        if (params.custom_prompt) {
+          formData.append('custom_prompt', params.custom_prompt)
+        }
+        if (params.provider) {
+          formData.append('provider', params.provider)
+        }
+        formData.append(
+          'use_project_reference',
+          String(params.use_project_reference ?? true),
+        )
+        formData.append('file', params.per_call_reference)
+        body = formData
+        headers = undefined
+      } else {
+        const { per_call_reference: _ignored, ...rest } = params
+        body = {
+          project_slug: slug,
+          ...rest,
+          use_project_reference: params.use_project_reference ?? true,
+        }
+      }
+
       const res = await $fetch('/api/illustrations/generate', {
         method: 'POST',
-        body: { project_slug: slug, ...params },
+        body,
+        headers,
       })
       // Prepend to list (most recent first)
       assets.value = [res, ...assets.value]
