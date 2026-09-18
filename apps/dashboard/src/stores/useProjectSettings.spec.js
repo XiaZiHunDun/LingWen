@@ -58,6 +58,67 @@ describe('useProjectSettingsStore', () => {
     await expect(store.save('test-slug', { default_provider: 'openai' }))
       .rejects.toThrow('save failed: 500')
   })
+
+  // Phase 98: PATCH semantics tests
+
+  it('save(partial) merges with current settings (U1)', async () => {
+    globalThis.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        default_provider: 'minimax',
+        max_assets: 5,
+        auto_generate: true,
+        confirm_before_generate: false,
+      }),
+    })
+    const store = useProjectSettingsStore()
+    store.settings = {
+      default_provider: 'minimax',
+      auto_generate: false,
+      max_assets: 20,
+      confirm_before_generate: false,
+    }
+
+    await store.save('test-slug', { max_assets: 5, auto_generate: true })
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      '/api/projects/test-slug/settings',
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify({
+          default_provider: 'minimax',
+          auto_generate: true,
+          max_assets: 5,
+          confirm_before_generate: false,
+        }),
+      }),
+    )
+  })
+
+  it('save({default_provider}) preserves max_assets (U2)', async () => {
+    globalThis.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        default_provider: 'openai',
+        max_assets: 20,
+        auto_generate: false,
+        confirm_before_generate: false,
+      }),
+    })
+    const store = useProjectSettingsStore()
+    store.settings = {
+      default_provider: 'minimax',
+      max_assets: 20,
+      auto_generate: false,
+      confirm_before_generate: false,
+    }
+
+    await store.save('test-slug', { default_provider: 'openai' })
+
+    const callBody = JSON.parse(globalThis.fetch.mock.calls[0][1].body)
+    expect(callBody.default_provider).toBe('openai')
+    expect(callBody.max_assets).toBe(20) // preserved from current
+  })
 })
 
 describe('useProjectSettingsStore — reference image methods (Phase 97)', () => {
