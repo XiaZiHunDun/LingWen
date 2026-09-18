@@ -1,5 +1,5 @@
 <!--
-  ProjectSettingsIllustration.vue — 插图偏好（Phase 90 Task 17 + Phase 96 Task 16 + Phase 97 Task 10 + Phase 98 Task 13）
+  ProjectSettingsIllustration.vue — 插图偏好（Phase 90 Task 17 + Phase 96 Task 16 + Phase 97 Task 10 + Phase 98 Task 13 + Phase 100 Task 8）
 
   包含：
   - 默认风格预设（古风水墨 / 现代写实 / 动漫厚涂）
@@ -13,13 +13,22 @@
     参考图与 provider 概念相关 — i2i 仅 MiniMax / Stability 支持 — 因此放在
     provider 之前；放在 max_assets 之后以便字段视觉分组 [风格 / 自动 / 参考图 /
     provider / 上限 / 确认])
+  - Phase 100 Task 8: 每个 provider 的默认模型 dropdown（3 个 select），
+    模型列表从 GET /api/illustrations/providers/{name}/models 拉取，
+    "Provider 默认" sentinel 选项（空串）表示回退到 adapter 自身的
+    default_model。整组 dict 持久化到 default_models 字段。
 
   Phase 98 Task 13: update() 现在 emit + save (Phase 96 只对 provider save)。
   三个新字段 (auto_generate / max_assets / confirm_before_generate) 现在持久化
   到 backend。on_provider_change 简化为 update() 调用（去重复）。
+
+  Phase 100 Task 8: 新增 update_model_default(provider, model) — 切换单 provider
+  选择后立刻持久化 dict；'' 表示 sentinel（被持久化为不含该 provider 的 dict）。
 -->
 <script setup>
+import { ref, onMounted } from 'vue'
 import { useProjectSettingsStore } from '@/stores/useProjectSettings.js'
+import { fetchProviderModels } from '@/api/illustrations'
 import ReferenceImageUpload from './ReferenceImageUpload.vue'
 
 const props = defineProps({
@@ -42,9 +51,48 @@ const providers = [
   { id: 'stability', label: 'Stability SD3' },
 ]
 
+// Phase 100 Task 8: per-provider model catalogs + selected overrides.
+const modelCatalogs = ref({}) // { provider: { models: string[], default_model: string } | null }
+const selectedModels = ref({}) // { provider: string } — '' means "use provider default"
+
+onMounted(async () => {
+  // Pre-populate selectedModels from current settings (defaults may be empty
+  // string sentinel or an explicit model id).
+  const currentDefaults = props.modelValue?.default_models || {}
+  for (const p of providers) {
+    const existing = currentDefaults[p.id]
+    selectedModels.value[p.id] = typeof existing === 'string' ? existing : ''
+  }
+
+  // Fetch each provider's model catalog in parallel — catalogs are independent.
+  await Promise.all(
+    providers.map(async (p) => {
+      try {
+        modelCatalogs.value[p.id] = await fetchProviderModels(p.id)
+      } catch {
+        // Best-effort: if a provider's catalog fetch fails (e.g. backend down
+        // for one adapter), leave that dropdown empty rather than blocking the
+        // whole settings panel.
+        modelCatalogs.value[p.id] = null
+      }
+    }),
+  )
+})
+
 async function update(key, value) {
   emit('update:modelValue', { ...props.modelValue, [key]: value })
   await store.save(props.slug, { [key]: value })
+}
+
+async function update_model_default(provider, model) {
+  // Sentinel '' is dropped from the saved dict so the backend falls back to
+  // adapter.default_model.
+  const next = { ...selectedModels.value, [provider]: model }
+  selectedModels.value = next
+  const filtered = Object.fromEntries(
+    Object.entries(next).filter(([, v]) => v !== ''),
+  )
+  await update('default_models', filtered)
 }
 
 const on_provider_change = (value) => update('default_provider', value)
@@ -107,6 +155,45 @@ const on_provider_change = (value) => update('default_provider', value)
           {{ p.label }}
         </option>
       </select>
+    </div>
+
+    <!-- Phase 100 Task 8: per-provider default model dropdowns.
+         Each select shows the adapter's model catalog with a "Provider 默认"
+         sentinel option (empty string) that resets to adapter.default_model
+         on the backend. -->
+    <div
+      class="field project-settings-illustration-field project-settings-illustration-models"
+      data-testid="default-models-section"
+    >
+      <p class="label project-settings-illustration-label">默认模型 (按 provider)</p>
+      <div
+        v-for="p in providers"
+        :key="`model-default-${p.id}`"
+        class="model-row project-settings-illustration-model-row"
+      >
+        <label
+          class="project-settings-illustration-model-label"
+          :for="`default-model-${p.id}`"
+        >
+          {{ p.label }}
+        </label>
+        <select
+          :id="`default-model-${p.id}`"
+          :data-testid="`default-model-${p.id}`"
+          :value="selectedModels[p.id] || ''"
+          class="project-settings-illustration-model-select"
+          @change="update_model_default(p.id, $event.target.value)"
+        >
+          <option value="">Provider 默认</option>
+          <option
+            v-for="m in (modelCatalogs[p.id] && modelCatalogs[p.id].models) || []"
+            :key="m"
+            :value="m"
+          >
+            {{ m }}
+          </option>
+        </select>
+      </div>
     </div>
 
     <div class="field project-settings-illustration-field">
@@ -206,5 +293,35 @@ const on_provider_change = (value) => update('default_provider', value)
   width: 120px;
   border: var(--border-width) solid var(--border-color);
   border-radius: var(--radius-sm);
+}
+
+/* Phase 100 Task 8: per-provider model defaults. */
+.project-settings-illustration-models {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.project-settings-illustration-model-row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.project-settings-illustration-model-label {
+  font-size: var(--text-sm);
+  font-family: var(--font-ui);
+  color: var(--color-text-muted, #4b5563);
+}
+
+.project-settings-illustration-model-select {
+  font-size: var(--text-sm);
+  font-family: var(--font-mono);
+  padding: 6px 8px;
+  background: var(--bg-primary);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-sm);
+  min-width: 180px;
 }
 </style>
