@@ -24,6 +24,7 @@ from lingwen_illustrations.exceptions import (
     IllustrationError,
     LoadError,
     StoreError,
+    UnknownModelError,  # NEW (Phase 100)
 )
 from pydantic import BaseModel, Field, model_validator
 
@@ -53,6 +54,7 @@ class GenerateRequest(BaseModel):
     style_preset: str
     custom_prompt: Optional[str] = None
     provider: Optional[str] = None  # NEW (Phase 96). None → resolve via project settings yaml.
+    model: Optional[str] = None  # NEW (Phase 100). None → resolve via 3-tier order.
     # NEW (Phase 97): user can disable project reference image. Default True.
     use_project_reference: bool = True
 
@@ -176,6 +178,7 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
                 "style_preset",
                 "custom_prompt",
                 "provider",
+                "model",  # NEW (Phase 100)
             ):
                 value = form.get(field)
                 if value is not None:
@@ -237,8 +240,22 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
                 api_key=api_key,
                 api_host=api_host,
                 provider=provider,
+                model=req.model,  # NEW (Phase 100)
                 reference_image_bytes=reference_image_bytes,
             )
+        except UnknownModelError as e:
+            # Phase 100: explicit model not in provider's KNOWN_MODELS → 422
+            # with structured detail so the frontend can re-render the picker.
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "error": str(e),
+                    "stage": "validation",
+                    "provider": e.provider,
+                    "model": e.model,
+                    "known": list(e.known),
+                },
+            ) from e
         except IllustrationError as e:
             # Phase 97: i2i not supported → 422 instead of 502.
             if (
@@ -298,6 +315,7 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
         asset_id: str,
         project_slug: str = Query(...),
         provider: Optional[str] = Query(None),  # NEW (Phase 96). None → existing_meta.provider.
+        model: Optional[str] = Query(None),  # NEW (Phase 100). None → 3-tier resolution.
     ) -> GenerateResponse:
         """Atomic regenerate: re-runs extract+compose+generate, swaps bytes in place.
 
@@ -308,6 +326,9 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
 
         Phase 96: provider query param overrides existing_meta.provider.
         If None, reuse the original provider (most common case).
+
+        Phase 100: model query param overrides existing_meta.model.
+        If None, resolve via 3-tier order (explicit > project > provider default).
 
         Returns same id (asset_id) with new scene_json + final_prompt.
         On Stage failure (Extract / Compose / Generate), the original asset
@@ -337,7 +358,20 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
                 api_key=api_key,
                 api_host=api_host,
                 provider=provider,  # None → pipeline reads existing_meta.provider
+                model=model,  # NEW (Phase 100). None → 3-tier resolve.
             )
+        except UnknownModelError as e:
+            # Phase 100: unknown model → 422 with structured detail.
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "error": str(e),
+                    "stage": "validation",
+                    "provider": e.provider,
+                    "model": e.model,
+                    "known": list(e.known),
+                },
+            ) from e
         except IllustrationError as e:
             _raise_stage_error(e)
 
@@ -375,6 +409,39 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
             raise HTTPException(404, detail=f"image file missing for {asset_id}")
 
         return FileResponse(img_path, media_type="image/jpeg")
+
+    @app.get("/api/illustrations/providers/{name}/models")
+    def get_provider_models(name: str) -> dict:
+        """Return the model catalog for a provider (Phase 100 Multi-Model).
+
+        Frontend fetches this on app boot to populate the model picker per
+        provider. Exposes the canonical catalog from
+        ``lingwen_illustrations.providers.KNOWN_PROVIDERS`` via
+        ``get_provider(name).models / default_model``.
+
+        Args:
+            name: Provider name (must be in KNOWN_PROVIDERS).
+
+        Returns:
+            Dict with keys ``provider`` (str), ``models`` (list[str]),
+            ``default_model`` (str).
+
+        Raises:
+            HTTPException 404 if name not in KNOWN_PROVIDERS.
+        """
+        from lingwen_illustrations.providers import KNOWN_PROVIDERS, get_provider
+
+        if name not in KNOWN_PROVIDERS:
+            raise HTTPException(
+                status_code=404,
+                detail=f"unknown provider '{name}', expected one of {KNOWN_PROVIDERS}",
+            )
+        adapter = get_provider(name)
+        return {
+            "provider": adapter.name,
+            "models": list(adapter.models),
+            "default_model": adapter.default_model,
+        }
 
 
 __all__ = ["register_illustrations"]
