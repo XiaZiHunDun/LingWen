@@ -42,7 +42,7 @@ from typing import Literal
 
 from lingwen_illustrations import storage
 from lingwen_illustrations.bible_loader import load_character_bible
-from lingwen_illustrations.exceptions import LoadError
+from lingwen_illustrations.exceptions import GenerateError, LoadError
 from lingwen_illustrations.metadata import IllustrationMetadata
 from lingwen_illustrations.prompt_builder import extract_scene
 from lingwen_illustrations.providers import UnknownProviderError, get_provider
@@ -94,11 +94,16 @@ async def generate_illustration(
     api_key: str,
     api_host: str,
     provider: str = "minimax",  # NEW (Phase 96)
+    reference_image_bytes: bytes | None = None,  # NEW (Phase 97)
 ) -> IllustrationMetadata:
     """Run the full pipeline. Returns metadata of saved asset.
 
     Phase 96: dispatches Stage 3 to the provider named by `provider`
     (default "minimax" for backwards compat).
+
+    Phase 97: when `reference_image_bytes` is provided, dispatches Stage 3
+    to the provider's i2i entry point (`adapter.generate_with_reference`).
+    Providers that don't support i2i raise GenerateError.
 
     Raises:
         LoadError: Project / chapter / character bible missing or malformed.
@@ -125,14 +130,28 @@ async def generate_illustration(
         custom_prompt=custom_prompt,
     )
 
-    # Stage 4: provider dispatch (Phase 96 + 97 adapter). get_provider raises
-    # UnknownProviderError if name not in KNOWN_PROVIDERS.
+    # Stage 4: provider dispatch. Phase 97: route to i2i vs text based on reference_image_bytes.
     adapter = get_provider(provider)
-    image_bytes = await adapter.generate(
-        prompt=final_prompt,
-        api_key=api_key,
-        api_host=api_host,
-    )
+
+    if reference_image_bytes is not None:
+        if not adapter.supports_i2i:
+            raise GenerateError(
+                f"provider '{provider}' does not support image-to-image generation",
+                provider=provider,
+                retryable=False,
+            )
+        image_bytes = await adapter.generate_with_reference(
+            prompt=final_prompt,
+            reference_image_bytes=reference_image_bytes,
+            api_key=api_key,
+            api_host=api_host,
+        )
+    else:
+        image_bytes = await adapter.generate(
+            prompt=final_prompt,
+            api_key=api_key,
+            api_host=api_host,
+        )
 
     # Stage 5: store. Build metadata + save.
     asset_id = f"{int(time.time())}-{uuid.uuid4().hex[:8]}"
@@ -149,7 +168,8 @@ async def generate_illustration(
         final_prompt=final_prompt,
         prompt_hash=prompt_hash,
         model=_resolve_model(provider),
-        provider=provider,  # NEW
+        provider=provider,  # NEW (Phase 96)
+        used_reference_image=reference_image_bytes is not None,  # NEW (Phase 97)
         created_at=_iso_utc_now(),
     )
 
@@ -164,6 +184,7 @@ async def regenerate_illustration(
     api_key: str,
     api_host: str,
     provider: str | None = None,  # NEW (Phase 96). None -> use existing_meta.provider.
+    reference_image_bytes: bytes | None = None,  # NEW (Phase 97)
 ) -> IllustrationMetadata:
     """Re-run the extract + compose + generate stages for an existing asset.
 
@@ -174,6 +195,10 @@ async def regenerate_illustration(
 
     Phase 96: `provider` parameter overrides existing_meta.provider.
     If None, reuse the original provider (most common case).
+
+    Phase 97: when `reference_image_bytes` is provided, dispatches Stage 3
+    to the provider's i2i entry point. Providers that don't support i2i
+    raise GenerateError.
 
     Atomicity:
     Uses ``storage.replace_asset`` (temp file + POSIX rename) to swap bytes
@@ -214,13 +239,28 @@ async def regenerate_illustration(
         custom_prompt=custom_prompt,
     )
 
-    # Stage 4: regenerate image bytes via provider (Phase 97 adapter).
+    # Stage 4: regenerate image bytes via provider. Phase 97: route to i2i vs text.
     adapter = get_provider(effective_provider)
-    image_bytes = await adapter.generate(
-        prompt=final_prompt,
-        api_key=api_key,
-        api_host=api_host,
-    )
+
+    if reference_image_bytes is not None:
+        if not adapter.supports_i2i:
+            raise GenerateError(
+                f"provider '{effective_provider}' does not support image-to-image generation",
+                provider=effective_provider,
+                retryable=False,
+            )
+        image_bytes = await adapter.generate_with_reference(
+            prompt=final_prompt,
+            reference_image_bytes=reference_image_bytes,
+            api_key=api_key,
+            api_host=api_host,
+        )
+    else:
+        image_bytes = await adapter.generate(
+            prompt=final_prompt,
+            api_key=api_key,
+            api_host=api_host,
+        )
 
     # Stage 5: build new metadata (preserve asset_id, refresh dynamic fields).
     prompt_hash = f"sha256:{hashlib.sha256(final_prompt.encode('utf-8')).hexdigest()[:16]}"
@@ -236,6 +276,7 @@ async def regenerate_illustration(
         prompt_hash=prompt_hash,
         model=_resolve_model(effective_provider),
         provider=effective_provider,
+        used_reference_image=reference_image_bytes is not None,  # NEW (Phase 97)
         created_at=_iso_utc_now(),  # refresh timestamp
     )
 

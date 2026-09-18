@@ -40,6 +40,9 @@ class IllustrationMetadata:
     # .meta.json files (Phase 90-95 era, no provider field). New code
     # always passes provider explicitly. Values: "minimax" | "openai" | "stability".
     provider: str = "minimax"
+    # NEW (Phase 97). Default False for backwards compat with Phase 90-96 metadata.json
+    # (no used_reference_image field). New code always passes this explicitly.
+    used_reference_image: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -53,6 +56,10 @@ class IllustrationMetadata:
         # lacks provider field (Phase 90-95 era).
         if "provider" not in d:
             d = {**d, "provider": "minimax"}
+        # Phase 97 backwards compat: inject False if old .meta.json
+        # lacks used_reference_image field (Phase 90-96 era).
+        if "used_reference_image" not in d:
+            d = {**d, "used_reference_image": False}
         try:
             return cls(**d)
         except (KeyError, TypeError) as e:
