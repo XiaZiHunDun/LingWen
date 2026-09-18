@@ -2,17 +2,20 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import GenerateIllustrationDialog from './GenerateIllustrationDialog.vue'
 
-// Mock the store module
+// Phase 98: store.settings is mutable per-test via let
+let mockSettings = { default_provider: 'minimax', confirm_before_generate: false }
+
 vi.mock('@/stores/useProjectSettings.js', () => ({
   useProjectSettingsStore: () => ({
-    settings: { default_provider: 'minimax' },
-    fetch: vi.fn().mockResolvedValue({ default_provider: 'minimax' }),
+    settings: mockSettings,
+    fetch: vi.fn().mockResolvedValue(mockSettings),
   }),
 }))
 
 describe('GenerateIllustrationDialog — reference image toggle', () => {
   beforeEach(() => {
-    globalThis.$fetch = vi.fn().mockResolvedValue({ default_provider: 'minimax' })
+    mockSettings = { default_provider: 'minimax', confirm_before_generate: false }
+    globalThis.$fetch = vi.fn().mockResolvedValue(mockSettings)
   })
 
   it('renders use-project-reference checkbox', () => {
@@ -63,5 +66,62 @@ describe('GenerateIllustrationDialog — reference image toggle', () => {
     await flushPromises()
     // Warning text should appear
     expect(wrapper.html()).toContain('OpenAI')
+  })
+})
+
+// Phase 98: confirm_before_generate tests (G1-G2)
+
+describe('GenerateIllustrationDialog — confirm_before_generate (Phase 98)', () => {
+  beforeEach(() => {
+    mockSettings = { default_provider: 'minimax', confirm_before_generate: false }
+    globalThis.$fetch = vi.fn().mockResolvedValue(mockSettings)
+  })
+
+  it('G1: shows native confirm when confirm_before_generate=true', async () => {
+    mockSettings.confirm_before_generate = true
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+
+    const wrapper = mount(GenerateIllustrationDialog, {
+      props: { projectSlug: 'test', chapterNum: 1, modelValue: true },
+    })
+    await flushPromises()
+    await wrapper.find('[data-testid="generate-submit"]').trigger('click')
+
+    expect(confirmSpy).toHaveBeenCalledOnce()
+    expect(wrapper.emitted('generate')).toBeTruthy()
+
+    confirmSpy.mockRestore()
+  })
+
+  it('G2: skips native confirm when confirm_before_generate=false', async () => {
+    mockSettings.confirm_before_generate = false
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+
+    const wrapper = mount(GenerateIllustrationDialog, {
+      props: { projectSlug: 'test', chapterNum: 1, modelValue: true },
+    })
+    await flushPromises()
+    await wrapper.find('[data-testid="generate-submit"]').trigger('click')
+
+    expect(confirmSpy).not.toHaveBeenCalled()
+    expect(wrapper.emitted('generate')).toBeTruthy()
+
+    confirmSpy.mockRestore()
+  })
+
+  it('G1b: user cancels native confirm — no generate emitted', async () => {
+    mockSettings.confirm_before_generate = true
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
+
+    const wrapper = mount(GenerateIllustrationDialog, {
+      props: { projectSlug: 'test', chapterNum: 1, modelValue: true },
+    })
+    await flushPromises()
+    await wrapper.find('[data-testid="generate-submit"]').trigger('click')
+
+    expect(confirmSpy).toHaveBeenCalledOnce()
+    expect(wrapper.emitted('generate')).toBeFalsy()
+
+    confirmSpy.mockRestore()
   })
 })

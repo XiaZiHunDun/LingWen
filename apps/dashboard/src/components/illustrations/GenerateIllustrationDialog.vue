@@ -67,6 +67,15 @@ function close() {
 
 function submit() {
   if (!isValid.value) return
+
+  // Phase 98: confirm_before_generate check (front-end only — backend
+  // audit log records bypassed state but doesn't reject).
+  if (store.settings?.confirm_before_generate) {
+    const provider = store.settings.default_provider || selectedProvider.value
+    const ok = window.confirm(`将使用 ${provider} 生成插图。继续？`)
+    if (!ok) return
+  }
+
   emit('generate', {
     type: props.type,
     chapter_num: props.chapterNum,
