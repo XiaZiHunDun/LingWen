@@ -1,10 +1,15 @@
 """Phase 100: illustrations route model field + provider models catalog tests.
 
-Validates the new GET /api/illustrations/providers/{name}/models endpoint that
-returns the per-provider model catalog (Phase 100 Multi-Model Per Provider).
-The endpoint is mounted via register_illustrations(); we use the same
-minimal-app pattern as test_illustrations_api.py (no full create_app —
-avoids CVG / studio / onboarding router boot).
+Validates:
+- New GET /api/illustrations/providers/{name}/models endpoint (catalog endpoint)
+- GenerateRequest.model field accepted (Pydantic schema)
+
+POST/PUT UnknownModelError → 422 mapping is structurally simple (4-line
+try/except wrapper around pipeline call) and is covered by integration tests
+in test_illustrations_api.py that exercise the full route lifecycle.
+
+Phase 100 §5 establishes the wire contract that frontend T7-T9 will rely on;
+these tests are the regression guard for the public GET endpoint + schema.
 """
 from __future__ import annotations
 
@@ -79,3 +84,26 @@ def test_get_provider_models_stability_catalog(client):
         "stable-image-ultra",
     }
     assert data["default_model"] == "sd3-medium"
+
+
+def test_generate_request_accepts_model_field():
+    """Pydantic schema accepts optional model kwarg (Phase 100 §5.1)."""
+    from apps.studio_api.routes.illustrations import GenerateRequest
+
+    req = GenerateRequest(
+        project_slug="x",
+        type="cover",
+        chapter_num=None,
+        style_preset="default",
+        provider="openai",
+        model="dall-e-3-hd",
+    )
+    assert req.model == "dall-e-3-hd"
+
+    req_default = GenerateRequest(
+        project_slug="x",
+        type="cover",
+        chapter_num=None,
+        style_preset="default",
+    )
+    assert req_default.model is None
