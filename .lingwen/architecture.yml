@@ -189,6 +189,10 @@ invariants:
     rule: "packages/lingwen-illustrations/src/lingwen_illustrations/providers/ 是 image generation provider 抽象（registry-based dispatch: KNOWN_PROVIDERS = ('minimax', 'openai', 'stability') + get_provider(name) → ProviderAdapter frozen dataclass (4 fields: name / generate / generate_with_reference / supports_i2i) + SUPPORTS_I2I capability constant per provider + 3 adapter modules [minimax/openai/stability] + _b64_decode shared envelope helper + multipart helpers in stability i2i path）的唯一实包；adapter.generate(...) 与 adapter.generate_with_reference(...) 是 adapter 唯一入口，pipeline / image_generator / route 层不直接调具体 API；infra.providers.* / infra.image_provider.* 路径非法 (Phase 97 REQ-002 v2 i2i extension, extends I088 for i2i capability declaration + ProviderAdapter dataclass + dynamic importlib.import_module lookup preserves Phase 96 monkeypatch compat)"
     severity: error
     scope: "all future image provider i2i code; enforcement via tests/test_phase97_reference_image_i2i.py + grep -rln \"infra\\.providers\\b\" --include=\"*.py\" packages/ apps/ tests/ infra/ → 0 行"
+  - id: I090   # ★ Phase 98 NEW
+    rule: "packages/lingwen-illustrations/src/lingwen_illustrations/storage.py:lru_cleanup 是 illustration LRU 删除唯一入口（per-type+per-chapter scope，max_count>0 校验，best-effort 删除后 list_assets 结果）；audit_log.record_event 是 illustration 事件记录唯一入口（JSONL append-only，OSError swallow best-effort）；pipeline.generate_illustration / pipeline.regenerate_illustration / apps.studio_api/routes/cleanup_route.py 三处 caller 通过这两个入口；infra.illustrations.* / infra.illustration_settings.* / 任何绕过 lru_cleanup 的 illustration 删除路径非法 (Phase 98 REQ-002 v2 ProjectSettings extension + LRU archive)"
+    severity: error
+    scope: "all new illustration policy code; enforcement via tests/test_phase98_settings_extension_lru.py G1 (lru_cleanup exists) + G3 (record_event exists) + G4 (pipeline calls lru_cleanup after save_asset) + G11 (OSError swallowed) + G13 (per-type+per-chapter scope)"
 
 # 模块边界（明确每个模块的公共 API 和依赖）
 module_boundaries:
