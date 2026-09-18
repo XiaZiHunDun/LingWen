@@ -234,3 +234,121 @@ def test_pipeline_module_imports_notifications() -> None:
     assert hasattr(p, "notifications"), (
         "pipeline module must expose 'notifications' as an attribute"
     )
+
+
+@pytest.mark.asyncio
+async def test_cleanup_route_double_writes_per_deleted_asset(project_root: Path) -> None:
+    """cleanup_route must publish one cleanup event per deleted asset (post-T5 wiring)."""
+    # Stub project_root_for to return tmp_path
+    import sys
+    from unittest.mock import patch as mp
+
+    # Ensure repo root + all lingwen-* package src/ dirs are on sys.path so
+    # 'apps.studio_api.routes._project_helpers' + 'lingwen_llm' etc resolve.
+    repo_root = Path(__file__).resolve().parents[3]  # tests/ → lingwen-illustrations/ → packages/ → repo
+    packages_root = repo_root / "packages"
+    for p in (repo_root, packages_root):
+        sp = str(p)
+        if sp not in sys.path:
+            sys.path.insert(0, sp)
+    # Pre-pend all lingwen-*/src directories
+    if packages_root.is_dir():
+        for pkg_dir in sorted(packages_root.iterdir()):
+            src_dir = pkg_dir / "src"
+            if src_dir.is_dir():
+                sp = str(src_dir)
+                if sp not in sys.path:
+                    sys.path.insert(0, sp)
+
+    def fake_root_for(slug):
+        return project_root
+
+    # Seed two chapter assets using the canonical storage layout
+    # (assets/illustrations/chapter-NNN/<id>.jpg + .meta.json per storage.py).
+    asset_dir = project_root / "assets" / "illustrations" / "chapter-001"
+    asset_dir.mkdir(parents=True, exist_ok=True)
+    import json as _json
+    for i, aid in enumerate(("ch1-a", "ch1-b")):
+        meta_dict = {
+            "id": aid,
+            "type": "chapter",
+            "project_slug": "my-project",
+            "chapter_num": 1,
+            "style_preset": "ink",
+            "custom_prompt": None,
+            "scene_json": {},
+            "final_prompt": f"prompt-{aid}",
+            "prompt_hash": f"hash-{aid}",
+            "model": "minimax-multimodal",
+            "created_at": f"2026-09-18T07:0{i}:00+00:00",
+            "provider": "minimax",
+            "used_reference_image": False,
+        }
+        (asset_dir / f"{aid}.jpg").write_bytes(b"\xff\xd8\xff\xe0" + aid.encode())
+        (asset_dir / f"{aid}.jpg.meta.json").write_text(
+            _json.dumps(meta_dict, ensure_ascii=False),
+            encoding="utf-8",
+        )
+
+    # Force max_assets=1 so both seeded assets exceed the limit and lru_cleanup
+    # deletes the older one (ch1-a).
+    settings_dir = project_root / ".lingwen"
+    settings_dir.mkdir(parents=True, exist_ok=True)
+    (settings_dir / "illustration_settings.yaml").write_text(
+        "max_assets: 1\n", encoding="utf-8"
+    )
+
+    captured: list[notifications.NotificationEvent] = []
+    captured_record: list[dict] = []
+
+    from lingwen_illustrations import audit_log as al
+    original_record = al.record_event
+    original_publish = notifications.publish
+
+    def fake_record(root, *, event, **kwargs):
+        captured_record.append({"id": kwargs.get("id"), "event": event})
+        return original_record(root, event=event, **kwargs)
+
+    def fake_publish(ev):
+        captured.append(ev)
+        return original_publish(ev)
+
+    # Pre-import the modules so the namespace package resolution works for mp("...") string patching.
+    import apps.studio_api.routes._project_helpers  # noqa: F401
+    import apps.studio_api.routes.cleanup_route  # noqa: F401
+
+    # Patch project_root_for and the publish + record_event
+    # Note: cleanup_route does `from apps.studio_api.routes._project_helpers import project_root_for`
+    # so we must patch the imported alias on the cleanup_route module, not the source.
+    # Same applies to `from lingwen_illustrations import audit_log, notifications`.
+    import apps.studio_api.routes.cleanup_route as cr_mod
+    import apps.studio_api.routes.ctx  # noqa: F401
+    with mp.object(cr_mod, "project_root_for", side_effect=fake_root_for), \
+         mp.object(cr_mod.notifications, "publish", side_effect=fake_publish), \
+         mp.object(cr_mod.audit_log, "record_event", side_effect=fake_record):
+        # Import here to pick up the patched module attrs
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+
+        from apps.studio_api.routes.cleanup_route import CleanupRequest, register_cleanup
+
+        app = FastAPI()
+        register_cleanup(app, ctx=None)
+        with TestClient(app) as client:
+            resp = client.post(
+                "/api/projects/my-project/illustrations/cleanup",
+                json={"type": "chapter", "chapter_num": 1, "dry_run": False},
+            )
+            assert resp.status_code == 200, resp.text
+            body = resp.json()
+            assert body["dry_run"] is False
+
+    # Verify at least one cleanup event was published.
+    cleanup_publishes = [ev for ev in captured if ev.event_type == "cleanup"]
+    assert len(cleanup_publishes) >= 1
+    # Same id flowed to record_event + publish.
+    cleanup_records = [r for r in captured_record if r["event"] == "cleanup"]
+    assert len(cleanup_records) == len(cleanup_publishes)
+    record_ids = {r["id"] for r in cleanup_records if r["id"]}
+    publish_ids = {ev.id for ev in cleanup_publishes}
+    assert record_ids == publish_ids

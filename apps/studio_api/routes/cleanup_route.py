@@ -18,6 +18,7 @@ from typing import Literal
 
 import yaml
 from fastapi import FastAPI, HTTPException
+from lingwen_illustrations import audit_log, notifications  # Phase 99 I091
 from lingwen_illustrations.exceptions import LoadError, StoreError
 from lingwen_illustrations.storage import list_assets, lru_cleanup
 from pydantic import BaseModel
@@ -97,6 +98,21 @@ def register_cleanup(app: FastAPI, ctx: RoutesContext) -> None:
                 ]
             scoped.sort(key=lambda m: (m.created_at, m.id))
             would_delete = scoped[: max(0, len(scoped) - max_assets)]
+            # Phase 99 I091: emit one synthetic cleanup event for dry-run.
+            # Dry-run is non-destructive — nothing was actually deleted, so we
+            # skip audit_log.record_event and only notify subscribers.
+            notifications.publish(notifications.NotificationEvent(
+                id=notifications.new_event_id(),
+                project_slug=slug,
+                event_type="cleanup",
+                asset_id=None,
+                asset_type=request.type,
+                chapter_num=request.chapter_num,
+                style_preset=None,
+                provider=None,
+                ts=notifications.now_iso(),
+                extra={"dry_run": True, "would_delete": len(would_delete)},
+            ))
             return CleanupResponse(
                 deleted=[_meta_to_dict(m) for m in would_delete],
                 remaining=len(scoped) - len(would_delete),
@@ -113,6 +129,30 @@ def register_cleanup(app: FastAPI, ctx: RoutesContext) -> None:
             )
         except StoreError as e:
             raise HTTPException(422, detail={"stage": "cleanup", "error": str(e)}) from e
+
+        # Phase 99 I091: emit one cleanup event per deleted asset (double-write).
+        # Same ULID flows to audit_log (JSONL durability) + notifications (SSE fan-out).
+        for meta in deleted:
+            event_id = notifications.new_event_id()
+            audit_log.record_event(
+                root,
+                event="cleanup",
+                asset_meta=meta,
+                id=event_id,
+                extra={"max_assets": max_assets, "trigger": "manual"},
+            )
+            notifications.publish(notifications.NotificationEvent(
+                id=event_id,
+                project_slug=slug,
+                event_type="cleanup",
+                asset_id=meta.id,
+                asset_type=meta.type,
+                chapter_num=meta.chapter_num,
+                style_preset=meta.style_preset,
+                provider=meta.provider,
+                ts=notifications.now_iso(),
+                extra={"max_assets": max_assets, "trigger": "manual"},
+            ))
 
         return CleanupResponse(
             deleted=[_meta_to_dict(m) for m in deleted],
