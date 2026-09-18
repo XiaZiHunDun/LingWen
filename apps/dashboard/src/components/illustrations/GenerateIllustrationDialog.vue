@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { NDialog, NButton, NInput } from 'naive-ui'
 import { useProjectSettingsStore } from '@/stores/useProjectSettings.js'
 
@@ -29,6 +29,18 @@ const store = useProjectSettingsStore()
 const selectedPreset = ref('ink')
 const customPrompt = ref('')
 const selectedProvider = ref('minimax')  // NEW (Phase 96)
+const useProjectReference = ref(true)
+const perCallFile = ref(null)
+
+const projectSupportsI2i = computed(() => {
+  return ['minimax', 'stability'].includes(selectedProvider.value)
+})
+
+watch(selectedProvider, (newVal) => {
+  if (newVal === 'openai' && useProjectReference.value) {
+    useProjectReference.value = false
+  }
+})
 
 // Preselect from project default on mount
 onMounted(async () => {
@@ -42,6 +54,13 @@ onMounted(async () => {
 
 const isValid = computed(() => selectedPreset.value !== null)
 
+function onPerCallFileChange(event) {
+  perCallFile.value = (event.target.files && event.target.files[0]) || null
+  if (perCallFile.value) {
+    useProjectReference.value = false
+  }
+}
+
 function close() {
   emit('update:modelValue', false)
 }
@@ -54,12 +73,14 @@ function submit() {
     style_preset: selectedPreset.value,
     custom_prompt: customPrompt.value || null,
     provider: selectedProvider.value,  // NEW (Phase 96). Per-call override.
+    use_project_reference: useProjectReference.value,
+    per_call_reference: perCallFile.value,
   })
   close()
 }
 
 // Expose for tests
-defineExpose({ selectedPreset, customPrompt, selectedProvider, store })
+defineExpose({ selectedPreset, customPrompt, selectedProvider, store, useProjectReference, perCallFile })
 </script>
 
 <template>
@@ -98,6 +119,33 @@ defineExpose({ selectedPreset, customPrompt, selectedProvider, store })
         >
           {{ p.label }}
         </button>
+      </div>
+
+      <p class="label">参考图（可选）</p>
+      <div class="reference-options">
+        <label class="reference-option-label">
+          <input
+            type="checkbox"
+            :disabled="selectedProvider === 'openai'"
+            :checked="useProjectReference"
+            data-testid="dialog-use-project-reference"
+            @change="useProjectReference = $event.target.checked"
+          />
+          使用项目默认参考图
+        </label>
+        <input
+          type="file"
+          accept="image/jpeg,image/png"
+          data-testid="dialog-per-call-reference"
+          @change="onPerCallFileChange"
+        />
+        <p
+          v-if="selectedProvider === 'openai' && (useProjectReference || perCallFile)"
+          class="warning"
+          data-testid="dialog-openai-warning"
+        >
+          OpenAI DALL-E 3 不支持参考图，已自动取消
+        </p>
       </div>
 
       <p class="label">补充描述（可选）</p>
@@ -189,4 +237,20 @@ defineExpose({ selectedPreset, customPrompt, selectedProvider, store })
   line-height: 1.6;
 }
 .hint { color: var(--color-accent, #7c3aed); }
+.reference-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.reference-option-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.warning {
+  font-size: 12px;
+  color: #dc2626;
+  margin: 0;
+}
 </style>
