@@ -5,11 +5,9 @@ provider's KNOWN_MODELS catalog.
 """
 from __future__ import annotations
 
-import pytest
-
 
 def test_unknown_model_error_is_value_error():
-    """UnknownModelError must subclass ValueError for Phase 96 caller compat."""
+    """UnknownModelError must subclass ValueError so routes/illustrations.py can map it to HTTP 422 (Phase 100 spec §3)."""
     from lingwen_illustrations.exceptions import UnknownModelError
 
     err = UnknownModelError("openai", "gpt-image-9", ("dall-e-3", "dall-e-2"))
