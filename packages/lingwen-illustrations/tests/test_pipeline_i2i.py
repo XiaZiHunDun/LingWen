@@ -28,6 +28,9 @@ async def test_generate_with_reference_bytes_dispatches_to_i2i(project_root):
         "supports_i2i": True,
         "generate_with_reference": AsyncMock(return_value=b"i2i-bytes"),
         "generate": AsyncMock(return_value=b"text-bytes"),
+        # Phase 100: pipeline resolves model from adapter.models + adapter.default_model.
+        "models": ("minimax-multimodal",),
+        "default_model": "minimax-multimodal",
     })()
 
     with patch("lingwen_illustrations.pipeline.get_provider", return_value=fake_adapter):
@@ -61,6 +64,9 @@ async def test_generate_without_reference_dispatches_to_text(project_root):
         "supports_i2i": True,
         "generate_with_reference": AsyncMock(return_value=b"i2i-bytes"),
         "generate": AsyncMock(return_value=b"text-bytes"),
+        # Phase 100: pipeline resolves model from adapter.models + adapter.default_model.
+        "models": ("minimax-multimodal",),
+        "default_model": "minimax-multimodal",
     })()
 
     with patch("lingwen_illustrations.pipeline.get_provider", return_value=fake_adapter):
@@ -93,6 +99,9 @@ async def test_generate_openai_with_reference_raises(project_root):
         "supports_i2i": False,
         "generate": AsyncMock(),
         "generate_with_reference": AsyncMock(),
+        # Phase 100: pipeline resolves model from adapter.models + adapter.default_model.
+        "models": ("dall-e-3",),
+        "default_model": "dall-e-3",
     })()
 
     with patch("lingwen_illustrations.pipeline.get_provider", return_value=fake_adapter):
@@ -127,6 +136,9 @@ async def test_metadata_marks_used_reference_image_true(project_root):
         "supports_i2i": True,
         "generate_with_reference": AsyncMock(return_value=b"i2i-bytes"),
         "generate": AsyncMock(),
+        # Phase 100: pipeline resolves model from adapter.models + adapter.default_model.
+        "models": ("sd3-medium",),
+        "default_model": "sd3-medium",
     })()
 
     with patch("lingwen_illustrations.pipeline.get_provider", return_value=fake_adapter):

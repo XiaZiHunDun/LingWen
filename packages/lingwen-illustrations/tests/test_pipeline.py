@@ -224,11 +224,11 @@ async def test_generate_illustration_dispatches_to_specified_provider(
 
     called_providers = []
 
-    async def fake_minimax_generate(*, prompt, api_key, api_host, timeout=60.0):
+    async def fake_minimax_generate(*, prompt, api_key, api_host, timeout=60.0, model=None):
         called_providers.append("minimax")
         return b"\xff\xd8\xff\xe0fake-jpeg"
 
-    async def fake_openai_generate(*, prompt, api_key, api_host, timeout=60.0):
+    async def fake_openai_generate(*, prompt, api_key, api_host, timeout=60.0, model=None):
         called_providers.append("openai")
         return b"\x89PNG\r\n\x1a\nfake-png"
 
@@ -270,7 +270,7 @@ async def test_generate_illustration_default_provider_is_minimax(
 
     called_providers = []
 
-    async def fake_minimax(*, prompt, api_key, api_host, timeout=60.0):
+    async def fake_minimax(*, prompt, api_key, api_host, timeout=60.0, model=None):
         called_providers.append("minimax")
         return b"\xff\xd8\xff\xe0"
 

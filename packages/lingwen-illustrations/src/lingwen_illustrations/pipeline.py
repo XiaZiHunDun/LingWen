@@ -34,31 +34,29 @@ Phase 96: provider abstraction
 from __future__ import annotations
 
 import hashlib
+import logging
 import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
+
+import yaml
 
 from lingwen_illustrations import (
     notifications,  # Phase 99 I091 fan-out
     storage,
 )
 from lingwen_illustrations.bible_loader import load_character_bible
-from lingwen_illustrations.exceptions import GenerateError, LoadError
+from lingwen_illustrations.exceptions import GenerateError, LoadError, UnknownModelError
 from lingwen_illustrations.metadata import IllustrationMetadata
 from lingwen_illustrations.prompt_builder import extract_scene
-from lingwen_illustrations.providers import UnknownProviderError, get_provider
+from lingwen_illustrations.providers import ProviderAdapter, get_provider
 from lingwen_illustrations.style_templates import compose as compose_prompt
 
-_TYPE = Literal["cover", "chapter"]
+logger = logging.getLogger(__name__)
 
-# Per-provider model name for metadata.model field.
-_MODEL_FOR_PROVIDER: dict[str, str] = {
-    "minimax": "minimax-multimodal",
-    "openai": "dall-e-3",
-    "stability": "sd3-medium",
-}
+_TYPE = Literal["cover", "chapter"]
 
 
 def _load_chapter_text(project_root: Path, type: _TYPE, chapter_num: int | None) -> str:
@@ -78,12 +76,72 @@ def _iso_utc_now() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-def _resolve_model(provider: str) -> str:
-    if provider not in _MODEL_FOR_PROVIDER:
-        raise UnknownProviderError(
-            f"unknown provider '{provider}', expected one of {tuple(_MODEL_FOR_PROVIDER)}"
+def _load_illustration_settings(project_root: Path) -> dict[str, Any]:
+    """Load illustration_settings.yaml from <project>/.lingwen/.
+
+    Returns empty dict if file missing. Returns dict with `default_models`,
+    `max_assets`, `auto_generate`, `confirm_before_generate` keys if present.
+
+    Phase 100: extracts default_models (was inlined as Phase 98 block in
+    generate_illustration). Single read path; reused in generate + regenerate.
+    """
+    settings_path = project_root / ".lingwen" / "illustration_settings.yaml"
+    if not settings_path.exists():
+        return {}
+    try:
+        return yaml.safe_load(settings_path.read_text(encoding="utf-8")) or {}
+    except (yaml.YAMLError, OSError) as e:
+        logger.warning(
+            "failed to parse illustration_settings.yaml: %s; using defaults", e
         )
-    return _MODEL_FOR_PROVIDER[provider]
+        return {}
+
+
+def resolve_model(
+    *,
+    provider: str,
+    explicit: str | None,
+    project_settings: dict | None,
+    adapter: ProviderAdapter,
+) -> str:
+    """Return the effective model for this generation.
+
+    Resolution order:
+        1. explicit (from API request) — must be in adapter.models or raise UnknownModelError
+        2. project default (from illustration_settings.yaml) — log warning if stale
+        3. adapter default (provider module's DEFAULT_MODEL)
+
+    Args:
+        provider: Provider name (must match adapter.name).
+        explicit: Explicit model override from API request. None means use defaults.
+        project_settings: Loaded illustration_settings.yaml dict (or None).
+        adapter: ProviderAdapter instance for the target provider.
+
+    Returns:
+        Effective model name (always a member of adapter.models).
+
+    Raises:
+        UnknownModelError: If explicit is not in adapter.models.
+    """
+    if explicit is not None:
+        if explicit not in adapter.models:
+            raise UnknownModelError(provider, explicit, adapter.models)
+        return explicit
+
+    if project_settings:
+        default_models = project_settings.get("default_models") or {}
+        proj_default = default_models.get(provider)
+        if proj_default is not None:
+            if proj_default not in adapter.models:
+                logger.warning(
+                    "project default_model '%s' not in provider '%s' models %s; "
+                    "falling back to %s",
+                    proj_default, provider, adapter.models, adapter.default_model,
+                )
+                return adapter.default_model
+            return proj_default
+
+    return adapter.default_model
 
 
 async def generate_illustration(
@@ -97,6 +155,7 @@ async def generate_illustration(
     api_key: str,
     api_host: str,
     provider: str = "minimax",  # NEW (Phase 96)
+    model: str | None = None,  # NEW (Phase 100). None -> resolve.
     reference_image_bytes: bytes | None = None,  # NEW (Phase 97)
 ) -> IllustrationMetadata:
     """Run the full pipeline. Returns metadata of saved asset.
@@ -108,6 +167,12 @@ async def generate_illustration(
     to the provider's i2i entry point (`adapter.generate_with_reference`).
     Providers that don't support i2i raise GenerateError.
 
+    Phase 100: when `model` is provided, threads it to Stage 3 (text-only path)
+    and records the resolved value on IllustrationMetadata. None means use
+    3-tier resolution order (explicit > project default > provider default).
+    i2i path does NOT accept model in v1 (single source of truth for i2i
+    is the provider module's DEFAULT_MODEL).
+
     Raises:
         LoadError: Project / chapter / character bible missing or malformed.
         ExtractError: Stage 1 LLM failed.
@@ -115,6 +180,7 @@ async def generate_illustration(
         GenerateError: Stage 3 image API failed.
         StoreError: Stage 4 file write failed.
         UnknownProviderError: provider name not in providers.KNOWN_PROVIDERS.
+        UnknownModelError: explicit model not in provider's KNOWN_MODELS.
     """
     # Stage 1a: load chapter text + character bible.
     chapter_text = _load_chapter_text(project_root, type, chapter_num)
@@ -134,7 +200,15 @@ async def generate_illustration(
     )
 
     # Stage 4: provider dispatch. Phase 97: route to i2i vs text based on reference_image_bytes.
+    # Phase 100: resolve model via 3-tier order (explicit > project > provider default).
     adapter = get_provider(provider)
+    settings = _load_illustration_settings(project_root)
+    effective_model = resolve_model(
+        provider=provider,
+        explicit=model,
+        project_settings=settings,
+        adapter=adapter,
+    )
 
     if reference_image_bytes is not None:
         if not adapter.supports_i2i:
@@ -148,12 +222,14 @@ async def generate_illustration(
             reference_image_bytes=reference_image_bytes,
             api_key=api_key,
             api_host=api_host,
+            # NOTE: model NOT threaded to i2i path (Phase 100 v1 limitation).
         )
     else:
         image_bytes = await adapter.generate(
             prompt=final_prompt,
             api_key=api_key,
             api_host=api_host,
+            model=effective_model,
         )
 
     # Stage 5: store. Build metadata + save.
@@ -170,7 +246,7 @@ async def generate_illustration(
         scene_json=scene_json,
         final_prompt=final_prompt,
         prompt_hash=prompt_hash,
-        model=_resolve_model(provider),
+        model=effective_model,  # Phase 100: resolved model (not raw input)
         provider=provider,  # NEW (Phase 96)
         used_reference_image=reference_image_bytes is not None,  # NEW (Phase 97)
         created_at=_iso_utc_now(),
@@ -185,17 +261,10 @@ async def generate_illustration(
     from lingwen_illustrations.storage import lru_cleanup
 
     try:
-        settings_path = project_root / ".lingwen" / "illustration_settings.yaml"
-        if settings_path.exists():
-            import yaml
-            _settings_data = yaml.safe_load(settings_path.read_text(encoding="utf-8")) or {}
-            _max_assets = int(_settings_data.get("max_assets", 20))
-            _auto_generate = bool(_settings_data.get("auto_generate", False))
-            _confirm_required = bool(_settings_data.get("confirm_before_generate", False))
-        else:
-            _max_assets = 20
-            _auto_generate = False
-            _confirm_required = False
+        # Phase 100: settings loaded once at top of function; reused here.
+        _max_assets = int(settings.get("max_assets", 20))
+        _auto_generate = bool(settings.get("auto_generate", False))
+        _confirm_required = bool(settings.get("confirm_before_generate", False))
 
         if _max_assets > 0:
             _deleted = lru_cleanup(
@@ -249,6 +318,7 @@ async def regenerate_illustration(
     api_key: str,
     api_host: str,
     provider: str | None = None,  # NEW (Phase 96). None -> use existing_meta.provider.
+    model: str | None = None,  # NEW (Phase 100). None -> resolve.
     reference_image_bytes: bytes | None = None,  # NEW (Phase 97)
 ) -> IllustrationMetadata:
     """Re-run the extract + compose + generate stages for an existing asset.
@@ -264,6 +334,10 @@ async def regenerate_illustration(
     Phase 97: when `reference_image_bytes` is provided, dispatches Stage 3
     to the provider's i2i entry point. Providers that don't support i2i
     raise GenerateError.
+
+    Phase 100: when `model` is provided, threads it to Stage 3 (text-only path).
+    None means use 3-tier resolution order (explicit > project > provider default).
+    i2i path does NOT accept model in v1.
 
     Atomicity:
     Uses ``storage.replace_asset`` (temp file + POSIX rename) to swap bytes
@@ -305,7 +379,15 @@ async def regenerate_illustration(
     )
 
     # Stage 4: regenerate image bytes via provider. Phase 97: route to i2i vs text.
+    # Phase 100: resolve model via 3-tier order (explicit > project > provider default).
     adapter = get_provider(effective_provider)
+    settings = _load_illustration_settings(project_root)
+    effective_model = resolve_model(
+        provider=effective_provider,
+        explicit=model,
+        project_settings=settings,
+        adapter=adapter,
+    )
 
     if reference_image_bytes is not None:
         if not adapter.supports_i2i:
@@ -325,6 +407,7 @@ async def regenerate_illustration(
             prompt=final_prompt,
             api_key=api_key,
             api_host=api_host,
+            model=effective_model,
         )
 
     # Stage 5: build new metadata (preserve asset_id, refresh dynamic fields).
@@ -339,7 +422,7 @@ async def regenerate_illustration(
         scene_json=scene_json,
         final_prompt=final_prompt,
         prompt_hash=prompt_hash,
-        model=_resolve_model(effective_provider),
+        model=effective_model,  # Phase 100: resolved model (not raw input)
         provider=effective_provider,
         used_reference_image=reference_image_bytes is not None,  # NEW (Phase 97)
         created_at=_iso_utc_now(),  # refresh timestamp
@@ -378,4 +461,4 @@ async def regenerate_illustration(
     return new_meta
 
 
-__all__ = ["generate_illustration", "regenerate_illustration"]
+__all__ = ["generate_illustration", "regenerate_illustration", "resolve_model"]

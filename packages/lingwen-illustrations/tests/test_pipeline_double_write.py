@@ -56,6 +56,9 @@ def _make_adapter_mock() -> MagicMock:
     adapter = MagicMock()
     adapter.supports_i2i = False
     adapter.generate = AsyncMock(return_value=b"\xff\xd8\xff\xe0fake_jpeg")
+    # Phase 100: pipeline reads adapter.models + adapter.default_model.
+    adapter.models = ("minimax-multimodal",)
+    adapter.default_model = "minimax-multimodal"
     return adapter
 
 
