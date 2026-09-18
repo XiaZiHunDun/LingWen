@@ -16,7 +16,14 @@ def test_append_and_read_back(tmp_path):
     meta = IllustrationMetadata(
         id="test-id",
         type="cover",
+        project_slug="test-slug",
         chapter_num=None,
+        style_preset="ink",
+        custom_prompt=None,
+        scene_json={"scene": "test"},
+        final_prompt="a test illustration",
+        prompt_hash="abc123",
+        model="minimax-multimodal",
         created_at="2026-09-18T00:00:00+00:00",
         provider="minimax",
     )
