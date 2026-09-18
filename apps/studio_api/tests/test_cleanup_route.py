@@ -44,14 +44,8 @@ def _setup_project(slug: str, tmp_path: Path) -> None:
 def test_cleanup_endpoint_success(tmp_path, monkeypatch):
     """POST /cleanup with default body deletes oldest assets."""
     slug = "test-cleanup-success"
+    monkeypatch.chdir(tmp_path)
     _setup_project(slug, tmp_path)
-
-    # Patch project_root_for to return our tmp_path structure
-    def fake_root_for(s):
-        return tmp_path / "projects" / s
-
-    from apps.studio_api.routes import _project_helpers
-    monkeypatch.setattr(_project_helpers, "project_root_for", fake_root_for)
 
     app = create_app()
     client = TestClient(app)
@@ -67,13 +61,8 @@ def test_cleanup_endpoint_success(tmp_path, monkeypatch):
 def test_cleanup_endpoint_dry_run(tmp_path, monkeypatch):
     """dry_run=true returns what would be deleted without actually deleting."""
     slug = "test-cleanup-dry-run"
+    monkeypatch.chdir(tmp_path)
     _setup_project(slug, tmp_path)
-
-    def fake_root_for(s):
-        return tmp_path / "projects" / s
-
-    from apps.studio_api.routes import _project_helpers
-    monkeypatch.setattr(_project_helpers, "project_root_for", fake_root_for)
 
     app = create_app()
     client = TestClient(app)
@@ -96,13 +85,8 @@ def test_cleanup_endpoint_dry_run(tmp_path, monkeypatch):
 def test_cleanup_endpoint_invalid_type(tmp_path, monkeypatch):
     """Invalid type returns 422."""
     slug = "test-cleanup-bad"
+    monkeypatch.chdir(tmp_path)
     _setup_project(slug, tmp_path)
-
-    def fake_root_for(s):
-        return tmp_path / "projects" / s
-
-    from apps.studio_api.routes import _project_helpers
-    monkeypatch.setattr(_project_helpers, "project_root_for", fake_root_for)
 
     app = create_app()
     client = TestClient(app)
@@ -117,13 +101,8 @@ def test_cleanup_endpoint_invalid_type(tmp_path, monkeypatch):
 def test_cleanup_endpoint_chapter_requires_num(tmp_path, monkeypatch):
     """type=chapter without chapter_num returns 422."""
     slug = "test-cleanup-chapter-no-num"
+    monkeypatch.chdir(tmp_path)
     _setup_project(slug, tmp_path)
-
-    def fake_root_for(s):
-        return tmp_path / "projects" / s
-
-    from apps.studio_api.routes import _project_helpers
-    monkeypatch.setattr(_project_helpers, "project_root_for", fake_root_for)
 
     app = create_app()
     client = TestClient(app)

@@ -17,6 +17,7 @@ from apps.studio_api.routes.creator_settings import register_creator_settings
 from apps.studio_api.routes.creator_volume import register_creator_volume
 from apps.studio_api.routes.ctx import RoutesContext
 from apps.studio_api.routes.cvg import register_cvg
+from apps.studio_api.routes.cleanup_route import register_cleanup
 from apps.studio_api.routes.decisions import register_decisions
 from apps.studio_api.routes.health import register_health
 from apps.studio_api.routes.illustrations import register_illustrations
@@ -39,6 +40,7 @@ def register_all_routes(app: FastAPI, ctx: RoutesContext) -> None:
     register_illustrations(app, ctx)
     register_project_settings(app, ctx)
     register_reference_image(app, ctx)
+    register_cleanup(app, ctx)
     register_overview(app, ctx)
     register_decisions(app, ctx)
     register_cvg(app, ctx)
