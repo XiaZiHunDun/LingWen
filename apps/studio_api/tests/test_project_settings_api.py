@@ -20,11 +20,16 @@ def client(tmp_path, monkeypatch):
 
 
 def test_get_settings_returns_defaults_when_yaml_missing(client):
-    """No yaml on disk → returns ProjectSettings() with default_provider='minimax'."""
+    """No yaml on disk → returns ProjectSettings() with all defaults (Phase 98: 4 fields)."""
     resp = client.get("/api/projects/test-slug/settings")
     assert resp.status_code == 200
     body = resp.json()
-    assert body == {"default_provider": "minimax"}
+    assert body == {
+        "default_provider": "minimax",
+        "auto_generate": False,
+        "max_assets": 20,
+        "confirm_before_generate": False,
+    }
 
 
 def test_put_settings_persists_yaml(client):
@@ -33,17 +38,33 @@ def test_put_settings_persists_yaml(client):
         json={"default_provider": "openai"},
     )
     assert resp.status_code == 200
-    assert resp.json() == {"default_provider": "openai"}
+    assert resp.json() == {
+        "default_provider": "openai",
+        "auto_generate": False,
+        "max_assets": 20,
+        "confirm_before_generate": False,
+    }
 
     yaml_path = Path("projects") / "test-slug" / ".lingwen" / "illustration_settings.yaml"
     assert yaml_path.exists()
-    assert yaml_path.read_text(encoding="utf-8").strip() == "default_provider: openai"
+    # Phase 98: yaml now contains all 4 fields (PyYAML sorts alphabetically)
+    assert yaml_path.read_text(encoding="utf-8").strip() == (
+        "auto_generate: false\n"
+        "confirm_before_generate: false\n"
+        "default_provider: openai\n"
+        "max_assets: 20"
+    )
 
 
 def test_put_then_get_round_trips(client):
     client.put("/api/projects/test-slug/settings", json={"default_provider": "stability"})
     resp = client.get("/api/projects/test-slug/settings")
-    assert resp.json() == {"default_provider": "stability"}
+    assert resp.json() == {
+        "default_provider": "stability",
+        "auto_generate": False,
+        "max_assets": 20,
+        "confirm_before_generate": False,
+    }
 
 
 def test_get_settings_corrupt_yaml_returns_defaults(client, tmp_path):
@@ -54,7 +75,12 @@ def test_get_settings_corrupt_yaml_returns_defaults(client, tmp_path):
 
     resp = client.get("/api/projects/test-slug/settings")
     assert resp.status_code == 200
-    assert resp.json() == {"default_provider": "minimax"}
+    assert resp.json() == {
+        "default_provider": "minimax",
+        "auto_generate": False,
+        "max_assets": 20,
+        "confirm_before_generate": False,
+    }
 
 
 def test_put_settings_invalid_provider_rejected(client):

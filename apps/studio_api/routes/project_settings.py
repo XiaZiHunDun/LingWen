@@ -1,11 +1,13 @@
-"""Project settings persistence (Phase 96).
+"""Project settings persistence (Phase 96 + Phase 98).
 
 PUT/GET /api/projects/{slug}/settings — stores per-project illustration
-preferences (default_provider) at <project_root>/.lingwen/illustration_settings.yaml.
+preferences (default_provider + auto_generate + max_assets +
+confirm_before_generate) at <project_root>/.lingwen/illustration_settings.yaml.
 
 Extends Phase 95 deferred work ("持久化在 v2 走 /api/projects/{slug}/settings").
-Future phases add fields (auto_generate, max_assets, confirm_before_generate)
-without breaking schema (Pydantic Literal + Optional fields).
+
+Phase 98: 3 new fields (auto_generate / max_assets / confirm_before_generate).
+Back-compat via Pydantic v2 default fill — old yaml files still load.
 """
 from __future__ import annotations
 
@@ -21,10 +23,16 @@ from apps.studio_api.routes._project_helpers import project_root_for
 from apps.studio_api.routes.ctx import RoutesContext
 
 
-# Future fields (auto_generate, max_assets, confirm_before_generate) added
-# in subsequent phases without breaking this schema.
 class ProjectSettings(BaseModel):
+    """Phase 98: extended with auto_generate / max_assets / confirm_before_generate.
+
+    Schema migration is back-compat: Pydantic v2 fills missing fields with defaults.
+    Old yaml files with only `default_provider` still load successfully.
+    """
     default_provider: Literal["minimax", "openai", "stability"] = "minimax"
+    auto_generate: bool = False
+    max_assets: int = 20
+    confirm_before_generate: bool = False
 
 
 def _settings_path(project_root: Path) -> Path:
