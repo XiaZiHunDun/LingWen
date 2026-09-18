@@ -40,7 +40,8 @@ describe('ReferenceImageUpload', () => {
       size_bytes: 1024,
       mime_type: 'image/jpeg',
     })
-    mockStore.fetchReferenceImageBlob.mockResolvedValue('blob:fake-url')
+    // Store contract: returns raw Blob; component wraps with URL.createObjectURL.
+    mockStore.fetchReferenceImageBlob.mockResolvedValue(new Blob(['fake-bytes'], { type: 'image/jpeg' }))
     mockStore.referenceImage = {
       exists: true,
       size_bytes: 1024,

@@ -1,5 +1,5 @@
 <!--
-  ProjectSettingsIllustration.vue — 插图偏好（Phase 90 Task 17 + Phase 96 Task 16）
+  ProjectSettingsIllustration.vue — 插图偏好（Phase 90 Task 17 + Phase 96 Task 16 + Phase 97 Task 10）
 
   包含：
   - 默认风格预设（古风水墨 / 现代写实 / 动漫厚涂）
@@ -9,11 +9,16 @@
   - 默认图片生成器 dropdown（Phase 96：minimax / openai / stability，
     变更后通过 useProjectSettingsStore.save 自动持久化到
     /api/projects/{slug}/settings）
+  - 项目参考图上传 (Phase 97: ReferenceImageUpload 子组件，
+    参考图与 provider 概念相关 — i2i 仅 MiniMax / Stability 支持 — 因此放在
+    provider 之前；放在 max_assets 之后以便字段视觉分组 [风格 / 自动 / 参考图 /
+    provider / 上限 / 确认])
 
   通过 v-model 双向绑定整组设置；provider 字段额外触发 store.save。
 -->
 <script setup>
 import { useProjectSettingsStore } from '@/stores/useProjectSettings.js'
+import ReferenceImageUpload from './ReferenceImageUpload.vue'
 
 const props = defineProps({
   modelValue: { type: Object, required: true },
@@ -84,6 +89,8 @@ async function on_provider_change(value) {
       </label>
       <p class="empty-hint project-settings-illustration-hint">每章约消耗 1 次 LLM 调用 + 1 次图片生成</p>
     </div>
+
+    <ReferenceImageUpload :slug="props.slug" />
 
     <div class="field project-settings-illustration-field">
       <label class="project-settings-illustration-label" for="project-settings-illustration-default-provider">

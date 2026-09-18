@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { NButton } from 'naive-ui'
 import { useProjectSettingsStore } from '@/stores/useProjectSettings.js'
 
@@ -9,6 +9,10 @@ const props = defineProps({
 
 const store = useProjectSettingsStore()
 const fileInput = ref(null)
+// previewUrl is a createObjectURL string (NOT a raw Blob) because <img :src>
+// requires a string URL. The store returns a raw Blob; we wrap it here to keep
+// the store contract simple (Blob is the canonical wire format from
+// fetchReferenceImageBlob) while satisfying the <img> element contract.
 const previewUrl = ref(null)
 const uploading = ref(false)
 const removing = ref(false)
@@ -18,20 +22,32 @@ onMounted(async () => {
   await loadInfo()
 })
 
+onBeforeUnmount(() => {
+  // Release the last object URL on unmount to avoid leaks.
+  if (previewUrl.value) {
+    URL.revokeObjectURL(previewUrl.value)
+    previewUrl.value = null
+  }
+})
+
 async function loadInfo() {
+  // Revoke previous object URL before allocating a new one to avoid leaks.
+  if (previewUrl.value) {
+    URL.revokeObjectURL(previewUrl.value)
+    previewUrl.value = null
+  }
   try {
     const info = await store.fetchReferenceImage(props.slug)
     if (info && info.exists) {
       try {
-        previewUrl.value = await store.fetchReferenceImageBlob(props.slug)
+        const blob = await store.fetchReferenceImageBlob(props.slug)
+        previewUrl.value = URL.createObjectURL(blob)
       } catch (e) {
         previewUrl.value = null
       }
-    } else {
-      previewUrl.value = null
     }
   } catch (e) {
-    previewUrl.value = null
+    // No reference image or fetch failed; previewUrl stays null.
   }
 }
 
@@ -59,7 +75,10 @@ async function onRemove() {
   errorMessage.value = null
   try {
     await store.deleteReferenceImage(props.slug)
-    previewUrl.value = null
+    if (previewUrl.value) {
+      URL.revokeObjectURL(previewUrl.value)
+      previewUrl.value = null
+    }
   } catch (e) {
     errorMessage.value = (e && e.data && e.data.detail) || e.message || '删除失败'
   } finally {
