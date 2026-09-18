@@ -352,6 +352,7 @@ async def regenerate_illustration(
             inherited from existing_meta, but defend anyway).
         GenerateError: Stage 3 image API failed (transient).
         StoreError: Stage 4 atomic replace failed.
+        UnknownModelError: explicit model not in provider's KNOWN_MODELS.
         UnknownProviderError: provider name not in providers.KNOWN_PROVIDERS.
     """
     effective_provider = provider if provider is not None else existing_meta.provider

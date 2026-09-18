@@ -116,6 +116,24 @@ def test_load_illustration_settings_missing_file_returns_empty_dict(tmp_path: Pa
     assert result == {}
 
 
+def test_load_illustration_settings_malformed_yaml_returns_empty_dict(tmp_path: Path, caplog):
+    """Malformed yaml → empty dict + WARNING (defensive guard, contract from pipeline.py:93)."""
+    import logging
+
+    from lingwen_illustrations.pipeline import _load_illustration_settings
+
+    settings_dir = tmp_path / ".lingwen"
+    settings_dir.mkdir()
+    settings_file = settings_dir / "illustration_settings.yaml"
+    # malformed: tab in indentation (PyYAML rejects)
+    settings_file.write_text("default_provider:\topenai\n  bad-indent", encoding="utf-8")
+
+    with caplog.at_level(logging.WARNING):
+        result = _load_illustration_settings(tmp_path)
+    assert result == {}
+    assert any("illustration_settings.yaml" in r.message for r in caplog.records)
+
+
 def _fake_adapter(models, default):
     """Build a minimal ProviderAdapter-like object for resolve_model tests."""
 
