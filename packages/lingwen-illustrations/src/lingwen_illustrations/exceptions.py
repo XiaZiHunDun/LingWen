@@ -80,6 +80,27 @@ class StoreError(IllustrationError):
         super().__init__(Stage.STORE, message, retryable=False)
 
 
+class UnknownModelError(ValueError):
+    """Raised when explicit model is not in provider's KNOWN_MODELS catalog.
+
+    Phase 100: returned by provider adapters (minimax/openai/stability) when
+    the `model` parameter is not in the module's KNOWN_MODELS tuple. Also
+    raised by pipeline.resolve_model() when explicit model is invalid.
+
+    Carries .provider / .model / .known attributes for structured error
+    handling in routes/illustrations.py (mapped to HTTP 422).
+    """
+
+    def __init__(self, provider: str, model: str, known: tuple[str, ...]) -> None:
+        self.provider = provider
+        self.model = model
+        self.known = known
+        super().__init__(
+            f"unknown model '{model}' for provider '{provider}', "
+            f"expected one of {known}"
+        )
+
+
 __all__ = [
     "Stage",
     "IllustrationError",
@@ -88,4 +109,5 @@ __all__ = [
     "ComposeError",
     "GenerateError",
     "StoreError",
+    "UnknownModelError",
 ]
