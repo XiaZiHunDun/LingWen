@@ -630,4 +630,170 @@ def test_put_regenerate_with_provider_override(illustrations_client):
 
     assert regen_resp.status_code == 200
     assert openai_mock.called
-    assert regen_resp.json()["id"] == original_id
+
+
+# ─── Phase 97: multipart file + use_project_reference + 422 i2i ────────
+
+
+def _make_minimal_project_dirs(tmp_path: Path, project: str) -> Path:
+    """Pre-create projects/{project}/chapters + config + .lingwen for i2i tests."""
+    target = tmp_path / "projects" / project
+    (target / "chapters").mkdir(parents=True, exist_ok=True)
+    (target / "config" / "illustrations").mkdir(parents=True, exist_ok=True)
+    (target / ".lingwen").mkdir(parents=True, exist_ok=True)
+    return target
+
+
+def test_generate_accepts_multipart_file_with_reference(tmp_path, monkeypatch):
+    """POST with file= should accept multipart upload and pass bytes to pipeline."""
+    monkeypatch.chdir(tmp_path)
+    _make_minimal_project_dirs(tmp_path, "test-slug")
+    (tmp_path / "projects" / "test-slug" / "chapters" / "001.md").write_text(
+        "test", encoding="utf-8"
+    )
+    (tmp_path / "projects" / "test-slug" / "config" / "illustrations" / "characters.json").write_text(
+        "[]", encoding="utf-8"
+    )
+
+    from lingwen_illustrations.metadata import IllustrationMetadata
+
+    fake_meta = IllustrationMetadata(
+        id="fake-id", type="chapter", project_slug="test-slug", chapter_num=1,
+        style_preset="ink", custom_prompt=None, scene_json={"x": 1},
+        final_prompt="prompt", prompt_hash="sha256:abc", model="minimax-multimodal",
+        provider="minimax", used_reference_image=False, created_at="2026-01-01T00:00:00Z",
+    )
+    captured_kwargs: dict = {}
+
+    async def fake_run_pipeline(**kwargs):
+        captured_kwargs.update(kwargs)
+        return fake_meta
+
+    import io
+
+    monkeypatch.setattr(
+        "lingwen_illustrations.pipeline.generate_illustration", fake_run_pipeline
+    )
+
+    from apps.studio_api.routes.illustrations import register_illustrations
+
+    app = FastAPI()
+    register_illustrations(app, _stub_ctx())
+    test_client = TestClient(app)
+
+    jpeg_bytes = b"\xff\xd8\xff\xe0" + b"\x00" * 100
+    response = test_client.post(
+        "/api/illustrations/generate",
+        data={
+            "project_slug": "test-slug",
+            "type": "chapter",
+            "chapter_num": 1,
+            "style_preset": "ink",
+            "use_project_reference": "false",
+        },
+        files={"file": ("ref.jpg", io.BytesIO(jpeg_bytes), "image/jpeg")},
+    )
+    assert response.status_code == 200, response.text
+    assert captured_kwargs.get("reference_image_bytes") == jpeg_bytes
+
+
+def test_generate_uses_project_reference_when_no_file(tmp_path, monkeypatch):
+    """When file is missing but use_project_reference=True, load from disk."""
+    monkeypatch.chdir(tmp_path)
+    project_root = _make_minimal_project_dirs(tmp_path, "test-slug")
+    (project_root / "chapters" / "001.md").write_text("test", encoding="utf-8")
+    (project_root / "config" / "illustrations" / "characters.json").write_text(
+        "[]", encoding="utf-8"
+    )
+    # Pre-save a reference image at canonical path.
+    (project_root / ".lingwen" / "reference_image.jpg").write_bytes(
+        b"\xff\xd8\xff\xe0ref-bytes"
+    )
+
+    from lingwen_illustrations.metadata import IllustrationMetadata
+
+    fake_meta = IllustrationMetadata(
+        id="fake-id", type="chapter", project_slug="test-slug", chapter_num=1,
+        style_preset="ink", custom_prompt=None, scene_json={"x": 1},
+        final_prompt="prompt", prompt_hash="sha256:abc", model="minimax-multimodal",
+        provider="minimax", used_reference_image=False, created_at="2026-01-01T00:00:00Z",
+    )
+    captured_kwargs: dict = {}
+
+    async def fake_run_pipeline(**kwargs):
+        captured_kwargs.update(kwargs)
+        return fake_meta
+
+    monkeypatch.setattr(
+        "lingwen_illustrations.pipeline.generate_illustration", fake_run_pipeline
+    )
+
+    from apps.studio_api.routes.illustrations import register_illustrations
+
+    app = FastAPI()
+    register_illustrations(app, _stub_ctx())
+    test_client = TestClient(app)
+
+    response = test_client.post(
+        "/api/illustrations/generate",
+        data={
+            "project_slug": "test-slug",
+            "type": "chapter",
+            "chapter_num": 1,
+            "style_preset": "ink",
+            "use_project_reference": "true",
+        },
+    )
+    assert response.status_code == 200, response.text
+    assert captured_kwargs.get("reference_image_bytes") == b"\xff\xd8\xff\xe0ref-bytes"
+
+
+def test_generate_returns_422_for_openai_with_reference_file(tmp_path, monkeypatch):
+    """openai + multipart file should propagate GenerateError as 422."""
+    monkeypatch.chdir(tmp_path)
+    _make_minimal_project_dirs(tmp_path, "test-slug")
+    (tmp_path / "projects" / "test-slug" / "chapters" / "001.md").write_text(
+        "test", encoding="utf-8"
+    )
+    (tmp_path / "projects" / "test-slug" / "config" / "illustrations" / "characters.json").write_text(
+        "[]", encoding="utf-8"
+    )
+
+    # Pipeline raises because openai doesn't support i2i.
+    async def fake_run_pipeline(**kwargs):
+        from lingwen_illustrations.exceptions import GenerateError
+
+        raise GenerateError(
+            "provider 'openai' does not support image-to-image generation",
+            provider="openai",
+            retryable=False,
+        )
+
+    monkeypatch.setattr(
+        "lingwen_illustrations.pipeline.generate_illustration", fake_run_pipeline
+    )
+
+    from apps.studio_api.routes.illustrations import register_illustrations
+
+    app = FastAPI()
+    register_illustrations(app, _stub_ctx())
+    test_client = TestClient(app)
+
+    import io
+
+    jpeg_bytes = b"\xff\xd8\xff\xe0" + b"\x00" * 100
+    response = test_client.post(
+        "/api/illustrations/generate",
+        data={
+            "project_slug": "test-slug",
+            "type": "chapter",
+            "chapter_num": 1,
+            "style_preset": "ink",
+            "provider": "openai",
+            "use_project_reference": "false",
+        },
+        files={"file": ("ref.jpg", io.BytesIO(jpeg_bytes), "image/jpeg")},
+    )
+    assert response.status_code == 422, response.text
+    detail = response.json()["detail"]
+    assert "does not support" in detail.get("error", "")

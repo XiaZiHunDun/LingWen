@@ -13,8 +13,9 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import Body, FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse
+from lingwen_illustrations import reference_image as reference_image_module
 from lingwen_illustrations import storage
 from lingwen_illustrations.exceptions import (
     ComposeError,
@@ -52,6 +53,8 @@ class GenerateRequest(BaseModel):
     style_preset: str
     custom_prompt: Optional[str] = None
     provider: Optional[str] = None  # NEW (Phase 96). None → resolve via project settings yaml.
+    # NEW (Phase 97): user can disable project reference image. Default True.
+    use_project_reference: bool = True
 
     @model_validator(mode="after")
     def _chapter_requires_num(self) -> "GenerateRequest":
@@ -154,7 +157,54 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
     _ = ctx  # reserved for future ctx fields (e.g. LLM service injection)
 
     @app.post("/api/illustrations/generate", response_model=GenerateResponse)
-    async def generate_illustration(req: GenerateRequest = Body(...)) -> GenerateResponse:
+    async def generate_illustration(request: Request) -> GenerateResponse:
+        # Phase 97: Accept JSON (legacy) OR multipart/form-data (new — supports
+        # file upload + use_project_reference). We can't mix Body(...) + File(...)
+        # in a FastAPI endpoint, so we parse the request manually based on
+        # Content-Type. The body is built once into a dict then validated by
+        # the GenerateRequest Pydantic model.
+        content_type = (request.headers.get("content-type") or "").lower()
+        body_data: dict = {}
+        uploaded_file_bytes: bytes | None = None
+
+        if "multipart/form-data" in content_type or "x-www-form-urlencoded" in content_type:
+            form = await request.form()
+            # Form fields → GenerateRequest fields.
+            for field in (
+                "project_slug",
+                "type",
+                "style_preset",
+                "custom_prompt",
+                "provider",
+            ):
+                value = form.get(field)
+                if value is not None:
+                    body_data[field] = value
+            chapter_num_raw = form.get("chapter_num")
+            if chapter_num_raw not in (None, ""):
+                body_data["chapter_num"] = int(chapter_num_raw)
+            use_ref_raw = form.get("use_project_reference")
+            if use_ref_raw is not None:
+                body_data["use_project_reference"] = (
+                    str(use_ref_raw).lower() in ("true", "1", "yes", "on")
+                )
+            # Multipart file (per-call override).
+            file_field = form.get("file")
+            if file_field is not None and getattr(file_field, "filename", None):
+                uploaded_file_bytes = await file_field.read()
+        else:
+            raw = await request.json()
+            if isinstance(raw, dict):
+                body_data = dict(raw)
+
+        try:
+            req = GenerateRequest(**body_data)
+        except Exception as exc:  # Pydantic ValidationError → 422.
+            raise HTTPException(
+                status_code=422,
+                detail={"error": str(exc), "stage": "validation"},
+            ) from exc
+
         try:
             project_root = project_root_for(req.project_slug)
         except LoadError as e:
@@ -162,6 +212,16 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
 
         provider = _resolve_provider_for_request(req.project_slug, req.provider)
         api_key, api_host = _api_credentials_for(provider)
+
+        # Phase 97: resolve reference_image_bytes from multipart file or project default.
+        reference_image_bytes: bytes | None = uploaded_file_bytes
+        if reference_image_bytes is None and req.use_project_reference:
+            try:
+                reference_image_bytes = reference_image_module.load_reference_image(
+                    project_root
+                )
+            except Exception:
+                reference_image_bytes = None
 
         # Lazy import to avoid loading pipeline deps at module import time
         from lingwen_illustrations.pipeline import generate_illustration as run_pipeline
@@ -177,8 +237,16 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
                 api_key=api_key,
                 api_host=api_host,
                 provider=provider,
+                reference_image_bytes=reference_image_bytes,
             )
         except IllustrationError as e:
+            # Phase 97: i2i not supported → 422 instead of 502.
+            if (
+                isinstance(e, GenerateError)
+                and not e.retryable
+                and "image-to-image" in e.message
+            ):
+                raise HTTPException(422, detail=_err_detail(e)) from e
             _raise_stage_error(e)
 
         return GenerateResponse(
