@@ -172,4 +172,63 @@ def list_assets(project_root: Path) -> list[IllustrationMetadata]:
     return assets
 
 
-__all__ = ["asset_path", "save_asset", "delete_asset", "replace_asset", "list_assets"]
+def lru_cleanup(
+    project_root: Path,
+    *,
+    type: AssetType,
+    chapter_num: int | None = None,
+    max_count: int,
+) -> list[IllustrationMetadata]:
+    """Per-type+per-chapter LRU: keep newest `max_count`, delete the rest.
+
+    Scope:
+      - type="cover"     → all <root>/assets/covers/*.jpg
+      - type="chapter"   → all <root>/assets/illustrations/chapter-NNN/*.jpg
+                           (chapter_num selects which chapter folder)
+
+    Returns:
+      - list of deleted metadata (oldest first). Empty list if no-op.
+
+    Behavior:
+      - max_count <= 0 raises StoreError
+      - if asset count <= max_count: no-op, returns []
+      - deletion is idempotent (missing files skipped via delete_asset)
+      - sort: meta.created_at desc; ties broken by meta.id asc
+
+    Raises:
+      StoreError: If type="chapter" and chapter_num is None.
+      StoreError: If max_count <= 0.
+
+    Invariant:
+      - I090 (Phase 98): lru_cleanup is the only entry point for
+        automatic illustration deletion (pipeline calls only this).
+    """
+    if max_count <= 0:
+        raise StoreError(f"max_count must be positive, got {max_count}")
+
+    if type == "chapter" and chapter_num is None:
+        raise StoreError("chapter_num required for chapter assets")
+
+    # Filter assets by scope
+    all_assets = list_assets(project_root)
+    if type == "cover":
+        scoped = [m for m in all_assets if m.type == "cover"]
+    else:  # chapter
+        scoped = [m for m in all_assets if m.type == "chapter" and m.chapter_num == chapter_num]
+
+    # Sort ascending by (created_at, id) so oldest is at index 0 (deletion target).
+    # Tie-break by id asc ensures deterministic ordering when timestamps collide.
+    scoped.sort(key=lambda m: (m.created_at, m.id))
+
+    if len(scoped) <= max_count:
+        return []
+
+    # Delete oldest (those at the beginning when sorted ascending)
+    to_delete = scoped[: len(scoped) - max_count]
+    for meta in to_delete:
+        delete_asset(project_root, meta)
+
+    return to_delete
+
+
+__all__ = ["asset_path", "save_asset", "delete_asset", "replace_asset", "list_assets", "lru_cleanup"]
