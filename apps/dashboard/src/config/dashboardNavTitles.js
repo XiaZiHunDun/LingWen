@@ -10,6 +10,7 @@ const NAV_CONTEXT_TITLES = {
   inbox: '待办',
   insight: '洞察',
   'cascade-runs': '级联',
+  notifications: '通知',
   settings: '设置',
 };
 

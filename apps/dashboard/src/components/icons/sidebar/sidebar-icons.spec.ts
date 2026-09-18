@@ -15,10 +15,11 @@ import {
   IconSidebarCascadeRuns,
   IconSidebarSettings,
   IconSidebarPilot,
+  IconSidebarNotifications,
 } from './index'
 
 // Single source of truth: id → component tuple.
-// Adding a 13th icon = 1 import + 1 tuple entry; no parallel arrays to drift.
+// Adding a 14th icon = 1 import + 1 tuple entry; no parallel arrays to drift.
 const ICON_CASES: ReadonlyArray<readonly [string, Component]> = [
   ['ask', IconSidebarAsk],
   ['write', IconSidebarWrite],
@@ -32,12 +33,13 @@ const ICON_CASES: ReadonlyArray<readonly [string, Component]> = [
   ['cascade-runs', IconSidebarCascadeRuns],
   ['settings', IconSidebarSettings],
   ['pilot', IconSidebarPilot],
+  ['notifications', IconSidebarNotifications],
 ] as const
 
 const EXPECTED_IDS = ICON_CASES.map(([id]) => id)
 
 describe('sidebar icons: SIDEBAR_ICONS registry', () => {
-  it('exports a dict with all 12 expected ids', () => {
+  it('exports a dict with all 13 expected ids', () => {
     for (const id of EXPECTED_IDS) {
       expect(SIDEBAR_ICONS).toHaveProperty(id)
     }

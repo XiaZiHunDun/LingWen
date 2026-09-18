@@ -92,6 +92,12 @@ const routes = [
     component: () => import('../pages/WorldPage.vue'),
     meta: { title: '世界' },
   },
+  {
+    path: '/notifications',
+    name: 'notifications',
+    component: () => import('../pages/NotificationsPage.vue'),
+    meta: { title: '通知', requiresProject: false },
+  },
 ]
 
 const router = createRouter({

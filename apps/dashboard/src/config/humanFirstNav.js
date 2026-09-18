@@ -25,6 +25,7 @@ export const HUMAN_FIRST_NAV_GROUPS = [
     showDivider: true,
     items: [
       { id: 'more', label: '工具箱' },
+      { id: 'notifications', label: '通知' },
       { id: 'settings', label: '设置' },
     ],
   },

@@ -114,6 +114,7 @@
               {{ isDarkMode ? '☀️' : '🌙' }}
             </button>
             <TextScaleToggle v-if="!isHumanFirstShell" />
+            <NotificationBell />
             <ProjectSwitcher
               v-if="isHumanFirstShell"
               compact
@@ -170,7 +171,10 @@ import { resolveDefaultLandingNavAsync } from './utils/resolveDefaultLanding.js'
 import { fetchCreatorOverview, fetchStudioSummary } from './api/index.js'
 import { useBootState } from './composables/useBootState.js'
 import { useWorkflowSocket } from './composables/index.js'
+import { useNotificationStream } from './composables/useNotificationStream.js'
 import { useNavStore, useRoleStore, useStudioStore, useConnectivityStore } from './stores/index.js'
+import { useNotificationStore } from './stores/useNotificationStore.js'
+import NotificationBell from './components/notifications/NotificationBell.vue'
 import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { BRAND } from './config/brand.js'
@@ -252,6 +256,29 @@ const creationMode = computed(() =>
   resolveEffectiveCreationMode(rawCreationMode.value, activeStudioProject.value),
 )
 
+// --- Notification Center (Phase 99) ---
+// Wire SSE → Pinia store so the header bell + dropdown render live events.
+const notificationStore = useNotificationStore()
+const projectSlugRef = computed(() => studioStore?.activeSlug ?? null)
+const {
+  history: streamHistory,
+  isConnected: streamConnected,
+  lastError: streamError,
+} = useNotificationStream(projectSlugRef)
+
+watch(streamHistory, (newStream) => {
+  const latest = newStream[newStream.length - 1]
+  if (latest && latest.id !== notificationStore.history[0]?.id) {
+    notificationStore.appendEvent(latest)
+  }
+}, { deep: true })
+
+watch(streamConnected, (v) => { notificationStore.isConnected = v })
+watch(streamError, (v) => { notificationStore.lastError = v })
+watch(projectSlugRef, (slug) => {
+  notificationStore.setActiveProject(slug)
+}, { immediate: true })
+
 // Nav items come from config (humanFirstNav / dashboardNav) and carry only
 // { id, label, icon? }. Attach the SVG component here, keyed by nav id, so the
 // sidebar renders `iconComponent` and falls back to the emoji `icon` string
@@ -291,6 +318,7 @@ const CENTERED_L1_NAV = new Set([
   'inbox',
   'produce',
   'insight',
+  'notifications',
 ])
 const isCenteredL1Page = computed(() => CENTERED_L1_NAV.has(activeNav))
 const isCompactL1Chrome = computed(() => isHumanFirstShell.value && isCenteredL1Page.value)
