@@ -40,7 +40,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal
 
-from lingwen_illustrations import storage
+from lingwen_illustrations import (
+    notifications,  # Phase 99 I091 fan-out
+    storage,
+)
 from lingwen_illustrations.bible_loader import load_character_bible
 from lingwen_illustrations.exceptions import GenerateError, LoadError
 from lingwen_illustrations.metadata import IllustrationMetadata
@@ -208,6 +211,9 @@ async def generate_illustration(
                     asset_meta=deleted_meta,
                 )
 
+        # Phase 99: I091 fan-out — record_event first for durability, publish second
+        # for fan-out. Both share the same ULID for since_id reconciliation.
+        _event_id = notifications.new_event_id()
         audit_log.record_event(
             project_root,
             event="generation",
@@ -215,7 +221,20 @@ async def generate_illustration(
             confirmed=None,  # generation from generate_illustration is API-driven (no user confirm dialog at this layer)
             bypassed=False,
             extra={"auto_generate": _auto_generate, "confirm_required": _confirm_required},
+            id=_event_id,  # NEW (Phase 99)
         )
+        notifications.publish(notifications.NotificationEvent(
+            id=_event_id,
+            project_slug=project_slug,
+            event_type="generation",
+            asset_id=meta.id,
+            asset_type=meta.type,
+            chapter_num=meta.chapter_num,
+            style_preset=meta.style_preset,
+            provider=provider,
+            ts=notifications.now_iso(),
+            extra={"auto_generate": _auto_generate, "confirm_required": _confirm_required},
+        ))
     except Exception:
         # Never block pipeline on settings/audit errors
         pass
@@ -330,13 +349,29 @@ async def regenerate_illustration(
     storage.replace_asset(project_root, image_bytes, new_meta)
 
     # Phase 98: audit log for regeneration (best-effort).
+    # Phase 99: I091 fan-out — record_event first for durability, publish second
+    # for fan-out. Both share the same ULID for since_id reconciliation.
     try:
         from lingwen_illustrations import audit_log
+        _event_id = notifications.new_event_id()
         audit_log.record_event(
             project_root,
             event="regeneration",
             asset_meta=new_meta,
+            id=_event_id,  # NEW (Phase 99)
         )
+        notifications.publish(notifications.NotificationEvent(
+            id=_event_id,
+            project_slug=existing_meta.project_slug,
+            event_type="regeneration",
+            asset_id=new_meta.id,
+            asset_type=new_meta.type,
+            chapter_num=new_meta.chapter_num,
+            style_preset=new_meta.style_preset,
+            provider=effective_provider,
+            ts=notifications.now_iso(),
+            extra={},
+        ))
     except Exception:
         pass
 
