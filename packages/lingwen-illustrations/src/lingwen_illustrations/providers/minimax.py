@@ -10,7 +10,7 @@ import base64
 
 import httpx
 
-from lingwen_illustrations.exceptions import GenerateError
+from lingwen_illustrations.exceptions import GenerateError, UnknownModelError
 from lingwen_illustrations.providers._b64_decode import decode_b64_envelope
 
 _PROVIDER_NAME = "minimax"
@@ -52,7 +52,6 @@ async def generate(
     """
     effective_model = model if model is not None else DEFAULT_MODEL
     if effective_model not in KNOWN_MODELS:
-        from lingwen_illustrations.exceptions import UnknownModelError
         raise UnknownModelError(_PROVIDER_NAME, effective_model, KNOWN_MODELS)
 
     url = f"{api_host.rstrip('/')}/v1/image_generation"

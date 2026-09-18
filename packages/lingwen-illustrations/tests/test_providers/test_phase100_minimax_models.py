@@ -11,7 +11,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-
 JPEG_MAGIC = b"\xff\xd8\xff\xe0fake-jpeg-bytes-here"
 
 
@@ -40,9 +39,7 @@ def test_minimax_known_models_count():
     """Phase 100 catalog: 2 models for MiniMax (full spec section 3)."""
     from lingwen_illustrations.providers.minimax import KNOWN_MODELS
 
-    assert len(KNOWN_MODELS) == 2
-    assert "minimax-multimodal" in KNOWN_MODELS
-    assert "minimax-vision-01" in KNOWN_MODELS
+    assert set(KNOWN_MODELS) == {"minimax-multimodal", "minimax-vision-01"}
 
 
 def test_minimax_default_model_in_known_models():
