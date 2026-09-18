@@ -17,12 +17,19 @@ _PROVIDER_NAME = "minimax"
 SUPPORTS_I2I = True
 _DEFAULT_STRENGTH = 0.5
 
+KNOWN_MODELS: tuple[str, ...] = (
+    "minimax-multimodal",     # current default; canonical v1 model
+    "minimax-vision-01",      # Phase 100 catalog addition
+)
+DEFAULT_MODEL: str = "minimax-multimodal"
+
 
 async def generate(
     *,
     prompt: str,
     api_key: str,
     api_host: str,
+    model: str | None = None,    # NEW (Phase 100). None → DEFAULT_MODEL.
     timeout: float = 60.0,
 ) -> bytes:
     """Call MiniMax image generation API. Returns JPEG bytes.
@@ -31,22 +38,30 @@ async def generate(
         prompt: Final composed image prompt (Stage 2 output).
         api_key: MiniMax API key (from APIConfig).
         api_host: Base URL (e.g. https://api.minimaxi.com).
+        model: MiniMax model identifier (Phase 100). None uses DEFAULT_MODEL.
+            Must be a member of KNOWN_MODELS — else UnknownModelError.
         timeout: HTTP timeout in seconds.
 
     Returns:
         Raw JPEG image bytes (decoded from b64_json envelope).
 
     Raises:
+        UnknownModelError: If ``model`` is not in KNOWN_MODELS (Phase 100).
         GenerateError: On HTTP / network / timeout / rate-limit / decode failures.
             All errors have provider="minimax" (per Phase 96 §5.1 invariant).
     """
+    effective_model = model if model is not None else DEFAULT_MODEL
+    if effective_model not in KNOWN_MODELS:
+        from lingwen_illustrations.exceptions import UnknownModelError
+        raise UnknownModelError(_PROVIDER_NAME, effective_model, KNOWN_MODELS)
+
     url = f"{api_host.rstrip('/')}/v1/image_generation"
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
     }
     payload = {
-        "model": "minimax-multimodal",
+        "model": effective_model,    # Phase 100: dynamic model (was hardcoded "minimax-multimodal")
         "prompt": prompt,
         "n": 1,
         "size": "1024x1024",
@@ -98,10 +113,15 @@ async def generate_with_reference(
     reference_image_bytes: bytes,
     api_key: str,
     api_host: str,
+    model: str | None = None,    # NEW (Phase 100). Accepted for API consistency; v1 ignores on i2i path.
     strength: float = _DEFAULT_STRENGTH,
     timeout: float = 60.0,
 ) -> bytes:
     """Call MiniMax image generation API with a reference image (i2i mode).
+
+    Phase 100 v1: `model` parameter accepted for API consistency but ignored
+    on the i2i path. Provider's i2i-default model is used regardless. v2
+    follow-up can dispatch model-aware i2i.
 
     Returns raw JPEG bytes decoded from b64_json envelope.
     """
@@ -154,4 +174,4 @@ async def generate_with_reference(
     return decode_b64_envelope(resp, provider=_PROVIDER_NAME)
 
 
-__all__ = ["generate", "generate_with_reference", "SUPPORTS_I2I"]
+__all__ = ["generate", "generate_with_reference", "SUPPORTS_I2I", "KNOWN_MODELS", "DEFAULT_MODEL"]
