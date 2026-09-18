@@ -174,6 +174,52 @@ async def generate_illustration(
     )
 
     storage.save_asset(project_root, image_bytes, meta)
+
+    # Phase 98: per-type+per-chapter LRU cleanup + audit log (best-effort).
+    # Imports hoisted out of try/except so a ModuleNotFoundError doesn't get
+    # silently swallowed by the broad exception handler.
+    from lingwen_illustrations import audit_log
+    from lingwen_illustrations.storage import lru_cleanup
+
+    try:
+        settings_path = project_root / ".lingwen" / "illustration_settings.yaml"
+        if settings_path.exists():
+            import yaml
+            _settings_data = yaml.safe_load(settings_path.read_text(encoding="utf-8")) or {}
+            _max_assets = int(_settings_data.get("max_assets", 20))
+            _auto_generate = bool(_settings_data.get("auto_generate", False))
+            _confirm_required = bool(_settings_data.get("confirm_before_generate", False))
+        else:
+            _max_assets = 20
+            _auto_generate = False
+            _confirm_required = False
+
+        if _max_assets > 0:
+            _deleted = lru_cleanup(
+                project_root,
+                type=type,
+                chapter_num=chapter_num,
+                max_count=_max_assets,
+            )
+            for deleted_meta in _deleted:
+                audit_log.record_event(
+                    project_root,
+                    event="cleanup",
+                    asset_meta=deleted_meta,
+                )
+
+        audit_log.record_event(
+            project_root,
+            event="generation",
+            asset_meta=meta,
+            confirmed=None,  # generation from generate_illustration is API-driven (no user confirm dialog at this layer)
+            bypassed=False,
+            extra={"auto_generate": _auto_generate, "confirm_required": _confirm_required},
+        )
+    except Exception:
+        # Never block pipeline on settings/audit errors
+        pass
+
     return meta
 
 
