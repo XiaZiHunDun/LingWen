@@ -204,6 +204,15 @@ invariants:
       publish for illustration event fan-out is illegal.
     severity: error
     scope: "all new illustration notification fan-out code; enforcement via tests/test_phase99_notification_center.py G2/G2b/G2c (3 double-write sites) + G4 (publish non-blocking) + G12 (I091 declared) + G13 (e2e SSE + history)"
+  - id: I092   # ★ Phase 100 NEW
+    rule: |
+      packages/lingwen-illustrations/src/lingwen_illustrations/providers/{minimax,openai,stability}.py:KNOWN_MODELS is the sole per-provider model catalog.
+      ProviderAdapter.models + .default_model expose the catalog.
+      UnknownModelError (lingwen_illustrations.exceptions) is the sole invalid-model error.
+      pipeline.resolve_model() implements 3-tier order (explicit > project default > provider default).
+      Any path bypassing resolve_model() or reading hardcoded model ids outside provider modules is illegal.
+    severity: error
+    scope: "all Phase 100 multi-model code paths; enforcement via tests/test_phase100_regression_guards.py G1 (11 KNOWN_MODELS) + G2 (ProviderAdapter.models+default_model) + G3 (UnknownModelError) + G4 (resolve_model exported) + G5 (settings yaml accepts default_models) + G6 (GenerateRequest.model optional) + G7 (GET /providers/{name}/models registered) + G8 (IllustrationMetadata.model records resolved value) + G9 (this invariant declared)"
 
 # 模块边界（明确每个模块的公共 API 和依赖）
 module_boundaries:
