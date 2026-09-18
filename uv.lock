@@ -835,6 +835,7 @@ dependencies = [
     { name = "lingwen-llm-service" },
     { name = "lingwen-paths" },
     { name = "lingwen-project-characters" },
+    { name = "python-ulid" },
 ]
 
 [package.metadata]
@@ -843,6 +844,7 @@ requires-dist = [
     { name = "lingwen-llm-service", editable = "packages/lingwen-llm-service" },
     { name = "lingwen-paths", editable = "packages/lingwen-paths" },
     { name = "lingwen-project-characters", editable = "packages/lingwen-project-characters" },
+    { name = "python-ulid", specifier = ">=2.0" },
 ]
 
 [[package]]

@@ -12,6 +12,7 @@ dependencies = [
     "lingwen-llm-service",        # I057 — Stage 1 LLM extraction
     "lingwen-project-characters", # I073 — character bible
     "lingwen-paths",              # I052 — project root resolution
+    "python-ulid>=2.0",           # Phase 99 — notification event ID (I091)
 ]
 # NOT-LEAF — 3 workspace deps
 
