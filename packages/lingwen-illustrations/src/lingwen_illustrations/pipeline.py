@@ -328,6 +328,18 @@ async def regenerate_illustration(
 
     # Atomic swap — original preserved if this fails.
     storage.replace_asset(project_root, image_bytes, new_meta)
+
+    # Phase 98: audit log for regeneration (best-effort).
+    try:
+        from lingwen_illustrations import audit_log
+        audit_log.record_event(
+            project_root,
+            event="regeneration",
+            asset_meta=new_meta,
+        )
+    except Exception:
+        pass
+
     return new_meta
 
 
