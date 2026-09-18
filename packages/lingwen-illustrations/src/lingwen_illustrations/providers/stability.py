@@ -14,6 +14,8 @@ from lingwen_illustrations.exceptions import GenerateError
 
 _PROVIDER_NAME = "stability"
 _DEFAULT_RETRY_AFTER = 30  # Stability v2beta often omits retry-after
+SUPPORTS_I2I = True
+_DEFAULT_STRENGTH = 0.35
 
 
 async def generate(
@@ -86,4 +88,59 @@ async def generate(
     return resp.content
 
 
-__all__ = ["generate"]
+async def generate_with_reference(
+    *,
+    prompt: str,
+    reference_image_bytes: bytes,
+    api_key: str,
+    api_host: str,
+    strength: float = _DEFAULT_STRENGTH,
+    timeout: float = 60.0,
+) -> bytes:
+    """Call Stability SD3 i2i endpoint. Returns raw PNG bytes via Accept: image/*."""
+    url = f"{api_host.rstrip('/')}/v2beta/stable-image/generate/sd3"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Accept": "image/*",
+    }
+    files = {
+        "prompt": (None, prompt),
+        "image": ("reference.jpg", reference_image_bytes, "image/jpeg"),
+        "strength": (None, str(strength)),
+        "output_format": (None, "png"),
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            resp = await client.post(url, headers=headers, files=files)
+    except httpx.TimeoutException as e:
+        raise GenerateError(
+            "Stability image API timeout", retry_after=60, provider=_PROVIDER_NAME
+        ) from e
+    except (httpx.HTTPError, ConnectionError, OSError) as e:
+        raise GenerateError(
+            f"Stability image API network error: {e}", provider=_PROVIDER_NAME
+        ) from e
+
+    if resp.status_code == 429:
+        raw = resp.headers.get("retry-after", str(_DEFAULT_RETRY_AFTER))
+        try:
+            retry_after = int(raw)
+        except ValueError:
+            retry_after = _DEFAULT_RETRY_AFTER
+        raise GenerateError(
+            "Stability rate limited", retry_after=retry_after, provider=_PROVIDER_NAME
+        )
+
+    if resp.status_code >= 400:
+        retryable = resp.status_code >= 500
+        raise GenerateError(
+            f"Stability image API HTTP {resp.status_code}",
+            provider=_PROVIDER_NAME,
+            retryable=retryable,
+        )
+
+    return resp.content
+
+
+__all__ = ["generate", "generate_with_reference", "SUPPORTS_I2I"]

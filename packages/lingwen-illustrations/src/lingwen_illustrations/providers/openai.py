@@ -12,6 +12,7 @@ from lingwen_illustrations.exceptions import GenerateError
 from lingwen_illustrations.providers._b64_decode import decode_b64_envelope
 
 _PROVIDER_NAME = "openai"
+SUPPORTS_I2I = False
 
 
 async def generate(
@@ -90,4 +91,21 @@ async def generate(
     return decode_b64_envelope(resp, provider=_PROVIDER_NAME)
 
 
-__all__ = ["generate"]
+async def generate_with_reference(
+    *,
+    prompt: str,
+    reference_image_bytes: bytes,
+    api_key: str,
+    api_host: str,
+    strength: float = 0.0,
+    timeout: float = 60.0,
+) -> bytes:
+    """OpenAI DALL-E 3 has no i2i capability. Always raises GenerateError."""
+    raise GenerateError(
+        "OpenAI DALL-E 3 does not support image-to-image generation",
+        provider=_PROVIDER_NAME,
+        retryable=False,
+    )
+
+
+__all__ = ["generate", "generate_with_reference", "SUPPORTS_I2I"]
