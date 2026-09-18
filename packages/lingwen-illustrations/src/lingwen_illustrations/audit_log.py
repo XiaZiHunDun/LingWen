@@ -34,6 +34,7 @@ def record_event(
     confirmed: bool | None = None,
     bypassed: bool = False,
     extra: dict | None = None,
+    id: str | None = None,  # NEW (Phase 99). None → omit from payload.
 ) -> None:
     """Append JSONL event. Best-effort: OSError silently swallowed.
 
@@ -44,6 +45,8 @@ def record_event(
         confirmed: Whether user confirmed the action (None if N/A).
         bypassed: Whether confirmation was required but skipped.
         extra: Additional context fields merged into the JSONL record.
+        id: Optional ULID; when provided, written into payload so SSE+JSONL
+            share the same id for since_id reconciliation (Phase 99 I091).
     """
     payload = {
         "ts": datetime.now(timezone.utc).isoformat(),
@@ -55,6 +58,8 @@ def record_event(
         "bypassed": bypassed,
         **(extra or {}),
     }
+    if id is not None:
+        payload["id"] = id  # NEW (Phase 99)
     target = _audit_path(project_root)
     try:
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -64,4 +69,42 @@ def record_event(
         pass  # best-effort, never raise
 
 
-__all__ = ["EventType", "record_event"]
+def read_history(
+    project_root: Path,
+    *,
+    since_id: str | None = None,
+    limit: int = 20,
+) -> tuple[list[dict], bool]:
+    """Parse JSONL audit log, return latest N events newer than since_id.
+
+    Phase 99: returns (events, has_more) where events is sorted most-recent
+    first by ULID lexicographic order (= time order), and has_more is True
+    if more rows exist beyond limit. Corrupt lines are silently skipped.
+    Returns ([], False) if the file does not exist or cannot be read.
+    """
+    target = _audit_path(project_root)
+    if not target.exists():
+        return [], False
+    rows: list[dict] = []
+    try:
+        with target.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    row = json.loads(line)
+                except json.JSONDecodeError:
+                    continue  # corrupt line, skip
+                row_id = row.get("id", "")
+                if since_id is not None and row_id <= since_id:
+                    continue  # older or equal, skip
+                rows.append(row)
+    except OSError:
+        return [], False
+    rows.sort(key=lambda r: r.get("id", ""), reverse=True)
+    has_more = len(rows) > limit
+    return rows[:limit], has_more
+
+
+__all__ = ["EventType", "record_event", "read_history"]
