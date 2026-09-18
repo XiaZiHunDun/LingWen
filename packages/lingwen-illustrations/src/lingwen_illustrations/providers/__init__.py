@@ -1,16 +1,21 @@
-"""Image generation provider registry (Phase 96).
+"""Image generation provider registry (Phase 96 + Phase 97 adapter).
 
-Exposes KNOWN_PROVIDERS tuple + get_provider(name) lookup function.
-Each provider module (minimax/openai/stability) exports `generate(...)`
-with uniform signature: `async def generate(*, prompt, api_key, api_host, timeout=60) -> bytes`.
+Exposes KNOWN_PROVIDERS tuple + get_provider(name) lookup.
+Phase 97: get_provider returns a ProviderAdapter dataclass with 4 fields:
+- name: str
+- generate: async callable (text-only, Phase 96)
+- generate_with_reference: async callable (i2i, Phase 97)
+- supports_i2i: bool capability declaration
 
-`get_provider` does a dynamic lookup of the named module's `generate`
-attribute, so callers that monkeypatch the module attribute
-(e.g. `monkeypatch.setattr("lingwen_illustrations.providers.minimax.generate", fake)`)
-get the patched function rather than the one captured at registry import time.
+Dynamic module attribute lookup preserves Phase 96 monkeypatch compatibility:
+`monkeypatch.setattr("lingwen_illustrations.providers.minimax.generate", fake)`
+still works because get_provider reads module.generate at call time.
 """
+from __future__ import annotations
+
 import importlib
-from typing import Any
+from dataclasses import dataclass
+from typing import Awaitable, Callable
 
 from lingwen_illustrations.providers import minimax, openai, stability  # noqa: F401
 
@@ -22,34 +27,51 @@ class UnknownProviderError(ValueError):
     """Raised when get_provider(name) gets a name not in KNOWN_PROVIDERS."""
 
 
-def get_provider(name: str) -> Any:
-    """Return the adapter generate() callable for the named provider.
+@dataclass(frozen=True)
+class ProviderAdapter:
+    """Adapter bundling text + i2i generation for one provider (Phase 97).
+
+    `generate` and `generate_with_reference` are looked up from the provider
+    module dynamically at adapter creation time, so test monkeypatching
+    (which mutates the module attribute) is reflected in subsequently-
+    created adapters.
+    """
+
+    name: str
+    generate: Callable[..., Awaitable[bytes]]
+    generate_with_reference: Callable[..., Awaitable[bytes]]
+    supports_i2i: bool
+
+
+def get_provider(name: str) -> ProviderAdapter:
+    """Return the ProviderAdapter for the named provider.
 
     Args:
         name: Provider name (must be one of KNOWN_PROVIDERS).
 
     Returns:
-        Async function with signature (*, prompt, api_key, api_host, timeout=60) -> bytes.
+        ProviderAdapter with all 4 fields populated.
 
     Raises:
-        UnknownProviderError: If name is not in KNOWN_PROVIDERS.
-
-    Dynamic lookup: re-reads the provider module's `generate` attribute on
-    each call. This lets tests monkeypatch the module attribute and have
-    the change take effect on subsequent `get_provider(name)` calls —
-    matching the established pattern in `test_image_generator.py`.
+        UnknownProviderError: If name not in KNOWN_PROVIDERS.
     """
     if name not in KNOWN_PROVIDERS:
         raise UnknownProviderError(
             f"unknown provider '{name}', expected one of {KNOWN_PROVIDERS}"
         )
     module = importlib.import_module(f"lingwen_illustrations.providers.{name}")
-    return module.generate
+    return ProviderAdapter(
+        name=name,
+        generate=module.generate,
+        generate_with_reference=module.generate_with_reference,
+        supports_i2i=module.SUPPORTS_I2I,
+    )
 
 
 __all__ = [
     "KNOWN_PROVIDERS",
     "DEFAULT_PROVIDER",
     "UnknownProviderError",
+    "ProviderAdapter",
     "get_provider",
 ]

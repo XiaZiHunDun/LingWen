@@ -125,10 +125,10 @@ async def generate_illustration(
         custom_prompt=custom_prompt,
     )
 
-    # Stage 4: provider dispatch (Phase 96). get_provider raises
+    # Stage 4: provider dispatch (Phase 96 + 97 adapter). get_provider raises
     # UnknownProviderError if name not in KNOWN_PROVIDERS.
-    provider_fn = get_provider(provider)
-    image_bytes = await provider_fn(
+    adapter = get_provider(provider)
+    image_bytes = await adapter.generate(
         prompt=final_prompt,
         api_key=api_key,
         api_host=api_host,
@@ -214,9 +214,9 @@ async def regenerate_illustration(
         custom_prompt=custom_prompt,
     )
 
-    # Stage 4: regenerate image bytes via provider.
-    provider_fn = get_provider(effective_provider)
-    image_bytes = await provider_fn(
+    # Stage 4: regenerate image bytes via provider (Phase 97 adapter).
+    adapter = get_provider(effective_provider)
+    image_bytes = await adapter.generate(
         prompt=final_prompt,
         api_key=api_key,
         api_host=api_host,

@@ -1,5 +1,12 @@
-"""Test provider registry (Phase 96 providers/__init__.py)."""
+"""Test provider registry (Phase 96 + Phase 97 adapter).
+
+Phase 97: get_provider returns a ProviderAdapter dataclass (4 fields).
+Phase 96 legacy tests updated to assert against `adapter.generate`
+instead of the bare function return.
+"""
 from __future__ import annotations
+
+import inspect
 
 import pytest
 from lingwen_illustrations.providers import (
@@ -20,16 +27,17 @@ def test_default_provider_is_minimax():
 
 def test_get_provider_returns_callable_for_each_known():
     for name in KNOWN_PROVIDERS:
-        fn = get_provider(name)
-        assert callable(fn)
-        import inspect
-        assert inspect.iscoroutinefunction(fn)
+        adapter = get_provider(name)
+        assert callable(adapter.generate)
+        assert callable(adapter.generate_with_reference)
+        assert inspect.iscoroutinefunction(adapter.generate)
+        assert inspect.iscoroutinefunction(adapter.generate_with_reference)
 
 
 def test_get_provider_minimax_returns_minimax_generate():
     from lingwen_illustrations.providers import minimax
-    fn = get_provider("minimax")
-    assert fn is minimax.generate
+    adapter = get_provider("minimax")
+    assert adapter.generate is minimax.generate
 
 
 def test_get_provider_unknown_raises():
