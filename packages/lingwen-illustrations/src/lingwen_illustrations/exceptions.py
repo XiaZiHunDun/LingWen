@@ -73,6 +73,25 @@ class GenerateError(IllustrationError):
         self.provider = provider
 
 
+class ProviderExhaustedError(GenerateError):
+    """Phase 101: All providers in fallback chain failed with retryable errors.
+
+    Subclass of GenerateError so existing catch blocks continue to work.
+    retryable=False because the chain is exhausted (no point retrying the
+    same chain without intervention). Carries .attempts for HTTP 502 detail.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        attempts: list[dict],
+        provider: str,
+    ) -> None:
+        super().__init__(message, provider=provider, retryable=False)
+        self.attempts = attempts
+
+
 class StoreError(IllustrationError):
     """File system write failure (disk full / permission / invalid path)."""
 
@@ -108,6 +127,7 @@ __all__ = [
     "ExtractError",
     "ComposeError",
     "GenerateError",
+    "ProviderExhaustedError",  # NEW (Phase 101)
     "StoreError",
     "UnknownModelError",
 ]
