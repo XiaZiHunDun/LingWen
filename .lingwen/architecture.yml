@@ -225,6 +225,27 @@ invariants:
       exception. infra.fallback.* and infra.image_provider.* paths are illegal.
     severity: error
     scope: "all Phase 101 fallback code paths; enforcement via tests/test_phase101_atomic_provider_fallback.py G1 (settings.yaml fallback_chain default []) + G2 (GenerateRequest.fallback_chain) + G3 (pipeline.generate_illustration uses dispatch_with_fallback) + G4 (pipeline.regenerate_illustration uses dispatch_with_fallback) + G5 (ProviderExhaustedError exception class) + G6 (audit_log.record_event receives attempts in extra) + G7 (this invariant declared) + G8 (Phase 100 G1-G9 preserved) + G9 (i2i path does not enter dispatch_with_fallback) + G10 (STAGE_HTTP_CODES maps ProviderExhaustedError → 502)"
+  - id: I094   # ★ Phase 102 NEW
+    rule: |
+      packages/lingwen-illustrations/src/lingwen_illustrations/pipeline.py:merge_chapter_settings
+      is the ONLY entry point for chapter-overrides merging in REQ-002 illustration generation.
+      pipeline.generate_illustration() and pipeline.regenerate_illustration() MUST call this
+      helper before resolve_provider() / resolve_model() so per-chapter subsets (max_assets,
+      confirm_before_generate, auto_generate, fallback_chain) override project-wide defaults.
+      Any path bypassing merge_chapter_settings for chapter-scoped settings is illegal.
+      infra.illustrations.* / infra.image_provider.* paths are illegal.
+    severity: error
+    scope: "all Phase 102 chapter-overrides code paths; enforcement via tests/test_phase102_settings_persistence_extension.py G1 (ProjectSettings.chapter_overrides field) + G2 (merge_chapter_settings exists) + G6 (chapter_overrides Pydantic subset validator) + G9 (I094 declared in architecture.yml) + G10 (frontend ProjectSettingsIllustration.vue chapter-overrides section) + G11 (useProjectSettings store chapter_overrides) + G12 (Phase 101 yaml back-compat loads via Pydantic v2 default fill)"
+  - id: I095   # ★ Phase 102 NEW
+    rule: |
+      packages/lingwen-illustrations/src/lingwen_illustrations/notifications.py:_consecutive_failures
+      is a per-project in-memory state machine maintained ONLY via record_failure() / record_success()
+      helpers. Crossing the project's notify_threshold MUST emit exactly one severity: "warning"
+      notification (no spam — repeated failures above threshold do NOT re-emit until record_success
+      resets the counter). infra.notifications.* paths are illegal; any path bypassing
+      record_failure / record_success for consecutive-failure tracking is illegal.
+    severity: error
+    scope: "all Phase 102 notification threshold code paths; enforcement via tests/test_phase102_settings_persistence_extension.py G1 (ProjectSettings.notify_threshold field) + G4 (record_failure + record_success exist) + G5 (_consecutive_failures state + warning emit) + G8 (notify_threshold >= 1 validator) + G9 (I095 declared in architecture.yml) + G10 (frontend ProjectSettingsIllustration.vue notify-threshold section) + G11 (useProjectSettings store notify_threshold) + G12 (Phase 101 yaml back-compat loads via Pydantic v2 default fill); extends I091 invariant (publish is sole fan-out entry point)"
 
 # 模块边界（明确每个模块的公共 API 和依赖）
 module_boundaries:
