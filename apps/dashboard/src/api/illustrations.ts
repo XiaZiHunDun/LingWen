@@ -33,6 +33,42 @@ export function deleteReferenceImage(slug: string): Promise<void> {
 
 // Phase 100: typed wrappers for illustration generation/regeneration + model catalog.
 
+// Phase 96/98/100/101/102: ProjectSettings type mirrors the backend Pydantic schema
+// (`apps/studio_api/routes/project_settings.py:ProjectSettings`). The 6 original
+// fields were never formally typed on the frontend (store used inline object
+// shapes); Phase 102 promotes them to a named interface so consumers can rely
+// on type safety for the 3 new fields added in this phase.
+export interface ProjectSettings {
+  default_provider: 'minimax' | 'openai' | 'stability'
+  // Phase 100: per-provider default model override (primary path)
+  default_models?: Record<string, string>
+  // Phase 98: 3 originally-extended fields
+  auto_generate?: boolean
+  max_assets?: number
+  confirm_before_generate?: boolean
+  // Phase 101: cross-provider fallback chain (ordered provider names)
+  fallback_chain?: string[]
+  // NEW Phase 102 ↓
+  /** Phase 102: provider name → model name, used only in fallback chain retry path. */
+  fallback_models?: Record<string, string>
+  /**
+   * Phase 102: chapter_num → subset of overridable fields.
+   * Whitelist mirrors backend `_CHAPTER_OVERRIDABLE_FIELDS` in
+   * apps/studio_api/routes/project_settings.py:35-37.
+   */
+  chapter_overrides?: Record<
+    number,
+    Partial<
+      Pick<
+        ProjectSettings,
+        'max_assets' | 'confirm_before_generate' | 'auto_generate' | 'fallback_chain'
+      >
+    >
+  >
+  /** Phase 102: consecutive failure count threshold that triggers a warning notification. */
+  notify_threshold?: number
+}
+
 export interface IllustrationMetadata {
   id: string
   type: 'cover' | 'chapter'
