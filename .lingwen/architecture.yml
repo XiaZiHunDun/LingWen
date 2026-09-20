@@ -213,6 +213,18 @@ invariants:
       Any path bypassing resolve_model() or reading hardcoded model ids outside provider modules is illegal.
     severity: error
     scope: "all Phase 100 multi-model code paths; enforcement via tests/test_phase100_regression_guards.py G1 (11 KNOWN_MODELS) + G2 (ProviderAdapter.models+default_model) + G3 (UnknownModelError) + G4 (resolve_model exported) + G5 (settings yaml accepts default_models) + G6 (GenerateRequest.model optional) + G7 (GET /providers/{name}/models registered) + G8 (IllustrationMetadata.model records resolved value) + G9 (this invariant declared)"
+  - id: I093   # ★ Phase 101 NEW
+    rule: |
+      packages/lingwen-illustrations/src/lingwen_illustrations/fallback.py:dispatch_with_fallback
+      is the only entry point for cross-provider fallback iteration in REQ-002 illustration generation.
+      pipeline.generate_illustration and pipeline.regenerate_illustration text-only paths call
+      this helper (passing pipeline.get_provider as provider_factory for testability); i2i paths
+      bypass it (provider-specific i2i models are not interchangeable).
+      Attempt (frozen dataclass) is the only attempt-tracking shape.
+      ProviderExhaustedError (lingwen_illustrations.exceptions) is the only terminal exhaustion
+      exception. infra.fallback.* and infra.image_provider.* paths are illegal.
+    severity: error
+    scope: "all Phase 101 fallback code paths; enforcement via tests/test_phase101_atomic_provider_fallback.py G1 (settings.yaml fallback_chain default []) + G2 (GenerateRequest.fallback_chain) + G3 (pipeline.generate_illustration uses dispatch_with_fallback) + G4 (pipeline.regenerate_illustration uses dispatch_with_fallback) + G5 (ProviderExhaustedError exception class) + G6 (audit_log.record_event receives attempts in extra) + G7 (this invariant declared) + G8 (Phase 100 G1-G9 preserved) + G9 (i2i path does not enter dispatch_with_fallback) + G10 (STAGE_HTTP_CODES maps ProviderExhaustedError → 502)"
 
 # 模块边界（明确每个模块的公共 API 和依赖）
 module_boundaries:
