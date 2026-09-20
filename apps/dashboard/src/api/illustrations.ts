@@ -66,6 +66,9 @@ export function generateIllustration(
     model?: string | null
     use_project_reference?: boolean
     reference_image?: File | null
+    // NEW (Phase 101): optional per-call fallback chain override.
+    // undefined → use project settings; empty [] → no fallback.
+    fallback_chain?: string[] | null
   }
 ): Promise<IllustrationMetadata> {
   return $fetch(`/api/illustrations/generate?project_slug=${slug}`, {
@@ -82,10 +85,21 @@ export function regenerateIllustration(
     model?: string | null
     use_project_reference?: boolean
     reference_image?: File | null
+    // NEW (Phase 101): comma-separated string in URL query param
+    // (matches FastAPI Optional[str] = Query(None) on backend).
+    fallback_chain?: string | null
   }
 ): Promise<IllustrationMetadata> {
+  // Phase 101: append fallback_chain as comma-separated query param.
+  // Backend reads it via Optional[str] = Query(None) and parses to list.
+  // Other body fields preserved for backwards compatibility.
+  const params = new URLSearchParams()
+  params.set('project_slug', slug)
+  if (body.fallback_chain) {
+    params.set('fallback_chain', body.fallback_chain)
+  }
   return $fetch(
-    `/api/illustrations/${assetId}/regenerate?project_slug=${slug}`,
+    `/api/illustrations/${assetId}/regenerate?${params.toString()}`,
     { method: 'PUT', body },
   )
 }
