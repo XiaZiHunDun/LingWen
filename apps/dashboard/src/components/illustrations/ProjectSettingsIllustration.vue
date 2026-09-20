@@ -96,6 +96,12 @@ async function update_model_default(provider, model) {
 }
 
 const on_provider_change = (value) => update('default_provider', value)
+
+// Phase 101: collect selected options from native multi-select change event.
+const on_fallback_chain_change = (event) => {
+  const selected = Array.from(event.target.selectedOptions).map((o) => o.value)
+  update('fallback_chain', selected)
+}
 </script>
 
 <template>
@@ -194,6 +200,33 @@ const on_provider_change = (value) => update('default_provider', value)
           </option>
         </select>
       </div>
+    </div>
+
+    <!-- Phase 101: fallback chain multi-select. Empty chain = no fallback.
+         When non-empty, the pipeline tries each provider in order if the
+         primary fails with a transient error (5xx / 429 / timeout). -->
+    <div class="field project-settings-illustration-field">
+      <label
+        class="project-settings-illustration-label"
+        for="project-settings-illustration-fallback-chain"
+      >
+        Fallback Chain
+      </label>
+      <select
+        id="project-settings-illustration-fallback-chain"
+        class="project-settings-illustration-fallback-chain-select"
+        multiple
+        :value="modelValue.fallback_chain || []"
+        data-testid="project-settings-illustration-fallback-chain"
+        @change="on_fallback_chain_change($event)"
+      >
+        <option v-for="p in providers" :key="p.id" :value="p.id">
+          {{ p.label }}
+        </option>
+      </select>
+      <p class="empty-hint project-settings-illustration-hint">
+        主 provider 失败时按序尝试。可留空（仅主 provider）。
+      </p>
     </div>
 
     <div class="field project-settings-illustration-field">
