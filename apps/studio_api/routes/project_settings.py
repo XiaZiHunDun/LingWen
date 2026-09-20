@@ -17,6 +17,7 @@ Back-compat via Pydantic v2 default fill — old yaml files still load.
 """
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any, Literal
 
@@ -29,10 +30,12 @@ from apps.studio_api.routes._project_helpers import project_root_for
 from apps.studio_api.routes.ctx import RoutesContext
 
 # Whitelisted subset of ProjectSettings fields that can be overridden per chapter
-# (Phase 102). Other fields (e.g. default_provider, fallback_chain itself) make
-# less sense per-chapter and would add complexity to the merge logic.
+# (Phase 102). Phase 103 adds default_models — chapter can override which model
+# to use per provider. Other fields (e.g. default_provider, fallback_models,
+# fallback_chain itself) make less sense per-chapter and would add complexity
+# to the merge logic.
 _CHAPTER_OVERRIDABLE_FIELDS: frozenset[str] = frozenset(
-    {"max_assets", "confirm_before_generate", "auto_generate", "fallback_chain"}
+    {"max_assets", "confirm_before_generate", "auto_generate", "fallback_chain", "default_models"}
 )
 
 
@@ -74,7 +77,14 @@ class ProjectSettings(BaseModel):
     @field_validator("chapter_overrides")
     @classmethod
     def _validate_chapter_overrides(cls, v: dict[int, dict[str, Any]]) -> dict[int, dict[str, Any]]:
-        """Key >= 0 int; value keys must be subset of _CHAPTER_OVERRIDABLE_FIELDS."""
+        """Key >= 0 int; value keys must be subset of _CHAPTER_OVERRIDABLE_FIELDS.
+
+        Phase 103: cross-reference per-chapter default_models values against
+        KNOWN_PROVIDERS + provider.KNOWN_MODELS (same pattern as top-level
+        fallback_models validator).
+        """
+        from lingwen_illustrations.providers import KNOWN_PROVIDERS, get_provider
+
         for chapter_num, subset in v.items():
             if not isinstance(chapter_num, int) or chapter_num < 0:
                 raise ValueError(
@@ -86,7 +96,38 @@ class ProjectSettings(BaseModel):
                     f"unknown fields in chapter_overrides[{chapter_num}]: {unknown}; "
                     f"allowed: {sorted(_CHAPTER_OVERRIDABLE_FIELDS)}"
                 )
+            # Phase 103: cross-reference per-chapter default_models if present
+            if "default_models" in subset:
+                cls._validate_chapter_default_models(
+                    chapter_num, subset["default_models"], KNOWN_PROVIDERS, get_provider
+                )
         return v
+
+    @classmethod
+    def _validate_chapter_default_models(
+        cls,
+        chapter_num: int,
+        default_models: dict[str, str],
+        known_providers: frozenset[str],
+        get_provider_fn: Callable,
+    ) -> None:
+        """Cross-reference per-chapter default_models against KNOWN_MODELS.
+
+        Mirrors the top-level fallback_models validator pattern (Phase 100).
+        """
+        for provider, model in default_models.items():
+            if provider not in known_providers:
+                raise ValueError(
+                    f"chapter_overrides[{chapter_num}].default_models: "
+                    f"unknown provider: {provider!r}"
+                )
+            adapter = get_provider_fn(provider)
+            if model not in adapter.models:
+                raise ValueError(
+                    f"chapter_overrides[{chapter_num}].default_models: "
+                    f"unknown model {model!r} for provider {provider!r}; "
+                    f"valid models: {adapter.models}"
+                )
 
     @field_validator("notify_threshold")
     @classmethod
