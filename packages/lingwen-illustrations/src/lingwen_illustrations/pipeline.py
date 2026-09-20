@@ -144,6 +144,29 @@ def resolve_model(
     return adapter.default_model
 
 
+def merge_chapter_settings(
+    settings: dict[str, Any],
+    chapter_num: int | None,
+) -> dict[str, Any]:
+    """Return settings merged with chapter_overrides[chapter_num] subset.
+
+    Override takes precedence. Returns settings unchanged (no copy) when:
+    - chapter_num is None (cover asset, no chapter scope)
+    - chapter_num not in settings['chapter_overrides']
+    - settings['chapter_overrides'] is empty
+
+    Immutable: never mutates input dict (KISS, avoids hidden aliasing bugs).
+
+    Phase 102 I094 invariant: this is the ONLY entry point for chapter-overrides
+    merging in pipeline.generate_illustration / pipeline.regenerate_illustration.
+    """
+    overrides = settings.get("chapter_overrides") or {}
+    if chapter_num is None or chapter_num not in overrides:
+        return settings
+    subset = overrides[chapter_num] or {}
+    return {**settings, **subset}
+
+
 async def generate_illustration(
     *,
     project_root: Path,
