@@ -360,6 +360,7 @@ async def regenerate_illustration(
     provider: str | None = None,  # NEW (Phase 96). None -> use existing_meta.provider.
     model: str | None = None,  # NEW (Phase 100). None -> resolve.
     reference_image_bytes: bytes | None = None,  # NEW (Phase 97)
+    fallback_chain: list[str] | None = None,    # NEW (Phase 101). None -> load from settings.
 ) -> IllustrationMetadata:
     """Re-run the extract + compose + generate stages for an existing asset.
 
@@ -379,6 +380,12 @@ async def regenerate_illustration(
     None means use 3-tier resolution order (explicit > project > provider default).
     i2i path does NOT accept model in v1.
 
+    Phase 101: when `fallback_chain` is provided (or settings has it),
+    iterates through [effective_provider, *fallback_chain] and tries each
+    on retryable GenerateError. Successful provider recorded on
+    IllustrationMetadata.provider; all attempts in audit extra.attempts.
+    i2i path does NOT use fallback.
+
     Atomicity:
     Uses ``storage.replace_asset`` (temp file + POSIX rename) to swap bytes
     in place. Concurrent readers see either the old bytes or the new bytes —
@@ -394,6 +401,7 @@ async def regenerate_illustration(
         StoreError: Stage 4 atomic replace failed.
         UnknownModelError: explicit model not in provider's KNOWN_MODELS.
         UnknownProviderError: provider name not in providers.KNOWN_PROVIDERS.
+        ProviderExhaustedError: NEW (Phase 101). All providers in chain failed retryably.
     """
     effective_provider = provider if provider is not None else existing_meta.provider
 
@@ -421,16 +429,15 @@ async def regenerate_illustration(
 
     # Stage 4: regenerate image bytes via provider. Phase 97: route to i2i vs text.
     # Phase 100: resolve model via 3-tier order (explicit > project > provider default).
-    adapter = get_provider(effective_provider)
+    # Phase 101: fallback chain for text-only path; i2i path bypasses fallback.
+    from lingwen_illustrations.fallback import Attempt, dispatch_with_fallback
+
     settings = _load_illustration_settings(project_root)
-    effective_model = resolve_model(
-        provider=effective_provider,
-        explicit=model,
-        project_settings=settings,
-        adapter=adapter,
-    )
+    effective_chain: list[str] = list(fallback_chain or settings.get("fallback_chain") or [])
 
     if reference_image_bytes is not None:
+        # i2i path: NO fallback (Phase 101). Single provider call.
+        adapter = get_provider(effective_provider)
         if not adapter.supports_i2i:
             raise GenerateError(
                 f"provider '{effective_provider}' does not support image-to-image generation",
@@ -443,13 +450,32 @@ async def regenerate_illustration(
             api_key=api_key,
             api_host=api_host,
         )
-    else:
-        image_bytes = await adapter.generate(
-            prompt=final_prompt,
-            api_key=api_key,
-            api_host=api_host,
-            model=effective_model,
+        effective_model = resolve_model(
+            provider=effective_provider,
+            explicit=model,
+            project_settings=settings,
+            adapter=adapter,
         )
+        attempts: list[Attempt] = [
+            Attempt(provider=effective_provider, model=effective_model, error=None, ts=_iso_utc_now()),
+        ]
+    else:
+        # Text-only path: fallback chain dispatch (Phase 101).
+        def _credentials_for(_p: str) -> tuple[str, str]:
+            return (api_key, api_host)
+
+        chain = [effective_provider] + effective_chain
+        image_bytes, success_provider, success_model, attempts = await dispatch_with_fallback(
+            chain=chain,
+            explicit_model=model,
+            project_settings=settings,
+            api_credentials_for=_credentials_for,
+            prompt=final_prompt,
+            provider_factory=get_provider,  # Phase 101: testability (patches take effect).
+        )
+        # Update effective provider/model for metadata + audit (Phase 101).
+        effective_provider = success_provider
+        effective_model = success_model
 
     # Stage 5: build new metadata (preserve asset_id, refresh dynamic fields).
     prompt_hash = f"sha256:{hashlib.sha256(final_prompt.encode('utf-8')).hexdigest()[:16]}"
@@ -475,13 +501,16 @@ async def regenerate_illustration(
     # Phase 98: audit log for regeneration (best-effort).
     # Phase 99: I091 fan-out — record_event first for durability, publish second
     # for fan-out. Both share the same ULID for since_id reconciliation.
+    # Phase 101: attempts list in extra (NEW).
     try:
         from lingwen_illustrations import audit_log
         _event_id = notifications.new_event_id()
+        _attempts_dicts = [a.__dict__ for a in attempts]
         audit_log.record_event(
             project_root,
             event="regeneration",
             asset_meta=new_meta,
+            extra={"attempts": _attempts_dicts},  # NEW (Phase 101)
             id=_event_id,  # NEW (Phase 99)
         )
         notifications.publish(notifications.NotificationEvent(
@@ -492,9 +521,9 @@ async def regenerate_illustration(
             asset_type=new_meta.type,
             chapter_num=new_meta.chapter_num,
             style_preset=new_meta.style_preset,
-            provider=effective_provider,
+            provider=effective_provider,  # NEW (Phase 101): successful provider
             ts=notifications.now_iso(),
-            extra={},
+            extra={"attempts": _attempts_dicts},  # NEW (Phase 101)
         ))
     except Exception:
         pass

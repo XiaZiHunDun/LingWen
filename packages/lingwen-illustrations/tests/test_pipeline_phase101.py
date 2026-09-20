@@ -11,6 +11,8 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 import yaml
 
+from lingwen_illustrations.exceptions import GenerateError
+
 
 def _make_fake_adapter(name: str = "minimax", supports_i2i: bool = False):
     """Build a fake provider adapter matching the ProviderAdapter dataclass."""
@@ -66,8 +68,6 @@ async def test_generate_fallback_records_attempts_in_audit(
     _patch_pipeline_common(monkeypatch)
 
     # Build adapters: openai fails retryable, stability succeeds
-    from lingwen_illustrations.exceptions import GenerateError
-
     openai_adapter = _make_fake_adapter(name="openai")
     openai_adapter.generate.side_effect = GenerateError(
         "boom 502", retryable=True, provider="openai",
@@ -177,3 +177,138 @@ async def test_generate_no_fallback_when_chain_empty(monkeypatch, tmp_path: Path
     attempts = captured_events[0]["extra"].get("attempts", [])
     assert len(attempts) == 1
     assert attempts[0]["provider"] == "openai"
+
+
+@pytest.mark.asyncio
+async def test_regenerate_fallback_chain_uses_existing_provider(monkeypatch, tmp_path: Path):
+    """regenerate with body.provider=None uses existing_meta.provider + chain."""
+    from lingwen_illustrations import audit_log, notifications, pipeline
+    from lingwen_illustrations.metadata import IllustrationMetadata
+
+    _patch_pipeline_common(monkeypatch)
+
+    openai_adapter = _make_fake_adapter(name="openai")
+    openai_adapter.generate.side_effect = GenerateError(
+        "boom 502", retryable=True, provider="openai",
+    )
+    stability_adapter = _make_fake_adapter(name="stability")
+    stability_adapter.generate.return_value = b"regen-jpeg"
+
+    def _provider_router(name: str):
+        if name == "openai":
+            return openai_adapter
+        if name == "stability":
+            return stability_adapter
+        raise ValueError(name)
+
+    monkeypatch.setattr(pipeline, "get_provider", _provider_router)
+    monkeypatch.setattr(pipeline.storage, "replace_asset", lambda *a, **kw: None)
+
+    captured_events: list[dict] = []
+
+    def _capture(root, *, event, **kwargs):
+        if event == "regeneration":
+            captured_events.append({"extra": kwargs.get("extra") or {}})
+
+    monkeypatch.setattr(audit_log, "record_event", _capture)
+    monkeypatch.setattr(notifications, "publish", lambda ev: None)
+
+    existing_meta = IllustrationMetadata(
+        id="old-id",
+        type="cover",
+        project_slug="test",
+        chapter_num=None,
+        style_preset="test",
+        custom_prompt=None,
+        scene_json={},
+        final_prompt="orig",
+        prompt_hash="sha256:abc",
+        model="dall-e-3",
+        provider="openai",
+        used_reference_image=False,
+        created_at="2026-09-18T00:00:00Z",
+    )
+
+    new_meta = await pipeline.regenerate_illustration(
+        project_root=tmp_path,
+        existing_meta=existing_meta,
+        api_key="fake",
+        api_host="https://fake.host",
+        provider=None,  # → use existing_meta.provider (= openai)
+        model=None,
+        reference_image_bytes=None,
+        fallback_chain=["stability"],
+    )
+
+    assert new_meta.provider == "stability"  # fallback succeeded
+    assert new_meta.id == "old-id"  # preserved
+    attempts = captured_events[0]["extra"].get("attempts", [])
+    assert len(attempts) == 2
+    assert attempts[0]["provider"] == "openai"  # primary first
+    assert attempts[1]["provider"] == "stability"
+
+
+@pytest.mark.asyncio
+async def test_regenerate_fallback_preserves_asset_id(monkeypatch, tmp_path: Path):
+    """On fallback success, atomic replace_asset is called (asset_id preserved)."""
+    from lingwen_illustrations import audit_log, notifications, pipeline
+    from lingwen_illustrations.metadata import IllustrationMetadata
+
+    _patch_pipeline_common(monkeypatch)
+
+    openai_adapter = _make_fake_adapter(name="openai")
+    openai_adapter.generate.side_effect = GenerateError(
+        "boom 502", retryable=True, provider="openai",
+    )
+    stability_adapter = _make_fake_adapter(name="stability")
+    stability_adapter.generate.return_value = b"new-jpeg"
+
+    def _provider_router(name: str):
+        if name == "openai":
+            return openai_adapter
+        if name == "stability":
+            return stability_adapter
+        raise ValueError(name)
+
+    monkeypatch.setattr(pipeline, "get_provider", _provider_router)
+
+    replace_calls: list[dict] = []
+
+    def _capture_replace(project_root, image_bytes, meta):
+        replace_calls.append({"asset_id": meta.id, "provider": meta.provider})
+
+    monkeypatch.setattr(pipeline.storage, "replace_asset", _capture_replace)
+    monkeypatch.setattr(audit_log, "record_event", lambda *a, **kw: None)
+    monkeypatch.setattr(notifications, "publish", lambda ev: None)
+
+    existing_meta = IllustrationMetadata(
+        id="preserved-id",
+        type="cover",
+        project_slug="test",
+        chapter_num=None,
+        style_preset="test",
+        custom_prompt=None,
+        scene_json={},
+        final_prompt="orig",
+        prompt_hash="sha256:abc",
+        model="dall-e-3",
+        provider="openai",
+        used_reference_image=False,
+        created_at="2026-09-18T00:00:00Z",
+    )
+
+    new_meta = await pipeline.regenerate_illustration(
+        project_root=tmp_path,
+        existing_meta=existing_meta,
+        api_key="fake",
+        api_host="https://fake.host",
+        provider=None,
+        model=None,
+        reference_image_bytes=None,
+        fallback_chain=["stability"],
+    )
+
+    assert new_meta.id == "preserved-id"  # Phase 94 invariant preserved
+    assert len(replace_calls) == 1
+    assert replace_calls[0]["asset_id"] == "preserved-id"
+    assert replace_calls[0]["provider"] == "stability"
