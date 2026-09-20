@@ -24,15 +24,17 @@ from apps.studio_api.routes.ctx import RoutesContext
 
 
 class ProjectSettings(BaseModel):
-    """Phase 98: extended with auto_generate / max_assets / confirm_before_generate.
+    """Phase 101: extended with fallback_chain.
 
     Schema migration is back-compat: Pydantic v2 fills missing fields with defaults.
-    Old yaml files with only `default_provider` still load successfully.
+    Old yaml files from Phase 100 (without fallback_chain) still load successfully.
     """
     default_provider: Literal["minimax", "openai", "stability"] = "minimax"
-    auto_generate: bool = False
-    max_assets: int = 20
-    confirm_before_generate: bool = False
+    default_models: dict[str, str] = {}                  # Phase 100
+    auto_generate: bool = False                          # Phase 98
+    max_assets: int = 20                                # Phase 98
+    confirm_before_generate: bool = False               # Phase 98
+    fallback_chain: list[str] = []                      # NEW (Phase 101)
 
 
 def _settings_path(project_root: Path) -> Path:

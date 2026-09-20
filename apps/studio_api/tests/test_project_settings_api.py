@@ -20,15 +20,17 @@ def client(tmp_path, monkeypatch):
 
 
 def test_get_settings_returns_defaults_when_yaml_missing(client):
-    """No yaml on disk → returns ProjectSettings() with all defaults (Phase 98: 4 fields)."""
+    """No yaml on disk → returns ProjectSettings() with all defaults (Phase 101: 6 fields)."""
     resp = client.get("/api/projects/test-slug/settings")
     assert resp.status_code == 200
     body = resp.json()
     assert body == {
         "default_provider": "minimax",
+        "default_models": {},
         "auto_generate": False,
         "max_assets": 20,
         "confirm_before_generate": False,
+        "fallback_chain": [],  # NEW (Phase 101)
     }
 
 
@@ -40,18 +42,22 @@ def test_put_settings_persists_yaml(client):
     assert resp.status_code == 200
     assert resp.json() == {
         "default_provider": "openai",
+        "default_models": {},
         "auto_generate": False,
         "max_assets": 20,
         "confirm_before_generate": False,
+        "fallback_chain": [],
     }
 
     yaml_path = Path("projects") / "test-slug" / ".lingwen" / "illustration_settings.yaml"
     assert yaml_path.exists()
-    # Phase 98: yaml now contains all 4 fields (PyYAML sorts alphabetically)
+    # Phase 101: yaml now contains all 6 fields (PyYAML sorts alphabetically)
     assert yaml_path.read_text(encoding="utf-8").strip() == (
         "auto_generate: false\n"
         "confirm_before_generate: false\n"
+        "default_models: {}\n"
         "default_provider: openai\n"
+        "fallback_chain: []\n"
         "max_assets: 20"
     )
 
@@ -61,9 +67,11 @@ def test_put_then_get_round_trips(client):
     resp = client.get("/api/projects/test-slug/settings")
     assert resp.json() == {
         "default_provider": "stability",
+        "default_models": {},
         "auto_generate": False,
         "max_assets": 20,
         "confirm_before_generate": False,
+        "fallback_chain": [],
     }
 
 
@@ -77,9 +85,11 @@ def test_get_settings_corrupt_yaml_returns_defaults(client, tmp_path):
     assert resp.status_code == 200
     assert resp.json() == {
         "default_provider": "minimax",
+        "default_models": {},
         "auto_generate": False,
         "max_assets": 20,
         "confirm_before_generate": False,
+        "fallback_chain": [],
     }
 
 
@@ -186,3 +196,47 @@ def test_missing_yaml_defaults(client):
     assert body["auto_generate"] is False
     assert body["max_assets"] == 20
     assert body["confirm_before_generate"] is False
+
+
+# ---- Phase 101: fallback_chain field ----
+
+def test_settings_pydantic_accepts_fallback_chain():
+    """Phase 101: ProjectSettings accepts fallback_chain as list[str]."""
+    from apps.studio_api.routes.project_settings import ProjectSettings
+    s = ProjectSettings(fallback_chain=["openai", "stability"])
+    assert s.fallback_chain == ["openai", "stability"]
+
+
+def test_settings_pydantic_default_empty_list():
+    """Phase 101: default fallback_chain is []."""
+    from apps.studio_api.routes.project_settings import ProjectSettings
+    s = ProjectSettings()
+    assert s.fallback_chain == []
+
+
+def test_put_then_get_fallback_chain_round_trips(client):
+    """Phase 101: PUT then GET round-trips fallback_chain."""
+    resp = client.put(
+        "/api/projects/test-slug/settings",
+        json={"fallback_chain": ["openai", "stability"]},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["fallback_chain"] == ["openai", "stability"]
+
+    resp2 = client.get("/api/projects/test-slug/settings")
+    assert resp2.json()["fallback_chain"] == ["openai", "stability"]
+
+
+def test_old_yaml_missing_fallback_chain_defaults_empty(client, tmp_path):
+    """Phase 101 back-compat: old yaml (no fallback_chain) loads with []."""
+    yaml_path = tmp_path / "projects" / "test-slug" / ".lingwen"
+    yaml_path.mkdir(parents=True)
+    (yaml_path / "illustration_settings.yaml").write_text(
+        "default_provider: openai\n",
+        encoding="utf-8",
+    )
+    resp = client.get("/api/projects/test-slug/settings")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["default_provider"] == "openai"
+    assert body["fallback_chain"] == []  # back-compat: defaults fill
