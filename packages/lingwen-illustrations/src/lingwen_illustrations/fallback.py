@@ -26,8 +26,9 @@ from lingwen_illustrations.exceptions import (
     GenerateError,
     ProviderExhaustedError,
 )
-from lingwen_illustrations.pipeline import resolve_model  # local import to avoid cycle
 from lingwen_illustrations.providers import KNOWN_PROVIDERS, UnknownProviderError, get_provider
+# NOTE: resolve_model is imported inside dispatch_with_fallback to avoid circular import
+# (pipeline.py imports dispatch_with_fallback; resolve_model is defined in pipeline.py)
 
 
 @dataclass(frozen=True)
@@ -107,6 +108,8 @@ async def dispatch_with_fallback(
         UnknownModelError: Resolved model not in adapter.models.
         ProviderExhaustedError: All retryable failures (chain exhausted).
     """
+    from lingwen_illustrations.pipeline import resolve_model  # lazy import to avoid cycle
+
     import logging
     logger = logging.getLogger(__name__)
 
