@@ -57,6 +57,8 @@ class GenerateRequest(BaseModel):
     model: Optional[str] = None  # NEW (Phase 100). None → resolve via 3-tier order.
     # NEW (Phase 97): user can disable project reference image. Default True.
     use_project_reference: bool = True
+    # NEW (Phase 101): one-off fallback chain override. None → use settings.
+    fallback_chain: Optional[list[str]] = None
 
     @model_validator(mode="after")
     def _chapter_requires_num(self) -> "GenerateRequest":
@@ -109,12 +111,19 @@ def _api_credentials_for(provider: str) -> tuple[str, str]:
     raise ValueError(f"unknown provider '{provider}'")
 
 
-def _resolve_provider_for_request(req_project_slug: str, body_provider: Optional[str]) -> str:
-    """Resolve provider with priority: body > project_settings > 'minimax'.
+def _resolve_provider_for_request(
+    req_project_slug: str,
+    body_provider: Optional[str],
+    body_fallback_chain: Optional[list[str]],
+) -> tuple[str, list[str]]:
+    """Phase 101: return (provider, fallback_chain).
 
-    Phase 96 §3.7 single source of truth. If body_provider is provided
-    but not in KNOWN_PROVIDERS, raise HTTPException(400). If project
-    settings cannot be loaded, fall back to 'minimax' default.
+    Priority:
+        provider: body > settings.default_provider > 'minimax'
+        fallback_chain: body > settings.fallback_chain > []
+
+    If body_provider is provided but not in KNOWN_PROVIDERS, raise HTTPException(400).
+    If project settings cannot be loaded, fall back to 'minimax' + [].
     """
     from lingwen_illustrations.providers import KNOWN_PROVIDERS
 
@@ -126,13 +135,35 @@ def _resolve_provider_for_request(req_project_slug: str, body_provider: Optional
                 status_code=400,
                 detail=f"unknown provider '{body_provider}', expected one of {KNOWN_PROVIDERS}",
             )
-        return body_provider
+        # body.provider wins; body.fallback_chain wins over settings.
+        try:
+            root = project_root_for(req_project_slug)
+            settings = _load_settings(root)
+        except LoadError:
+            settings = ProjectSettings()
+        fallback_chain = list(
+            body_fallback_chain if body_fallback_chain is not None
+            else settings.fallback_chain
+        )
+        return body_provider, fallback_chain
+
+    # No body.provider; use settings (or defaults).
+    # Note: body_fallback_chain can still override settings' fallback_chain even
+    # when body_provider is None (debugging / one-off override scenario).
     try:
         root = project_root_for(req_project_slug)
         settings = _load_settings(root)
     except LoadError:
-        return "minimax"
-    return settings.default_provider
+        settings_provider = "minimax"
+        settings_chain: list[str] = []
+    else:
+        settings_provider = settings.default_provider
+        settings_chain = list(settings.fallback_chain)
+    fallback_chain = list(
+        body_fallback_chain if body_fallback_chain is not None
+        else settings_chain
+    )
+    return settings_provider, fallback_chain
 
 
 def _err_detail(exc: IllustrationError) -> dict:
@@ -213,7 +244,9 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
         except LoadError as e:
             raise HTTPException(404, detail=_err_detail(e)) from e
 
-        provider = _resolve_provider_for_request(req.project_slug, req.provider)
+        provider, fallback_chain = _resolve_provider_for_request(
+            req.project_slug, req.provider, req.fallback_chain,
+        )
         api_key, api_host = _api_credentials_for(provider)
 
         # Phase 97: resolve reference_image_bytes from multipart file or project default.
@@ -242,6 +275,7 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
                 provider=provider,
                 model=req.model,  # NEW (Phase 100)
                 reference_image_bytes=reference_image_bytes,
+                fallback_chain=fallback_chain,  # NEW (Phase 101)
             )
         except UnknownModelError as e:
             # Phase 100: explicit model not in provider's KNOWN_MODELS → 422
@@ -316,6 +350,7 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
         project_slug: str = Query(...),
         provider: Optional[str] = Query(None),  # NEW (Phase 96). None → existing_meta.provider.
         model: Optional[str] = Query(None),  # NEW (Phase 100). None → 3-tier resolution.
+        fallback_chain: Optional[str] = Query(None),  # NEW (Phase 101). Comma-separated or repeated.
     ) -> GenerateResponse:
         """Atomic regenerate: re-runs extract+compose+generate, swaps bytes in place.
 
@@ -330,10 +365,18 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
         Phase 100: model query param overrides existing_meta.model.
         If None, resolve via 3-tier order (explicit > project > provider default).
 
+        Phase 101: fallback_chain query param accepts comma-separated string
+        (e.g. "openai,stability"). None → use settings.
+
         Returns same id (asset_id) with new scene_json + final_prompt.
         On Stage failure (Extract / Compose / Generate), the original asset
         is preserved (no destructive behavior).
         """
+        # Phase 101: parse comma-separated fallback_chain string into list.
+        if fallback_chain is not None:
+            fallback_chain_list = [s.strip() for s in fallback_chain.split(",") if s.strip()]
+        else:
+            fallback_chain_list = None
         try:
             project_root = project_root_for(project_slug)
         except LoadError as e:
@@ -359,6 +402,7 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
                 api_host=api_host,
                 provider=provider,  # None → pipeline reads existing_meta.provider
                 model=model,  # NEW (Phase 100). None → 3-tier resolve.
+                fallback_chain=fallback_chain_list,  # NEW (Phase 101)
             )
         except UnknownModelError as e:
             # Phase 100: unknown model → 422 with structured detail.

@@ -477,10 +477,11 @@ def test_resolve_provider_for_request_body_overrides(monkeypatch):
     # inside _resolve_provider_for_request.
     monkeypatch.setattr(
         "apps.studio_api.routes.project_settings._load_settings",
-        lambda root: type("S", (), {"default_provider": "openai"})(),
+        lambda root: type("S", (), {"default_provider": "openai", "fallback_chain": []})(),
     )
-    resolved = _resolve_provider_for_request("x", "stability")
-    assert resolved == "stability"
+    provider, fallback_chain = _resolve_provider_for_request("x", "stability", None)
+    assert provider == "stability"
+    assert fallback_chain == []  # body_provider + no body_fallback_chain → use settings (which is [])
 
 
 def test_resolve_provider_for_request_falls_back_to_settings(monkeypatch):
@@ -496,10 +497,11 @@ def test_resolve_provider_for_request_falls_back_to_settings(monkeypatch):
     )
     monkeypatch.setattr(
         "apps.studio_api.routes.project_settings._load_settings",
-        lambda root: type("S", (), {"default_provider": "openai"})(),
+        lambda root: type("S", (), {"default_provider": "openai", "fallback_chain": ["stability"]})(),
     )
-    resolved = _resolve_provider_for_request("x", None)
-    assert resolved == "openai"
+    provider, fallback_chain = _resolve_provider_for_request("x", None, None)
+    assert provider == "openai"
+    assert fallback_chain == ["stability"]
 
 
 def test_resolve_provider_for_request_falls_back_to_minimax_on_load_error(monkeypatch):
@@ -514,8 +516,9 @@ def test_resolve_provider_for_request_falls_back_to_minimax_on_load_error(monkey
         "apps.studio_api.routes.project_settings._load_settings",
         _raise,
     )
-    resolved = _resolve_provider_for_request("x", None)
-    assert resolved == "minimax"
+    provider, fallback_chain = _resolve_provider_for_request("x", None, None)
+    assert provider == "minimax"
+    assert fallback_chain == []
 
 
 def test_resolve_provider_for_request_unknown_body_raises_400(monkeypatch):
@@ -525,7 +528,7 @@ def test_resolve_provider_for_request_unknown_body_raises_400(monkeypatch):
     from apps.studio_api.routes.illustrations import _resolve_provider_for_request
 
     with pytest.raises(HTTPException) as exc:
-        _resolve_provider_for_request("x", "fake_provider")
+        _resolve_provider_for_request("x", "fake_provider", None)
     assert exc.value.status_code == 400
     assert "fake_provider" in str(exc.value.detail)
 
@@ -797,3 +800,53 @@ def test_generate_returns_422_for_openai_with_reference_file(tmp_path, monkeypat
     assert response.status_code == 422, response.text
     detail = response.json()["detail"]
     assert "does not support" in detail.get("error", "")
+
+
+# ---- Phase 101: GenerateRequest.fallback_chain + route integration ----
+
+def test_generate_request_accepts_fallback_chain():
+    """Phase 101: GenerateRequest accepts fallback_chain as optional list[str]."""
+    from apps.studio_api.routes.illustrations import GenerateRequest
+    req = GenerateRequest(
+        project_slug="test",
+        type="cover",
+        style_preset="preset",
+        fallback_chain=["openai", "stability"],
+    )
+    assert req.fallback_chain == ["openai", "stability"]
+
+
+def test_generate_request_fallback_chain_defaults_none():
+    """When not provided, fallback_chain is None (let pipeline resolve from settings)."""
+    from apps.studio_api.routes.illustrations import GenerateRequest
+    req = GenerateRequest(
+        project_slug="test",
+        type="cover",
+        style_preset="preset",
+    )
+    assert req.fallback_chain is None
+
+
+def test_resolve_provider_body_fallback_overrides_settings(monkeypatch, tmp_path):
+    """body.fallback_chain > settings.fallback_chain."""
+    import yaml
+
+    from apps.studio_api.routes.illustrations import _resolve_provider_for_request
+
+    monkeypatch.setattr(
+        "apps.studio_api.routes.illustrations.project_root_for",
+        lambda slug: tmp_path,
+    )
+    (tmp_path / ".lingwen").mkdir()
+    (tmp_path / ".lingwen" / "illustration_settings.yaml").write_text(
+        yaml.safe_dump({
+            "default_provider": "openai",
+            "fallback_chain": ["stability"],
+        }),
+        encoding="utf-8",
+    )
+    provider, fallback_chain = _resolve_provider_for_request(
+        "x", body_provider=None, body_fallback_chain=["minimax"],  # body override
+    )
+    assert provider == "openai"
+    assert fallback_chain == ["minimax"]  # body wins
