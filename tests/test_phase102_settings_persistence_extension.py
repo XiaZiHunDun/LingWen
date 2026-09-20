@@ -11,7 +11,6 @@ from pathlib import Path
 
 import pytest
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PROJECT_SETTINGS_PY = (
     REPO_ROOT / "apps/studio_api" / "routes" / "project_settings.py"

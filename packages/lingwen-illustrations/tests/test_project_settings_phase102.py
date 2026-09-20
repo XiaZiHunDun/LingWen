@@ -83,8 +83,7 @@ def test_fallback_models_rejects_unknown_model() -> None:
 
 def test_fallback_models_accepts_valid() -> None:
     """At least one valid provider/model pair passes (cross-references real KNOWN_MODELS)."""
-    from lingwen_illustrations.providers import KNOWN_PROVIDERS
-    from lingwen_illustrations.providers import get_provider
+    from lingwen_illustrations.providers import KNOWN_PROVIDERS, get_provider
 
     valid_found = False
     for provider_name in KNOWN_PROVIDERS:

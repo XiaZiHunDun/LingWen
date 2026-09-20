@@ -28,7 +28,6 @@ from pydantic import BaseModel, ValidationError, field_validator
 from apps.studio_api.routes._project_helpers import project_root_for
 from apps.studio_api.routes.ctx import RoutesContext
 
-
 # Whitelisted subset of ProjectSettings fields that can be overridden per chapter
 # (Phase 102). Other fields (e.g. default_provider, fallback_chain itself) make
 # less sense per-chapter and would add complexity to the merge logic.

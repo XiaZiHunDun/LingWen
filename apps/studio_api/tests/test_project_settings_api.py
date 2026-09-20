@@ -19,19 +19,26 @@ def client(tmp_path, monkeypatch):
     return TestClient(app)
 
 
+_PHASE_102_DEFAULT_SETTINGS = {
+    "default_provider": "minimax",
+    "default_models": {},
+    "auto_generate": False,
+    "max_assets": 20,
+    "confirm_before_generate": False,
+    "fallback_chain": [],  # Phase 101
+    "fallback_models": {},  # Phase 102 NEW
+    "chapter_overrides": {},  # Phase 102 NEW
+    "notify_threshold": 3,  # Phase 102 NEW
+}
+
+
 def test_get_settings_returns_defaults_when_yaml_missing(client):
-    """No yaml on disk → returns ProjectSettings() with all defaults (Phase 101: 6 fields)."""
+    """No yaml on disk → returns ProjectSettings() with all defaults (Phase 102: 9 fields)."""
     resp = client.get("/api/projects/test-slug/settings")
     assert resp.status_code == 200
     body = resp.json()
-    assert body == {
-        "default_provider": "minimax",
-        "default_models": {},
-        "auto_generate": False,
-        "max_assets": 20,
-        "confirm_before_generate": False,
-        "fallback_chain": [],  # NEW (Phase 101)
-    }
+    expected = dict(_PHASE_102_DEFAULT_SETTINGS)
+    assert body == expected
 
 
 def test_put_settings_persists_yaml(client):
@@ -40,39 +47,30 @@ def test_put_settings_persists_yaml(client):
         json={"default_provider": "openai"},
     )
     assert resp.status_code == 200
-    assert resp.json() == {
-        "default_provider": "openai",
-        "default_models": {},
-        "auto_generate": False,
-        "max_assets": 20,
-        "confirm_before_generate": False,
-        "fallback_chain": [],
-    }
+    expected = dict(_PHASE_102_DEFAULT_SETTINGS, default_provider="openai")
+    assert resp.json() == expected
 
     yaml_path = Path("projects") / "test-slug" / ".lingwen" / "illustration_settings.yaml"
     assert yaml_path.exists()
-    # Phase 101: yaml now contains all 6 fields (PyYAML sorts alphabetically)
+    # Phase 102: yaml now contains all 9 fields (PyYAML sorts alphabetically)
     assert yaml_path.read_text(encoding="utf-8").strip() == (
         "auto_generate: false\n"
+        "chapter_overrides: {}\n"
         "confirm_before_generate: false\n"
         "default_models: {}\n"
         "default_provider: openai\n"
         "fallback_chain: []\n"
-        "max_assets: 20"
+        "fallback_models: {}\n"
+        "max_assets: 20\n"
+        "notify_threshold: 3"
     )
 
 
 def test_put_then_get_round_trips(client):
     client.put("/api/projects/test-slug/settings", json={"default_provider": "stability"})
     resp = client.get("/api/projects/test-slug/settings")
-    assert resp.json() == {
-        "default_provider": "stability",
-        "default_models": {},
-        "auto_generate": False,
-        "max_assets": 20,
-        "confirm_before_generate": False,
-        "fallback_chain": [],
-    }
+    expected = dict(_PHASE_102_DEFAULT_SETTINGS, default_provider="stability")
+    assert resp.json() == expected
 
 
 def test_get_settings_corrupt_yaml_returns_defaults(client, tmp_path):
@@ -83,14 +81,7 @@ def test_get_settings_corrupt_yaml_returns_defaults(client, tmp_path):
 
     resp = client.get("/api/projects/test-slug/settings")
     assert resp.status_code == 200
-    assert resp.json() == {
-        "default_provider": "minimax",
-        "default_models": {},
-        "auto_generate": False,
-        "max_assets": 20,
-        "confirm_before_generate": False,
-        "fallback_chain": [],
-    }
+    assert resp.json() == _PHASE_102_DEFAULT_SETTINGS
 
 
 def test_put_settings_invalid_provider_rejected(client):
