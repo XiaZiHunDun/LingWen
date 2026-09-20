@@ -103,19 +103,24 @@ def resolve_model(
     explicit: str | None,
     project_settings: dict | None,
     adapter: ProviderAdapter,
+    is_fallback: bool = False,  # NEW (Phase 102). When True, prefer fallback_models over default_models.
 ) -> str:
     """Return the effective model for this generation.
 
-    Resolution order:
+    Resolution order (Phase 102):
         1. explicit (from API request) — must be in adapter.models or raise UnknownModelError
-        2. project default (from illustration_settings.yaml) — log warning if stale
-        3. adapter default (provider module's DEFAULT_MODEL)
+        2. fallback_models[provider] — ONLY when is_fallback=True (chain retry path)
+        3. project default (from illustration_settings.yaml) — log warning if stale
+        4. adapter default (provider module's DEFAULT_MODEL)
 
     Args:
         provider: Provider name (must match adapter.name).
         explicit: Explicit model override from API request. None means use defaults.
         project_settings: Loaded illustration_settings.yaml dict (or None).
         adapter: ProviderAdapter instance for the target provider.
+        is_fallback: True when called from dispatch_with_fallback chain retry path;
+            falls back to default_models[provider] when fallback_models[provider] absent.
+            Default False preserves Phase 100 behavior for primary path callers.
 
     Returns:
         Effective model name (always a member of adapter.models).
@@ -129,6 +134,20 @@ def resolve_model(
         return explicit
 
     if project_settings:
+        # Phase 102: fallback-models priority for chain retry path
+        if is_fallback:
+            fallback_models = project_settings.get("fallback_models") or {}
+            fb_default = fallback_models.get(provider)
+            if fb_default is not None:
+                if fb_default not in adapter.models:
+                    logger.warning(
+                        "fallback_model '%s' not in provider '%s' models %s; "
+                        "falling back to default_models chain",
+                        fb_default, provider, adapter.models,
+                    )
+                else:
+                    return fb_default
+
         default_models = project_settings.get("default_models") or {}
         proj_default = default_models.get(provider)
         if proj_default is not None:
