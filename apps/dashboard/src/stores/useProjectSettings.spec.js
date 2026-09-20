@@ -133,6 +133,122 @@ describe('useProjectSettingsStore', () => {
   })
 })
 
+describe('useProjectSettingsStore — 3 new fields (Phase 102)', () => {
+  // Phase 102 added 3 new persistent fields:
+  //   - fallback_models: per-provider model override for fallback chain retry
+  //   - chapter_overrides: per-chapter subset merge
+  //   - notify_threshold: consecutive failure count before warning
+  //
+  // Defaults are applied at the CONSUMER level via `??` operator in the
+  // component (props.modelValue?.X ?? default). The store stores whatever the
+  // API returns — old-shape (200 OK without 3 new fields) leaves them
+  // undefined, and the `??` fallback path activates. The 404 / network-error
+  // path applies defaults at the store level (see tests above).
+  //
+  // This describe has its own beforeEach to reset globalThis.fetch — the outer
+  // describe's beforeEach does not propagate to sibling describes, so without
+  // this reset mock.calls from prior tests would leak into mock.calls[0].
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    globalThis.fetch = vi.fn()
+  })
+
+  it('store has fallback_models field defaulting to {}', () => {
+    const store = useProjectSettingsStore()
+    // settings starts as null → consumer applies `?? {}` default.
+    expect(store.settings?.fallback_models ?? {}).toEqual({})
+  })
+
+  it('store has chapter_overrides field defaulting to {}', () => {
+    const store = useProjectSettingsStore()
+    expect(store.settings?.chapter_overrides ?? {}).toEqual({})
+  })
+
+  it('store has notify_threshold field defaulting to 3', () => {
+    const store = useProjectSettingsStore()
+    expect(store.settings?.notify_threshold ?? 3).toBe(3)
+  })
+
+  it('load() populates 3 new fields from new-shape API response', async () => {
+    globalThis.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        default_provider: 'minimax',
+        fallback_chain: ['openai'],
+        fallback_models: { minimax: 'minimax-vision-01' },
+        chapter_overrides: { 1: { max_assets: 5 }, 2: { auto_generate: true } },
+        notify_threshold: 7,
+      }),
+    })
+    const store = useProjectSettingsStore()
+    await store.fetch('test-slug')
+    expect(store.settings.fallback_models).toEqual({
+      minimax: 'minimax-vision-01',
+    })
+    expect(store.settings.chapter_overrides).toEqual({
+      1: { max_assets: 5 },
+      2: { auto_generate: true },
+    })
+    expect(store.settings.notify_threshold).toBe(7)
+  })
+
+  it('save() includes 3 new fields in PUT body', async () => {
+    globalThis.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        default_provider: 'minimax',
+        fallback_models: { minimax: 'minimax-vision-01' },
+        chapter_overrides: { 1: { max_assets: 5 } },
+        notify_threshold: 5,
+      }),
+    })
+    const store = useProjectSettingsStore()
+    // Pre-populate store.settings so save() merges from these values.
+    store.settings = {
+      default_provider: 'minimax',
+      fallback_models: { minimax: 'minimax-vision-01' },
+      chapter_overrides: { 1: { max_assets: 5 } },
+      notify_threshold: 5,
+    }
+
+    await store.save('test-slug', {})
+
+    const callBody = JSON.parse(globalThis.fetch.mock.calls[0][1].body)
+    expect(callBody.fallback_models).toEqual({ minimax: 'minimax-vision-01' })
+    expect(callBody.chapter_overrides).toEqual({ 1: { max_assets: 5 } })
+    expect(callBody.notify_threshold).toBe(5)
+  })
+
+  it('old-shape API response (no 3 new fields) — 3 new fields are undefined, consumer ?? defaults apply', async () => {
+    // Old-shape = Phase 101 yaml (only legacy fields). The store stores the raw
+    // API payload on 200 OK — it does NOT merge defaults. Consumers (component)
+    // apply defaults via `??` operator.
+    globalThis.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        default_provider: 'minimax',
+        fallback_chain: [],
+        auto_generate: false,
+        max_assets: 10,
+        confirm_before_generate: false,
+      }),
+    })
+    const store = useProjectSettingsStore()
+    await store.fetch('test-slug')
+
+    // Store stores raw API payload — 3 new fields are undefined.
+    expect(store.settings.fallback_models).toBeUndefined()
+    expect(store.settings.chapter_overrides).toBeUndefined()
+    expect(store.settings.notify_threshold).toBeUndefined()
+
+    // Consumer `??` fallback path applies defaults.
+    expect(store.settings?.fallback_models ?? {}).toEqual({})
+    expect(store.settings?.chapter_overrides ?? {}).toEqual({})
+    expect(store.settings?.notify_threshold ?? 3).toBe(3)
+  })
+})
+
 describe('useProjectSettingsStore — reference image methods (Phase 97)', () => {
   it('fetchReferenceImage populates state and returns info', async () => {
     globalThis.fetch.mockResolvedValueOnce({
