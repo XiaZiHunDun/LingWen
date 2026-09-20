@@ -1,5 +1,5 @@
 <!--
-  ProjectSettingsIllustration.vue — 插图偏好（Phase 90 Task 17 + Phase 96 Task 16 + Phase 97 Task 10 + Phase 98 Task 13 + Phase 100 Task 8）
+  ProjectSettingsIllustration.vue — 插图偏好（Phase 90 Task 17 + Phase 96 Task 16 + Phase 97 Task 10 + Phase 98 Task 13 + Phase 100 Task 8 + Phase 102 Task 9）
 
   包含：
   - 默认风格预设（古风水墨 / 现代写实 / 动漫厚涂）
@@ -17,6 +17,10 @@
     模型列表从 GET /api/illustrations/providers/{name}/models 拉取，
     "Provider 默认" sentinel 选项（空串）表示回退到 adapter 自身的
     default_model。整组 dict 持久化到 default_models 字段。
+  - Phase 101: fallback_chain 多选 — 主 provider 失败时按序尝试。
+  - Phase 102 Task 9: fallback_models — 每个 provider 在 fallback chain
+    retry 路径使用的模型 dropdown（mirror default_models 模式，整组 dict
+    持久化到 fallback_models 字段）。主路径仍用 default_models[provider]。
 
   Phase 98 Task 13: update() 现在 emit + save (Phase 96 只对 provider save)。
   三个新字段 (auto_generate / max_assets / confirm_before_generate) 现在持久化
@@ -24,6 +28,12 @@
 
   Phase 100 Task 8: 新增 update_model_default(provider, model) — 切换单 provider
   选择后立刻持久化 dict；'' 表示 sentinel（被持久化为不含该 provider 的 dict）。
+
+  Phase 102 Task 9: 新增 update_fallback_model_default(provider, model) — 与
+  update_model_default 同 shape，但写入 fallback_models 字段。仅在 provider
+  被 fallback chain 调起时由 pipeline.resolve_model(is_fallback=True) 优先
+  读取 (packages/lingwen-illustrations/src/lingwen_illustrations/pipeline.py
+  resolve_model:108-141)；主路径仍用 default_models[provider]。
 -->
 <script setup>
 import { ref, onMounted } from 'vue'
@@ -55,6 +65,11 @@ const providers = [
 const modelCatalogs = ref({}) // { provider: { models: string[], default_model: string } | null }
 const selectedModels = ref({}) // { provider: string } — '' means "use provider default"
 
+// Phase 102 Task 9: per-provider model override for fallback chain retry path.
+// Same shape as selectedModels but written to `fallback_models` field. Pipeline
+// reads fallback_models[provider] ONLY when is_fallback=True (chain retry).
+const selectedFallbackModels = ref({}) // { provider: string }
+
 onMounted(async () => {
   // Pre-populate selectedModels from current settings (defaults may be empty
   // string sentinel or an explicit model id).
@@ -62,6 +77,14 @@ onMounted(async () => {
   for (const p of providers) {
     const existing = currentDefaults[p.id]
     selectedModels.value[p.id] = typeof existing === 'string' ? existing : ''
+  }
+
+  // Phase 102 Task 9: pre-populate fallback model overrides from settings.
+  // Empty dict means "no override" — pipeline falls back to default_models.
+  const currentFallbackModels = props.modelValue?.fallback_models || {}
+  for (const p of providers) {
+    const existing = currentFallbackModels[p.id]
+    selectedFallbackModels.value[p.id] = typeof existing === 'string' ? existing : ''
   }
 
   // Fetch each provider's model catalog in parallel — catalogs are independent.
@@ -93,6 +116,18 @@ async function update_model_default(provider, model) {
     Object.entries(next).filter(([, v]) => v !== ''),
   )
   await update('default_models', filtered)
+}
+
+// Phase 102 Task 9: parallel of update_model_default for fallback chain retry
+// path. Sentinel '' is dropped so the backend pipeline falls back to
+// default_models[provider] (which in turn falls back to adapter.default_model).
+async function update_fallback_model_default(provider, model) {
+  const next = { ...selectedFallbackModels.value, [provider]: model }
+  selectedFallbackModels.value = next
+  const filtered = Object.fromEntries(
+    Object.entries(next).filter(([, v]) => v !== ''),
+  )
+  await update('fallback_models', filtered)
 }
 
 const on_provider_change = (value) => update('default_provider', value)
@@ -226,6 +261,54 @@ const on_fallback_chain_change = (event) => {
       </select>
       <p class="empty-hint project-settings-illustration-hint">
         主 provider 失败时按序尝试。可留空（仅主 provider）。
+      </p>
+    </div>
+
+    <!-- Phase 102 Task 9: per-provider model override for fallback chain retry
+         path. Mirrors the default_models section above but writes to
+         `fallback_models` field. Pipeline.resolve_model(is_fallback=True) reads
+         fallback_models[provider] FIRST, falling back to default_models[provider]
+         only when fallback_models[provider] is absent (see
+         packages/lingwen-illustrations/src/lingwen_illustrations/pipeline.py
+         resolve_model:108-141). "Provider 默认" sentinel ('') means "no
+         fallback override" — pipeline uses default_models[provider]. -->
+    <div
+      class="field project-settings-illustration-field project-settings-illustration-models"
+      data-testid="fallback-models-section"
+    >
+      <p class="label project-settings-illustration-label">
+        Fallback 模型 (按 provider)
+      </p>
+      <div
+        v-for="p in providers"
+        :key="`fallback-model-default-${p.id}`"
+        class="model-row project-settings-illustration-model-row"
+      >
+        <label
+          class="project-settings-illustration-model-label"
+          :for="`fallback-model-${p.id}`"
+        >
+          {{ p.label }}
+        </label>
+        <select
+          :id="`fallback-model-${p.id}`"
+          :data-testid="`fallback-model-${p.id}`"
+          :value="selectedFallbackModels[p.id] || ''"
+          class="project-settings-illustration-model-select"
+          @change="update_fallback_model_default(p.id, $event.target.value)"
+        >
+          <option value="">Provider 默认</option>
+          <option
+            v-for="m in (modelCatalogs[p.id] && modelCatalogs[p.id].models) || []"
+            :key="m"
+            :value="m"
+          >
+            {{ m }}
+          </option>
+        </select>
+      </div>
+      <p class="empty-hint project-settings-illustration-hint">
+        仅当该 provider 通过 fallback chain 调起时生效。主路径仍用默认模型。
       </p>
     </div>
 
