@@ -3,9 +3,17 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 
 // Phase 100 T8: per-provider model dropdowns.
+// Phase 102 T9: per-provider fallback model dropdowns (mirror default_models).
 // Tests live alongside the component (existing convention in this folder — see
 // `ProjectSettingsIllustration.spec.ts`, `ReferenceImageUpload.spec.ts`,
 // `GenerateIllustrationDialog.spec.ts`).
+
+// vi.hoisted: shared mutable mock so each test can introspect save() calls.
+// vi.mock factories are hoisted to the top of the file, so any spy used inside
+// must also live in hoisted space.
+const storeMocks = vi.hoisted(() => ({
+  saveMock: vi.fn().mockResolvedValue(undefined),
+}))
 
 const fetchProviderModelsMock = vi.fn(async (name: string) => {
   const catalogs: Record<string, { provider: string; models: string[]; default_model: string }> = {
@@ -34,8 +42,8 @@ vi.mock('@/api/illustrations', () => ({
 
 vi.mock('@/stores/useProjectSettings.js', () => ({
   useProjectSettingsStore: () => ({
-    settings: { default_provider: 'minimax', default_models: {} },
-    save: vi.fn(),
+    settings: { default_provider: 'minimax', default_models: {}, fallback_models: {} },
+    save: storeMocks.saveMock,
     fetch: vi.fn(),
   }),
 }))
@@ -44,6 +52,7 @@ describe('ProjectSettingsIllustration — per-provider model dropdowns (Phase 10
   beforeEach(() => {
     setActivePinia(createPinia())
     fetchProviderModelsMock.mockClear()
+    storeMocks.saveMock.mockClear()
   })
 
   it('renders 3 per-provider model dropdowns', async () => {
@@ -77,6 +86,73 @@ describe('ProjectSettingsIllustration — per-provider model dropdowns (Phase 10
     expect(
       wrapper.find('[data-testid="default-model-stability"]').exists()
     ).toBe(true)
+  })
+
+  it('renders 3 per-provider fallback-model dropdowns', async () => {
+    const { default: ProjectSettingsIllustration } = await import(
+      './ProjectSettingsIllustration.vue'
+    )
+    const wrapper = mount(ProjectSettingsIllustration, {
+      props: {
+        modelValue: {
+          style_preset: 'ink',
+          auto_generate: false,
+          max_assets: 10,
+          confirm_before_generate: false,
+          default_provider: 'minimax',
+          default_models: { minimax: 'minimax-vision-01' },
+          fallback_models: { minimax: 'minimax-multimodal' },
+        },
+        slug: 'test-slug',
+      },
+    })
+    await flushPromises()
+    await flushPromises()
+
+    const selects = wrapper.findAll('select[data-testid^="fallback-model-"]')
+    expect(selects.length).toBe(3)
+    expect(
+      wrapper.find('[data-testid="fallback-model-minimax"]').exists()
+    ).toBe(true)
+    expect(
+      wrapper.find('[data-testid="fallback-model-openai"]').exists()
+    ).toBe(true)
+    expect(
+      wrapper.find('[data-testid="fallback-model-stability"]').exists()
+    ).toBe(true)
+    expect(
+      wrapper.find('[data-testid="fallback-models-section"]').exists()
+    ).toBe(true)
+  })
+
+  it('update_fallback_model_default drops sentinel "" in save payload', async () => {
+    const { default: ProjectSettingsIllustration } = await import(
+      './ProjectSettingsIllustration.vue'
+    )
+    const wrapper = mount(ProjectSettingsIllustration, {
+      props: {
+        modelValue: {
+          style_preset: 'ink',
+          auto_generate: false,
+          max_assets: 10,
+          confirm_before_generate: false,
+          default_provider: 'minimax',
+          default_models: { minimax: 'minimax-vision-01' },
+          fallback_models: { minimax: 'minimax-multimodal' },
+        },
+        slug: 'test-slug',
+      },
+    })
+    await flushPromises()
+    await flushPromises()
+
+    const select = wrapper.find('[data-testid="fallback-model-minimax"]')
+    await select.setValue('') // sentinel — should be dropped from save payload
+
+    expect(storeMocks.saveMock).toHaveBeenCalledWith(
+      'test-slug',
+      expect.objectContaining({ fallback_models: {} }),
+    )
   })
 
   it('accepts default_models dict on store.settings', async () => {
