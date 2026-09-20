@@ -23,6 +23,7 @@ from lingwen_illustrations.exceptions import (
     GenerateError,
     IllustrationError,
     LoadError,
+    ProviderExhaustedError,  # NEW (Phase 101)
     StoreError,
     UnknownModelError,  # NEW (Phase 100)
 )
@@ -37,6 +38,7 @@ STAGE_HTTP_CODES: dict[type[IllustrationError], int] = {
     ExtractError: 502,
     ComposeError: 400,
     GenerateError: 502,
+    ProviderExhaustedError: 502,  # NEW (Phase 101): terminal fallback exhaustion
     StoreError: 500,
 }
 
@@ -167,12 +169,18 @@ def _resolve_provider_for_request(
 
 
 def _err_detail(exc: IllustrationError) -> dict:
-    """Build the standard error detail payload."""
+    """Build the standard error detail payload.
+
+    Phase 101: ProviderExhaustedError includes attempts list in payload.
+    """
     payload = {"stage": exc.stage.value, "error": exc.message, "retryable": exc.retryable}
     if isinstance(exc, GenerateError):
         if exc.retry_after is not None:
             payload["retry_after"] = exc.retry_after
         payload["provider"] = exc.provider  # NEW (Phase 96)
+    if isinstance(exc, ProviderExhaustedError):
+        payload["provider"] = exc.provider
+        payload["attempts"] = exc.attempts  # NEW (Phase 101)
     return payload
 
 

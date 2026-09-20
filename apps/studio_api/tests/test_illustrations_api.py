@@ -850,3 +850,33 @@ def test_resolve_provider_body_fallback_overrides_settings(monkeypatch, tmp_path
     )
     assert provider == "openai"
     assert fallback_chain == ["minimax"]  # body wins
+
+
+# ---- Phase 101: ProviderExhaustedError → 502 + detail.attempts ----
+
+def test_provider_exhausted_maps_to_502():
+    """Phase 101: STAGE_HTTP_CODES maps ProviderExhaustedError → 502."""
+    from apps.studio_api.routes.illustrations import STAGE_HTTP_CODES
+    from lingwen_illustrations.exceptions import ProviderExhaustedError
+    assert STAGE_HTTP_CODES.get(ProviderExhaustedError) == 502
+
+
+def test_err_detail_provider_exhausted_includes_attempts():
+    """Phase 101: _err_detail includes attempts list for ProviderExhaustedError."""
+    from apps.studio_api.routes.illustrations import _err_detail
+    from lingwen_illustrations.exceptions import ProviderExhaustedError
+
+    err = ProviderExhaustedError(
+        "all 2 providers failed",
+        attempts=[
+            {"provider": "openai", "model": "dall-e-3", "error": "GenerateError: 502", "ts": "2026-09-18T10:30:00Z"},
+            {"provider": "stability", "model": "sd3", "error": None, "ts": "2026-09-18T10:30:03Z"},
+        ],
+        provider="stability",
+    )
+    payload = _err_detail(err)
+    assert payload["stage"] == "generate"
+    assert payload["retryable"] is False
+    assert payload["provider"] == "stability"
+    assert "attempts" in payload
+    assert len(payload["attempts"]) == 2
