@@ -17,7 +17,6 @@ Back-compat via Pydantic v2 default fill — old yaml files still load.
 """
 from __future__ import annotations
 
-from collections.abc import Callable
 from pathlib import Path
 from typing import Any, Literal
 
@@ -83,8 +82,6 @@ class ProjectSettings(BaseModel):
         KNOWN_PROVIDERS + provider.KNOWN_MODELS (same pattern as top-level
         fallback_models validator).
         """
-        from lingwen_illustrations.providers import KNOWN_PROVIDERS, get_provider
-
         for chapter_num, subset in v.items():
             if not isinstance(chapter_num, int) or chapter_num < 0:
                 raise ValueError(
@@ -98,9 +95,7 @@ class ProjectSettings(BaseModel):
                 )
             # Phase 103: cross-reference per-chapter default_models if present
             if "default_models" in subset:
-                cls._validate_chapter_default_models(
-                    chapter_num, subset["default_models"], KNOWN_PROVIDERS, get_provider
-                )
+                cls._validate_chapter_default_models(chapter_num, subset["default_models"])
         return v
 
     @classmethod
@@ -108,20 +103,21 @@ class ProjectSettings(BaseModel):
         cls,
         chapter_num: int,
         default_models: dict[str, str],
-        known_providers: frozenset[str],
-        get_provider_fn: Callable,
     ) -> None:
         """Cross-reference per-chapter default_models against KNOWN_MODELS.
 
         Mirrors the top-level fallback_models validator pattern (Phase 100).
+        Lazy import to avoid module load cycle with providers package.
         """
+        from lingwen_illustrations.providers import KNOWN_PROVIDERS, get_provider
+
         for provider, model in default_models.items():
-            if provider not in known_providers:
+            if provider not in KNOWN_PROVIDERS:
                 raise ValueError(
                     f"chapter_overrides[{chapter_num}].default_models: "
                     f"unknown provider: {provider!r}"
                 )
-            adapter = get_provider_fn(provider)
+            adapter = get_provider(provider)
             if model not in adapter.models:
                 raise ValueError(
                     f"chapter_overrides[{chapter_num}].default_models: "
