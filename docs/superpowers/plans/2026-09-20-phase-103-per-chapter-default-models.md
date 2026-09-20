@@ -370,7 +370,6 @@ Verifies that:
 """
 from __future__ import annotations
 
-from lingwen_illustrations.exceptions import UnknownModelError
 from lingwen_illustrations.pipeline import merge_chapter_settings, resolve_model
 from lingwen_illustrations.providers import KNOWN_PROVIDERS, get_provider
 
@@ -707,9 +706,10 @@ const addChapterDefaultModel = async (chapterKey: string, provider: string) => {
   const overrides = { ...(props.modelValue?.chapter_overrides || {}) }
   const existing = overrides[chapterKey] || {}
   const currentDefaultModels = existing.default_models || {}
-  // Fetch provider models (use first valid model as default)
-  const adapter = providerCatalog[provider]
-  const defaultModel = adapter?.default_model || ''
+  // Pull the provider's default model from the fetched modelCatalogs (same
+  // pattern as Phase 100 default_models section above).
+  const catalog = modelCatalogs.value[provider]
+  const defaultModel = catalog?.default_model || ''
   overrides[chapterKey] = {
     ...existing,
     default_models: { ...currentDefaultModels, [provider]: defaultModel },
@@ -784,7 +784,7 @@ In the `<tbody>` row section (around line 519, after the fallback_chain cell), a
                         }
                       }"
                     >
-                      <option v-for="p in KNOWN_PROVIDERS" :key="p" :value="p">{{ p }}</option>
+                      <option v-for="p in providers" :key="p.id" :value="p.id">{{ p.label }}</option>
                     </select>
                     <select
                       :value="model"
@@ -792,7 +792,11 @@ In the `<tbody>` row section (around line 519, after the fallback_chain cell), a
                       :data-testid="`chapter-override-default-model-name-${chapter}-${provider}`"
                       @change="(e) => updateChapterDefaultModel(chapter, provider, (e.target as HTMLSelectElement).value)"
                     >
-                      <option v-for="m in providerModels[provider] || []" :key="m" :value="m">{{ m }}</option>
+                      <option
+                        v-for="m in (modelCatalogs[provider] && modelCatalogs[provider].models) || []"
+                        :key="m"
+                        :value="m"
+                      >{{ m }}</option>
                     </select>
                     <button
                       type="button"
@@ -805,12 +809,12 @@ In the `<tbody>` row section (around line 519, after the fallback_chain cell), a
                     type="button"
                     class="project-settings-illustration-chapter-default-model-add"
                     :data-testid="`chapter-override-default-model-add-${chapter}`"
-                    @click="addChapterDefaultModel(chapter, KNOWN_PROVIDERS[0])"
+                    @click="addChapterDefaultModel(chapter, providers[0].id)"
                   >+ Add</button>
                 </td>
 ```
 
-Adjust syntax to match existing template patterns (e.g., script setup variable names, KNOWN_PROVIDERS import location).
+Adjust syntax to match existing template patterns (e.g., script setup variable names — `providers` array is already declared at the top of the script setup; no new import needed).
 
 - [ ] **Step 5: Add CSS for new column**
 
@@ -862,7 +866,7 @@ pnpm tsc --noEmit 2>&1 | tail -10
 ```
 Expected: 0 new errors from this component.
 
-If errors arise, fix inline (typical issues: `$attrs['x'] as unknown` cast for vue-tsc strict, missing imports for KNOWN_PROVIDERS, etc.).
+If errors arise, fix inline (typical issues: `$attrs['x'] as unknown` cast for vue-tsc strict, missing reactive destructuring, etc.).
 
 - [ ] **Step 7: Write frontend component tests**
 
@@ -1262,7 +1266,7 @@ Create `docs/superpowers/handoffs/2026-09-20-phase-103-per-chapter-default-model
 
 [Follow Phase 102 handoff structure: spec link + plan link + commit list + validation gates + lessons + cluster cumulative + future work]
 
-## Commits (11 atomic)
+## Commits (10 atomic)
 
 1. `docs(phase-103): design spec for per-chapter default_models overrides` (Task 1)
 2. `docs(phase-103): implementation plan — 11 tasks` (Task 2)
@@ -1289,6 +1293,7 @@ Create `docs/superpowers/handoffs/2026-09-20-phase-103-per-chapter-default-model
 
 1. **Shallow merge semantic for dict override** — `merge_chapter_settings {**settings, **subset}` replaces whole `default_models` dict, not per-key merge. Matches "override wins on conflict" semantic for scalars. No code change needed; existing helper already correct.
 2. **Pipeline code untouched** — `resolve_model` reads `effective_settings["default_models"]` which is already merged. Adding per-chapter override is schema + UI only.
+3. **No new invariants introduced** — chapter_overrides.default_models cross-reference reuses existing fallback_models validator pattern; adding new invariant would be YAGNI since the existing Pydantic field_validator contract is already self-documenting via type signatures.
 4. **Pick-based whitelist mirror** — TypeScript chapter_overrides subset uses `Pick<ProjectSettings, ...>` — adding `'default_models'` propagates through type system automatically. No store-side code change needed.
 5. **Cascade picker UX reuse** — Phase 100 `fetchProviderModels(provider)` API supports cascade (provider → model dropdown) reuse for chapter-level override, symmetric with fallback_models keyed table (Phase 102).
 6. **Pre-commit guard G8** — verifying "no new deps" via `git diff HEAD~12..HEAD -- pyproject.toml package.json` catches accidental dep additions across the whole phase atomic commit range.
@@ -1344,7 +1349,7 @@ git commit -m "docs(phase-103): handoff + BACKLOG + MEMORY sync"
 
 ---
 
-## Final Validation (Task 12, included in Task 11's commit or separate)
+## Final Validation (after Task 11 commit)
 
 ```bash
 cd /home/ailearn/projects/LingWen
