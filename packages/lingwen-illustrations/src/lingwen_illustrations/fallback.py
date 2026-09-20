@@ -133,11 +133,15 @@ async def dispatch_with_fallback(
         adapter = _get_provider(provider)
         # Primary (first) gets explicit_model; fallbacks always None (per-provider default).
         explicit = explicit_model if idx == 0 else None
+        # Phase 102 I096: primary provider uses is_fallback=False (default_models priority);
+        # chain retry providers use is_fallback=True (fallback_models priority).
+        is_fallback = idx > 0
         model = resolve_model(
             provider=provider,
             explicit=explicit,
             project_settings=project_settings,
             adapter=adapter,
+            is_fallback=is_fallback,
         )
 
         # i2i: pre-flight check (Phase 97 semantics).

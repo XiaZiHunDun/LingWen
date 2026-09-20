@@ -254,7 +254,11 @@ async def generate_illustration(
     from lingwen_illustrations.fallback import Attempt, dispatch_with_fallback
 
     settings = _load_illustration_settings(project_root)
-    effective_chain: list[str] = list(fallback_chain or settings.get("fallback_chain") or [])
+    # Phase 102 I094: merge chapter_overrides for this chapter_num (cover type → identity).
+    effective_settings = merge_chapter_settings(settings, chapter_num)
+    effective_chain: list[str] = list(fallback_chain or effective_settings.get("fallback_chain") or [])
+    # Phase 102 I095: notify_threshold from merged settings (chapter_overrides win over root).
+    _notify_threshold = int(effective_settings.get("notify_threshold", 3))
 
     if reference_image_bytes is not None:
         # i2i path: NO fallback (Phase 101). Single provider call.
@@ -276,7 +280,7 @@ async def generate_illustration(
         effective_model = resolve_model(
             provider=provider,
             explicit=model,
-            project_settings=settings,
+            project_settings=effective_settings,
             adapter=adapter,
         )
         attempts: list[Attempt] = [
@@ -294,14 +298,26 @@ async def generate_illustration(
             return (api_key, api_host)
 
         chain = [provider] + effective_chain
-        image_bytes, success_provider, success_model, attempts = await dispatch_with_fallback(
-            chain=chain,
-            explicit_model=model,
-            project_settings=settings,
-            api_credentials_for=_credentials_for,
-            prompt=final_prompt,
-            provider_factory=get_provider,  # Phase 101: pass for testability (patches take effect).
-        )
+        try:
+            image_bytes, success_provider, success_model, attempts = await dispatch_with_fallback(
+                chain=chain,
+                explicit_model=model,
+                project_settings=effective_settings,
+                api_credentials_for=_credentials_for,
+                prompt=final_prompt,
+                provider_factory=get_provider,  # Phase 101: pass for testability (patches take effect).
+            )
+        except Exception as _exc:
+            # Phase 102 I095: record failure for threshold tracking, then re-raise.
+            notifications.record_failure(
+                project_slug, _exc,
+                project_root=project_root,
+                threshold=_notify_threshold,
+            )
+            raise
+        else:
+            # Phase 102 I095: reset failure counter on success.
+            notifications.record_success(project_slug)
         # Update effective provider/model for metadata + audit (Phase 101).
         provider = success_provider
         effective_model = success_model
@@ -335,10 +351,10 @@ async def generate_illustration(
     from lingwen_illustrations.storage import lru_cleanup
 
     try:
-        # Phase 100: settings loaded once at top of function; reused here.
-        _max_assets = int(settings.get("max_assets", 20))
-        _auto_generate = bool(settings.get("auto_generate", False))
-        _confirm_required = bool(settings.get("confirm_before_generate", False))
+        # Phase 102: use merged settings (chapter_overrides applied) for max_assets etc.
+        _max_assets = int(effective_settings.get("max_assets", 20))
+        _auto_generate = bool(effective_settings.get("auto_generate", False))
+        _confirm_required = bool(effective_settings.get("confirm_before_generate", False))
 
         if _max_assets > 0:
             _deleted = lru_cleanup(
@@ -475,7 +491,11 @@ async def regenerate_illustration(
     from lingwen_illustrations.fallback import Attempt, dispatch_with_fallback
 
     settings = _load_illustration_settings(project_root)
-    effective_chain: list[str] = list(fallback_chain or settings.get("fallback_chain") or [])
+    # Phase 102 I094: merge chapter_overrides for this chapter_num.
+    effective_settings = merge_chapter_settings(settings, chapter_num)
+    effective_chain: list[str] = list(fallback_chain or effective_settings.get("fallback_chain") or [])
+    # Phase 102 I095: notify_threshold from merged settings.
+    _notify_threshold = int(effective_settings.get("notify_threshold", 3))
 
     if reference_image_bytes is not None:
         # i2i path: NO fallback (Phase 101). Single provider call.
@@ -495,7 +515,7 @@ async def regenerate_illustration(
         effective_model = resolve_model(
             provider=effective_provider,
             explicit=model,
-            project_settings=settings,
+            project_settings=effective_settings,
             adapter=adapter,
         )
         attempts: list[Attempt] = [
@@ -507,14 +527,26 @@ async def regenerate_illustration(
             return (api_key, api_host)
 
         chain = [effective_provider] + effective_chain
-        image_bytes, success_provider, success_model, attempts = await dispatch_with_fallback(
-            chain=chain,
-            explicit_model=model,
-            project_settings=settings,
-            api_credentials_for=_credentials_for,
-            prompt=final_prompt,
-            provider_factory=get_provider,  # Phase 101: testability (patches take effect).
-        )
+        try:
+            image_bytes, success_provider, success_model, attempts = await dispatch_with_fallback(
+                chain=chain,
+                explicit_model=model,
+                project_settings=effective_settings,
+                api_credentials_for=_credentials_for,
+                prompt=final_prompt,
+                provider_factory=get_provider,  # Phase 101: testability (patches take effect).
+            )
+        except Exception as _exc:
+            # Phase 102 I095: record failure for threshold tracking, then re-raise.
+            notifications.record_failure(
+                existing_meta.project_slug, _exc,
+                project_root=project_root,
+                threshold=_notify_threshold,
+            )
+            raise
+        else:
+            # Phase 102 I095: reset failure counter on success.
+            notifications.record_success(existing_meta.project_slug)
         # Update effective provider/model for metadata + audit (Phase 101).
         effective_provider = success_provider
         effective_model = success_model
