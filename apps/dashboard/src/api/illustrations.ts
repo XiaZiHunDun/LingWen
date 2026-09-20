@@ -61,7 +61,7 @@ export interface ProjectSettings {
     Partial<
       Pick<
         ProjectSettings,
-        'max_assets' | 'confirm_before_generate' | 'auto_generate' | 'fallback_chain'
+        'max_assets' | 'confirm_before_generate' | 'auto_generate' | 'fallback_chain' | 'default_models'
       >
     >
   >
