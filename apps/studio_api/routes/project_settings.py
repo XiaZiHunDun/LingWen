@@ -77,7 +77,7 @@ class ProjectSettings(BaseModel):
     def _validate_chapter_overrides(cls, v: dict[int, dict[str, Any]]) -> dict[int, dict[str, Any]]:
         """Key >= 0 int; value keys must be subset of _CHAPTER_OVERRIDABLE_FIELDS."""
         for chapter_num, subset in v.items():
-            if not isinstance(chapter_num, int) or isinstance(chapter_num, bool) or chapter_num < 0:
+            if not isinstance(chapter_num, int) or chapter_num < 0:
                 raise ValueError(
                     f"chapter_num must be >= 0 int, got {chapter_num!r}"
                 )
@@ -92,7 +92,7 @@ class ProjectSettings(BaseModel):
     @field_validator("notify_threshold")
     @classmethod
     def _validate_notify_threshold(cls, v: int) -> int:
-        if not isinstance(v, int) or isinstance(v, bool) or v < 1:
+        if not isinstance(v, int) or v < 1:
             raise ValueError(f"notify_threshold must be >= 1, got {v}")
         return v
 
