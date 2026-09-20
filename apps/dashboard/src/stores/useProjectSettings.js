@@ -37,17 +37,17 @@ export const useProjectSettingsStore = defineStore('projectSettings', () => {
       if (resp.ok) {
         settings.value = await resp.json()
       } else {
-        settings.value = { default_provider: 'minimax' }
+        settings.value = { default_provider: 'minimax', fallback_chain: [] }
       }
     } catch {
-      settings.value = { default_provider: 'minimax' }
+      settings.value = { default_provider: 'minimax', fallback_chain: [] }
     } finally {
       loading.value = false
     }
   }
 
   async function save(targetSlug, partial) {
-    const current = settings.value || { default_provider: 'minimax' }
+    const current = settings.value || { default_provider: 'minimax', fallback_chain: [] }
     const next = { ...current, ...partial }
     loading.value = true
     try {
