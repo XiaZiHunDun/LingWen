@@ -2,10 +2,19 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 /**
- * Project settings Pinia store (Phase 96 + Phase 97 reference image).
+ * Project settings Pinia store
+ *   Phase 96: default_provider + auto_generate + max_assets + confirm_before_generate
+ *   Phase 97: reference image state
+ *   Phase 101: fallback_chain
+ *   Phase 102: fallback_models + chapter_overrides + notify_threshold
  *
  * State:
- *   - settings: { default_provider } | null
+ *   - settings: object | null
+ *       { default_provider, fallback_chain,
+ *         fallback_models: Record<string, string>,
+ *         chapter_overrides: Record<number, ChapterOverrideSubset>,
+ *         notify_threshold: number,
+ *         auto_generate?, max_assets?, confirm_before_generate? } | null
  *   - slug: string | null
  *   - loading: bool
  *   - referenceImage: { exists, size_bytes, mime_type } | null (Phase 97)
@@ -37,17 +46,35 @@ export const useProjectSettingsStore = defineStore('projectSettings', () => {
       if (resp.ok) {
         settings.value = await resp.json()
       } else {
-        settings.value = { default_provider: 'minimax', fallback_chain: [] }
+        settings.value = {
+          default_provider: 'minimax',
+          fallback_chain: [],
+          fallback_models: {},
+          chapter_overrides: {},
+          notify_threshold: 3,
+        }
       }
     } catch {
-      settings.value = { default_provider: 'minimax', fallback_chain: [] }
+      settings.value = {
+        default_provider: 'minimax',
+        fallback_chain: [],
+        fallback_models: {},
+        chapter_overrides: {},
+        notify_threshold: 3,
+      }
     } finally {
       loading.value = false
     }
   }
 
   async function save(targetSlug, partial) {
-    const current = settings.value || { default_provider: 'minimax', fallback_chain: [] }
+    const current = settings.value || {
+      default_provider: 'minimax',
+      fallback_chain: [],
+      fallback_models: {},
+      chapter_overrides: {},
+      notify_threshold: 3,
+    }
     const next = { ...current, ...partial }
     loading.value = true
     try {

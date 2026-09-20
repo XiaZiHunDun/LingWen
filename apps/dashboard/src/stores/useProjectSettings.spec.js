@@ -26,14 +26,26 @@ describe('useProjectSettingsStore', () => {
     })
     const store = useProjectSettingsStore()
     await store.fetch('test-slug')
-    expect(store.settings).toEqual({ default_provider: 'minimax', fallback_chain: [] })
+    expect(store.settings).toEqual({
+      default_provider: 'minimax',
+      fallback_chain: [],
+      fallback_models: {},
+      chapter_overrides: {},
+      notify_threshold: 3,
+    })
   })
 
   it('fetch falls back to defaults on network error', async () => {
     globalThis.fetch.mockRejectedValueOnce(new Error('network'))
     const store = useProjectSettingsStore()
     await store.fetch('test-slug')
-    expect(store.settings).toEqual({ default_provider: 'minimax', fallback_chain: [] })
+    expect(store.settings).toEqual({
+      default_provider: 'minimax',
+      fallback_chain: [],
+      fallback_models: {},
+      chapter_overrides: {},
+      notify_threshold: 3,
+    })
   })
 
   it('save persists to API', async () => {
