@@ -156,14 +156,23 @@ async def test_pipeline_extract_failure_raises(monkeypatch, project_root, sample
 
 @pytest.mark.asyncio
 async def test_pipeline_generate_failure_raises(monkeypatch, project_root, sample_chapter, sample_characters):
-    """Image API failure -> GenerateError with retry_after propagated."""
+    """Image API failure -> ProviderExhaustedError wraps GenerateError (Phase 101).
+
+    Phase 101: with no fallback_chain configured, a single-provider retryable
+    failure now raises ProviderExhaustedError (chain exhausted after 1 attempt)
+    rather than bare GenerateError. This is semantically correct: even with
+    one provider, the chain is exhausted. ProviderExhaustedError is also a
+    GenerateError (subclass), preserving existing catch blocks.
+    """
+    from lingwen_illustrations.exceptions import ProviderExhaustedError
+
     _mock_llm_service(monkeypatch, response_payload={
         "subject": "x", "scene": "y", "mood": "z",
         "characters_in_scene": [], "extraction_confidence": 0.8,
     })
     _mock_generate(monkeypatch, side_effect=GenerateError("api down", retry_after=30))
 
-    with pytest.raises(GenerateError) as exc:
+    with pytest.raises(ProviderExhaustedError) as exc:
         await generate_illustration(
             project_root=project_root,
             project_slug="test",
@@ -174,8 +183,12 @@ async def test_pipeline_generate_failure_raises(monkeypatch, project_root, sampl
             api_key="k",
             api_host="https://api.test",
         )
-    assert exc.value.retry_after == 30
-    assert exc.value.retryable is True
+    # ProviderExhaustedError is a GenerateError subclass.
+    assert exc.value.retryable is False  # terminal failure
+    assert exc.value.provider == "minimax"  # last tried
+    assert len(exc.value.attempts) == 1
+    assert exc.value.attempts[0]["provider"] == "minimax"
+    assert exc.value.attempts[0]["error"] is not None
 
 
 @pytest.mark.asyncio

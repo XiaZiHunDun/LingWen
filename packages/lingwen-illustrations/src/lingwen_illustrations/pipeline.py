@@ -157,6 +157,7 @@ async def generate_illustration(
     provider: str = "minimax",  # NEW (Phase 96)
     model: str | None = None,  # NEW (Phase 100). None -> resolve.
     reference_image_bytes: bytes | None = None,  # NEW (Phase 97)
+    fallback_chain: list[str] | None = None,    # NEW (Phase 101). None -> load from settings.
 ) -> IllustrationMetadata:
     """Run the full pipeline. Returns metadata of saved asset.
 
@@ -173,6 +174,11 @@ async def generate_illustration(
     i2i path does NOT accept model in v1 (single source of truth for i2i
     is the provider module's DEFAULT_MODEL).
 
+    Phase 101: when `fallback_chain` is provided (or settings has it),
+    iterates through [provider, *fallback_chain] and tries each on retryable
+    GenerateError. Successful provider recorded on IllustrationMetadata.provider;
+    all attempts in audit extra.attempts. i2i path does NOT use fallback.
+
     Raises:
         LoadError: Project / chapter / character bible missing or malformed.
         ExtractError: Stage 1 LLM failed.
@@ -181,6 +187,7 @@ async def generate_illustration(
         StoreError: Stage 4 file write failed.
         UnknownProviderError: provider name not in providers.KNOWN_PROVIDERS.
         UnknownModelError: explicit model not in provider's KNOWN_MODELS.
+        ProviderExhaustedError: NEW (Phase 101). All providers in chain failed retryably.
     """
     # Stage 1a: load chapter text + character bible.
     chapter_text = _load_chapter_text(project_root, type, chapter_num)
@@ -201,16 +208,15 @@ async def generate_illustration(
 
     # Stage 4: provider dispatch. Phase 97: route to i2i vs text based on reference_image_bytes.
     # Phase 100: resolve model via 3-tier order (explicit > project > provider default).
-    adapter = get_provider(provider)
+    # Phase 101: fallback chain for text-only path; i2i path bypasses fallback.
+    from lingwen_illustrations.fallback import Attempt, dispatch_with_fallback
+
     settings = _load_illustration_settings(project_root)
-    effective_model = resolve_model(
-        provider=provider,
-        explicit=model,
-        project_settings=settings,
-        adapter=adapter,
-    )
+    effective_chain: list[str] = list(fallback_chain or settings.get("fallback_chain") or [])
 
     if reference_image_bytes is not None:
+        # i2i path: NO fallback (Phase 101). Single provider call.
+        adapter = get_provider(provider)
         if not adapter.supports_i2i:
             raise GenerateError(
                 f"provider '{provider}' does not support image-to-image generation",
@@ -224,13 +230,39 @@ async def generate_illustration(
             api_host=api_host,
             # NOTE: model NOT threaded to i2i path (Phase 100 v1 limitation).
         )
-    else:
-        image_bytes = await adapter.generate(
-            prompt=final_prompt,
-            api_key=api_key,
-            api_host=api_host,
-            model=effective_model,
+        # i2i attempts: single success entry (no fallback).
+        effective_model = resolve_model(
+            provider=provider,
+            explicit=model,
+            project_settings=settings,
+            adapter=adapter,
         )
+        attempts: list[Attempt] = [
+            Attempt(provider=provider, model=effective_model, error=None, ts=_iso_utc_now()),
+        ]
+    else:
+        # Text-only path: fallback chain dispatch (Phase 101).
+        def _credentials_for(_p: str) -> tuple[str, str]:
+            """Local credentials dispatcher for fallback chain providers.
+
+            Reuses the existing api_key/api_host passed for the primary.
+            In v1, all providers in a chain share the same primary credentials
+            (per-project API keys are not yet distinguished); v2 may split.
+            """
+            return (api_key, api_host)
+
+        chain = [provider] + effective_chain
+        image_bytes, success_provider, success_model, attempts = await dispatch_with_fallback(
+            chain=chain,
+            explicit_model=model,
+            project_settings=settings,
+            api_credentials_for=_credentials_for,
+            prompt=final_prompt,
+            provider_factory=get_provider,  # Phase 101: pass for testability (patches take effect).
+        )
+        # Update effective provider/model for metadata + audit (Phase 101).
+        provider = success_provider
+        effective_model = success_model
 
     # Stage 5: store. Build metadata + save.
     asset_id = f"{int(time.time())}-{uuid.uuid4().hex[:8]}"
@@ -289,7 +321,11 @@ async def generate_illustration(
             asset_meta=meta,
             confirmed=None,  # generation from generate_illustration is API-driven (no user confirm dialog at this layer)
             bypassed=False,
-            extra={"auto_generate": _auto_generate, "confirm_required": _confirm_required},
+            extra={
+                "auto_generate": _auto_generate,
+                "confirm_required": _confirm_required,
+                "attempts": [a.__dict__ for a in attempts],  # NEW (Phase 101)
+            },
             id=_event_id,  # NEW (Phase 99)
         )
         notifications.publish(notifications.NotificationEvent(
@@ -300,9 +336,13 @@ async def generate_illustration(
             asset_type=meta.type,
             chapter_num=meta.chapter_num,
             style_preset=meta.style_preset,
-            provider=provider,
+            provider=provider,  # NEW (Phase 101): successful provider
             ts=notifications.now_iso(),
-            extra={"auto_generate": _auto_generate, "confirm_required": _confirm_required},
+            extra={
+                "auto_generate": _auto_generate,
+                "confirm_required": _confirm_required,
+                "attempts": [a.__dict__ for a in attempts],  # NEW (Phase 101)
+            },
         ))
     except Exception:
         # Never block pipeline on settings/audit errors

@@ -82,6 +82,7 @@ async def dispatch_with_fallback(
     prompt: str,
     i2i: bool = False,
     reference_image_bytes: bytes | None = None,
+    provider_factory: Callable[[str], object] | None = None,
 ) -> tuple[bytes, str, str, list[Attempt]]:
     """Iterate chain. Return (bytes, success_provider, success_model, attempts).
 
@@ -120,10 +121,15 @@ async def dispatch_with_fallback(
             f"fallback chain empty after filtering: {chain}"
         )
 
+    # Phase 101: allow caller to pass a provider_factory for testability
+    # (so tests patching lingwen_illustrations.pipeline.get_provider take effect).
+    # Default to module-level get_provider.
+    _get_provider = provider_factory if provider_factory is not None else get_provider
+
     attempts: list[Attempt] = []
 
     for idx, provider in enumerate(valid_chain):
-        adapter = get_provider(provider)
+        adapter = _get_provider(provider)
         # Primary (first) gets explicit_model; fallbacks always None (per-provider default).
         explicit = explicit_model if idx == 0 else None
         model = resolve_model(
