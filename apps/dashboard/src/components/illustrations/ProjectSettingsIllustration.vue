@@ -1,5 +1,5 @@
 <!--
-  ProjectSettingsIllustration.vue — 插图偏好（Phase 90 Task 17 + Phase 96 Task 16 + Phase 97 Task 10 + Phase 98 Task 13 + Phase 100 Task 8 + Phase 102 Task 9）
+  ProjectSettingsIllustration.vue — 插图偏好（Phase 90 Task 17 + Phase 96 Task 16 + Phase 97 Task 10 + Phase 98 Task 13 + Phase 100 Task 8 + Phase 102 Task 9 + Phase 102 Task 10）
 
   包含：
   - 默认风格预设（古风水墨 / 现代写实 / 动漫厚涂）
@@ -21,6 +21,9 @@
   - Phase 102 Task 9: fallback_models — 每个 provider 在 fallback chain
     retry 路径使用的模型 dropdown（mirror default_models 模式，整组 dict
     持久化到 fallback_models 字段）。主路径仍用 default_models[provider]。
+  - Phase 102 Task 10: chapter_overrides — per-chapter 子集覆写
+    (dict[chapter_num, subset])，逐章覆盖 max_assets / confirm_before_generate /
+    auto_generate / fallback_chain 中任意子集；存到 chapter_overrides 字段。
 
   Phase 98 Task 13: update() 现在 emit + save (Phase 96 只对 provider save)。
   三个新字段 (auto_generate / max_assets / confirm_before_generate) 现在持久化
@@ -128,6 +131,90 @@ async function update_fallback_model_default(provider, model) {
     Object.entries(next).filter(([, v]) => v !== ''),
   )
   await update('fallback_models', filtered)
+}
+
+// Phase 102 Task 10: chapter_overrides row helpers.
+// chapter_overrides is dict[chapter_num, subset-of-overridable-fields].
+// Backend pipeline merges per-chapter subset onto base settings at request time
+// (overrides win on conflict). Subset fields are whitelisted on the backend
+// (_CHAPTER_OVERRIDABLE_FIELDS in
+// apps/studio_api/routes/project_settings.py:35-37): max_assets /
+// confirm_before_generate / auto_generate / fallback_chain.
+
+// Compute the next available chapter number for "+ Add chapter" — keep it
+// monotonic vs. existing keys so the user can keep clicking without collision.
+function next_chapter_number() {
+  const existing = Object.keys(props.modelValue?.chapter_overrides || {}).map(
+    (k) => Number(k),
+  )
+  if (existing.length === 0) return 1
+  return Math.max(...existing) + 1
+}
+
+async function addChapterOverrideRow() {
+  const overrides = { ...(props.modelValue?.chapter_overrides || {}) }
+  // Skip if next number already exists (defensive — should not happen).
+  const next = next_chapter_number()
+  if (Object.prototype.hasOwnProperty.call(overrides, String(next))) return
+  overrides[next] = {}
+  await update('chapter_overrides', overrides)
+}
+
+async function removeChapterOverrideRow(chapter) {
+  const overrides = { ...(props.modelValue?.chapter_overrides || {}) }
+  delete overrides[chapter]
+  await update('chapter_overrides', overrides)
+}
+
+async function updateChapterOverrideChapter(oldChapter, newChapterRaw) {
+  const newChapter = Number(newChapterRaw)
+  if (!Number.isInteger(newChapter) || newChapter < 0) return
+  const overrides = { ...(props.modelValue?.chapter_overrides || {}) }
+  // Collision check: if newChapter key already exists (different from oldChapter),
+  // refuse to clobber — let the user clear the existing row first.
+  if (
+    newChapter !== oldChapter &&
+    Object.prototype.hasOwnProperty.call(overrides, String(newChapter))
+  ) {
+    return
+  }
+  const subset = overrides[oldChapter]
+  delete overrides[oldChapter]
+  overrides[newChapter] = subset ?? {}
+  await update('chapter_overrides', overrides)
+}
+
+async function updateChapterOverrideField(chapter, field, value) {
+  const overrides = { ...(props.modelValue?.chapter_overrides || {}) }
+  const subset = { ...(overrides[chapter] || {}) }
+  if (
+    value === '' ||
+    value === null ||
+    value === undefined ||
+    (Array.isArray(value) && value.length === 0)
+  ) {
+    // Empty sentinel — drop the field from the subset so backend sees
+    // "no override for this field" (it then falls back to base settings).
+    delete subset[field]
+  } else if (field === 'max_assets') {
+    // max_assets is a number — coerce after the sentinel check so that an
+    // empty input (Number('') === 0) is treated as "drop override" rather
+    // than persisting 0 to the backend.
+    const num = Number(value)
+    if (Number.isFinite(num)) {
+      subset[field] = num
+    } else {
+      delete subset[field]
+    }
+  } else if (field === 'confirm_before_generate' || field === 'auto_generate') {
+    subset[field] = Boolean(value)
+  } else if (field === 'fallback_chain') {
+    subset[field] = Array.isArray(value) ? value : [value]
+  } else {
+    subset[field] = value
+  }
+  overrides[chapter] = subset
+  await update('chapter_overrides', overrides)
 }
 
 const on_provider_change = (value) => update('default_provider', value)
@@ -312,6 +399,144 @@ const on_fallback_chain_change = (event) => {
       </p>
     </div>
 
+    <!-- Phase 102 Task 10: chapter_overrides — per-chapter subset merge.
+         dict[chapter_num, subset-of-overridable-fields] where the subset is
+         any combination of max_assets / confirm_before_generate / auto_generate
+         / fallback_chain. Backend pipeline.merge_chapter_settings() merges each
+         chapter's subset onto base settings at request time (overrides win).
+         Add row appends next monotonic chapter number; remove deletes the row.
+         Editing chapter-num renames the dict key (with collision check); editing
+         a field within a row updates only that field in the subset (empty value
+         drops the field from the subset so backend falls back to base). -->
+    <div
+      class="field project-settings-illustration-field project-settings-illustration-chapter-overrides"
+      data-testid="chapter-overrides-section"
+    >
+      <p class="label project-settings-illustration-label">章节覆写</p>
+      <p class="empty-hint project-settings-illustration-hint">
+        按章节覆盖部分字段；留空表示沿用上方默认值。
+      </p>
+      <table
+        class="project-settings-illustration-chapter-overrides-table"
+        data-testid="chapter-overrides-table"
+      >
+        <thead>
+          <tr>
+            <th>章节</th>
+            <th>max_assets</th>
+            <th>confirm</th>
+            <th>auto</th>
+            <th>fallback_chain</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="chapter in Object.keys(props.modelValue?.chapter_overrides || {}).sort(
+              (a, b) => Number(a) - Number(b)
+            )"
+            :key="chapter"
+            :data-testid="`chapter-override-row-${chapter}`"
+            class="project-settings-illustration-chapter-override-row"
+          >
+            <td>
+              <input
+                type="number"
+                class="project-settings-illustration-chapter-override-chapter-num"
+                :value="chapter"
+                :min="0"
+                :step="1"
+                :data-testid="`chapter-override-chapter-num-${chapter}`"
+                @change="updateChapterOverrideChapter(chapter, $event.target.value)"
+              />
+            </td>
+            <td>
+              <input
+                type="number"
+                class="project-settings-illustration-chapter-override-max-assets"
+                :value="(props.modelValue?.chapter_overrides?.[chapter]?.max_assets) ?? ''"
+                :min="0"
+                :step="1"
+                :data-testid="`chapter-override-max-assets-${chapter}`"
+                @change="updateChapterOverrideField(chapter, 'max_assets', $event.target.value)"
+              />
+            </td>
+            <td>
+              <input
+                type="checkbox"
+                class="project-settings-illustration-chapter-override-confirm"
+                :checked="
+                  !!props.modelValue?.chapter_overrides?.[chapter]?.confirm_before_generate
+                "
+                :data-testid="`chapter-override-confirm-${chapter}`"
+                @change="
+                  updateChapterOverrideField(
+                    chapter,
+                    'confirm_before_generate',
+                    $event.target.checked
+                  )
+                "
+              />
+            </td>
+            <td>
+              <input
+                type="checkbox"
+                class="project-settings-illustration-chapter-override-auto"
+                :checked="
+                  !!props.modelValue?.chapter_overrides?.[chapter]?.auto_generate
+                "
+                :data-testid="`chapter-override-auto-generate-${chapter}`"
+                @change="
+                  updateChapterOverrideField(
+                    chapter,
+                    'auto_generate',
+                    $event.target.checked
+                  )
+                "
+              />
+            </td>
+            <td>
+              <input
+                type="text"
+                class="project-settings-illustration-chapter-override-fallback-chain"
+                :value="
+                  (
+                    props.modelValue?.chapter_overrides?.[chapter]?.fallback_chain || []
+                  ).join(',')
+                "
+                placeholder="(use default)"
+                :data-testid="`chapter-override-fallback-chain-${chapter}`"
+                @change="
+                  updateChapterOverrideField(
+                    chapter,
+                    'fallback_chain',
+                    $event.target.value
+                      .split(',')
+                      .map((s) => s.trim())
+                      .filter(Boolean)
+                  )
+                "
+              />
+            </td>
+            <td>
+              <button
+                type="button"
+                class="project-settings-illustration-chapter-override-remove"
+                :data-testid="`chapter-override-remove-${chapter}`"
+                @click="removeChapterOverrideRow(chapter)"
+              >×</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <button
+        type="button"
+        class="project-settings-illustration-add-chapter-override"
+        data-testid="add-chapter-override"
+        @click="addChapterOverrideRow"
+      >+ Add chapter</button>
+    </div>
+
     <div class="field project-settings-illustration-field">
       <label class="project-settings-illustration-label" for="project-settings-illustration-max-assets">
         资产数量上限
@@ -439,5 +664,84 @@ const on_fallback_chain_change = (event) => {
   border: var(--border-width) solid var(--border-color);
   border-radius: var(--radius-sm);
   min-width: 180px;
+}
+
+/* Phase 102 Task 10: chapter_overrides table. */
+.project-settings-illustration-chapter-overrides {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.project-settings-illustration-chapter-overrides-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: var(--text-sm);
+  font-family: var(--font-ui);
+}
+
+.project-settings-illustration-chapter-overrides-table th,
+.project-settings-illustration-chapter-overrides-table td {
+  border: var(--border-width) solid var(--border-color);
+  padding: 4px 6px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.project-settings-illustration-chapter-overrides-table th {
+  font-weight: 600;
+  color: var(--color-text-muted, #4b5563);
+  background: var(--bg-muted);
+}
+
+.project-settings-illustration-chapter-override-chapter-num,
+.project-settings-illustration-chapter-override-max-assets {
+  width: 70px;
+  font-family: var(--font-mono);
+  padding: 4px 6px;
+  background: var(--bg-primary);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-sm);
+}
+
+.project-settings-illustration-chapter-override-fallback-chain {
+  width: 160px;
+  font-family: var(--font-mono);
+  padding: 4px 6px;
+  background: var(--bg-primary);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-sm);
+}
+
+.project-settings-illustration-chapter-override-remove {
+  cursor: pointer;
+  background: transparent;
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 2px 8px;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted, #4b5563);
+}
+
+.project-settings-illustration-chapter-override-remove:hover {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.project-settings-illustration-add-chapter-override {
+  align-self: flex-start;
+  padding: 4px 10px;
+  background: var(--bg-primary);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-family: var(--font-ui);
+  color: var(--color-text);
+}
+
+.project-settings-illustration-add-chapter-override:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
 }
 </style>
