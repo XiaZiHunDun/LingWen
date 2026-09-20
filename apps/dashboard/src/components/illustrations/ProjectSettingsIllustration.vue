@@ -24,6 +24,8 @@
   - Phase 102 Task 10: chapter_overrides — per-chapter 子集覆写
     (dict[chapter_num, subset])，逐章覆盖 max_assets / confirm_before_generate /
     auto_generate / fallback_chain 中任意子集；存到 chapter_overrides 字段。
+  - Phase 102 Task 11: notify_threshold slider — 连续失败次数达到阈值后
+    触发 warning 通知（1-10，默认 3，counter 在下次成功时重置）。
 
   Phase 98 Task 13: update() 现在 emit + save (Phase 96 只对 provider save)。
   三个新字段 (auto_generate / max_assets / confirm_before_generate) 现在持久化
@@ -39,7 +41,7 @@
   resolve_model:108-141)；主路径仍用 default_models[provider]。
 -->
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useProjectSettingsStore } from '@/stores/useProjectSettings.js'
 import { fetchProviderModels } from '@/api/illustrations'
 import ReferenceImageUpload from './ReferenceImageUpload.vue'
@@ -223,6 +225,22 @@ const on_provider_change = (value) => update('default_provider', value)
 const on_fallback_chain_change = (event) => {
   const selected = Array.from(event.target.selectedOptions).map((o) => o.value)
   update('fallback_chain', selected)
+}
+
+// Phase 102 Task 11: notify_threshold — consecutive failure count before
+// warning notification (1-10, default 3). Backend pipeline tracks consecutive
+// failures and emits a warning when the count reaches this threshold; counter
+// resets on the next success.
+const notify_threshold_value = computed(
+  () => props.modelValue?.notify_threshold ?? 3,
+)
+
+async function updateNotifyThreshold(value) {
+  const num = Number(value)
+  if (!Number.isFinite(num)) return
+  // Clamp to slider range so any out-of-range input is normalized to 1-10.
+  const clamped = Math.max(1, Math.min(10, Math.round(num)))
+  await update('notify_threshold', clamped)
 }
 </script>
 
@@ -535,6 +553,38 @@ const on_fallback_chain_change = (event) => {
         data-testid="add-chapter-override"
         @click="addChapterOverrideRow"
       >+ Add chapter</button>
+    </div>
+
+    <!-- Phase 102 Task 11: notify_threshold slider. Number of consecutive
+         generation failures before emitting a warning notification. Range 1-10
+         (default 3). Counter resets on the next success. -->
+    <div
+      class="field project-settings-illustration-field project-settings-illustration-notify-threshold"
+      data-testid="notify-threshold-section"
+    >
+      <label
+        class="project-settings-illustration-label"
+        for="project-settings-illustration-notify-threshold"
+      >
+        通知阈值
+      </label>
+      <p class="empty-hint project-settings-illustration-hint">
+        连续生成失败次数达到此值后触发警告通知，下次成功时重置。
+      </p>
+      <input
+        id="project-settings-illustration-notify-threshold"
+        type="range"
+        class="project-settings-illustration-notify-threshold-slider"
+        min="1"
+        max="10"
+        step="1"
+        :value="notify_threshold_value"
+        data-testid="notify-threshold-slider"
+        @input="updateNotifyThreshold($event.target.value)"
+      />
+      <p class="empty-hint project-settings-illustration-hint">
+        当前: {{ notify_threshold_value }} 次连续失败 → 警告通知
+      </p>
     </div>
 
     <div class="field project-settings-illustration-field">
