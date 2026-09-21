@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import math
 import time
 import uuid
 from datetime import datetime, timezone
@@ -55,6 +56,35 @@ from lingwen_illustrations.providers import ProviderAdapter, get_provider
 from lingwen_illustrations.style_templates import compose as compose_prompt
 
 logger = logging.getLogger(__name__)
+
+# Phase 104: per-event-type notify_threshold. Sentinel for "never warn" — kept
+# as a module-local constant (same value as notifications.INFINITY_THRESHOLD)
+# so pipeline.py doesn't need to import notifications.INFINITY_THRESHOLD
+# (notifications stays yaml-free; pipeline already imports notifications).
+INFINITY_THRESHOLD = math.inf
+
+
+def _resolve_threshold(settings: dict, event_type: str) -> int | float:
+    """Resolve notify_threshold for specific event_type.
+
+    After Pydantic normalization, settings["notify_threshold"] is dict[str, int]
+    where keys are subset of ("generation", "regeneration", "cleanup", "deletion").
+    Missing key → INFINITY_THRESHOLD (never warn for that event type).
+
+    Defensive: if int legacy form slips through (shouldn't post-validation),
+    returns int directly. If something else (bool, None), returns INFINITY
+    to err on the side of "don't warn" rather than crashing callers.
+
+    Phase 104 spec §3.
+    """
+    nt = settings.get("notify_threshold", INFINITY_THRESHOLD)
+    if isinstance(nt, bool):
+        # bool is subclass of int — exclude truthy acceptance before int check.
+        return INFINITY_THRESHOLD
+    if isinstance(nt, (int, float)):
+        return nt
+    return nt.get(event_type, INFINITY_THRESHOLD)
+
 
 _TYPE = Literal["cover", "chapter"]
 
@@ -257,8 +287,8 @@ async def generate_illustration(
     # Phase 102 I094: merge chapter_overrides for this chapter_num (cover type → identity).
     effective_settings = merge_chapter_settings(settings, chapter_num)
     effective_chain: list[str] = list(fallback_chain or effective_settings.get("fallback_chain") or [])
-    # Phase 102 I095: notify_threshold from merged settings (chapter_overrides win over root).
-    _notify_threshold = int(effective_settings.get("notify_threshold", 3))
+    # Phase 102 I095 + Phase 104: notify_threshold resolved per-type from merged settings.
+    _notify_threshold = _resolve_threshold(effective_settings, "generation")
 
     if reference_image_bytes is not None:
         # i2i path: NO fallback (Phase 101). Single provider call.
@@ -308,16 +338,17 @@ async def generate_illustration(
                 provider_factory=get_provider,  # Phase 101: pass for testability (patches take effect).
             )
         except Exception as _exc:
-            # Phase 102 I095: record failure for threshold tracking, then re-raise.
+            # Phase 102 I095 + Phase 104: record failure with event_type="generation".
             notifications.record_failure(
                 project_slug, _exc,
                 project_root=project_root,
                 threshold=_notify_threshold,
+                event_type="generation",
             )
             raise
         else:
-            # Phase 102 I095: reset failure counter on success.
-            notifications.record_success(project_slug)
+            # Phase 102 I095 + Phase 104: reset failure counter for "generation" only.
+            notifications.record_success(project_slug, event_type="generation")
         # Update effective provider/model for metadata + audit (Phase 101).
         provider = success_provider
         effective_model = success_model
@@ -494,8 +525,8 @@ async def regenerate_illustration(
     # Phase 102 I094: merge chapter_overrides for this chapter_num.
     effective_settings = merge_chapter_settings(settings, chapter_num)
     effective_chain: list[str] = list(fallback_chain or effective_settings.get("fallback_chain") or [])
-    # Phase 102 I095: notify_threshold from merged settings.
-    _notify_threshold = int(effective_settings.get("notify_threshold", 3))
+    # Phase 102 I095 + Phase 104: notify_threshold resolved per-type from merged settings.
+    _notify_threshold = _resolve_threshold(effective_settings, "regeneration")
 
     if reference_image_bytes is not None:
         # i2i path: NO fallback (Phase 101). Single provider call.
@@ -537,16 +568,17 @@ async def regenerate_illustration(
                 provider_factory=get_provider,  # Phase 101: testability (patches take effect).
             )
         except Exception as _exc:
-            # Phase 102 I095: record failure for threshold tracking, then re-raise.
+            # Phase 102 I095 + Phase 104: record failure with event_type="regeneration".
             notifications.record_failure(
                 existing_meta.project_slug, _exc,
                 project_root=project_root,
                 threshold=_notify_threshold,
+                event_type="regeneration",
             )
             raise
         else:
-            # Phase 102 I095: reset failure counter on success.
-            notifications.record_success(existing_meta.project_slug)
+            # Phase 102 I095 + Phase 104: reset failure counter for "regeneration" only.
+            notifications.record_success(existing_meta.project_slug, event_type="regeneration")
         # Update effective provider/model for metadata + audit (Phase 101).
         effective_provider = success_provider
         effective_model = success_model
