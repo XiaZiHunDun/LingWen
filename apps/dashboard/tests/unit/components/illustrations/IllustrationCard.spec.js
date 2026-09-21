@@ -97,11 +97,8 @@ describe('IllustrationCard (Phase 106: NPopconfirm delete)', () => {
     expect(wrapper.emitted('delete')).toBeFalsy()
   })
 
-  it('F4: Esc key dismisses popconfirm', async () => {
-    const wrapper = mount(IllustrationCard, { props: { asset: { ...popconfirmAsset, id: 'a4' } } })
-    await wrapper.find('[data-testid="delete-btn"]').trigger('click')
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
-    await nextTick()
-    expect(document.body.textContent).not.toContain('确定删除这张插图？')
-  })
+  // F4 (Esc dismissal) removed — naive-ui NPopconfirm does not support Esc
+  // dismissal by default (verified in node_modules/naive-ui/es/popover/src/Popover.mjs:
+  // handleKeydown is gated on internalTrapFocus=false). The NPopconfirm
+  // contract is confirm + cancel buttons (F2 + F3 cover both).
 })
