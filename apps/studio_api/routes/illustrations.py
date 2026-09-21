@@ -364,18 +364,76 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
         asset_id: str,
         project_slug: str = Query(...),
     ) -> dict:
+        # Phase 106: failure tracking wiring (mirrors cleanup_route Phase 105 pattern).
+        # LoadError path: record_failure with project_root=None (counter increments;
+        # audit_log skipped inside notifications._emit_failure_warning).
         try:
             project_root = project_root_for(project_slug)
         except LoadError as e:
+            notifications.record_failure(
+                project_slug, e,
+                project_root=None,
+                threshold=notifications.resolve_threshold({}, "deletion"),
+                event_type="deletion",
+            )
             raise HTTPException(404, detail=_err_detail(e)) from e
 
-        # Find the asset by id (list_assets is idempotent and cheap)
+        # Real project_root exists — resolve actual threshold from settings.
+        settings = _load_deletion_settings(project_root)
+        threshold = notifications.resolve_threshold(settings, "deletion")
+
+        # Find the asset by id (list_assets is idempotent and cheap).
         all_assets = storage.list_assets(project_root)
         meta = next((a for a in all_assets if a.id == asset_id), None)
+
         if meta is None:
+            # Phase 106: 404 asset-not-found = no-op success (per user decision).
+            # Asset is already gone (idempotent); record_success resets the
+            # (slug, "deletion") counter to avoid stale warnings from prior
+            # transient failures. Symmetric with cleanup_route "0 deleted under
+            # limit" success path.
+            notifications.record_success(project_slug, event_type="deletion")
             raise HTTPException(404, detail=f"asset {asset_id} not found")
 
-        storage.delete_asset(project_root, meta)
+        # Phase 106: real delete with failure tracking + double-write.
+        try:
+            storage.delete_asset(project_root, meta)
+        except StoreError as e:
+            # Phase 106: StoreError is a system failure — record_failure with
+            # the real project_root (audit_log captures the warning event).
+            notifications.record_failure(
+                project_slug, e,
+                project_root=project_root,
+                threshold=threshold,
+                event_type="deletion",
+            )
+            raise HTTPException(500, detail=_err_detail(e)) from e
+        else:
+            # Phase 106: successful delete resets (slug, "deletion") counter.
+            notifications.record_success(project_slug, event_type="deletion")
+
+        # Phase 99 I091 + Phase 106: double-write audit_log + publish (same ULID).
+        event_id = notifications.new_event_id()
+        audit_log.record_event(
+            project_root,
+            event="deletion",
+            asset_meta=meta,
+            id=event_id,
+            extra={"trigger": "manual"},
+        )
+        notifications.publish(notifications.NotificationEvent(
+            id=event_id,
+            project_slug=project_slug,
+            event_type="deletion",
+            asset_id=meta.id,
+            asset_type=meta.type,
+            chapter_num=meta.chapter_num,
+            style_preset=meta.style_preset,
+            provider=meta.provider,
+            ts=notifications.now_iso(),
+            extra={"trigger": "manual"},
+        ))
+
         return {"deleted": asset_id}
 
     @app.put("/api/illustrations/{asset_id}/regenerate", response_model=GenerateResponse)
