@@ -49,7 +49,7 @@
   但写入 chapter_overrides[chapter].default_models 子字段，触发 update()。
 -->
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useProjectSettingsStore } from '@/stores/useProjectSettings.js'
 import { fetchProviderModels } from '@/api/illustrations'
 import ReferenceImageUpload from './ReferenceImageUpload.vue'
@@ -294,20 +294,60 @@ const on_fallback_chain_change = (event) => {
   update('fallback_chain', selected)
 }
 
-// Phase 102 Task 11: notify_threshold — consecutive failure count before
-// warning notification (1-10, default 3). Backend pipeline tracks consecutive
-// failures and emits a warning when the count reaches this threshold; counter
-// resets on the next success.
-const notify_threshold_value = computed(
-  () => props.modelValue?.notify_threshold ?? 3,
-)
+// Phase 102 Task 11 + Phase 104 Task 8: notify_threshold per-event-type.
+// Phase 102 form was a single int slider (1-10, default 3). Phase 104 widens
+// to per-event_type dict (generation / regeneration / cleanup / deletion),
+// each independently configurable. Empty input on a row means "never warn
+// for that event type" (∞). Backend Pydantic validator auto-expands legacy
+// int payloads to a 4-key dict on read; see
+// apps/studio_api/routes/project_settings.py:_validate_notify_threshold.
+import { NOTIFY_EVENT_TYPES } from '@/api/illustrations'
 
-async function updateNotifyThreshold(value) {
-  const num = Number(value)
-  if (!Number.isFinite(num)) return
-  // Clamp to slider range so any out-of-range input is normalized to 1-10.
-  const clamped = Math.max(1, Math.min(10, Math.round(num)))
-  await update('notify_threshold', clamped)
+const DEFAULT_THRESHOLD = 3
+
+function formatThreshold(value, et) {
+  // Phase 104: legacy int (post-Phase 104 backend never sends raw int, but the
+  // UI handles the form defensively in case a stale API/cache leaks through)
+  // shows the same number in every row.
+  if (typeof value === 'number') return value
+  // Per-event_type dict — show the configured value or empty (∞).
+  if (value && typeof value === 'object' && et in value) return value[et]
+  // undefined / empty dict / unknown shape → opt-out all.
+  return ''
+}
+
+async function onThresholdChange(et, event) {
+  // Build a normalized dict from current value (handles int legacy / dict /
+  // undefined uniformly). We spread to avoid mutating props.
+  const current = props.modelValue?.notify_threshold
+  const dict =
+    current && typeof current === 'object' && !Array.isArray(current)
+      ? { ...current }
+      : {}
+
+  const raw = event.target.value.trim()
+  if (raw === '') {
+    // Empty → opt out of warnings for this event type.
+    delete dict[et]
+  } else {
+    const parsed = parseInt(raw, 10)
+    if (Number.isFinite(parsed) && parsed >= 1) {
+      dict[et] = parsed
+    } else {
+      // Invalid input (zero / negative / non-numeric) — silently ignore. The
+      // input's `min="1"` attribute catches most cases in the browser.
+      return
+    }
+  }
+  await update('notify_threshold', dict)
+}
+
+async function resetAllThresholds() {
+  const dict = {}
+  for (const et of NOTIFY_EVENT_TYPES) {
+    dict[et] = DEFAULT_THRESHOLD
+  }
+  await update('notify_threshold', dict)
 }
 </script>
 
@@ -667,36 +707,61 @@ async function updateNotifyThreshold(value) {
       >+ Add chapter</button>
     </div>
 
-    <!-- Phase 102 Task 11: notify_threshold slider. Number of consecutive
-         generation failures before emitting a warning notification. Range 1-10
-         (default 3). Counter resets on the next success. -->
+    <!-- Phase 102 Task 11 + Phase 104 Task 8: notify_threshold per-event-type.
+         Phase 102 was a single int slider (1-10, default 3) shared across all
+         event types. Phase 104 widens to a per-event_type dict — 4 fixed rows
+         (generation / regeneration / cleanup / deletion), each independently
+         configurable. Empty input on a row means "never warn for that event
+         type" (∞). Reset button sets all 4 rows back to the default (3). -->
     <div
-      class="field project-settings-illustration-field project-settings-illustration-notify-threshold"
-      data-testid="notify-threshold-section"
+      class="field project-settings-illustration-field project-settings-illustration-notify-thresholds"
+      data-testid="notify-thresholds-section"
     >
-      <label
-        class="project-settings-illustration-label"
-        for="project-settings-illustration-notify-threshold"
+      <p class="label project-settings-illustration-label">通知阈值（按事件类型）</p>
+      <p class="empty-hint project-settings-illustration-hint">
+        连续失败次数达到该值后触发警告通知；留空表示从不警告。
+      </p>
+      <table
+        class="project-settings-illustration-notify-thresholds-table"
+        data-testid="notify-thresholds-table"
       >
-        通知阈值
-      </label>
-      <p class="empty-hint project-settings-illustration-hint">
-        连续生成失败次数达到此值后触发警告通知，下次成功时重置。
-      </p>
-      <input
-        id="project-settings-illustration-notify-threshold"
-        type="range"
-        class="project-settings-illustration-notify-threshold-slider"
-        min="1"
-        max="10"
-        step="1"
-        :value="notify_threshold_value"
-        data-testid="notify-threshold-slider"
-        @input="updateNotifyThreshold($event.target.value)"
-      />
-      <p class="empty-hint project-settings-illustration-hint">
-        当前: {{ notify_threshold_value }} 次连续失败 → 警告通知
-      </p>
+        <thead>
+          <tr>
+            <th>Event type</th>
+            <th>Threshold</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="et in NOTIFY_EVENT_TYPES"
+            :key="et"
+            class="project-settings-illustration-notify-threshold-row"
+            :data-testid="`notify-threshold-row-${et}`"
+          >
+            <td>{{ et }}</td>
+            <td>
+              <input
+                type="number"
+                class="project-settings-illustration-notify-threshold-input"
+                :value="formatThreshold(props.modelValue?.notify_threshold, et)"
+                min="1"
+                step="1"
+                placeholder="∞"
+                :data-testid="`notify-threshold-input-${et}`"
+                @change="onThresholdChange(et, $event)"
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <button
+        type="button"
+        class="project-settings-illustration-notify-threshold-reset-all"
+        data-testid="notify-threshold-reset-all"
+        @click="resetAllThresholds"
+      >
+        Reset all to default
+      </button>
     </div>
 
     <div class="field project-settings-illustration-field">
@@ -956,6 +1021,61 @@ async function updateNotifyThreshold(value) {
 }
 
 .project-settings-illustration-add-chapter-override:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* Phase 104 Task 8: notify_thresholds per-event-type table. */
+.project-settings-illustration-notify-thresholds {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.project-settings-illustration-notify-thresholds-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: var(--text-sm);
+  font-family: var(--font-ui);
+}
+
+.project-settings-illustration-notify-thresholds-table th,
+.project-settings-illustration-notify-thresholds-table td {
+  border: var(--border-width) solid var(--border-color);
+  padding: 4px 6px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.project-settings-illustration-notify-thresholds-table th {
+  font-weight: 600;
+  color: var(--color-text-muted, #4b5563);
+  background: var(--bg-muted);
+}
+
+.project-settings-illustration-notify-threshold-input {
+  width: 100px;
+  font-family: var(--font-mono);
+  padding: 4px 6px;
+  background: var(--bg-primary);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-sm);
+}
+
+.project-settings-illustration-notify-threshold-reset-all {
+  align-self: flex-start;
+  margin-top: var(--space-xs);
+  padding: 4px 10px;
+  background: var(--bg-primary);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-family: var(--font-ui);
+  color: var(--color-text);
+}
+
+.project-settings-illustration-notify-threshold-reset-all:hover {
   border-color: var(--color-accent);
   color: var(--color-accent);
 }

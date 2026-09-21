@@ -37,9 +37,15 @@ const fetchProviderModelsMock = vi.fn(async (name: string) => {
   return catalogs[name]
 })
 
-vi.mock('@/api/illustrations', () => ({
-  fetchProviderModels: fetchProviderModelsMock,
-}))
+vi.mock('@/api/illustrations', async () => {
+  const actual = await vi.importActual<typeof import('@/api/illustrations')>(
+    '@/api/illustrations'
+  )
+  return {
+    ...actual,
+    fetchProviderModels: fetchProviderModelsMock,
+  }
+})
 
 vi.mock('@/stores/useProjectSettings.js', () => ({
   useProjectSettingsStore: () => ({
@@ -157,14 +163,14 @@ describe('ProjectSettingsIllustration — chapter_overrides section (Phase 102 T
   })
 })
 
-describe('ProjectSettingsIllustration — notify_threshold slider (Phase 102 T11)', () => {
+describe('ProjectSettingsIllustration — notify_threshold table (Phase 102 T11 + Phase 104 T8)', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     fetchProviderModelsMock.mockClear()
     storeMocks.saveMock.mockClear()
   })
 
-  it('renders notify_threshold slider', async () => {
+  it('renders notify_threshold table section', async () => {
     const { default: ProjectSettingsIllustration } = await import(
       './ProjectSettingsIllustration.vue'
     )
@@ -177,16 +183,27 @@ describe('ProjectSettingsIllustration — notify_threshold slider (Phase 102 T11
     await flushPromises()
     await flushPromises()
 
+    // Phase 104: notify_threshold widened from a single slider to a 4-row
+    // keyed table (generation / regeneration / cleanup / deletion).
     expect(
-      wrapper.find('[data-testid="notify-threshold-slider"]').exists()
+      wrapper.find('[data-testid="notify-thresholds-section"]').exists()
     ).toBe(true)
-    // Also verify the wrapping section is present.
+    expect(wrapper.find('[data-testid="notify-thresholds-table"]').exists()).toBe(true)
     expect(
-      wrapper.find('[data-testid="notify-threshold-section"]').exists()
+      wrapper.find('[data-testid="notify-threshold-row-generation"]').exists()
+    ).toBe(true)
+    expect(
+      wrapper.find('[data-testid="notify-threshold-row-regeneration"]').exists()
+    ).toBe(true)
+    expect(
+      wrapper.find('[data-testid="notify-threshold-row-cleanup"]').exists()
+    ).toBe(true)
+    expect(
+      wrapper.find('[data-testid="notify-threshold-row-deletion"]').exists()
     ).toBe(true)
   })
 
-  it('updates notify_threshold via slider and persists via store.save', async () => {
+  it('updates notify_threshold via input change and persists via store.save (Phase 104 per-event-type dict)', async () => {
     const { default: ProjectSettingsIllustration } = await import(
       './ProjectSettingsIllustration.vue'
     )
@@ -199,17 +216,19 @@ describe('ProjectSettingsIllustration — notify_threshold slider (Phase 102 T11
     await flushPromises()
     await flushPromises()
 
-    const slider = wrapper.find('[data-testid="notify-threshold-slider"]')
-    expect(slider.exists()).toBe(true)
+    const input = wrapper.find('[data-testid="notify-threshold-input-generation"]')
+    expect(input.exists()).toBe(true)
 
-    // setValue triggers @input on the range input; updateNotifyThreshold clamps
-    // to 1-10 and round-trips through update() → store.save().
-    await slider.setValue('5')
+    // setValue triggers @change on the number input; onThresholdChange writes a
+    // per-event_type dict (not a bare int like the Phase 102 slider did).
+    await input.setValue('5')
     await flushPromises()
 
     expect(storeMocks.saveMock).toHaveBeenCalledWith(
       'test-slug',
-      expect.objectContaining({ notify_threshold: 5 }),
+      expect.objectContaining({
+        notify_threshold: expect.objectContaining({ generation: 5 }),
+      }),
     )
   })
 })

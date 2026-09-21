@@ -36,9 +36,15 @@ const fetchProviderModelsMock = vi.fn(async (name: string) => {
   return catalogs[name]
 })
 
-vi.mock('@/api/illustrations', () => ({
-  fetchProviderModels: fetchProviderModelsMock,
-}))
+vi.mock('@/api/illustrations', async () => {
+  const actual = await vi.importActual<typeof import('@/api/illustrations')>(
+    '@/api/illustrations'
+  )
+  return {
+    ...actual,
+    fetchProviderModels: fetchProviderModelsMock,
+  }
+})
 
 vi.mock('@/stores/useProjectSettings.js', () => ({
   useProjectSettingsStore: () => ({
