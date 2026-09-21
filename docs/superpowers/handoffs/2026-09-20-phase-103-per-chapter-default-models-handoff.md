@@ -43,7 +43,7 @@ Phase 103 extends the `chapter_overrides` whitelist (introduced in Phase 102) wi
   - Scope widened: "all Phase 102 chapter-overrides code paths + **Phase 103 chapter default_models paths**"
   - Enforcement chain extended with 8 NEW G1-G8 regression guards in Phase 103 test file
 
-## Commits (14 atomic)
+## Commits (15 atomic — Tasks 1-11)
 
 | # | Task | SHA | Commit |
 |---|------|-----|--------|
