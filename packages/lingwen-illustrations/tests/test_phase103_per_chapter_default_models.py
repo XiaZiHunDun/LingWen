@@ -11,9 +11,8 @@ G8: No new dependencies in pyproject.toml or apps/dashboard/package.json
 """
 from __future__ import annotations
 
-from pathlib import Path
 import re
-
+from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -28,6 +27,7 @@ def test_g1_default_models_in_chapter_overridable_fields() -> None:
 def test_g2_validate_chapter_overrides_cross_references_default_models() -> None:
     """Validator raises when per-chapter default_models has unknown provider."""
     from pydantic import ValidationError
+
     from apps.studio_api.routes.project_settings import ProjectSettings
     with __import__("pytest").raises(ValidationError, match="unknown provider"):
         ProjectSettings(chapter_overrides={1: {"default_models": {"unknown_xyz": "m"}}})
