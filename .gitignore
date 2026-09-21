@@ -117,6 +117,9 @@ node_modules/
 npm-debug.log
 yarn-error.log
 
+# Turbo build cache
+.turbo/
+
 # 敏感文件
 *.local
 credentials.json
