@@ -249,6 +249,72 @@ describe('useProjectSettingsStore — 3 new fields (Phase 102)', () => {
   })
 })
 
+describe('useProjectSettingsStore — chapter_overrides[].default_models sync (Phase 103)', () => {
+  // Phase 103 adds `default_models: Record<string, string>` to the
+  // ChapterOverrideSubset whitelist. The store stores the raw API payload,
+  // so the new field flows through `chapter_overrides[N].default_models`
+  // without any store-level transformation. These tests verify that the
+  // store correctly preserves per-chapter default_models when set directly
+  // (e.g. after fetch/save round-trip) and that an old-shape response (no
+  // per-chapter default_models) leaves the field undefined for the
+  // consumer's `??` fallback path.
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    globalThis.fetch = vi.fn()
+  })
+
+  it('store accepts chapter_overrides[N].default_models from new-shape response', async () => {
+    const store = useProjectSettingsStore()
+
+    // Simulate Phase 103 server response (full shape with per-chapter default_models).
+    const settings = {
+      default_provider: 'minimax',
+      default_models: {},
+      auto_generate: false,
+      max_assets: 20,
+      confirm_before_generate: false,
+      fallback_chain: [],
+      fallback_models: {},
+      chapter_overrides: {
+        1: { default_models: { openai: 'dall-e-3' } },
+        5: { default_models: {} },
+      },
+      notify_threshold: 3,
+    }
+    store.settings = settings
+
+    expect(store.settings.chapter_overrides[1].default_models).toEqual({
+      openai: 'dall-e-3',
+    })
+    expect(store.settings.chapter_overrides[5].default_models).toEqual({})
+  })
+
+  it('old-shape response (without per-chapter default_models) leaves field undefined', async () => {
+    const store = useProjectSettingsStore()
+
+    // Simulate Phase 102 server response (no per-chapter default_models).
+    const settings = {
+      default_provider: 'minimax',
+      default_models: {},
+      auto_generate: false,
+      max_assets: 20,
+      confirm_before_generate: false,
+      fallback_chain: [],
+      fallback_models: {},
+      chapter_overrides: {
+        5: { max_assets: 8 }, // no default_models key
+      },
+      notify_threshold: 3,
+    }
+    store.settings = settings
+
+    // Per Phase 102 lesson 7: consumer applies defaults via ??.
+    expect(store.settings.chapter_overrides[5].default_models).toBeUndefined()
+    expect(store.settings.chapter_overrides[5].max_assets).toBe(8)
+  })
+})
+
 describe('useProjectSettingsStore — reference image methods (Phase 97)', () => {
   it('fetchReferenceImage populates state and returns info', async () => {
     globalThis.fetch.mockResolvedValueOnce({
