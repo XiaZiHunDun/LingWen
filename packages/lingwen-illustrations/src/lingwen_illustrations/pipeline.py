@@ -83,7 +83,9 @@ def _resolve_threshold(settings: dict, event_type: str) -> int | float:
         return INFINITY_THRESHOLD
     if isinstance(nt, (int, float)):
         return nt
-    return nt.get(event_type, INFINITY_THRESHOLD)
+    if isinstance(nt, dict):
+        return nt.get(event_type, INFINITY_THRESHOLD)
+    return INFINITY_THRESHOLD  # defensive: non-validated path fallback
 
 
 _TYPE = Literal["cover", "chapter"]
