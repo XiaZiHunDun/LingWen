@@ -49,11 +49,11 @@ describe('creationModeMeta', () => {
   });
 
   it('handles nullish input without throwing', () => {
-    // @ts-expect-error — exercise runtime fallback for nullish input
+    // creationModeMeta has no type annotation (.js source), so null/undefined
+    // pass through TypeScript checks. The runtime fallback covers both cases.
     const result = creationModeMeta(null);
     expect(result.label).toBe('未知模式');
 
-    // @ts-expect-error — same for undefined
     const undefResult = creationModeMeta(undefined);
     expect(undefResult.label).toBe('未知模式');
   });
