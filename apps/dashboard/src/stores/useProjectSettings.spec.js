@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useProjectSettingsStore } from './useProjectSettings.js'
+import {
+  useProjectSettingsStore,
+  normalizeNotifyThreshold,
+} from './useProjectSettings.js'
 
 describe('useProjectSettingsStore', () => {
   beforeEach(() => {
@@ -15,7 +18,9 @@ describe('useProjectSettingsStore', () => {
     })
     const store = useProjectSettingsStore()
     await store.fetch('test-slug')
-    expect(store.settings).toEqual({ default_provider: 'openai' })
+    // Phase 104: fetch() normalizes notify_threshold (always present after normalization,
+    // defaulting to {} when API omitted the field).
+    expect(store.settings).toEqual({ default_provider: 'openai', notify_threshold: {} })
     expect(store.slug).toBe('test-slug')
   })
 
@@ -190,7 +195,13 @@ describe('useProjectSettingsStore — 3 new fields (Phase 102)', () => {
       1: { max_assets: 5 },
       2: { auto_generate: true },
     })
-    expect(store.settings.notify_threshold).toBe(7)
+    // Phase 104: legacy int 7 is expanded to a 4-key dict at the store boundary.
+    expect(store.settings.notify_threshold).toEqual({
+      generation: 7,
+      regeneration: 7,
+      cleanup: 7,
+      deletion: 7,
+    })
   })
 
   it('save() includes 3 new fields in PUT body', async () => {
@@ -224,6 +235,9 @@ describe('useProjectSettingsStore — 3 new fields (Phase 102)', () => {
     // Old-shape = Phase 101 yaml (only legacy fields). The store stores the raw
     // API payload on 200 OK — it does NOT merge defaults. Consumers (component)
     // apply defaults via `??` operator.
+    //
+    // Phase 104 EXCEPTION: notify_threshold is always normalized at the store
+    // boundary (undefined → {}) so downstream consumers see a uniform dict shape.
     globalThis.fetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
@@ -237,15 +251,19 @@ describe('useProjectSettingsStore — 3 new fields (Phase 102)', () => {
     const store = useProjectSettingsStore()
     await store.fetch('test-slug')
 
-    // Store stores raw API payload — 3 new fields are undefined.
+    // Store stores raw API payload — fallback_models + chapter_overrides remain
+    // undefined (Phase 102 contract).
     expect(store.settings.fallback_models).toBeUndefined()
     expect(store.settings.chapter_overrides).toBeUndefined()
-    expect(store.settings.notify_threshold).toBeUndefined()
+    // Phase 104: notify_threshold is normalized to {} when API omitted the field.
+    expect(store.settings.notify_threshold).toEqual({})
 
-    // Consumer `??` fallback path applies defaults.
+    // Consumer `??` fallback path applies defaults for the legacy-shape fields.
     expect(store.settings?.fallback_models ?? {}).toEqual({})
     expect(store.settings?.chapter_overrides ?? {}).toEqual({})
-    expect(store.settings?.notify_threshold ?? 3).toBe(3)
+    // notify_threshold is always a dict post-normalization; consumers iterate
+    // NOTIFY_EVENT_TYPES to apply per-key defaults.
+    expect(store.settings.notify_threshold).toEqual({})
   })
 })
 
@@ -366,5 +384,52 @@ describe('useProjectSettingsStore — reference image methods (Phase 97)', () =>
     const store = useProjectSettingsStore()
     const result = await store.fetchReferenceImageBlob('test-slug')
     expect(result).toBe(fakeBlob)
+  })
+})
+
+describe('normalizeNotifyThreshold (Phase 104)', () => {
+  // Phase 104 widens notify_threshold from `int` (Phase 102) to
+  // `int | Record<NotifyEventType, number>` for per-event-type tuning.
+  // The store exports a pure normalization helper that:
+  //   - expands a legacy int into a 4-key dict (one entry per NOTIFY_EVENT_TYPES)
+  //   - copies a dict unchanged (already-normalized shape)
+  //   - coerces undefined / null to an empty dict (opt-out)
+  //
+  // The fetch() action applies this on every successful API read so that
+  // downstream consumers (Task 8 UI table) see a uniform dict shape.
+
+  it('expands int into 4-key dict (one entry per NOTIFY_EVENT_TYPES)', () => {
+    const result = normalizeNotifyThreshold(3)
+    expect(result).toEqual({
+      generation: 3,
+      regeneration: 3,
+      cleanup: 3,
+      deletion: 3,
+    })
+  })
+
+  it('preserves dict unchanged when already normalized', () => {
+    const input = { generation: 5, regeneration: 10 }
+    const result = normalizeNotifyThreshold(input)
+    expect(result).toEqual({ generation: 5, regeneration: 10 })
+  })
+
+  it('coerces undefined and null to empty dict (opt-out)', () => {
+    expect(normalizeNotifyThreshold(undefined)).toEqual({})
+    expect(normalizeNotifyThreshold(null)).toEqual({})
+  })
+
+  it('round-trip dict through normalize (mirrors fetch → store → write)', () => {
+    // Simulates: API returns dict → fetch() normalizes → store mirrors → save()
+    // serializes the same dict (no transformation back to int).
+    const input = { generation: 5, regeneration: 10 }
+    const fetched = normalizeNotifyThreshold(input)
+    // store mirrors fetched (no further transformation in fetch())
+    const stored = fetched
+    // write() passes dict unchanged via JSON.stringify
+    const written = { ...stored }
+    expect(written).toEqual(input)
+    expect(written.generation).toBe(5)
+    expect(written.regeneration).toBe(10)
   })
 })
