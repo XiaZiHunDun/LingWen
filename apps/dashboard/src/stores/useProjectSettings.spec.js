@@ -36,7 +36,10 @@ describe('useProjectSettingsStore', () => {
       fallback_chain: [],
       fallback_models: {},
       chapter_overrides: {},
-      notify_threshold: 3,
+      // Phase 104 EXCEPTION: notify_threshold fallback defaults are normalized
+      // via normalizeNotifyThreshold(3) to keep the "always dict at store
+      // boundary" contract. The legacy int 3 expands to a 4-key dict here.
+      notify_threshold: { generation: 3, regeneration: 3, cleanup: 3, deletion: 3 },
     })
   })
 
@@ -49,7 +52,10 @@ describe('useProjectSettingsStore', () => {
       fallback_chain: [],
       fallback_models: {},
       chapter_overrides: {},
-      notify_threshold: 3,
+      // Phase 104 EXCEPTION: notify_threshold fallback defaults are normalized
+      // via normalizeNotifyThreshold(3) to keep the "always dict at store
+      // boundary" contract. The legacy int 3 expands to a 4-key dict here.
+      notify_threshold: { generation: 3, regeneration: 3, cleanup: 3, deletion: 3 },
     })
   })
 

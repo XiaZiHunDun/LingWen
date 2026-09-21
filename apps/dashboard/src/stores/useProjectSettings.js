@@ -94,7 +94,7 @@ export const useProjectSettingsStore = defineStore('projectSettings', () => {
           fallback_chain: [],
           fallback_models: {},
           chapter_overrides: {},
-          notify_threshold: 3,
+          notify_threshold: normalizeNotifyThreshold(3),
         }
       }
     } catch {
@@ -103,7 +103,7 @@ export const useProjectSettingsStore = defineStore('projectSettings', () => {
         fallback_chain: [],
         fallback_models: {},
         chapter_overrides: {},
-        notify_threshold: 3,
+        notify_threshold: normalizeNotifyThreshold(3),
       }
     } finally {
       loading.value = false
