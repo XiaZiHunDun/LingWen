@@ -882,3 +882,397 @@ def test_err_detail_provider_exhausted_includes_attempts():
     assert payload["provider"] == "stability"
     assert "attempts" in payload
     assert len(payload["attempts"]) == 2
+
+
+# ─── Phase 106: DELETE /api/illustrations/{id} failure tracking (T1-T6) ───────
+
+
+def test_delete_asset_load_error_records_failure_with_none_root(monkeypatch, tmp_path):
+    """T1: LoadError on project_root_for → record_failure(event_type='deletion', project_root=None)."""
+    from lingwen_illustrations import notifications
+    from lingwen_illustrations.exceptions import LoadError
+
+    captured = []
+    monkeypatch.setattr(
+        notifications,
+        "record_failure",
+        lambda slug, err, *, project_root, threshold, event_type: captured.append(
+            (slug, str(err), project_root, threshold, event_type)
+        ),
+    )
+
+    def _raise(_slug):
+        raise LoadError("project missing-slug not found")
+
+    monkeypatch.setattr(
+        "apps.studio_api.routes.illustrations.project_root_for",
+        _raise,
+    )
+
+    from fastapi.testclient import TestClient
+
+    from apps.studio_api.app import create_app
+
+    client = TestClient(create_app())
+
+    resp = client.delete("/api/illustrations/asset-x?project_slug=missing-slug")
+    assert resp.status_code == 404
+    assert len(captured) == 1
+    slug, _err_str, root, _threshold, et = captured[0]
+    assert slug == "missing-slug"
+    assert root is None  # Phase 106: LoadError path → project_root=None
+    assert et == "deletion"
+
+
+def test_delete_asset_not_found_records_success(monkeypatch, tmp_path):
+    """T2: 404 asset-not-found → record_success(event_type='deletion') (no-op success)."""
+    from lingwen_illustrations import notifications
+
+    captured_success = []
+    captured_failure = []
+    monkeypatch.setattr(
+        notifications,
+        "record_success",
+        lambda slug, event_type: captured_success.append((slug, event_type)),
+    )
+    monkeypatch.setattr(
+        notifications,
+        "record_failure",
+        lambda *args, **kwargs: captured_failure.append((args, kwargs)),
+    )
+
+    # Valid project_root, but no asset matches the id
+    monkeypatch.setattr(
+        "apps.studio_api.routes.illustrations.project_root_for",
+        lambda slug: tmp_path,
+    )
+
+    from fastapi.testclient import TestClient
+
+    from apps.studio_api.app import create_app
+
+    client = TestClient(create_app())
+
+    resp = client.delete("/api/illustrations/nonexistent-id?project_slug=test-slug")
+    assert resp.status_code == 404
+    assert len(captured_success) == 1
+    assert captured_success[0] == ("test-slug", "deletion")
+    assert len(captured_failure) == 0  # Phase 106: NOT a failure
+
+
+def test_delete_asset_success_records_success_and_publishes(monkeypatch, tmp_path):
+    """T3: Successful delete → record_success + audit_log.record_event + notifications.publish."""
+    from lingwen_illustrations import audit_log, notifications
+    from lingwen_illustrations.metadata import IllustrationMetadata
+    from lingwen_illustrations.storage import save_asset
+
+    captured_success = []
+    captured_publish = []
+    captured_audit = []
+    monkeypatch.setattr(
+        notifications,
+        "record_success",
+        lambda slug, event_type: captured_success.append((slug, event_type)),
+    )
+    monkeypatch.setattr(
+        notifications,
+        "publish",
+        lambda event: captured_publish.append(event),
+    )
+    monkeypatch.setattr(
+        audit_log,
+        "record_event",
+        lambda *args, **kwargs: captured_audit.append((args, kwargs)),
+    )
+
+    meta = IllustrationMetadata(
+        id="asset-y",
+        type="cover",
+        project_slug="test-slug",
+        chapter_num=None,
+        style_preset="default",
+        custom_prompt=None,
+        scene_json={},
+        final_prompt="x",
+        prompt_hash="sha256:x",
+        model="minimax-image-01",
+        provider="minimax",
+        used_reference_image=False,
+        created_at="2026-09-21T10:00:00Z",
+    )
+    save_asset(tmp_path, b"\xff\xd8\xff\xe0fake-jpeg", meta)
+
+    monkeypatch.setattr(
+        "apps.studio_api.routes.illustrations.project_root_for",
+        lambda slug: tmp_path,
+    )
+
+    from fastapi.testclient import TestClient
+
+    from apps.studio_api.app import create_app
+
+    client = TestClient(create_app())
+
+    resp = client.delete("/api/illustrations/asset-y?project_slug=test-slug")
+    assert resp.status_code == 200
+    assert resp.json() == {"deleted": "asset-y"}
+    assert len(captured_success) == 1
+    assert captured_success[0] == ("test-slug", "deletion")
+    # Phase 106: audit_log + publish double-write (I091) with same ULID
+    assert len(captured_audit) == 1
+    assert len(captured_publish) == 1
+    assert captured_audit[0][1]["id"] == captured_publish[0].id
+    assert captured_publish[0].event_type == "deletion"
+
+
+def test_delete_asset_store_error_records_failure_with_real_root(monkeypatch, tmp_path):
+    """T4: StoreError on storage.delete_asset → record_failure(event_type='deletion', project_root=root)."""
+    from lingwen_illustrations import notifications, storage
+    from lingwen_illustrations.exceptions import StoreError
+    from lingwen_illustrations.metadata import IllustrationMetadata
+    from lingwen_illustrations.storage import save_asset
+
+    captured_failure = []
+    monkeypatch.setattr(
+        notifications,
+        "record_failure",
+        lambda slug, err, *, project_root, threshold, event_type: captured_failure.append(
+            (slug, str(err), project_root, threshold, event_type)
+        ),
+    )
+    monkeypatch.setattr(
+        storage,
+        "delete_asset",
+        lambda root, meta: (_ for _ in ()).throw(StoreError("disk full")),
+    )
+
+    # Bootstrap the asset so list_assets finds it and the route reaches delete_asset.
+    save_asset(
+        tmp_path,
+        b"\xff\xd8\xff\xe0fake-jpeg",
+        IllustrationMetadata(
+            id="asset-z",
+            type="cover",
+            project_slug="test-slug",
+            chapter_num=None,
+            style_preset="default",
+            custom_prompt=None,
+            scene_json={},
+            final_prompt="x",
+            prompt_hash="sha256:x",
+            model="minimax-image-01",
+            provider="minimax",
+            used_reference_image=False,
+            created_at="2026-09-21T10:00:00Z",
+        ),
+    )
+
+    monkeypatch.setattr(
+        "apps.studio_api.routes.illustrations.project_root_for",
+        lambda slug: tmp_path,
+    )
+
+    from fastapi.testclient import TestClient
+
+    from apps.studio_api.app import create_app
+
+    client = TestClient(create_app())
+
+    resp = client.delete("/api/illustrations/asset-z?project_slug=test-slug")
+    assert resp.status_code == 500
+    assert len(captured_failure) == 1
+    slug, _err_str, root, _threshold, et = captured_failure[0]
+    assert slug == "test-slug"
+    assert root is tmp_path  # Phase 106: real project_root for audit_log
+    assert et == "deletion"
+
+
+def test_delete_asset_success_resets_counter_from_prior_failures(monkeypatch, tmp_path):
+    """T5: 1 deletion success resets counter from prior 1 failure (counter stays 0)."""
+    from lingwen_illustrations import notifications, storage
+    from lingwen_illustrations.exceptions import StoreError
+    from lingwen_illustrations.metadata import IllustrationMetadata
+    from lingwen_illustrations.storage import save_asset
+
+    captured_success = []
+    captured_failure = []
+    monkeypatch.setattr(
+        notifications,
+        "record_failure",
+        lambda *a, **kw: captured_failure.append(1),
+    )
+    monkeypatch.setattr(
+        notifications,
+        "record_success",
+        lambda slug, event_type: captured_success.append((slug, event_type)),
+    )
+
+    # Bootstrap asset-a so the route reaches storage.delete_asset.
+    save_asset(
+        tmp_path,
+        b"\xff\xd8\xff\xe0fake-jpeg",
+        IllustrationMetadata(
+            id="asset-a",
+            type="cover",
+            project_slug="test-slug",
+            chapter_num=None,
+            style_preset="default",
+            custom_prompt=None,
+            scene_json={},
+            final_prompt="x",
+            prompt_hash="sha256:x",
+            model="minimax-image-01",
+            provider="minimax",
+            used_reference_image=False,
+            created_at="2026-09-21T10:00:00Z",
+        ),
+    )
+
+    # First: StoreError
+    monkeypatch.setattr(
+        storage,
+        "delete_asset",
+        lambda *a, **kw: (_ for _ in ()).throw(StoreError("boom")),
+    )
+
+    monkeypatch.setattr(
+        "apps.studio_api.routes.illustrations.project_root_for",
+        lambda slug: tmp_path,
+    )
+
+    from fastapi.testclient import TestClient
+
+    from apps.studio_api.app import create_app
+
+    client = TestClient(create_app())
+
+    resp = client.delete("/api/illustrations/asset-a?project_slug=test-slug")
+    assert resp.status_code == 500
+    assert len(captured_failure) == 1
+    assert len(captured_success) == 0
+
+    # Now: bootstrap asset-b + restore real storage.delete_asset
+    monkeypatch.undo()
+
+    save_asset(
+        tmp_path,
+        b"\xff\xd8\xff\xe0fake-jpeg",
+        IllustrationMetadata(
+            id="asset-b",
+            type="cover",
+            project_slug="test-slug",
+            chapter_num=None,
+            style_preset="default",
+            custom_prompt=None,
+            scene_json={},
+            final_prompt="x",
+            prompt_hash="sha256:x",
+            model="minimax-image-01",
+            provider="minimax",
+            used_reference_image=False,
+            created_at="2026-09-21T10:00:00Z",
+        ),
+    )
+
+    captured_success.clear()
+    captured_failure.clear()
+    monkeypatch.setattr(
+        notifications,
+        "record_success",
+        lambda slug, event_type: captured_success.append((slug, event_type)),
+    )
+    monkeypatch.setattr(
+        notifications,
+        "record_failure",
+        lambda *a, **kw: captured_failure.append(1),
+    )
+    # Re-patch project_root_for because monkeypatch.undo() reset it
+    monkeypatch.setattr(
+        "apps.studio_api.routes.illustrations.project_root_for",
+        lambda slug: tmp_path,
+    )
+
+    resp = client.delete("/api/illustrations/asset-b?project_slug=test-slug")
+    assert resp.status_code == 200
+    assert len(captured_success) == 1
+    assert len(captured_failure) == 0
+
+
+def test_delete_asset_threshold_crossing_emits_warning(monkeypatch, tmp_path):
+    """T6: 3 consecutive StoreErrors with threshold=2 → 1 severity=warning notification emitted."""
+    from lingwen_illustrations import notifications, storage
+    from lingwen_illustrations.exceptions import StoreError
+    from lingwen_illustrations.metadata import IllustrationMetadata
+    from lingwen_illustrations.storage import save_asset
+
+    # Pre-seed threshold via direct notifications state mutation
+    notifications._consecutive_failures[("test-slug-t6", "deletion")] = 0
+    notifications._warning_emitted[("test-slug-t6", "deletion")] = False
+
+    captured_publishes = []
+    monkeypatch.setattr(
+        notifications,
+        "publish",
+        lambda event: captured_publishes.append(event),
+    )
+
+    monkeypatch.setattr(
+        storage,
+        "delete_asset",
+        lambda *a, **kw: (_ for _ in ()).throw(StoreError("boom")),
+    )
+
+    monkeypatch.setattr(
+        "apps.studio_api.routes.illustrations.project_root_for",
+        lambda slug: tmp_path,
+    )
+
+    # Bootstrap 3 assets so each delete call reaches storage.delete_asset.
+    for i in range(3):
+        save_asset(
+            tmp_path,
+            b"\xff\xd8\xff\xe0fake-jpeg",
+            IllustrationMetadata(
+                id=f"asset-{i}",
+                type="cover",
+                project_slug="test-slug-t6",
+                chapter_num=None,
+                style_preset="default",
+                custom_prompt=None,
+                scene_json={},
+                final_prompt="x",
+                prompt_hash="sha256:x",
+                model="minimax-image-01",
+                provider="minimax",
+                used_reference_image=False,
+                created_at="2026-09-21T10:00:00Z",
+            ),
+        )
+
+    # Write a settings yaml with threshold=2 for deletion event_type
+    settings_path = tmp_path / ".lingwen" / "illustration_settings.yaml"
+    settings_path.parent.mkdir(parents=True, exist_ok=True)
+    settings_path.write_text(
+        "notify_threshold:\n  deletion: 2\n", encoding="utf-8"
+    )
+
+    from fastapi.testclient import TestClient
+
+    from apps.studio_api.app import create_app
+
+    client = TestClient(create_app())
+
+    # Trigger 3 deletions, all fail. threshold=2.
+    for i in range(3):
+        resp = client.delete(
+            f"/api/illustrations/asset-{i}?project_slug=test-slug-t6"
+        )
+        assert resp.status_code == 500
+
+    # Phase 102: exactly 1 warning emitted (idempotent on threshold crossing)
+    warnings = [
+        e
+        for e in captured_publishes
+        if e.event_type == "deletion" and e.severity == "warning"
+    ]
+    assert len(warnings) == 1
