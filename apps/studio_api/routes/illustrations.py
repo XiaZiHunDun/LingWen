@@ -11,12 +11,18 @@ Errors map to specific HTTP statuses per stage (see STAGE_HTTP_CODES).
 
 from __future__ import annotations
 
+from pathlib import Path  # Phase 106: for _load_deletion_settings
 from typing import Optional
 
+import yaml  # Phase 106: for _load_deletion_settings
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse
+from lingwen_illustrations import (  # Phase 99 + Phase 106: double-write + failure tracking
+    audit_log,
+    notifications,
+    storage,
+)
 from lingwen_illustrations import reference_image as reference_image_module
-from lingwen_illustrations import storage
 from lingwen_illustrations.exceptions import (
     ComposeError,
     ExtractError,
@@ -188,6 +194,26 @@ def _raise_stage_error(exc: IllustrationError) -> None:
     """Convert a stage exception to the corresponding HTTPException."""
     status = STAGE_HTTP_CODES.get(type(exc), 500)
     raise HTTPException(status, detail=_err_detail(exc)) from exc
+
+
+def _load_deletion_settings(project_root: Path) -> dict:
+    """Phase 106: load notification-relevant settings for deletion event_type.
+
+    Reads .lingwen/illustration_settings.yaml and returns dict containing
+    notify_threshold (or empty dict if file missing / malformed). Used by
+    delete_asset to resolve per-event-type threshold via
+    notifications.resolve_threshold(). Defensive: missing file silently
+    returns {} (matches cleanup_route._load_cleanup_settings + pipeline
+    _load_illustration_settings pattern).
+    """
+    settings_path = project_root / ".lingwen" / "illustration_settings.yaml"
+    if not settings_path.exists():
+        return {}
+    try:
+        data = yaml.safe_load(settings_path.read_text(encoding="utf-8")) or {}
+        return dict(data) if isinstance(data, dict) else {}
+    except (yaml.YAMLError, OSError):
+        return {}
 
 
 # --- Router registration ---
