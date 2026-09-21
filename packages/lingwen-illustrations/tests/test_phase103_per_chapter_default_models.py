@@ -116,13 +116,14 @@ def test_g7_component_renders_default_models_column() -> None:
 
 # G8
 def test_g8_no_new_dependencies() -> None:
-    """Phase 103 introduces 0 new third-party or workspace dependencies."""
-    # No new pyproject.toml package additions
-    pyproject = REPO_ROOT / "pyproject.toml"
-    pyproject_text = pyproject.read_text(encoding="utf-8") if pyproject.exists() else ""
+    """Phase 103 introduces 0 new third-party or workspace dependencies.
+
+    Anchored at f25ace5a (LAST Phase 102 commit) so this guard continues to
+    cover the full Phase 103 window even after Tasks 10+11 push HEAD forward.
+    """
     import subprocess
     result = subprocess.run(
-        ["git", "diff", "HEAD~12..HEAD", "--name-only", "--", "pyproject.toml", "packages/*/pyproject.toml", "apps/*/package.json"],
+        ["git", "diff", "f25ace5a..HEAD", "--name-only", "--", "pyproject.toml", "packages/*/pyproject.toml", "apps/*/package.json"],
         cwd=str(REPO_ROOT),
         capture_output=True, text=True,
     )
