@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import { NPopconfirm } from 'naive-ui'
 
 const props = defineProps({
   asset: { type: Object, required: true },
@@ -32,12 +33,20 @@ const label = computed(() =>
         :aria-label="`重生 ${label}`"
         @click="emit('regenerate', asset.id)"
       >↻ 重生</button>
-      <button
-        class="delete-btn"
-        data-testid="delete-btn"
-        :aria-label="`删除 ${label}`"
-        @click="emit('delete', asset.id)"
-      >🗑 删除</button>
+      <NPopconfirm
+        positive-text="确认删除"
+        negative-text="取消"
+        @positive-click="emit('delete', asset.id)"
+      >
+        <template #trigger>
+          <button
+            class="delete-btn"
+            data-testid="delete-btn"
+            :aria-label="`删除 ${label}`"
+          >🗑 删除</button>
+        </template>
+        确定删除这张插图？删除后无法恢复。
+      </NPopconfirm>
     </div>
   </div>
 </template>

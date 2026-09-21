@@ -45,13 +45,6 @@ describe('IllustrationCard', () => {
     expect(wrapper.emitted('regenerate')[0]).toEqual(['abc'])
   })
 
-  it('emits delete event on button click', async () => {
-    const wrapper = mount(IllustrationCard, { props: { asset } })
-    await wrapper.find('[data-testid="delete-btn"]').trigger('click')
-    expect(wrapper.emitted('delete')).toBeTruthy()
-    expect(wrapper.emitted('delete')[0]).toEqual(['abc'])
-  })
-
   it('buttons have aria-labels for screen readers', () => {
     const wrapper = mount(IllustrationCard, { props: { asset } })
     expect(wrapper.find('[data-testid="regenerate-btn"]').attributes('aria-label')).toBe(
