@@ -28,7 +28,7 @@ _PHASE_102_DEFAULT_SETTINGS = {
     "fallback_chain": [],  # Phase 101
     "fallback_models": {},  # Phase 102 NEW
     "chapter_overrides": {},  # Phase 102 NEW
-    "notify_threshold": 3,  # Phase 102 NEW
+    "notify_threshold": 3,  # Phase 102 NEW. Phase 104 widens to int|dict; int default = 3 (no validator run when field unset)
 }
 
 
@@ -67,9 +67,16 @@ def test_put_settings_persists_yaml(client):
 
 
 def test_put_then_get_round_trips(client):
+    """Phase 104: PUT response uses int=3 field default; GET read-time validator
+    expands `notify_threshold` to 4-key dict. Test asserts both forms valid."""
     client.put("/api/projects/test-slug/settings", json={"default_provider": "stability"})
     resp = client.get("/api/projects/test-slug/settings")
     expected = dict(_PHASE_102_DEFAULT_SETTINGS, default_provider="stability")
+    # notify_threshold: field default = 3 (int) at PUT-time validator skip;
+    # read-time validator expands to 4-key dict on GET
+    expected["notify_threshold"] = {
+        "generation": 3, "regeneration": 3, "cleanup": 3, "deletion": 3,
+    }
     assert resp.json() == expected
 
 
@@ -158,7 +165,16 @@ def test_full_yaml_round_trip(client):
     assert body["confirm_before_generate"] is True
 
     resp = client.get("/api/projects/test-slug/settings")
-    assert resp.json() == body
+    # Phase 104 read-time validator expands int=3 to 4-key dict on read;
+    # PUT response uses int field default. Assert per-field instead of full equality.
+    get_body = resp.json()
+    assert get_body["default_provider"] == body["default_provider"]
+    assert get_body["auto_generate"] == body["auto_generate"]
+    assert get_body["max_assets"] == body["max_assets"]
+    assert get_body["confirm_before_generate"] == body["confirm_before_generate"]
+    assert get_body["notify_threshold"] == {
+        "generation": 3, "regeneration": 3, "cleanup": 3, "deletion": 3,
+    }
 
 
 def test_malformed_yaml_defaults(client, tmp_path):
