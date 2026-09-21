@@ -262,19 +262,28 @@ async function updateChapterDefaultModel(chapter, provider, model) {
   await update('chapter_overrides', overrides)
 }
 
-// Swap the provider key on an existing pair — delete the old key, then add a
-// new pair under the new provider with its default model. Extracted so the
-// template can call a single function (Vue templates can't parse inline
-// TypeScript casts like `e.target as HTMLSelectElement`).
+// Swap the provider key on an existing pair — build the new default_models
+// dict in one shot so the chapter is never briefly persisted in an intermediate
+// "neither provider" state. Extracted so the template can call a single
+// function (Vue templates can't parse inline TypeScript casts like
+// `e.target as HTMLSelectElement`). Preserves the old model value if the new
+// provider supports it; otherwise falls back to the new provider's default.
 async function swapChapterDefaultModelProvider(chapter, oldProvider, e) {
-  const newProvider = e?.target?.value
+  const target = e?.target
+  const newProvider = target?.value
   if (newProvider === oldProvider || !newProvider) return
-  await removeChapterDefaultModel(chapter, oldProvider)
-  await addChapterDefaultModel(chapter, newProvider)
-}
-
-function onChapterDefaultModelNameChange(chapter, provider, e) {
-  return updateChapterDefaultModel(chapter, provider, e?.target?.value)
+  const overrides = { ...(props.modelValue?.chapter_overrides || {}) }
+  const existing = { ...(overrides[chapter] || {}) }
+  const currentDefaultModels = { ...(existing.default_models || {}) }
+  const oldModel = currentDefaultModels[oldProvider] ?? ''
+  delete currentDefaultModels[oldProvider]
+  const catalog = modelCatalogs.value[newProvider]
+  currentDefaultModels[newProvider] =
+    oldModel && catalog?.models?.includes(oldModel)
+      ? oldModel
+      : catalog?.default_model ?? ''
+  overrides[chapter] = { ...existing, default_models: currentDefaultModels }
+  await update('chapter_overrides', overrides)
 }
 
 const on_provider_change = (value) => update('default_provider', value)
@@ -617,7 +626,7 @@ async function updateNotifyThreshold(value) {
                   :value="model"
                   class="project-settings-illustration-chapter-default-model-name"
                   :data-testid="`chapter-override-default-model-name-${chapter}-${provider}`"
-                  @change="onChapterDefaultModelNameChange(chapter, provider, $event)"
+                  @change="updateChapterDefaultModel(chapter, provider, $event.target.value)"
                 >
                   <option
                     v-for="m in (modelCatalogs[provider] && modelCatalogs[provider].models) || []"

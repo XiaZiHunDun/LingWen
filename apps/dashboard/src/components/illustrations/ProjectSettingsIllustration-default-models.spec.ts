@@ -171,16 +171,16 @@ describe('ProjectSettingsIllustration — chapter_overrides[].default_models col
     await flushPromises()
 
     // Component propagates via store.save with new chapter_overrides dict
-    // (immutable spread — original input is preserved).
-    expect(storeMocks.saveMock).toHaveBeenCalled()
-    const lastCallArg = storeMocks.saveMock.mock.calls[
-      storeMocks.saveMock.mock.calls.length - 1
-    ][1] as Record<string, unknown>
-    const chapterOverrides = lastCallArg.chapter_overrides as Record<
-      string,
-      Record<string, unknown>
-    >
-    expect(chapterOverrides[1].default_models).toEqual({})
+    // (immutable spread — original input is preserved). Use objectContaining
+    // so we are robust against unrelated intermediate update() calls.
+    expect(storeMocks.saveMock).toHaveBeenCalledWith(
+      'test-slug',
+      expect.objectContaining({
+        chapter_overrides: expect.objectContaining({
+          1: expect.objectContaining({ default_models: {} }),
+        }),
+      }),
+    )
   })
 
   it('emits update via store.save when Add button clicked (seeds provider default_model)', async () => {
@@ -205,16 +205,62 @@ describe('ProjectSettingsIllustration — chapter_overrides[].default_models col
     await addBtn.trigger('click')
     await flushPromises()
 
-    expect(storeMocks.saveMock).toHaveBeenCalled()
-    const lastCallArg = storeMocks.saveMock.mock.calls[
-      storeMocks.saveMock.mock.calls.length - 1
-    ][1] as Record<string, unknown>
-    const chapterOverrides = lastCallArg.chapter_overrides as Record<
-      string,
-      Record<string, unknown>
-    >
-    expect(chapterOverrides[5].default_models).toBeDefined()
-    expect(Object.keys(chapterOverrides[5].default_models).length).toBeGreaterThan(0)
+    // providers[0].id is 'minimax' (see ProjectSettingsIllustration.vue
+    // providers const) and its mocked default_model is 'minimax-multimodal',
+    // so Add seeds default_models['minimax'] with a non-empty string.
+    expect(storeMocks.saveMock).toHaveBeenCalledWith(
+      'test-slug',
+      expect.objectContaining({
+        chapter_overrides: expect.objectContaining({
+          5: expect.objectContaining({
+            default_models: expect.objectContaining({
+              minimax: expect.any(String),
+            }),
+          }),
+        }),
+      }),
+    )
+  })
+
+  it('emits update via store.save when model-name select changes', async () => {
+    const { default: ProjectSettingsIllustration } = await import(
+      './ProjectSettingsIllustration.vue'
+    )
+    const wrapper = mount(ProjectSettingsIllustration, {
+      props: {
+        modelValue: {
+          ...baseProps(),
+          chapter_overrides: {
+            1: { default_models: { openai: 'dall-e-3' } },
+          },
+        },
+        slug: 'test-slug',
+      },
+    })
+    await flushPromises()
+    await flushPromises()
+
+    const modelSelect = wrapper.find(
+      '[data-testid="chapter-override-default-model-name-1-openai"]'
+    )
+    expect(modelSelect.exists()).toBe(true)
+
+    // Set to a different model in the mocked openai catalog so we are not just
+    // asserting "called with same value". 'dall-e-2' is in the mocked models
+    // list (see fetchProviderModelsMock above).
+    await modelSelect.setValue('dall-e-2')
+    await flushPromises()
+
+    expect(storeMocks.saveMock).toHaveBeenCalledWith(
+      'test-slug',
+      expect.objectContaining({
+        chapter_overrides: expect.objectContaining({
+          1: expect.objectContaining({
+            default_models: expect.objectContaining({ openai: 'dall-e-2' }),
+          }),
+        }),
+      }),
+    )
   })
 
   it('preserves all other chapter_overrides columns alongside the new default_models column', async () => {
