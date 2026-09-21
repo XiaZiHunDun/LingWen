@@ -3,6 +3,9 @@
 I095 invariant: _consecutive_failures state is maintained only via these helpers.
 Threshold crossing emits EXACTLY ONE severity=warning notification; counter stays
 elevated until record_success() resets it.
+
+Phase 104: counter keys widened to (project_slug, event_type) tuples (I095 EXTENDED).
+All assertions below use tuple keys.
 """
 from __future__ import annotations
 
@@ -17,6 +20,10 @@ from lingwen_illustrations.notifications import (
     record_success,
 )
 
+# Phase 104: counter keys are (slug, event_type) tuples. Test helper for the
+# canonical "generation" event_type used by Phase 102 generation pipeline.
+EVENT = "generation"
+
 
 @pytest.fixture(autouse=True)
 def _reset_state() -> None:
@@ -26,24 +33,24 @@ def _reset_state() -> None:
 
 
 def test_record_failure_increments_counter() -> None:
-    record_failure("proj-a", RuntimeError("oops"), project_root=Path("/tmp"), threshold=3)
-    assert _consecutive_failures["proj-a"] == 1
-    record_failure("proj-a", RuntimeError("oops"), project_root=Path("/tmp"), threshold=3)
-    assert _consecutive_failures["proj-a"] == 2
+    record_failure("proj-a", RuntimeError("oops"), project_root=Path("/tmp"), threshold=3, event_type=EVENT)
+    assert _consecutive_failures[("proj-a", EVENT)] == 1
+    record_failure("proj-a", RuntimeError("oops"), project_root=Path("/tmp"), threshold=3, event_type=EVENT)
+    assert _consecutive_failures[("proj-a", EVENT)] == 2
 
 
 def test_record_success_resets_counter() -> None:
-    record_failure("proj-a", RuntimeError("oops"), project_root=Path("/tmp"), threshold=3)
-    record_failure("proj-a", RuntimeError("oops"), project_root=Path("/tmp"), threshold=3)
-    assert _consecutive_failures["proj-a"] == 2
-    record_success("proj-a")
-    assert _consecutive_failures.get("proj-a", 0) == 0
+    record_failure("proj-a", RuntimeError("oops"), project_root=Path("/tmp"), threshold=3, event_type=EVENT)
+    record_failure("proj-a", RuntimeError("oops"), project_root=Path("/tmp"), threshold=3, event_type=EVENT)
+    assert _consecutive_failures[("proj-a", EVENT)] == 2
+    record_success("proj-a", EVENT)
+    assert _consecutive_failures.get(("proj-a", EVENT), 0) == 0
 
 
 def test_record_success_when_count_zero_noop() -> None:
     """No negative counter; record_success on zero is safe."""
-    record_success("proj-a")
-    assert _consecutive_failures.get("proj-a", 0) == 0
+    record_success("proj-a", EVENT)
+    assert _consecutive_failures.get(("proj-a", EVENT), 0) == 0
 
 
 def test_threshold_emit_warning_on_cross(monkeypatch) -> None:
@@ -55,9 +62,9 @@ def test_threshold_emit_warning_on_cross(monkeypatch) -> None:
         MagicMock(record_event=MagicMock()),
     )
 
-    record_failure("proj-a", RuntimeError("e1"), project_root=Path("/tmp"), threshold=3)
-    record_failure("proj-a", RuntimeError("e2"), project_root=Path("/tmp"), threshold=3)
-    record_failure("proj-a", RuntimeError("e3"), project_root=Path("/tmp"), threshold=3)
+    record_failure("proj-a", RuntimeError("e1"), project_root=Path("/tmp"), threshold=3, event_type=EVENT)
+    record_failure("proj-a", RuntimeError("e2"), project_root=Path("/tmp"), threshold=3, event_type=EVENT)
+    record_failure("proj-a", RuntimeError("e3"), project_root=Path("/tmp"), threshold=3, event_type=EVENT)
 
     assert len(captured) == 1
     assert captured[0].severity == "warning"
@@ -74,8 +81,8 @@ def test_below_threshold_no_warning(monkeypatch) -> None:
         MagicMock(record_event=MagicMock()),
     )
 
-    record_failure("proj-a", RuntimeError("e1"), project_root=Path("/tmp"), threshold=3)
-    record_failure("proj-a", RuntimeError("e2"), project_root=Path("/tmp"), threshold=3)
+    record_failure("proj-a", RuntimeError("e1"), project_root=Path("/tmp"), threshold=3, event_type=EVENT)
+    record_failure("proj-a", RuntimeError("e2"), project_root=Path("/tmp"), threshold=3, event_type=EVENT)
     assert len(captured) == 0
 
 
@@ -88,7 +95,7 @@ def test_threshold_one_emits_on_first_failure(monkeypatch) -> None:
         MagicMock(record_event=MagicMock()),
     )
 
-    record_failure("proj-a", RuntimeError("e1"), project_root=Path("/tmp"), threshold=1)
+    record_failure("proj-a", RuntimeError("e1"), project_root=Path("/tmp"), threshold=1, event_type=EVENT)
     assert len(captured) == 1
 
 
@@ -104,23 +111,23 @@ def test_warning_idempotent_until_reset(monkeypatch) -> None:
     for i in range(5):
         record_failure(
             "proj-a", RuntimeError(f"e{i}"),
-            project_root=Path("/tmp"), threshold=3,
+            project_root=Path("/tmp"), threshold=3, event_type=EVENT,
         )
     assert len(captured) == 1  # only 1 warning, despite 5 failures
-    assert _consecutive_failures["proj-a"] == 5  # counter stays elevated
+    assert _consecutive_failures[("proj-a", EVENT)] == 5  # counter stays elevated
 
 
 def test_per_project_isolation() -> None:
     """Different project_slugs have independent counters."""
-    record_failure("proj-a", RuntimeError("e"), project_root=Path("/tmp"), threshold=3)
-    record_failure("proj-b", RuntimeError("e"), project_root=Path("/tmp"), threshold=3)
-    record_failure("proj-b", RuntimeError("e"), project_root=Path("/tmp"), threshold=3)
-    assert _consecutive_failures["proj-a"] == 1
-    assert _consecutive_failures["proj-b"] == 2
+    record_failure("proj-a", RuntimeError("e"), project_root=Path("/tmp"), threshold=3, event_type=EVENT)
+    record_failure("proj-b", RuntimeError("e"), project_root=Path("/tmp"), threshold=3, event_type=EVENT)
+    record_failure("proj-b", RuntimeError("e"), project_root=Path("/tmp"), threshold=3, event_type=EVENT)
+    assert _consecutive_failures[("proj-a", EVENT)] == 1
+    assert _consecutive_failures[("proj-b", EVENT)] == 2
 
 
 def test_record_failure_unknown_project_slug_does_not_crash() -> None:
     """record_failure for project_slug not in counters → no-op safety."""
-    assert "never-seen" not in _consecutive_failures
-    record_failure("never-seen", RuntimeError("e"), project_root=Path("/tmp"), threshold=3)
-    assert _consecutive_failures["never-seen"] == 1
+    assert ("never-seen", EVENT) not in _consecutive_failures
+    record_failure("never-seen", RuntimeError("e"), project_root=Path("/tmp"), threshold=3, event_type=EVENT)
+    assert _consecutive_failures[("never-seen", EVENT)] == 1
