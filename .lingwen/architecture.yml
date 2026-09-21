@@ -189,21 +189,22 @@ invariants:
     rule: "packages/lingwen-illustrations/src/lingwen_illustrations/providers/ 是 image generation provider 抽象（registry-based dispatch: KNOWN_PROVIDERS = ('minimax', 'openai', 'stability') + get_provider(name) → ProviderAdapter frozen dataclass (4 fields: name / generate / generate_with_reference / supports_i2i) + SUPPORTS_I2I capability constant per provider + 3 adapter modules [minimax/openai/stability] + _b64_decode shared envelope helper + multipart helpers in stability i2i path）的唯一实包；adapter.generate(...) 与 adapter.generate_with_reference(...) 是 adapter 唯一入口，pipeline / image_generator / route 层不直接调具体 API；infra.providers.* / infra.image_provider.* 路径非法 (Phase 97 REQ-002 v2 i2i extension, extends I088 for i2i capability declaration + ProviderAdapter dataclass + dynamic importlib.import_module lookup preserves Phase 96 monkeypatch compat)"
     severity: error
     scope: "all future image provider i2i code; enforcement via tests/test_phase97_reference_image_i2i.py + grep -rln \"infra\\.providers\\b\" --include=\"*.py\" packages/ apps/ tests/ infra/ → 0 行"
-  - id: I090   # ★ Phase 98 NEW
-    rule: "packages/lingwen-illustrations/src/lingwen_illustrations/storage.py:lru_cleanup 是 illustration LRU 删除唯一入口（per-type+per-chapter scope，max_count>0 校验，best-effort 删除后 list_assets 结果）；audit_log.record_event 是 illustration 事件记录唯一入口（JSONL append-only，OSError swallow best-effort）；pipeline.generate_illustration / pipeline.regenerate_illustration / apps.studio_api/routes/cleanup_route.py 三处 caller 通过这两个入口；infra.illustrations.* / infra.illustration_settings.* / 任何绕过 lru_cleanup 的 illustration 删除路径非法 (Phase 98 REQ-002 v2 ProjectSettings extension + LRU archive)"
+  - id: I090   # ★ Phase 98 NEW + Phase 106 EXTENDED (DELETE route 4th caller)
+    rule: "packages/lingwen-illustrations/src/lingwen_illustrations/storage.py:lru_cleanup 是 illustration LRU 删除唯一入口（per-type+per-chapter scope，max_count>0 校验，best-effort 删除后 list_assets 结果）；audit_log.record_event 是 illustration 事件记录唯一入口（JSONL append-only，OSError swallow best-effort）；pipeline.generate_illustration / pipeline.regenerate_illustration / apps/studio_api/routes/cleanup_route.py / apps/studio_api/routes/illustrations.py (delete_asset) 四处 caller 通过这两个入口；infra.illustrations.* / infra.illustration_settings.* / 任何绕过 lru_cleanup 的 illustration 删除路径非法 (Phase 98 REQ-002 v2 ProjectSettings extension + LRU archive + Phase 106 delete_asset route 扩展 caller list)"
     severity: error
-    scope: "all new illustration policy code; enforcement via tests/test_phase98_settings_extension_lru.py G1 (lru_cleanup exists) + G3 (record_event exists) + G4 (pipeline calls lru_cleanup after save_asset) + G11 (OSError swallowed) + G13 (per-type+per-chapter scope)"
-  - id: I091   # ★ Phase 99 NEW
+    scope: "all new illustration policy code; enforcement via tests/test_phase98_settings_extension_lru.py G1 (lru_cleanup exists) + G3 (record_event exists) + G4 (pipeline calls lru_cleanup after save_asset) + G11 (OSError swallowed) + G13 (per-type+per-chapter scope) + Phase 106 tests/test_phase106_delete_endpoint_failure_tracking.py G1 (delete_asset has >= 2 record_failure calls) + G3 (delete_asset double-writes audit_log.record_event + notifications.publish) + G4 (_load_deletion_settings helper exists)"
+  - id: I091   # ★ Phase 99 NEW + Phase 106 EXTENDED (DELETE route 4th double-write site)
     rule: |
       packages/lingwen-illustrations/src/lingwen_illustrations/notifications.py:publish
       is the sole fan-out entry point for illustration events.
-      pipeline.generate_illustration, pipeline.regenerate_illustration, and
-      apps/studio_api/routes/cleanup_route.py double-write to BOTH
+      pipeline.generate_illustration, pipeline.regenerate_illustration,
+      apps/studio_api/routes/cleanup_route.py, AND
+      apps/studio_api/routes/illustrations.py (delete_asset) double-write to BOTH
       audit_log.record_event (I090) and notifications.publish with the SAME
       ULID id. infra.notifications.* paths are illegal; any path bypassing
       publish for illustration event fan-out is illegal.
     severity: error
-    scope: "all new illustration notification fan-out code; enforcement via tests/test_phase99_notification_center.py G2/G2b/G2c (3 double-write sites) + G4 (publish non-blocking) + G12 (I091 declared) + G13 (e2e SSE + history)"
+    scope: "all new illustration notification fan-out code; enforcement via tests/test_phase99_notification_center.py G2/G2b/G2c (3 double-write sites) + G4 (publish non-blocking) + G12 (I091 declared) + G13 (e2e SSE + history) + Phase 106 tests/test_phase106_delete_endpoint_failure_tracking.py G3 (delete_asset double-writes audit_log.record_event + notifications.publish — 4th double-write site)"
   - id: I092   # ★ Phase 100 NEW
     rule: |
       packages/lingwen-illustrations/src/lingwen_illustrations/providers/{minimax,openai,stability}.py:KNOWN_MODELS is the sole per-provider model catalog.
@@ -239,7 +240,7 @@ invariants:
       infra.illustrations.* / infra.image_provider.* paths are illegal.
     severity: error
     scope: "all Phase 102 chapter-overrides code paths + Phase 103 chapter default_models paths; enforcement via tests/test_phase102_settings_persistence_extension.py G1 (ProjectSettings.chapter_overrides field) + G2 (merge_chapter_settings exists) + G6 (chapter_overrides Pydantic subset validator) + G9 (I094 declared in architecture.yml) + G10 (frontend ProjectSettingsIllustration.vue chapter-overrides section) + G11 (useProjectSettings store chapter_overrides) + G12 (Phase 101 yaml back-compat loads via Pydantic v2 default fill) + Phase 103 tests/test_phase103_per_chapter_default_models.py G1 (_CHAPTER_OVERRIDABLE_FIELDS includes default_models) + G2 (_validate_chapter_overrides cross-references default_models against KNOWN_PROVIDERS + KNOWN_MODELS) + G3 (merge_chapter_settings shallow merge semantic with default_models dict replacement) + G4 (resolve_model 4-tier order preserved) + G5 (I094 invariant documented in architecture.yml + CLAUDE.md) + G6 (frontend api/illustrations.ts Pick whitelist includes default_models) + G7 (ProjectSettingsIllustration.vue renders default_models column) + G8 (useProjectSettings store sync default_models method)"
-  - id: I095   # ★ Phase 102 NEW (Phase 104 EXTENDED: tuple-keyed counter state)
+  - id: I095   # ★ Phase 102 NEW (Phase 104 EXTENDED: tuple-keyed counter state + Phase 106 EXTENDED: deletion event_type)
     rule: |
       packages/lingwen-illustrations/src/lingwen_illustrations/notifications.py:_consecutive_failures
       is an in-memory state machine keyed per (project_slug, event_type) tuple and maintained
@@ -249,11 +250,23 @@ invariants:
       INFINITY for missing keys). Crossing the project's notify_threshold for a given
       (slug, event_type) pair MUST emit exactly one severity: "warning" notification for that
       pair (no spam — repeated failures above threshold do NOT re-emit until record_success
-      resets the (slug, event_type) counter). infra.notifications.* paths are illegal; any
-      path bypassing record_failure / record_success for consecutive-failure tracking,
-      or any path using bare project_slug keys instead of (slug, event_type) tuples, is illegal.
+      resets the (slug, event_type) counter). Phase 106 EXTENDED via docstring:
+      apps/studio_api/routes/illustrations.py (delete_asset) is the third caller of
+      record_failure / record_success (alongside pipeline.generate_illustration /
+      pipeline.regenerate_illustration and apps/studio_api/routes/cleanup_route.py);
+      all 4 known event_types (generation / regeneration / cleanup / deletion) now have
+      at least one caller. The delete_asset route calls record_failure on the LoadError
+      path (asset_id not found) with project_root=None so the counter still increments
+      while audit_log.record_event is skipped (no real project context for missing slug),
+      and on the StoreError path (storage.delete_asset raises) with the real project_root
+      for full audit_log + publish double-write. 404 asset-not-found is treated as a
+      no-op success via record_success to defensively reset the (slug, "deletion")
+      counter — same pattern as cleanup_route's else-branch reset. infra.notifications.*
+      paths are illegal; any path bypassing record_failure / record_success for
+      consecutive-failure tracking, or any path using bare project_slug keys instead of
+      (slug, event_type) tuples, is illegal.
     severity: error
-    scope: "all Phase 102 notification threshold code paths + Phase 104 per-event-type extension; enforcement via tests/test_phase102_settings_persistence_extension.py G1 (ProjectSettings.notify_threshold field) + G4 (record_failure + record_success exist) + G5 (_consecutive_failures state + warning emit) + G8 (notify_threshold >= 1 validator) + G9 (I095 declared in architecture.yml) + G10 (frontend ProjectSettingsIllustration.vue notify-threshold section) + G11 (useProjectSettings store notify_threshold) + G12 (Phase 101 yaml back-compat loads via Pydantic v2 default fill) + Phase 104 tests/test_phase104_notify_threshold_per_event_type.py G1 (validator int legacy expands to 4-key dict) + G1b (validator int legacy minimum) + G2 (validator partial dict preserves only configured keys) + G2b (validator empty dict is opt-out) + G2c (validator multi-event-type dict) + G3 (validator rejects unknown event_type) + G4 (validator rejects int < 1) + G4b (validator rejects dict value < 1) + G5 (_resolve_threshold returns int for configured key) + G5b (_resolve_threshold returns INFINITY for missing key) + G6 (counter keys are (slug, event_type) tuples — NOT bare slug) + G7 (record_failure isolates event_type counters) + G8 (record_success isolates event_type counters); extends I091 invariant (publish is sole fan-out entry point)"
+    scope: "all Phase 102 notification threshold code paths + Phase 104 per-event-type extension + Phase 106 deletion event_type extension; enforcement via tests/test_phase102_settings_persistence_extension.py G1 (ProjectSettings.notify_threshold field) + G4 (record_failure + record_success exist) + G5 (_consecutive_failures state + warning emit) + G8 (notify_threshold >= 1 validator) + G9 (I095 declared in architecture.yml) + G10 (frontend ProjectSettingsIllustration.vue notify-threshold section) + G11 (useProjectSettings store notify_threshold) + G12 (Phase 101 yaml back-compat loads via Pydantic v2 default fill) + Phase 104 tests/test_phase104_notify_threshold_per_event_type.py G1 (validator int legacy expands to 4-key dict) + G1b (validator int legacy minimum) + G2 (validator partial dict preserves only configured keys) + G2b (validator empty dict is opt-out) + G2c (validator multi-event-type dict) + G3 (validator rejects unknown event_type) + G4 (validator rejects int < 1) + G4b (validator rejects dict value < 1) + G5 (_resolve_threshold returns int for configured key) + G5b (_resolve_threshold returns INFINITY for missing key) + G6 (counter keys are (slug, event_type) tuples — NOT bare slug) + G7 (record_failure isolates event_type counters) + G8 (record_success isolates event_type counters) + Phase 106 tests/test_phase106_delete_endpoint_failure_tracking.py G1 (delete_asset >= 2 record_failure calls) + G2 (delete_asset >= 1 record_success call) + G5 (3 deletion failures leave generation counter untouched — counter isolation preserved across event_types) + G6 (I095 rule mentions deletion event_type — 4th extension); extends I091 invariant (publish is sole fan-out entry point)"
 
 # 模块边界（明确每个模块的公共 API 和依赖）
 module_boundaries:
