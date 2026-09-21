@@ -18,7 +18,7 @@ Back-compat via Pydantic v2 default fill — old yaml files still load.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 import yaml
 from fastapi import FastAPI, HTTPException
@@ -53,7 +53,7 @@ class ProjectSettings(BaseModel):
     # NEW Phase 102 ↓
     fallback_models: dict[str, str] = {}                 # per-provider model for chain retry path
     chapter_overrides: dict[int, dict[str, Any]] = {}   # chapter_num -> subset of fields
-    notify_threshold: int = 3                           # consecutive failures before warning
+    notify_threshold: int | dict[str, int] = 3         # Phase 104: int (legacy, auto-expand) | dict (per-event_type)
 
     @field_validator("fallback_models")
     @classmethod
@@ -125,12 +125,41 @@ class ProjectSettings(BaseModel):
                     f"valid models: {adapter.models}"
                 )
 
-    @field_validator("notify_threshold")
+    KNOWN_NOTIFY_EVENT_TYPES: ClassVar[tuple[str, ...]] = (
+        "generation", "regeneration", "cleanup", "deletion",
+    )
+
+    @field_validator("notify_threshold", mode="before")
     @classmethod
-    def _validate_notify_threshold(cls, v: int) -> int:
-        if not isinstance(v, int) or v < 1:
-            raise ValueError(f"notify_threshold must be >= 1, got {v}")
-        return v
+    def _validate_notify_threshold(cls, v):
+        """Phase 104: accept int (legacy auto-expand) or dict (per-event_type).
+
+        - int: validate >= 1, return expanded {et: v for et in KNOWN_NOTIFY_EVENT_TYPES}
+        - dict: validate keys ⊆ KNOWN_NOTIFY_EVENT_TYPES + each value >= 1
+        - empty dict {}: valid (opt-out from all warnings)
+        - otherwise: ValueError
+        """
+        if isinstance(v, bool):
+            # bool is a subclass of int — exclude to avoid silent truthy acceptance
+            raise ValueError(f"notify_threshold must be int or dict, got bool")
+        if isinstance(v, int):
+            if v < 1:
+                raise ValueError(f"notify_threshold must be >= 1, got {v}")
+            return {et: v for et in cls.KNOWN_NOTIFY_EVENT_TYPES}
+        if isinstance(v, dict):
+            for k, vv in v.items():
+                if k not in cls.KNOWN_NOTIFY_EVENT_TYPES:
+                    raise ValueError(
+                        f"notify_threshold key {k!r} not in {cls.KNOWN_NOTIFY_EVENT_TYPES}"
+                    )
+                if not isinstance(vv, int) or isinstance(vv, bool) or vv < 1:
+                    raise ValueError(
+                        f"notify_threshold[{k!r}] must be int >= 1, got {vv!r}"
+                    )
+            return dict(v)
+        raise ValueError(
+            f"notify_threshold must be int or dict[str, int], got {type(v).__name__}"
+        )
 
 
 def _settings_path(project_root: Path) -> Path:
