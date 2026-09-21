@@ -225,17 +225,20 @@ invariants:
       exception. infra.fallback.* and infra.image_provider.* paths are illegal.
     severity: error
     scope: "all Phase 101 fallback code paths; enforcement via tests/test_phase101_atomic_provider_fallback.py G1 (settings.yaml fallback_chain default []) + G2 (GenerateRequest.fallback_chain) + G3 (pipeline.generate_illustration uses dispatch_with_fallback) + G4 (pipeline.regenerate_illustration uses dispatch_with_fallback) + G5 (ProviderExhaustedError exception class) + G6 (audit_log.record_event receives attempts in extra) + G7 (this invariant declared) + G8 (Phase 100 G1-G9 preserved) + G9 (i2i path does not enter dispatch_with_fallback) + G10 (STAGE_HTTP_CODES maps ProviderExhaustedError → 502)"
-  - id: I094   # ★ Phase 102 NEW
+  - id: I094   # ★ Phase 102 NEW + Phase 103 EXTENDED
     rule: |
       packages/lingwen-illustrations/src/lingwen_illustrations/pipeline.py:merge_chapter_settings
       is the ONLY entry point for chapter-overrides merging in REQ-002 illustration generation.
       pipeline.generate_illustration() and pipeline.regenerate_illustration() MUST call this
       helper before resolve_provider() / resolve_model() so per-chapter subsets (max_assets,
-      confirm_before_generate, auto_generate, fallback_chain) override project-wide defaults.
+      confirm_before_generate, auto_generate, fallback_chain, default_models) override
+      project-wide defaults. default_models per-chapter override (dict[str, str]) replaces
+      the project-wide default_models dict via shallow merge (chapter owns its full
+      default_models view; override-wins-on-conflict via dict replacement).
       Any path bypassing merge_chapter_settings for chapter-scoped settings is illegal.
       infra.illustrations.* / infra.image_provider.* paths are illegal.
     severity: error
-    scope: "all Phase 102 chapter-overrides code paths; enforcement via tests/test_phase102_settings_persistence_extension.py G1 (ProjectSettings.chapter_overrides field) + G2 (merge_chapter_settings exists) + G6 (chapter_overrides Pydantic subset validator) + G9 (I094 declared in architecture.yml) + G10 (frontend ProjectSettingsIllustration.vue chapter-overrides section) + G11 (useProjectSettings store chapter_overrides) + G12 (Phase 101 yaml back-compat loads via Pydantic v2 default fill)"
+    scope: "all Phase 102 chapter-overrides code paths + Phase 103 chapter default_models paths; enforcement via tests/test_phase102_settings_persistence_extension.py G1 (ProjectSettings.chapter_overrides field) + G2 (merge_chapter_settings exists) + G6 (chapter_overrides Pydantic subset validator) + G9 (I094 declared in architecture.yml) + G10 (frontend ProjectSettingsIllustration.vue chapter-overrides section) + G11 (useProjectSettings store chapter_overrides) + G12 (Phase 101 yaml back-compat loads via Pydantic v2 default fill) + Phase 103 tests/test_phase103_per_chapter_default_models.py G1 (_CHAPTER_OVERRIDABLE_FIELDS includes default_models) + G2 (_validate_chapter_overrides cross-references default_models against KNOWN_PROVIDERS + KNOWN_MODELS) + G3 (merge_chapter_settings shallow merge semantic with default_models dict replacement) + G4 (resolve_model 4-tier order preserved) + G5 (I094 invariant documented in architecture.yml + CLAUDE.md) + G6 (frontend api/illustrations.ts Pick whitelist includes default_models) + G7 (ProjectSettingsIllustration.vue renders default_models column) + G8 (useProjectSettings store sync default_models method)"
   - id: I095   # ★ Phase 102 NEW
     rule: |
       packages/lingwen-illustrations/src/lingwen_illustrations/notifications.py:_consecutive_failures
