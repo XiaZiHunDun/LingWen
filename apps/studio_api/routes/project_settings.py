@@ -141,7 +141,7 @@ class ProjectSettings(BaseModel):
         """
         if isinstance(v, bool):
             # bool is a subclass of int — exclude to avoid silent truthy acceptance
-            raise ValueError(f"notify_threshold must be int or dict, got bool")
+            raise ValueError("notify_threshold must be int or dict, got bool")
         if isinstance(v, int):
             if v < 1:
                 raise ValueError(f"notify_threshold must be >= 1, got {v}")

@@ -6,13 +6,11 @@ Per spec 2026-09-21-phase-104-notify-threshold-per-event-type-design.md §1 + §
 from __future__ import annotations
 
 import math
-from pathlib import Path
 
 import pytest
-
-from apps.studio_api.routes.project_settings import ProjectSettings
 from lingwen_illustrations import notifications
 
+from apps.studio_api.routes.project_settings import ProjectSettings
 
 KNOWN_EVENT_TYPES = ("generation", "regeneration", "cleanup", "deletion")
 INFINITY = math.inf
