@@ -1,5 +1,5 @@
 <!--
-  ProjectSettingsIllustration.vue — 插图偏好（Phase 90 Task 17 + Phase 96 Task 16 + Phase 97 Task 10 + Phase 98 Task 13 + Phase 100 Task 8 + Phase 102 Task 9 + Phase 102 Task 10）
+  ProjectSettingsIllustration.vue — 插图偏好（Phase 90 Task 17 + Phase 96 Task 16 + Phase 97 Task 10 + Phase 98 Task 13 + Phase 100 Task 8 + Phase 102 Task 9 + Phase 102 Task 10 + Phase 102 Task 11 + Phase 103 Task 8）
 
   包含：
   - 默认风格预设（古风水墨 / 现代写实 / 动漫厚涂）
@@ -26,6 +26,10 @@
     auto_generate / fallback_chain 中任意子集；存到 chapter_overrides 字段。
   - Phase 102 Task 11: notify_threshold slider — 连续失败次数达到阈值后
     触发 warning 通知（1-10，默认 3，counter 在下次成功时重置）。
+  - Phase 103 Task 8: chapter_overrides.default_models — per-chapter
+    provider→model 映射表（在 chapter_overrides 表新增列）；cascade picker
+    每行一对 (provider select + model select + ×)，+ Add 行追加第一 provider
+    的 default_model。
 
   Phase 98 Task 13: update() 现在 emit + save (Phase 96 只对 provider save)。
   三个新字段 (auto_generate / max_assets / confirm_before_generate) 现在持久化
@@ -39,6 +43,10 @@
   被 fallback chain 调起时由 pipeline.resolve_model(is_fallback=True) 优先
   读取 (packages/lingwen-illustrations/src/lingwen_illustrations/pipeline.py
   resolve_model:108-141)；主路径仍用 default_models[provider]。
+
+  Phase 103 Task 8: 新增 addChapterDefaultModel / removeChapterDefaultModel /
+  updateChapterDefaultModel — 与 chapter_overrides 行 helpers 同样 shape，
+  但写入 chapter_overrides[chapter].default_models 子字段，触发 update()。
 -->
 <script setup>
 import { ref, onMounted, computed } from 'vue'
@@ -217,6 +225,56 @@ async function updateChapterOverrideField(chapter, field, value) {
   }
   overrides[chapter] = subset
   await update('chapter_overrides', overrides)
+}
+
+// Phase 103: per-chapter default_models provider-model pairs. Each chapter's
+// default_models is dict[provider, model] (same shape as the project-level
+// default_models); pipeline.merge_chapter_settings() merges it onto base
+// settings at request time (override wins on conflict).
+async function addChapterDefaultModel(chapter, provider) {
+  const overrides = { ...(props.modelValue?.chapter_overrides || {}) }
+  const existing = { ...(overrides[chapter] || {}) }
+  const currentDefaultModels = { ...(existing.default_models || {}) }
+  // Pull the provider's default model from the cached modelCatalogs — same
+  // source the project-level default_models dropdown uses.
+  const catalog = modelCatalogs.value[provider]
+  const defaultModel = catalog?.default_model || ''
+  currentDefaultModels[provider] = defaultModel
+  overrides[chapter] = { ...existing, default_models: currentDefaultModels }
+  await update('chapter_overrides', overrides)
+}
+
+async function removeChapterDefaultModel(chapter, provider) {
+  const overrides = { ...(props.modelValue?.chapter_overrides || {}) }
+  const existing = { ...(overrides[chapter] || {}) }
+  const currentDefaultModels = { ...(existing.default_models || {}) }
+  delete currentDefaultModels[provider]
+  overrides[chapter] = { ...existing, default_models: currentDefaultModels }
+  await update('chapter_overrides', overrides)
+}
+
+async function updateChapterDefaultModel(chapter, provider, model) {
+  const overrides = { ...(props.modelValue?.chapter_overrides || {}) }
+  const existing = { ...(overrides[chapter] || {}) }
+  const currentDefaultModels = { ...(existing.default_models || {}) }
+  currentDefaultModels[provider] = model
+  overrides[chapter] = { ...existing, default_models: currentDefaultModels }
+  await update('chapter_overrides', overrides)
+}
+
+// Swap the provider key on an existing pair — delete the old key, then add a
+// new pair under the new provider with its default model. Extracted so the
+// template can call a single function (Vue templates can't parse inline
+// TypeScript casts like `e.target as HTMLSelectElement`).
+async function swapChapterDefaultModelProvider(chapter, oldProvider, e) {
+  const newProvider = e?.target?.value
+  if (newProvider === oldProvider || !newProvider) return
+  await removeChapterDefaultModel(chapter, oldProvider)
+  await addChapterDefaultModel(chapter, newProvider)
+}
+
+function onChapterDefaultModelNameChange(chapter, provider, e) {
+  return updateChapterDefaultModel(chapter, provider, e?.target?.value)
 }
 
 const on_provider_change = (value) => update('default_provider', value)
@@ -445,6 +503,7 @@ async function updateNotifyThreshold(value) {
             <th>confirm</th>
             <th>auto</th>
             <th>fallback_chain</th>
+            <th>Default Models</th>
             <th></th>
           </tr>
         </thead>
@@ -535,6 +594,50 @@ async function updateNotifyThreshold(value) {
                   )
                 "
               />
+            </td>
+            <td
+              class="project-settings-illustration-chapter-override-default-models"
+              :data-testid="`chapter-override-default-models-${chapter}`"
+            >
+              <div
+                v-for="(model, provider) in props.modelValue?.chapter_overrides?.[chapter]?.default_models || {}"
+                :key="`${chapter}-${provider}`"
+                class="project-settings-illustration-chapter-default-model-pair"
+                :data-testid="`chapter-override-default-model-pair-${chapter}-${provider}`"
+              >
+                <select
+                  :value="provider"
+                  class="project-settings-illustration-chapter-default-model-provider"
+                  :data-testid="`chapter-override-default-model-provider-${chapter}-${provider}`"
+                  @change="swapChapterDefaultModelProvider(chapter, provider, $event)"
+                >
+                  <option v-for="p in providers" :key="p.id" :value="p.id">{{ p.label }}</option>
+                </select>
+                <select
+                  :value="model"
+                  class="project-settings-illustration-chapter-default-model-name"
+                  :data-testid="`chapter-override-default-model-name-${chapter}-${provider}`"
+                  @change="onChapterDefaultModelNameChange(chapter, provider, $event)"
+                >
+                  <option
+                    v-for="m in (modelCatalogs[provider] && modelCatalogs[provider].models) || []"
+                    :key="m"
+                    :value="m"
+                  >{{ m }}</option>
+                </select>
+                <button
+                  type="button"
+                  class="project-settings-illustration-chapter-default-model-remove"
+                  :data-testid="`chapter-override-default-model-remove-${chapter}-${provider}`"
+                  @click="removeChapterDefaultModel(chapter, provider)"
+                >×</button>
+              </div>
+              <button
+                type="button"
+                class="project-settings-illustration-chapter-default-model-add"
+                :data-testid="`chapter-override-default-model-add-${chapter}`"
+                @click="addChapterDefaultModel(chapter, providers[0].id)"
+              >+ Add</button>
             </td>
             <td>
               <button
@@ -776,6 +879,59 @@ async function updateNotifyThreshold(value) {
 .project-settings-illustration-chapter-override-remove:hover {
   color: var(--color-accent);
   border-color: var(--color-accent);
+}
+
+/* Phase 103: per-chapter default_models cascade picker. */
+.project-settings-illustration-chapter-override-default-models {
+  min-width: 240px;
+  vertical-align: top;
+}
+
+.project-settings-illustration-chapter-default-model-pair {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.project-settings-illustration-chapter-default-model-provider,
+.project-settings-illustration-chapter-default-model-name {
+  flex: 1;
+  font-size: var(--text-sm);
+  font-family: var(--font-mono);
+  padding: 2px 4px;
+  background: var(--bg-primary);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-sm);
+  min-width: 70px;
+}
+
+.project-settings-illustration-chapter-default-model-remove {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted, #888);
+  padding: 0 4px;
+  font-size: var(--text-sm);
+}
+.project-settings-illustration-chapter-default-model-remove:hover {
+  color: var(--color-accent);
+}
+
+.project-settings-illustration-chapter-default-model-add {
+  background: transparent;
+  border: 1px dashed var(--border-color, #ccc);
+  padding: 2px 8px;
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-family: var(--font-ui);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted, #4b5563);
+}
+
+.project-settings-illustration-chapter-default-model-add:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
 }
 
 .project-settings-illustration-add-chapter-override {
