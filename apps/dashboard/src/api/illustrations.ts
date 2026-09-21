@@ -33,11 +33,24 @@ export function deleteReferenceImage(slug: string): Promise<void> {
 
 // Phase 100: typed wrappers for illustration generation/regeneration + model catalog.
 
-// Phase 96/98/100/101/102: ProjectSettings type mirrors the backend Pydantic schema
+// Phase 104: NotifyEventType mirrors the backend EventType Literal
+// (`packages/lingwen-illustrations/src/lingwen_illustrations/notifications.py:41`).
+// Used as keys for the per-event-type `notify_threshold` form.
+export type NotifyEventType = "generation" | "regeneration" | "cleanup" | "deletion"
+
+export const NOTIFY_EVENT_TYPES: readonly NotifyEventType[] = [
+  "generation",
+  "regeneration",
+  "cleanup",
+  "deletion",
+] as const
+
+// Phase 96/98/100/101/102/104: ProjectSettings type mirrors the backend Pydantic schema
 // (`apps/studio_api/routes/project_settings.py:ProjectSettings`). The 6 original
 // fields were never formally typed on the frontend (store used inline object
 // shapes); Phase 102 promotes them to a named interface so consumers can rely
 // on type safety for the 3 new fields added in this phase.
+// Phase 104 widens `notify_threshold` to a union form for per-event-type thresholds.
 export interface ProjectSettings {
   default_provider: 'minimax' | 'openai' | 'stability'
   // Phase 100: per-provider default model override (primary path)
@@ -65,8 +78,12 @@ export interface ProjectSettings {
       >
     >
   >
-  /** Phase 102: consecutive failure count threshold that triggers a warning notification. */
-  notify_threshold?: number
+  /**
+   * Phase 104: per-event_type threshold.
+   * - number: legacy form (Phase 102) — applies to all event types
+   * - Record<NotifyEventType, number>: per-event_type form — unconfigured keys default to Infinity
+   */
+  notify_threshold?: number | Record<NotifyEventType, number>
 }
 
 export interface IllustrationMetadata {
