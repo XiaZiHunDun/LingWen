@@ -10,6 +10,12 @@ Supports:
 
 Invariants:
   - I090 (Phase 98): This route is the only manual entry point for LRU cleanup.
+
+Phase 105: failure tracking wired into notifications.record_failure /
+record_success with event_type="cleanup". 404 LoadError passes project_root=None
+(audit_log skipped; counter still increments). StoreError on lru_cleanup uses
+the real project_root. Successful lru_cleanup calls record_success to reset
+the (slug, "cleanup") counter.
 """
 from __future__ import annotations
 
@@ -50,6 +56,24 @@ def _load_max_assets(project_root: Path) -> int:
         return 20
 
 
+def _load_cleanup_settings(project_root: Path) -> dict:
+    """Phase 105: load notification-relevant settings from illustration_settings.yaml.
+
+    Returns dict containing notify_threshold (or empty dict if file missing /
+    malformed). Used by cleanup_illustrations to resolve per-event-type
+    threshold via notifications.resolve_threshold(). Defensive: missing file
+    silently returns {} (matches pipeline._load_illustration_settings pattern).
+    """
+    settings_path = project_root / ".lingwen" / "illustration_settings.yaml"
+    if not settings_path.exists():
+        return {}
+    try:
+        data = yaml.safe_load(settings_path.read_text(encoding="utf-8")) or {}
+        return dict(data) if isinstance(data, dict) else {}
+    except (yaml.YAMLError, OSError):
+        return {}
+
+
 def _meta_to_dict(m) -> dict:
     """Serialize IllustrationMetadata to dict (avoid leaking internal fields)."""
     return {
@@ -70,16 +94,41 @@ def register_cleanup(app: FastAPI, ctx: RoutesContext) -> None:
         response_model=CleanupResponse,
     )
     async def cleanup_illustrations(slug: str, request: CleanupRequest) -> CleanupResponse:
+        # Phase 105: resolve per-event-type threshold BEFORE any project lookup so
+        # the threshold (or INFINITY) is ready for failure-tracking on every path.
+        # Try to find the project root first; if it doesn't exist, we still want
+        # to record a failure (counter) — but we have no project_root for audit_log.
+        root: Path | None = None
         try:
             root = project_root_for(slug)
         except LoadError as e:
+            # Phase 105: 404 path. No real project_root (audit_log skipped inside
+            # notifications._emit_failure_warning when project_root is None).
+            # record_failure increments (slug, "cleanup") counter; threshold stays
+            # INFINITY because no settings exist for a missing project, so warning
+            # will never fire on this path — but the counter still tracks sustained
+            # request failures for observability.
+            settings: dict = {}
+            threshold = notifications.resolve_threshold(settings, "cleanup")
+            notifications.record_failure(
+                slug, e,
+                project_root=None,
+                threshold=threshold,
+                event_type="cleanup",
+            )
             raise HTTPException(
                 404, detail={"stage": "load", "error": e.message}
             ) from e
 
+        assert root is not None  # type narrow for type-checker
+        # Phase 105: load settings for cleanup event_type threshold.
+        settings = _load_cleanup_settings(root)
+        threshold = notifications.resolve_threshold(settings, "cleanup")
+
         max_assets = _load_max_assets(root)
 
         if request.type == "chapter" and request.chapter_num is None:
+            # Validation error (user input) — NOT a system failure. No failure tracking.
             raise HTTPException(
                 422,
                 detail={"field": "chapter_num", "error": "required for type=chapter"},
@@ -101,6 +150,7 @@ def register_cleanup(app: FastAPI, ctx: RoutesContext) -> None:
             # Phase 99 I091: emit one synthetic cleanup event for dry-run.
             # Dry-run is non-destructive — nothing was actually deleted, so we
             # skip audit_log.record_event and only notify subscribers.
+            # Phase 105: dry_run is NOT a failure — counter not touched.
             notifications.publish(notifications.NotificationEvent(
                 id=notifications.new_event_id(),
                 project_slug=slug,
@@ -128,7 +178,20 @@ def register_cleanup(app: FastAPI, ctx: RoutesContext) -> None:
                 max_count=max_assets,
             )
         except StoreError as e:
+            # Phase 105: StoreError is a system failure — record_failure with the
+            # real project_root (audit_log captures the warning event).
+            notifications.record_failure(
+                slug, e,
+                project_root=root,
+                threshold=threshold,
+                event_type="cleanup",
+            )
             raise HTTPException(422, detail={"stage": "cleanup", "error": str(e)}) from e
+        else:
+            # Phase 105: successful lru_cleanup resets (slug, "cleanup") counter.
+            # Counter resets regardless of deleted count (including 0 — under-limit
+            # is a successful no-op, not a failure).
+            notifications.record_success(slug, event_type="cleanup")
 
         # Phase 99 I091: emit one cleanup event per deleted asset (double-write).
         # Same ULID flows to audit_log (JSONL durability) + notifications (SSE fan-out).

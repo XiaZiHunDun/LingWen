@@ -166,7 +166,7 @@ def record_failure(
     project_slug: str,
     error: BaseException,
     *,
-    project_root: Path,
+    project_root: Path | None,
     threshold: int | float,
     event_type: str,
 ) -> None:
@@ -178,6 +178,10 @@ def record_failure(
 
     Phase 104: counter keyed per (project_slug, event_type) tuple. Failures in
     different event types do NOT bleed into each other's counters.
+
+    Phase 105: project_root is Path | None. None is allowed when caller cannot
+    resolve a real project root (e.g. cleanup_route LoadError on unknown slug).
+    audit_log.record_event is skipped when None; publish() still fires for SSE.
 
     Caller pattern (in pipeline.generate_illustration):
         settings = _load_illustration_settings(project_root)
@@ -219,24 +223,28 @@ def _emit_failure_warning(
     project_slug: str,
     count: int,
     error: BaseException,
-    project_root: Path,
+    project_root: Path | None,
     event_type: str,
 ) -> None:
     """Emit severity=warning notification; ULID shared with audit_log (I091 invariant).
 
     Phase 104: event_type passed in (was hardcoded "generation" in Phase 102).
+    Phase 105: project_root is Path | None. When None, audit_log.record_event is
+    skipped (caller has no real project context, e.g. cleanup_route LoadError on
+    missing slug). publish() still fires for SSE fan-out.
     """
     event_id = str(ulid.ULID())
-    audit_log.record_event(
-        project_root,
-        event=event_type,
-        extra={
-            "severity": "warning",
-            "consecutive_failures": count,
-            "last_error": str(error),
-            "id": event_id,
-        },
-    )
+    if project_root is not None:
+        audit_log.record_event(
+            project_root,
+            event=event_type,
+            extra={
+                "severity": "warning",
+                "consecutive_failures": count,
+                "last_error": str(error),
+                "id": event_id,
+            },
+        )
     publish(NotificationEvent(
         id=event_id,
         project_slug=project_slug,
