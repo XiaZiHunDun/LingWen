@@ -35,7 +35,6 @@ from __future__ import annotations
 
 import hashlib
 import logging
-import math
 import time
 import uuid
 from datetime import datetime, timezone
@@ -51,41 +50,14 @@ from lingwen_illustrations import (
 from lingwen_illustrations.bible_loader import load_character_bible
 from lingwen_illustrations.exceptions import GenerateError, LoadError, UnknownModelError
 from lingwen_illustrations.metadata import IllustrationMetadata
+from lingwen_illustrations.notifications import (
+    resolve_threshold as _resolve_threshold,  # Phase 105: relocated from pipeline.py
+)
 from lingwen_illustrations.prompt_builder import extract_scene
 from lingwen_illustrations.providers import ProviderAdapter, get_provider
 from lingwen_illustrations.style_templates import compose as compose_prompt
 
 logger = logging.getLogger(__name__)
-
-# Phase 104: per-event-type notify_threshold. Sentinel for "never warn" — kept
-# as a module-local constant (same value as notifications.INFINITY_THRESHOLD)
-# so pipeline.py doesn't need to import notifications.INFINITY_THRESHOLD
-# (notifications stays yaml-free; pipeline already imports notifications).
-INFINITY_THRESHOLD = math.inf
-
-
-def _resolve_threshold(settings: dict, event_type: str) -> int | float:
-    """Resolve notify_threshold for specific event_type.
-
-    After Pydantic normalization, settings["notify_threshold"] is dict[str, int]
-    where keys are subset of ("generation", "regeneration", "cleanup", "deletion").
-    Missing key → INFINITY_THRESHOLD (never warn for that event type).
-
-    Defensive: if int legacy form slips through (shouldn't post-validation),
-    returns int directly. If something else (bool, None), returns INFINITY
-    to err on the side of "don't warn" rather than crashing callers.
-
-    Phase 104 spec §3.
-    """
-    nt = settings.get("notify_threshold", INFINITY_THRESHOLD)
-    if isinstance(nt, bool):
-        # bool is subclass of int — exclude truthy acceptance before int check.
-        return INFINITY_THRESHOLD
-    if isinstance(nt, (int, float)):
-        return nt
-    if isinstance(nt, dict):
-        return nt.get(event_type, INFINITY_THRESHOLD)
-    return INFINITY_THRESHOLD  # defensive: non-validated path fallback
 
 
 _TYPE = Literal["cover", "chapter"]

@@ -128,6 +128,34 @@ def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+# Phase 105: _resolve_threshold relocated from pipeline.py. Co-located with the
+# counter state machine because the YAML-derived threshold value drives counter
+# behavior. Pipeline keeps a back-compat re-export (`pipeline._resolve_threshold`)
+# so existing callers and tests are unchanged.
+def resolve_threshold(settings: dict, event_type: str) -> int | float:
+    """Resolve notify_threshold for specific event_type.
+
+    After Pydantic normalization, settings["notify_threshold"] is dict[str, int]
+    where keys are subset of ("generation", "regeneration", "cleanup", "deletion").
+    Missing key → INFINITY_THRESHOLD (never warn for that event type).
+
+    Defensive: if int legacy form slips through (shouldn't post-validation),
+    returns int directly. If something else (bool, None), returns INFINITY
+    to err on the side of "don't warn" rather than crashing callers.
+
+    Phase 104 spec §3. Phase 105 relocated from pipeline.py.
+    """
+    nt = settings.get("notify_threshold", INFINITY_THRESHOLD)
+    if isinstance(nt, bool):
+        # bool is subclass of int — exclude truthy acceptance before int check.
+        return INFINITY_THRESHOLD
+    if isinstance(nt, (int, float)):
+        return nt
+    if isinstance(nt, dict):
+        return nt.get(event_type, INFINITY_THRESHOLD)
+    return INFINITY_THRESHOLD  # defensive: non-validated path fallback
+
+
 # Phase 102 I095: record_failure / record_success — _consecutive_failures state machine.
 # Caller (pipeline) passes project_root + threshold so notifications module stays yaml-free,
 # consistent with audit_log.record_event signature (pipeline knows project_root + has
@@ -237,4 +265,5 @@ __all__ = [
     "now_iso",
     "record_failure",
     "record_success",
+    "resolve_threshold",  # NEW Phase 105 (relocated from pipeline.py)
 ]
