@@ -450,6 +450,55 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
 
         return ListResponse(assets=[a.to_dict() for a in assets])
 
+    @app.delete("/api/illustrations")
+    async def bulk_delete_assets(
+        slug: str = Query(..., description="Project slug"),
+        ids: str = Query(..., description="Comma-separated asset UUIDs, 1..50 after dedupe"),
+    ) -> dict:
+        """Phase 107: bulk delete up to 50 illustrations.
+
+        Sequential for-loop calls ``_delete_asset_inner`` per asset. Each asset
+        follows the SAME 5-path contract as single-delete (I090/I091/I095).
+        ``mode="bulk"`` is interpolated into audit_log + NotificationEvent
+        ``extra`` for downstream analytics.
+
+        Returns:
+          200 OK + {deleted: [...], failed: [{id, status}, ...], summary: {total, ok, fail}}
+          422 - empty ids or > 50 after dedupe
+          404 - slug doesn't resolve via project_root_for
+        """
+        raw_ids = [a.strip() for a in ids.split(",") if a.strip()]
+        asset_ids = list(dict.fromkeys(raw_ids))  # dedupe preserving order
+        if not asset_ids:
+            raise HTTPException(422, detail="ids must be 1..50 comma-separated asset_ids")
+        if len(asset_ids) > 50:
+            raise HTTPException(422, detail="max 50 ids per request")
+
+        try:
+            project_root = project_root_for(slug)
+        except LoadError as e:
+            raise HTTPException(404, detail=_err_detail(e)) from e
+
+        settings = _load_deletion_settings(project_root)
+        threshold = notifications.resolve_threshold(settings, "deletion")
+
+        deleted: list[str] = []
+        failed: list[dict] = []
+        for aid in asset_ids:
+            status = await _delete_asset_inner(
+                slug, aid, project_root=project_root, threshold=threshold, mode="bulk",
+            )
+            if status == "ok":
+                deleted.append(aid)
+            else:
+                failed.append({"id": aid, "status": status})
+
+        return {
+            "deleted": deleted,
+            "failed": failed,
+            "summary": {"total": len(asset_ids), "ok": len(deleted), "fail": len(failed)},
+        }
+
     @app.delete("/api/illustrations/{asset_id}")
     async def delete_asset(
         asset_id: str,

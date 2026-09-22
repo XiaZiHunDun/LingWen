@@ -11,11 +11,12 @@ from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
+from lingwen_illustrations import audit_log, notifications
+from lingwen_illustrations.exceptions import LoadError, StoreError
+from lingwen_illustrations.metadata import IllustrationMetadata
 
 from apps.studio_api.app import create_app
 from apps.studio_api.routes import illustrations as illus_module
-from lingwen_illustrations import audit_log, notifications
-from lingwen_illustrations.exceptions import LoadError, StoreError
 
 
 def _make_meta(asset_id: str, project_slug: str = "test-slug") -> "IllustrationMetadata":
@@ -272,6 +273,15 @@ def test_bulk_delete_dedupes_ids(monkeypatch, tmp_path):
     """T7: ids="a,a,b,b,b,c,d,d" (8 raw) → only 4 iterations; response has 4 entries."""
     from lingwen_illustrations import storage
 
+    # Build 4 meta objects so list_assets returns them and helper reaches delete_asset.
+    unique_ids = ["a", "b", "c", "d"]
+    meta_by_id = {aid: _make_meta(aid) for aid in unique_ids}
+
+    monkeypatch.setattr(
+        storage, "list_assets",
+        lambda pr: [meta_by_id[aid] for aid in unique_ids],
+    )
+
     iteration_log = []
     monkeypatch.setattr(storage, "delete_asset", lambda pr, m: iteration_log.append(m.id) or None)
     monkeypatch.setattr(notifications, "record_success", lambda *a, **kw: None)
@@ -368,24 +378,37 @@ def test_bulk_delete_threshold_crossing_emits_one_warning(monkeypatch, tmp_path)
     """T10: 5 consecutive StoreError → threshold=3 → exactly 1 severity=warning notification."""
     from lingwen_illustrations import storage
 
-    captured_warnings = []
-    monkeypatch.setattr(
-        notifications,
-        "_emit_failure_warning",
-        lambda slug, et, threshold: captured_warnings.append((slug, et, threshold)),
-    )
-    monkeypatch.setattr(
-        notifications,
-        "record_failure",
-        lambda slug, err, *, project_root, threshold, event_type: None,
-    )
-    monkeypatch.setattr(notifications, "resolve_threshold", lambda settings, et: 3)
-    monkeypatch.setattr(audit_log, "record_event", lambda *a, **kw: None)
-    monkeypatch.setattr(notifications, "publish", lambda ev: None)
+    # Phase 106 pattern: pre-seed counter state, don't mock record_failure (counter
+    # would never increment). Use a unique slug to isolate from other tests' state.
+    notifications._consecutive_failures[("test-slug-t10", "deletion")] = 0
+    notifications._warning_emitted[("test-slug-t10", "deletion")] = False
 
-    # Pre-populate so list_assets finds them and we reach storage.delete_asset.
+    captured_publishes = []
+    monkeypatch.setattr(notifications, "publish", lambda ev: captured_publishes.append(ev))
+    monkeypatch.setattr(audit_log, "record_event", lambda *a, **kw: None)
+
+    # Force threshold=3 via settings.yaml (resolve_threshold reads it).
+    settings_path = tmp_path / ".lingwen" / "illustration_settings.yaml"
+    settings_path.parent.mkdir(parents=True, exist_ok=True)
+    settings_path.write_text("notify_threshold:\n  deletion: 3\n", encoding="utf-8")
+
+    # Bootstrap 5 assets so each iteration reaches storage.delete_asset.
     for i in range(5):
-        meta = _make_meta(f"a-{i}")
+        meta = IllustrationMetadata(
+            id=f"a-{i}",
+            type="cover",
+            project_slug="test-slug-t10",
+            chapter_num=None,
+            style_preset="default",
+            custom_prompt=None,
+            scene_json={},
+            final_prompt="x",
+            prompt_hash="sha256:x",
+            model="minimax-image-01",
+            provider="minimax",
+            used_reference_image=False,
+            created_at="2026-09-22T10:00:00Z",
+        )
         storage.save_asset(tmp_path, b"\xff\xd8\xff\xe0fake-jpeg", meta)
 
     monkeypatch.setattr(
@@ -396,17 +419,20 @@ def test_bulk_delete_threshold_crossing_emits_one_warning(monkeypatch, tmp_path)
     monkeypatch.setattr(
         illus_module,
         "project_root_for",
-        lambda slug: tmp_path if slug == "test-slug" else (_ for _ in ()).throw(
+        lambda slug: tmp_path if slug == "test-slug-t10" else (_ for _ in ()).throw(
             LoadError(f"project {slug} not found")
         ),
     )
 
     client = TestClient(create_app())
     ids = ",".join(f"a-{i}" for i in range(5))
-    resp = client.delete(f"/api/illustrations?slug=test-slug&ids={ids}")
+    resp = client.delete(f"/api/illustrations?slug=test-slug-t10&ids={ids}")
     assert resp.status_code == 200
     body = resp.json()
     assert body["summary"] == {"total": 5, "ok": 0, "fail": 5}
-    # Exactly 1 warning emission despite 5 failures (Phase 102 _warning_emitted idempotent flag)
-    assert len(captured_warnings) == 1
-    assert captured_warnings[0] == ("test-slug", "deletion", 3)
+    # Phase 102 idempotent flag: exactly 1 warning despite 5 failures
+    warnings = [
+        e for e in captured_publishes
+        if e.event_type == "deletion" and e.severity == "warning"
+    ]
+    assert len(warnings) == 1

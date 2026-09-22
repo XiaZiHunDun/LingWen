@@ -63,13 +63,18 @@ def test_g1_delete_asset_route_has_at_least_two_record_failure_calls():
     """
     text = _strip_docstrings(_read(ILLUSTRATIONS_ROUTE))
     body = _extract_delete_asset_body(text)
-    failure_calls = body.count('record_failure(')
-    event_type_count = body.count('event_type="deletion"')
+    # Phase 107: helper extraction moved the calls into _delete_asset_inner —
+    # the route handler now delegates. Check the union (route body + helper)
+    # so the guard still catches future regressions.
+    helper_text = text[text.index("async def _delete_asset_inner("):]
+    body_or_helper = body + helper_text
+    failure_calls = body_or_helper.count('record_failure(')
+    event_type_count = body_or_helper.count('event_type="deletion"')
     assert failure_calls >= 2, (
-        f"Expected >= 2 record_failure calls in delete_asset body, found {failure_calls}"
+        f"Expected >= 2 record_failure calls in delete_asset or _delete_asset_inner, found {failure_calls}"
     )
     assert event_type_count >= 2, (
-        f"Expected >= 2 'event_type=\"deletion\"' references in delete_asset body, "
+        f"Expected >= 2 'event_type=\"deletion\"' references in delete_asset or _delete_asset_inner, "
         f"found {event_type_count}"
     )
 
@@ -83,11 +88,14 @@ def test_g2_delete_asset_route_has_at_least_one_record_success_call():
     """
     text = _strip_docstrings(_read(ILLUSTRATIONS_ROUTE))
     body = _extract_delete_asset_body(text)
-    success_calls = body.count('record_success(')
+    # Phase 107: helper extraction — check union of delete_asset body + helper.
+    helper_text = text[text.index("async def _delete_asset_inner("):]
+    body_or_helper = body + helper_text
+    success_calls = body_or_helper.count('record_success(')
     assert success_calls >= 1, (
-        f"Expected >= 1 record_success call in delete_asset body, found {success_calls}"
+        f"Expected >= 1 record_success call in delete_asset or _delete_asset_inner, found {success_calls}"
     )
-    assert 'event_type="deletion"' in body, (
+    assert 'event_type="deletion"' in body_or_helper, (
         "record_success must be called with event_type=\"deletion\""
     )
 
@@ -100,11 +108,14 @@ def test_g3_delete_asset_double_writes_audit_log_and_publish():
     """
     text = _strip_docstrings(_read(ILLUSTRATIONS_ROUTE))
     body = _extract_delete_asset_body(text)
-    assert 'audit_log.record_event(' in body, (
-        "audit_log.record_event not called in delete_asset body"
+    # Phase 107: helper extraction — check union of delete_asset body + helper.
+    helper_text = text[text.index("async def _delete_asset_inner("):]
+    body_or_helper = body + helper_text
+    assert 'audit_log.record_event(' in body_or_helper, (
+        "audit_log.record_event not called in delete_asset or _delete_asset_inner"
     )
-    assert 'notifications.publish(' in body, (
-        "notifications.publish not called in delete_asset body"
+    assert 'notifications.publish(' in body_or_helper, (
+        "notifications.publish not called in delete_asset or _delete_asset_inner"
     )
 
 
