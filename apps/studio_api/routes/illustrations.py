@@ -12,7 +12,7 @@ Errors map to specific HTTP statuses per stage (see STAGE_HTTP_CODES).
 from __future__ import annotations
 
 from pathlib import Path  # Phase 106: for _load_deletion_settings
-from typing import Optional
+from typing import Literal, Optional
 
 import yaml  # Phase 106: for _load_deletion_settings
 from fastapi import FastAPI, HTTPException, Query, Request
@@ -216,6 +216,97 @@ def _load_deletion_settings(project_root: Path) -> dict:
         return {}
 
 
+async def _delete_asset_inner(
+    slug: str,
+    asset_id: str,
+    *,
+    project_root: Path | None,
+    threshold: int | float,
+    mode: Literal["single", "bulk"] = "single",
+) -> Literal["ok", "not_found", "load_error", "store_error"]:
+    """Phase 107: shared per-asset delete + failure tracking.
+
+    Used by BOTH:
+      - delete_asset route (DELETE /{asset_id}, Phase 106 5-path) — mode="single"
+      - bulk_delete_assets route (DELETE ?ids=...&slug=..., Phase 107 sequential loop) — mode="bulk"
+
+    Returns one of: "ok" | "not_found" | "load_error" | "store_error".
+    The caller maps status → HTTPException (single-delete) or accumulates into
+    a partial-failure response (bulk-delete).
+
+    Phase 106 5-path lives here verbatim:
+      1. project_root is None (LoadError upstream) → record_failure(project_root=None)
+         → return "load_error"
+      2. asset not found (no storage entry) → record_success (no-op success, defensive reset)
+         → return "not_found"
+      3. StoreError on storage.delete_asset → record_failure(project_root=root)
+         → return "store_error"
+      4. success → record_success + audit_log.record_event + notifications.publish (same ULID)
+         → return "ok"
+
+    ``extra={"trigger": "manual", "mode": mode}`` records single vs bulk in
+    audit_log and NotificationEvent for downstream analytics.
+    """
+    # LoadError precheck (project_root already known to caller; None implies upstream LoadError)
+    if project_root is None:
+        try:
+            project_root = project_root_for(slug)
+        except LoadError as e:
+            notifications.record_failure(
+                slug, e,
+                project_root=None,
+                threshold=threshold,
+                event_type="deletion",
+            )
+            return "load_error"
+
+    # Existence check via storage.list_assets (matches Phase 106 delete_asset pattern;
+    # storage.load_asset does not exist in lingwen_illustrations.storage).
+    all_assets = storage.list_assets(project_root)
+    meta = next((a for a in all_assets if a.id == asset_id), None)
+    if meta is None:
+        # 404 asset-not-found = no-op success (matches Phase 106 + Phase 105 cleanup_route).
+        notifications.record_success(slug, event_type="deletion")
+        return "not_found"
+
+    # Delete + audit + publish on success
+    try:
+        storage.delete_asset(project_root, meta)
+    except StoreError as e:
+        notifications.record_failure(
+            slug, e,
+            project_root=project_root,
+            threshold=threshold,
+            event_type="deletion",
+        )
+        return "store_error"
+
+    # Success path: counter reset + audit_log + publish (same ULID, I091).
+    notifications.record_success(slug, event_type="deletion")
+
+    event_id = notifications.new_event_id()
+    audit_log.record_event(
+        project_root,
+        event="deletion",
+        asset_meta=meta,
+        id=event_id,
+        extra={"trigger": "manual", "mode": mode},
+    )
+    notifications.publish(notifications.NotificationEvent(
+        id=event_id,
+        project_slug=slug,
+        event_type="deletion",
+        asset_id=meta.id,
+        asset_type=meta.type,
+        chapter_num=meta.chapter_num,
+        style_preset=meta.style_preset,
+        provider=meta.provider,
+        ts=notifications.now_iso(),
+        extra={"trigger": "manual", "mode": mode},
+    ))
+    return "ok"
+
+
 # --- Router registration ---
 
 
@@ -360,80 +451,42 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
         return ListResponse(assets=[a.to_dict() for a in assets])
 
     @app.delete("/api/illustrations/{asset_id}")
-    def delete_asset(
+    async def delete_asset(
         asset_id: str,
         project_slug: str = Query(...),
     ) -> dict:
-        # Phase 106: failure tracking wiring (mirrors cleanup_route Phase 105 pattern).
-        # LoadError path: record_failure with project_root=None (counter increments;
-        # audit_log skipped inside notifications._emit_failure_warning).
+        """Phase 107 refactor: delegates to _delete_asset_inner helper.
+
+        Phase 106 5-path failure tracking + double-write is preserved in
+        ``_delete_asset_inner``. This handler now maps helper status to HTTP:
+          load_error   → 404 (project missing)
+          not_found    → 404 (asset already gone — no-op success counter reset)
+          store_error  → 500 (delete failure)
+          ok           → 200 + {"deleted": asset_id}
+        """
         try:
             project_root = project_root_for(project_slug)
         except LoadError as e:
-            notifications.record_failure(
-                project_slug, e,
+            status = await _delete_asset_inner(
+                project_slug, asset_id,
                 project_root=None,
                 threshold=notifications.resolve_threshold({}, "deletion"),
-                event_type="deletion",
+                mode="single",
             )
             raise HTTPException(404, detail=_err_detail(e)) from e
 
-        # Real project_root exists — resolve actual threshold from settings.
         settings = _load_deletion_settings(project_root)
         threshold = notifications.resolve_threshold(settings, "deletion")
-
-        # Find the asset by id (list_assets is idempotent and cheap).
-        all_assets = storage.list_assets(project_root)
-        meta = next((a for a in all_assets if a.id == asset_id), None)
-
-        if meta is None:
-            # Phase 106: 404 asset-not-found = no-op success (per user decision).
-            # Asset is already gone (idempotent); record_success resets the
-            # (slug, "deletion") counter to avoid stale warnings from prior
-            # transient failures. Symmetric with cleanup_route "0 deleted under
-            # limit" success path.
-            notifications.record_success(project_slug, event_type="deletion")
-            raise HTTPException(404, detail=f"asset {asset_id} not found")
-
-        # Phase 106: real delete with failure tracking + double-write.
-        try:
-            storage.delete_asset(project_root, meta)
-        except StoreError as e:
-            # Phase 106: StoreError is a system failure — record_failure with
-            # the real project_root (audit_log captures the warning event).
-            notifications.record_failure(
-                project_slug, e,
-                project_root=project_root,
-                threshold=threshold,
-                event_type="deletion",
-            )
-            raise HTTPException(500, detail=_err_detail(e)) from e
-        else:
-            # Phase 106: successful delete resets (slug, "deletion") counter.
-            notifications.record_success(project_slug, event_type="deletion")
-
-        # Phase 99 I091 + Phase 106: double-write audit_log + publish (same ULID).
-        event_id = notifications.new_event_id()
-        audit_log.record_event(
-            project_root,
-            event="deletion",
-            asset_meta=meta,
-            id=event_id,
-            extra={"trigger": "manual"},
+        status = await _delete_asset_inner(
+            project_slug, asset_id,
+            project_root=project_root,
+            threshold=threshold,
+            mode="single",
         )
-        notifications.publish(notifications.NotificationEvent(
-            id=event_id,
-            project_slug=project_slug,
-            event_type="deletion",
-            asset_id=meta.id,
-            asset_type=meta.type,
-            chapter_num=meta.chapter_num,
-            style_preset=meta.style_preset,
-            provider=meta.provider,
-            ts=notifications.now_iso(),
-            extra={"trigger": "manual"},
-        ))
-
+        if status == "not_found":
+            raise HTTPException(404, detail=f"asset {asset_id} not found")
+        if status == "store_error":
+            raise HTTPException(500, detail="store error during delete")
         return {"deleted": asset_id}
 
     @app.put("/api/illustrations/{asset_id}/regenerate", response_model=GenerateResponse)
