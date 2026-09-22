@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { NCheckbox, NButton, NPopconfirm } from 'naive-ui'
 import { useIllustration } from '@/composables/useIllustration'
 import { useBulkDeleteToast } from '@/composables/useBulkDeleteToast'
+import { useBulkRegenerateToast } from '@/composables/useBulkRegenerateToast'
 import IllustrationCard from './IllustrationCard.vue'
 
 const props = defineProps({
@@ -13,10 +14,11 @@ const props = defineProps({
   selectable: { type: Boolean, default: true },
 })
 
-const emit = defineEmits(['regenerate', 'delete', 'bulk-deleted'])
+const emit = defineEmits(['regenerate', 'delete', 'bulk-deleted', 'bulk-regenerated'])
 
-const { assets, error, loadAssets, regenerate, deleteAsset, bulkDeleteAssets } = useIllustration(props.projectSlug)
+const { assets, error, loadAssets, regenerate, deleteAsset, bulkDeleteAssets, bulkRegenerateAssets } = useIllustration(props.projectSlug)
 const toast = useBulkDeleteToast()
+const regenToast = useBulkRegenerateToast()
 
 onMounted(() => loadAssets())
 
@@ -31,6 +33,7 @@ const filtered = computed(() => {
 // computed/template reactivity.
 const selection = ref(new Set())
 const bulkDeleteInFlight = ref(false)
+const bulkRegenerateInFlight = ref(false)
 
 const bulkActionBarVisible = computed(() => selection.value.size > 0)
 const selectedCount = computed(() => selection.value.size)
@@ -72,6 +75,33 @@ async function confirmBulkDelete() {
     toast.showValidationError(e.message || 'bulk delete failed')
   } finally {
     bulkDeleteInFlight.value = false
+  }
+}
+
+// Phase 108: bulk regenerate. Mirrors confirmBulkDelete semantics —
+// in-flight guard, idempotent across concurrent paths (pipeline.regenerate
+// on the server is atomic), selection cleared only on success. Backend
+// counter keyed (slug, "regeneration") tracks per-asset failure tracking
+// via the shared _regenerate_asset_inner helper (Task A). User-visible
+// confirmation via <NPopconfirm> because the operation is slow (up to 10×
+// LLM call latency; Phase 10 aborted on user research).
+async function confirmBulkRegenerate() {
+  if (bulkRegenerateInFlight.value) return
+  const ids = Array.from(selection.value)
+  if (ids.length === 0) return
+  bulkRegenerateInFlight.value = true
+  try {
+    const result = await bulkRegenerateAssets(props.projectSlug, ids)
+    regenToast.showResult(result)
+    emit('bulk-regenerated', result)
+    clearSelection()
+  } catch (e) {
+    // On error: show message, but keep selection so user can retry without
+    // re-selecting. The store's error has already been surfaced via the
+    // composable's `error` ref.
+    regenToast.showValidationError(e.message || 'bulk regenerate failed')
+  } finally {
+    bulkRegenerateInFlight.value = false
   }
 }
 
@@ -145,6 +175,22 @@ function onDelete(id) {
           </NButton>
         </template>
         确认删除这 {{ selectedCount }} 张插图？删除后无法恢复。
+      </NPopconfirm>
+      <NPopconfirm
+        positive-text="确认再生"
+        negative-text="取消"
+        @positive-click="confirmBulkRegenerate"
+      >
+        <template #trigger>
+          <NButton
+            data-testid="bulk-regenerate-btn"
+            class="bulk-regenerate-btn"
+            :loading="bulkRegenerateInFlight"
+          >
+            批量再生
+          </NButton>
+        </template>
+        将对已选的 {{ selectedCount }} 张插图重新生成。继续？
       </NPopconfirm>
     </div>
   </div>
