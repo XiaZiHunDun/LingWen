@@ -17,9 +17,6 @@ Mirrors Phase 107 test_bulk_delete_api.py exactly with these translations:
 """
 from __future__ import annotations
 
-from pathlib import Path
-from unittest.mock import patch
-
 import pytest
 from fastapi.testclient import TestClient
 from lingwen_illustrations import audit_log, notifications
@@ -27,6 +24,7 @@ from lingwen_illustrations.exceptions import (
     GenerateError,
     IllustrationError,
     LoadError,
+    UnknownModelError,
 )
 from lingwen_illustrations.metadata import IllustrationMetadata
 
@@ -36,8 +34,6 @@ from apps.studio_api.routes import illustrations as illus_module
 
 def _make_meta(asset_id: str, project_slug: str = "test-slug") -> "IllustrationMetadata":
     """Build a minimal valid IllustrationMetadata for storage.save_asset bootstrap."""
-    from lingwen_illustrations.metadata import IllustrationMetadata
-
     return IllustrationMetadata(
         id=asset_id,
         type="cover",
@@ -53,28 +49,6 @@ def _make_meta(asset_id: str, project_slug: str = "test-slug") -> "IllustrationM
         used_reference_image=False,
         created_at="2026-09-22T10:00:00Z",
     )
-
-
-def _load_regeneration_settings(project_root: Path) -> dict:
-    """Phase 108: load notify_threshold for event_type='regeneration'.
-
-    Mirrors Phase 105 _load_cleanup_settings + Phase 106 _load_deletion_settings
-    pattern. Permissive fallback: missing file → {}; malformed yaml → {}.
-
-    NOTE: defined here in the test file (self-contained) until Task A2 wires
-    it into ``apps.studio_api.routes.illustrations``. Both this definition and
-    the production module are independently valid until the route is wired.
-    """
-    import yaml
-
-    settings_path = project_root / ".lingwen" / "illustration_settings.yaml"
-    if not settings_path.exists():
-        return {}
-    try:
-        data = yaml.safe_load(settings_path.read_text(encoding="utf-8")) or {}
-        return dict(data) if isinstance(data, dict) else {}
-    except Exception:
-        return {}
 
 
 @pytest.fixture(autouse=True)
@@ -420,6 +394,7 @@ def test_bulk_regenerate_dedupes_ids(monkeypatch, tmp_path):
     assert resp.status_code == 200, resp.text
     body = resp.json()
     assert body["summary"]["total"] == 4  # dedupe silently
+    assert len(body["regenerated"]) == 4
     assert iteration_log == ["a", "b", "c", "d"]
 
 
@@ -543,21 +518,7 @@ def test_bulk_regenerate_threshold_crossing_emits_one_warning(monkeypatch, tmp_p
 
     # Bootstrap 5 assets so each iteration reaches pipeline.regenerate_illustration.
     for i in range(5):
-        meta = IllustrationMetadata(
-            id=f"a-{i}",
-            type="cover",
-            project_slug="test-slug-t10",
-            chapter_num=None,
-            style_preset="default",
-            custom_prompt=None,
-            scene_json={},
-            final_prompt="x",
-            prompt_hash="sha256:x",
-            model="minimax-image-01",
-            provider="minimax",
-            used_reference_image=False,
-            created_at="2026-09-22T10:00:00Z",
-        )
+        meta = _make_meta(f"a-{i}", project_slug="test-slug-t10")
         storage.save_asset(tmp_path, b"\xff\xd8\xff\xe0fake-jpeg", meta)
 
     async def fake_regenerate(*args, **kwargs):
@@ -588,3 +549,136 @@ def test_bulk_regenerate_threshold_crossing_emits_one_warning(monkeypatch, tmp_p
         if e.event_type == "regeneration" and e.severity == "warning"
     ]
     assert len(warnings) == 1
+
+
+# ---------- T11: UnknownModelError → unknown_model status (no counter increment) ----------
+def test_bulk_regenerate_unknown_model_status_no_counter(monkeypatch, tmp_path):
+    """T11: Phase 108 NEW per-asset status 'unknown_model' (Phase 107 has no equivalent).
+
+    UnknownModelError is a USER input error (model not in adapter.models), so:
+      - failed[].status == "unknown_model"
+      - NO record_failure call (counter is for runtime failures, not config bugs)
+      - NO record_success call (only not_found triggers defensive record_success)
+
+    Only 2 assets so the test is fast.
+    """
+    from lingwen_illustrations import storage
+
+    captured_success, captured_failure = [], []
+
+    monkeypatch.setattr(
+        notifications,
+        "record_success",
+        lambda slug, event_type: captured_success.append((slug, event_type)),
+    )
+    monkeypatch.setattr(
+        notifications,
+        "record_failure",
+        lambda slug, err, *, project_root, threshold, event_type: captured_failure.append(
+            (slug, str(err), project_root, event_type)
+        ),
+    )
+    monkeypatch.setattr(audit_log, "record_event", lambda *a, **kw: None)
+    monkeypatch.setattr(notifications, "publish", lambda ev: None)
+
+    # Pre-populate 2 assets
+    asset_ids = []
+    for i in range(2):
+        meta = _make_meta(f"asset-{i}")
+        storage.save_asset(tmp_path, b"\xff\xd8\xff\xe0fake-jpeg", meta)
+        asset_ids.append(meta.id)
+
+    async def fake_regenerate(*args, **kwargs):
+        raise UnknownModelError("minimax", "nonexistent-model", ["minimax-image-01"])
+
+    monkeypatch.setattr(
+        "lingwen_illustrations.pipeline.regenerate_illustration",
+        fake_regenerate,
+    )
+    monkeypatch.setattr(
+        illus_module,
+        "project_root_for",
+        lambda slug: tmp_path if slug == "test-slug" else (_ for _ in ()).throw(
+            LoadError(f"project {slug} not found")
+        ),
+    )
+
+    client = TestClient(create_app())
+    resp = client.put(f"/api/illustrations?slug=test-slug&ids={','.join(asset_ids)}")
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["regenerated"] == []
+    assert len(body["failed"]) == 2
+    assert all(f["status"] == "unknown_model" for f in body["failed"])
+    assert body["summary"] == {"total": 2, "ok": 0, "fail": 2}
+
+    # No counter increment: UnknownModelError is a user-input error, not runtime failure
+    assert captured_failure == []
+    # No no-op success either: only not_found triggers defensive record_success
+    assert captured_success == []
+
+
+# ---------- T12: meta_by_id pre-resolved once (Phase 107 invariant preserved) ----------
+def test_bulk_regenerate_meta_by_id_pre_resolved(monkeypatch, tmp_path):
+    """T12: storage.list_assets called exactly once per request (not per asset).
+
+    Mirrors Phase 107 T11 invariant. bulk_regenerate performs LLM API calls
+    per asset (5-30s each), so O(N×M) filesystem lookups would compound with
+    the LLM cost. This guard catches any regression to per-asset list_assets.
+    """
+    from lingwen_illustrations import storage
+
+    list_call_count = [0]
+    original_list_assets = storage.list_assets
+
+    def counting_list_assets(*args, **kwargs):
+        list_call_count[0] += 1
+        return original_list_assets(*args, **kwargs)
+
+    monkeypatch.setattr(storage, "list_assets", counting_list_assets)
+
+    # Pre-populate 3 assets
+    asset_ids = []
+    for i in range(3):
+        meta = _make_meta(f"asset-{i}")
+        storage.save_asset(tmp_path, b"\xff\xd8\xff\xe0fake-jpeg", meta)
+        asset_ids.append(meta.id)
+
+    async def fake_regenerate(*args, **kwargs):
+        existing_meta = kwargs.get("existing_meta")
+        return IllustrationMetadata(
+            id=existing_meta.id,
+            type=existing_meta.type,
+            project_slug=existing_meta.project_slug,
+            chapter_num=existing_meta.chapter_num,
+            style_preset=existing_meta.style_preset,
+            custom_prompt=existing_meta.custom_prompt,
+            scene_json=existing_meta.scene_json,
+            final_prompt=existing_meta.final_prompt,
+            prompt_hash=existing_meta.prompt_hash,
+            model=existing_meta.model,
+            provider=existing_meta.provider,
+            used_reference_image=False,
+            created_at="2026-09-22T10:00:00Z",
+        )
+
+    monkeypatch.setattr(
+        "lingwen_illustrations.pipeline.regenerate_illustration",
+        fake_regenerate,
+    )
+    monkeypatch.setattr(
+        illus_module,
+        "project_root_for",
+        lambda slug: tmp_path if slug == "test-slug" else (_ for _ in ()).throw(
+            LoadError(f"project {slug} not found")
+        ),
+    )
+    monkeypatch.setattr(notifications, "record_success", lambda *a, **kw: None)
+    monkeypatch.setattr(notifications, "publish", lambda ev: None)
+    monkeypatch.setattr(audit_log, "record_event", lambda *a, **kw: None)
+
+    client = TestClient(create_app())
+    resp = client.put(f"/api/illustrations?slug=test-slug&ids={','.join(asset_ids)}")
+    assert resp.status_code == 200, resp.text
+    # meta_by_id pre-resolved once before loop (not per-asset)
+    assert list_call_count[0] == 1
