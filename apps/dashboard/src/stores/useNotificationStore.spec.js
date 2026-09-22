@@ -2,7 +2,7 @@
  * Phase 99: useNotificationStore — Pinia store managing notification history,
  * unread count, SSE lifecycle, and localStorage read-state.
  */
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useNotificationStore } from './useNotificationStore'
 
