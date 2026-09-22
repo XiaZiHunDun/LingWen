@@ -213,3 +213,58 @@ export async function bulkDeleteAssets(
   }
   return response.json()
 }
+
+// ============================================================================
+// Phase 108: bulk regenerate illustration endpoint
+// ============================================================================
+
+export interface BulkRegenerateFailedItem {
+  id: string
+  status: 'not_found' | 'unknown_model' | 'stage_error'
+  stage?: string
+  error?: string
+}
+
+// Phase 108: type alias for illustration regenerate response. Mirrors the
+// existing IllustrationMetadata interface used by the single regenerate path
+// (regenerateIllustration at line 133). Defined here as a named alias so the
+// BulkRegenerateResult contract is self-documenting at the call site.
+export type GenerateResponse = IllustrationMetadata
+
+export interface BulkRegenerateResult {
+  regenerated: GenerateResponse[]
+  failed: BulkRegenerateFailedItem[]
+  summary: { total: number; ok: number; fail: number }
+}
+
+export interface BulkRegenerateOptions {
+  provider?: string
+  model?: string
+  fallbackChain?: string
+}
+
+export async function bulkRegenerateAssets(
+  slug: string,
+  assetIds: string[],
+  opts: BulkRegenerateOptions = {},
+): Promise<BulkRegenerateResult> {
+  if (!assetIds || assetIds.length === 0) {
+    throw new Error('bulkRegenerateAssets requires at least 1 assetId')
+  }
+  if (assetIds.length > 10) {
+    throw new Error(`bulkRegenerateAssets allows at most 10 assetIds (got ${assetIds.length})`)
+  }
+
+  const params = new URLSearchParams()
+  params.set('slug', slug)
+  params.set('ids', assetIds.join(','))
+  if (opts.provider) params.set('provider', opts.provider)
+  if (opts.model) params.set('model', opts.model)
+  if (opts.fallbackChain) params.set('fallback_chain', opts.fallbackChain)
+
+  const response = await $fetch<BulkRegenerateResult>(
+    `/api/illustrations?${params.toString()}`,
+    { method: 'PUT' },
+  )
+  return response
+}
