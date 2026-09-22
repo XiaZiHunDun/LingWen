@@ -116,6 +116,42 @@ export const useIllustrationStore = defineStore('illustrations', () => {
     return result
   }
 
+  // Phase 108: bulk regenerate (1 method).
+  // Delegates to api.bulkRegenerateAssets and reactively UPDATES each
+  // regenerated entry by id (atomic scene_json + url swap from server).
+  // not_found → removed; stage_error + unknown_model → retained for retry.
+  async function bulkRegenerateAssets(slug, assetIds, opts = {}) {
+    loading.value = true
+    error.value = null
+    try {
+      // Lazy import to keep initial bundle small
+      const { bulkRegenerateAssets: apiBulkRegen } = await import('@/api/illustrations')
+      const result = await apiBulkRegen(slug, assetIds, opts)
+      // Update regenerated[] in place (atomic from server)
+      for (const newMeta of result.regenerated) {
+        const idx = assets.value.findIndex(a => a.id === newMeta.id)
+        if (idx >= 0) {
+          assets.value[idx] = { ...assets.value[idx], ...newMeta }
+        } else {
+          // Defensive: server says ok but asset not in local store (race?)
+          assets.value.push(newMeta)
+        }
+      }
+      // Remove not_found (defensive — should be rare)
+      const notFoundIds = result.failed.filter(f => f.status === 'not_found').map(f => f.id)
+      if (notFoundIds.length > 0) {
+        assets.value = assets.value.filter(a => !notFoundIds.includes(a.id))
+      }
+      // Retain stage_error + unknown_model for retry
+      return result
+    } catch (e) {
+      error.value = e.data?.detail?.error || e.message || 'bulk regenerate failed'
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
   // v55.4 Phase 94 — atomic regenerate via PUT /{id}/regenerate.
   // Replaces v1's DELETE+POST pattern (which left a window where the asset
   // didn't exist and could lose the old asset if POST failed). Backend now
@@ -152,6 +188,6 @@ export const useIllustrationStore = defineStore('illustrations', () => {
 
   return {
     assets, loading, error, projectSlug,
-    loadAssets, generate, regenerate, deleteAsset, bulkDeleteAssets,
+    loadAssets, generate, regenerate, deleteAsset, bulkDeleteAssets, bulkRegenerateAssets,
   }
 })

@@ -128,3 +128,72 @@ describe('useIllustrationStore.bulkDeleteAssets — Phase 107', () => {
     expect(store.assets.map(a => a.id)).toEqual(['b'])
   })
 })
+
+// Phase 108: useIllustrationStore.bulkRegenerateAssets — reactive local update
+// of each regenerated entry by id (atomic scene_json + url swap). Lazy-imports
+// api/illustrations. stage_error + unknown_model retained for retry; not_found
+// removed defensively.
+describe('useIllustrationStore.bulkRegenerateAssets — Phase 108', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    globalThis.$fetch = vi.fn()
+    // Reset module registry so vi.mock from prior describe doesn't leak.
+    vi.resetModules()
+  })
+
+  it('BulkRegenHappy: updates each regenerated entry in local state and returns result', async () => {
+    vi.doMock('@/api/illustrations', () => ({
+      bulkRegenerateAssets: vi.fn().mockResolvedValue({
+        regenerated: [
+          { id: 'a', scene_json: { new: 'a' }, url: '/new/a' },
+          { id: 'b', scene_json: { new: 'b' }, url: '/new/b' },
+          { id: 'c', scene_json: { new: 'c' }, url: '/new/c' },
+        ],
+        failed: [],
+        summary: { total: 3, ok: 3, fail: 0 },
+      }),
+    }))
+    const { useIllustrationStore: freshStore } = await import('./useIllustrationStore.js')
+    const store = freshStore()
+    store.assets = [
+      { id: 'a', scene_json: { old: 'a' }, url: '/old/a' },
+      { id: 'b', scene_json: { old: 'b' }, url: '/old/b' },
+      { id: 'c', scene_json: { old: 'c' }, url: '/old/c' },
+    ]
+
+    const result = await store.bulkRegenerateAssets('test-slug', ['a', 'b', 'c'])
+    expect(result.summary.ok).toBe(3)
+    expect(store.assets.find(a => a.id === 'a').scene_json).toEqual({ new: 'a' })
+    expect(store.assets.find(a => a.id === 'b').url).toBe('/new/b')
+  })
+
+  it('BulkRegenPartial: retains stage_error for retry; removes not_found; updates ok', async () => {
+    vi.doMock('@/api/illustrations', () => ({
+      bulkRegenerateAssets: vi.fn().mockResolvedValue({
+        regenerated: [
+          { id: 'a', scene_json: { new: 'a' }, url: '/new/a' },
+        ],
+        failed: [
+          { id: 'b', status: 'stage_error', stage: 'stage_3' },
+          { id: 'c', status: 'not_found' },
+        ],
+        summary: { total: 3, ok: 1, fail: 2 },
+      }),
+    }))
+    const { useIllustrationStore: freshStore } = await import('./useIllustrationStore.js')
+    const store = freshStore()
+    store.assets = [
+      { id: 'a', scene_json: { old: 'a' }, url: '/old/a' },
+      { id: 'b', scene_json: { old: 'b' }, url: '/old/b' },
+      { id: 'c', scene_json: { old: 'c' }, url: '/old/c' },
+    ]
+
+    await store.bulkRegenerateAssets('test-slug', ['a', 'b', 'c'])
+    // 'a' updated to new server content
+    expect(store.assets.find(a => a.id === 'a').scene_json).toEqual({ new: 'a' })
+    // 'b' stage_error retained with original scene_json (retry candidate)
+    expect(store.assets.find(a => a.id === 'b').scene_json).toEqual({ old: 'b' })
+    // 'c' not_found removed (asset gone)
+    expect(store.assets.find(a => a.id === 'c')).toBeUndefined()
+  })
+})
