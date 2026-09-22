@@ -268,3 +268,16 @@ export async function bulkRegenerateAssets(
   )
   return response
 }
+
+// Phase 109: single asset delete (reuses Phase 106 backend endpoint).
+// Typed wrapper so useNotificationStore can lazy-import + mock in vitest
+// (mirrors bulkDeleteAssets pattern).
+export async function deleteAsset(
+  projectSlug: string,
+  assetId: string
+): Promise<{ deleted: string }> {
+  return $fetch(
+    `/api/illustrations/${assetId}?project_slug=${projectSlug}`,
+    { method: 'DELETE' }
+  )
+}

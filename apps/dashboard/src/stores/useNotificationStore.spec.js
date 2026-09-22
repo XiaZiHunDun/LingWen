@@ -44,4 +44,68 @@ describe('useNotificationStore', () => {
     store.recomputeUnread()
     expect(store.unreadCount).toBe(2) // two events with id > '01HZ0'
   })
+
+  // Phase 109: delete asset directly from notification feed
+  describe('deleteAssetFromNotification (Phase 109)', () => {
+    const baseItem = {
+      id: '01HZX',
+      projectSlug: 'proj-X',
+      eventType: 'generation',
+      assetId: 'asset-1',
+      assetType: 'chapter',
+      chapterNum: 3,
+    }
+
+    it('T9: marks _deleted=true on 200 OK', async () => {
+      vi.resetModules()
+      vi.doMock('@/api/illustrations', () => ({
+        deleteAsset: vi.fn().mockResolvedValue({ deleted: 'asset-1' }),
+      }))
+      const store = useNotificationStore()
+      store.history = [baseItem]
+      const result = await store.deleteAssetFromNotification(baseItem)
+      expect(result).toEqual({ status: 'deleted' })
+      expect(store.history[0]._deleted).toBe(true)
+    })
+
+    it('T10: skips non-generation/regeneration eventTypes', async () => {
+      vi.resetModules()
+      vi.doMock('@/api/illustrations', () => ({
+        deleteAsset: vi.fn(),
+      }))
+      const { useNotificationStore: useStore } = await import('@/stores/useNotificationStore')
+      const store = useStore()
+      const cleanupItem = { ...baseItem, eventType: 'cleanup', assetId: null }
+      store.history = [cleanupItem]
+      const result = await store.deleteAssetFromNotification(cleanupItem)
+      expect(result).toEqual({ status: 'skipped' })
+      expect(store.history[0]._deleted).toBeUndefined()
+    })
+
+    it('T11: marks _deleted=true on 404 (Option α UX consistency)', async () => {
+      vi.resetModules()
+      vi.doMock('@/api/illustrations', () => ({
+        deleteAsset: vi.fn().mockRejectedValue(new Error('404 not found')),
+      }))
+      const { useNotificationStore: useStore } = await import('@/stores/useNotificationStore')
+      const store = useStore()
+      store.history = [{ ...baseItem }]
+      const result = await store.deleteAssetFromNotification(store.history[0])
+      expect(result.status).toBe('not_found')
+      expect(store.history[0]._deleted).toBe(true)
+    })
+
+    it('T12: keeps _deleted=false on 500 StoreError (allows retry)', async () => {
+      vi.resetModules()
+      vi.doMock('@/api/illustrations', () => ({
+        deleteAsset: vi.fn().mockRejectedValue(new Error('500 store error')),
+      }))
+      const { useNotificationStore: useStore } = await import('@/stores/useNotificationStore')
+      const store = useStore()
+      store.history = [{ ...baseItem }]
+      const result = await store.deleteAssetFromNotification(store.history[0])
+      expect(result.status).toBe('error')
+      expect(store.history[0]._deleted).toBeUndefined()
+    })
+  })
 })
