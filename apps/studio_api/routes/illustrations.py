@@ -219,6 +219,26 @@ def _load_deletion_settings(project_root: Path) -> dict:
         return {}
 
 
+def _load_regeneration_settings(project_root: Path) -> dict:
+    """Phase 108: load notification-relevant settings for regeneration event_type.
+
+    Reads .lingwen/illustration_settings.yaml and returns dict containing
+    notify_threshold (or empty dict if file missing / malformed). Used by
+    bulk_regenerate_assets + regenerate_illustration to resolve per-event-type
+    threshold via notifications.resolve_threshold(). Defensive: missing file
+    silently returns {} (matches Phase 105 cleanup_route._load_cleanup_settings +
+    Phase 106 _load_deletion_settings + pipeline._load_illustration_settings).
+    """
+    settings_path = project_root / ".lingwen" / "illustration_settings.yaml"
+    if not settings_path.exists():
+        return {}
+    try:
+        data = yaml.safe_load(settings_path.read_text(encoding="utf-8")) or {}
+        return dict(data) if isinstance(data, dict) else {}
+    except (yaml.YAMLError, OSError):
+        return {}
+
+
 async def _delete_asset_inner(
     slug: str,
     asset_id: str,
@@ -318,6 +338,108 @@ async def _delete_asset_inner(
         extra={"trigger": "manual", "mode": mode},
     ))
     return "ok"
+
+
+async def _regenerate_asset_inner(
+    project_slug: str,
+    asset_id: str,
+    *,
+    project_root: Path,
+    threshold: int | float,
+    provider: Optional[str] = None,
+    model: Optional[str] = None,
+    fallback_chain_list: Optional[list[str]] = None,
+    meta_by_id: dict[str, "IllustrationMetadata"] | None = None,
+    mode: Literal["single", "bulk"] = "single",
+) -> tuple[
+    Literal["ok", "not_found", "unknown_model", "stage_error"],
+    "IllustrationMetadata | None",
+    "IllustrationError | UnknownModelError | None",
+]:
+    """Phase 108: shared per-asset regenerate + failure tracking shim.
+
+    Used by BOTH:
+      - regenerate_illustration route (PUT /{asset_id}/regenerate, Phase 94) — mode="single"
+      - bulk_regenerate_assets route (PUT ?ids=...&slug=..., Phase 108 sequential loop) — mode="bulk"
+
+    Returns (status, new_meta, exc):
+      - ("ok", new_meta, None) — pipeline emitted record_event + publish (I091)
+      - ("not_found", None, None) — defensive counter reset (pipeline not invoked)
+      - ("unknown_model", None, exc) — UnknownModelError captured for caller detail
+      - ("stage_error", None, exc) — IllustrationError captured for caller STAGE_HTTP_CODES mapping
+
+    The caller maps status → HTTPException (single-regenerate, uses STAGE_HTTP_CODES via
+    ``_raise_stage_error(exc)`` to preserve Phase 94 stage detail) or accumulates into
+    a partial-failure response (bulk-regenerate, ignores ``exc``).
+
+    Phase 108 Option A architecture — helper is COUNTER-ONLY SHIM:
+      - record_failure on IllustrationError (counter increments; may cross threshold)
+      - record_success on not_found + ok (counter reset, defensive — single-result idempotent
+        with pipeline.py:555)
+      - NO audit_log.record_event + NO notifications.publish — pipeline.regenerate_illustration
+        emits internally on success (pipeline.py:585-607) with shared ULID for I091 invariant.
+        Pipeline does NOT emit on failure (only counter via record_failure at pipeline.py:545-551).
+
+    ``mode`` parameter is for API symmetry with _delete_asset_inner; NOT interpolated into
+    audit_log + NotificationEvent extra because pipeline emits its own format
+    (extra={"attempts":[...]}). See Phase 108 handoff §5 for split-responsibility rationale.
+
+    ``meta_by_id`` (Phase 108 perf): pre-resolved {id: IllustrationMetadata} dict the caller
+    can pass to avoid N×M filesystem reads in bulk-regenerate. When None (single-regenerate
+    path), falls back to ``storage.list_assets`` + linear search (matches Phase 94 behavior).
+    """
+    # Existence check: prefer pre-resolved meta_by_id (bulk path) to avoid
+    # N×M filesystem reads; fall back to list_assets for single-regenerate.
+    if meta_by_id is not None:
+        meta = meta_by_id.get(asset_id)
+    else:
+        all_assets = storage.list_assets(project_root)
+        meta = next((a for a in all_assets if a.id == asset_id), None)
+    if meta is None:
+        # 404 asset-not-found = no-op success (matches Phase 107 delete + Phase 105 cleanup).
+        # Defensive counter reset (helper invokes record_success directly because pipeline
+        # is NOT entered on the not_found path).
+        notifications.record_success(project_slug, event_type="regeneration")
+        return ("not_found", None, None)
+
+    effective_provider = provider if provider is not None else meta.provider
+    api_key, api_host = _api_credentials_for(effective_provider)
+
+    # Lazy import to avoid loading pipeline deps at module import time.
+    from lingwen_illustrations.pipeline import regenerate_illustration as run_regen
+
+    try:
+        new_meta = await run_regen(
+            project_root=project_root,
+            existing_meta=meta,
+            api_key=api_key,
+            api_host=api_host,
+            provider=provider,  # None → pipeline reads existing_meta.provider
+            model=model,  # NEW (Phase 100). None → 3-tier resolve.
+            fallback_chain=fallback_chain_list,  # NEW (Phase 101)
+        )
+    except UnknownModelError as e:
+        # Phase 108 NEW per-asset status 'unknown_model' (Phase 107 has no equivalent).
+        # User input error (model not in adapter.models): NO counter increment,
+        # NO record_success — only not_found triggers defensive reset.
+        return ("unknown_model", None, e)
+    except IllustrationError as e:
+        # Stage error: counter increment (pipeline.py:545-551 also calls record_failure
+        # before re-raising). Production sees a double-count (one per failure): see
+        # Phase 108 handoff §5 for split-responsibility analysis. Idempotent warning
+        # emission still yields exactly ONE severity="warning" per (slug, "regeneration")
+        # pair (I095 invariant).
+        notifications.record_failure(
+            project_slug, e,
+            project_root=project_root,
+            threshold=threshold,
+            event_type="regeneration",
+        )
+        return ("stage_error", None, e)
+
+    # Success — counter reset (idempotent with pipeline.py:555 record_success).
+    notifications.record_success(project_slug, event_type="regeneration")
+    return ("ok", new_meta, None)
 
 
 # --- Router registration ---
@@ -569,6 +691,84 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
             raise HTTPException(500, detail="store error during delete")
         return {"deleted": asset_id}
 
+    @app.put("/api/illustrations")
+    async def bulk_regenerate_assets(
+        slug: str = Query(..., description="Project slug"),
+        ids: str = Query(..., description="Comma-separated asset UUIDs, 1..10 after dedupe"),
+        provider: Optional[str] = Query(None, description="Override provider for ALL assets (Phase 96)"),
+        model: Optional[str] = Query(None, description="Override model for ALL assets (Phase 100)"),
+        fallback_chain: Optional[str] = Query(None, description="Comma-separated provider chain (Phase 101)"),
+    ) -> dict:
+        """Phase 108: bulk regenerate up to 10 illustrations.
+
+        Sequential for-loop calls ``_regenerate_asset_inner`` per asset. Each asset
+        follows the SAME failure tracking contract as single-regenerate
+        (I090/I091/I095 6th EXTENDED via docstring).
+
+        Returns 200 OK + partial-failure body always (after 404 slug LoadError
+        raised before loop). 422 for over-10 / empty after dedupe.
+
+        Phase 108 Option A: pipeline owns emit (record_event + publish, I091 shared ULID).
+        Helper is a counter-tracking shim. ``mode='bulk'`` parameter is for API
+        symmetry with _delete_asset_inner — NOT interpolated into audit_log +
+        NotificationEvent extra because pipeline emits its own format
+        (extra={"attempts": ...}). See Phase 108 handoff §5 for split-responsibility.
+        """
+        raw_ids = [a.strip() for a in ids.split(",") if a.strip()]
+        asset_ids = list(dict.fromkeys(raw_ids))  # dedupe preserving order
+        if not asset_ids:
+            raise HTTPException(422, detail="ids must be 1..10 comma-separated asset_ids")
+        if len(asset_ids) > 10:
+            raise HTTPException(422, detail="max 10 ids per request")
+
+        try:
+            project_root = project_root_for(slug)
+        except LoadError as e:
+            raise HTTPException(404, detail=_err_detail(e)) from e
+
+        # Phase 101: parse comma-separated fallback_chain string into list.
+        if fallback_chain is not None:
+            fallback_chain_list = [s.strip() for s in fallback_chain.split(",") if s.strip()]
+        else:
+            fallback_chain_list = None
+
+        # Phase 108: resolve per-event-type threshold for "regeneration" via settings.
+        settings = _load_regeneration_settings(project_root)
+        threshold = notifications.resolve_threshold(settings, "regeneration")
+
+        # Phase 108 I1 perf: pre-resolve {id: meta} dict once before the loop.
+        # Regenerate is expensive (LLM calls 5-30s each), so avoiding per-asset
+        # list_assets compounds the perf win (10×M filesystem reads → O(1) dict lookup).
+        meta_by_id: dict[str, "IllustrationMetadata"] = {
+            a.id: a for a in storage.list_assets(project_root)
+        }
+
+        regenerated: list[str] = []
+        failed: list[dict] = []
+        for aid in asset_ids:
+            status, _new_meta, _exc = await _regenerate_asset_inner(
+                slug, aid,
+                project_root=project_root,
+                threshold=threshold,
+                provider=provider,
+                model=model,
+                fallback_chain_list=fallback_chain_list,
+                meta_by_id=meta_by_id,
+                mode="bulk",
+            )
+            if status == "ok":
+                regenerated.append(aid)
+            else:
+                # All non-ok statuses map to failed[].{id, status}. No enum code for
+                # unknown_model — caller can fetch GET /providers/{name}/models to retry.
+                failed.append({"id": aid, "status": status})
+
+        return {
+            "regenerated": regenerated,
+            "failed": failed,
+            "summary": {"total": len(asset_ids), "ok": len(regenerated), "fail": len(failed)},
+        }
+
     @app.put("/api/illustrations/{asset_id}/regenerate", response_model=GenerateResponse)
     async def regenerate_illustration(
         asset_id: str,
@@ -577,21 +777,17 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
         model: Optional[str] = Query(None),  # NEW (Phase 100). None → 3-tier resolution.
         fallback_chain: Optional[str] = Query(None),  # NEW (Phase 101). Comma-separated or repeated.
     ) -> GenerateResponse:
-        """Atomic regenerate: re-runs extract+compose+generate, swaps bytes in place.
+        """Phase 108: thin wrapper around _regenerate_asset_inner (helper extracted
+        from Phase 94 fat-function). The bulk route delegates to the same helper.
 
-        v55.4 Phase 94 — replaces the v1 frontend pattern (DELETE then POST)
-        that left a window where the asset didn't exist. The PUT endpoint
-        preserves the asset_id and atomically replaces image bytes + sidecar
-        via storage.replace_asset (temp file + POSIX rename).
+        v55.4 Phase 94 atomic regenerate: re-runs extract+compose+generate, swaps bytes
+        in place. PUT replaces v1's DELETE-then-POST pattern that left a window where
+        the asset didn't exist. Preserves the asset_id and atomically replaces image
+        bytes + sidecar via storage.replace_asset (temp file + POSIX rename).
 
         Phase 96: provider query param overrides existing_meta.provider.
-        If None, reuse the original provider (most common case).
-
         Phase 100: model query param overrides existing_meta.model.
-        If None, resolve via 3-tier order (explicit > project > provider default).
-
-        Phase 101: fallback_chain query param accepts comma-separated string
-        (e.g. "openai,stability"). None → use settings.
+        Phase 101: fallback_chain query param accepts comma-separated string.
 
         Returns same id (asset_id) with new scene_json + final_prompt.
         On Stage failure (Extract / Compose / Generate), the original asset
@@ -607,42 +803,40 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
         except LoadError as e:
             raise HTTPException(404, detail=_err_detail(e)) from e
 
-        # Find the existing asset by id.
-        all_assets = storage.list_assets(project_root)
-        meta = next((a for a in all_assets if a.id == asset_id), None)
-        if meta is None:
+        # Phase 108: resolve per-event-type threshold for "regeneration" via settings.
+        settings = _load_regeneration_settings(project_root)
+        threshold = notifications.resolve_threshold(settings, "regeneration")
+
+        status, new_meta, exc = await _regenerate_asset_inner(
+            project_slug, asset_id,
+            project_root=project_root,
+            threshold=threshold,
+            provider=provider,
+            model=model,
+            fallback_chain_list=fallback_chain_list,
+            mode="single",
+        )
+
+        if status == "not_found":
             raise HTTPException(404, detail=f"asset {asset_id} not found")
-
-        effective_provider = provider if provider is not None else meta.provider
-        api_key, api_host = _api_credentials_for(effective_provider)
-
-        # Lazy import to avoid loading pipeline deps at module import time
-        from lingwen_illustrations.pipeline import regenerate_illustration as run_regen
-
-        try:
-            new_meta = await run_regen(
-                project_root=project_root,
-                existing_meta=meta,
-                api_key=api_key,
-                api_host=api_host,
-                provider=provider,  # None → pipeline reads existing_meta.provider
-                model=model,  # NEW (Phase 100). None → 3-tier resolve.
-                fallback_chain=fallback_chain_list,  # NEW (Phase 101)
-            )
-        except UnknownModelError as e:
-            # Phase 100: unknown model → 422 with structured detail.
+        if status == "unknown_model":
+            # Preserve UnknownModelError detail (provider / model / known) like Phase 94.
+            assert isinstance(exc, UnknownModelError)
             raise HTTPException(
                 status_code=422,
                 detail={
-                    "error": str(e),
+                    "error": str(exc),
                     "stage": "validation",
-                    "provider": e.provider,
-                    "model": e.model,
-                    "known": list(e.known),
+                    "provider": exc.provider,
+                    "model": exc.model,
+                    "known": list(exc.known),
                 },
-            ) from e
-        except IllustrationError as e:
-            _raise_stage_error(e)
+            )
+        if status == "stage_error":
+            # Preserve Phase 94 STAGE_HTTP_CODES mapping (LoadError → 404,
+            # ExtractError/GenerateError → 502, StoreError → 500).
+            assert isinstance(exc, IllustrationError)
+            _raise_stage_error(exc)
 
         return GenerateResponse(
             id=new_meta.id,
