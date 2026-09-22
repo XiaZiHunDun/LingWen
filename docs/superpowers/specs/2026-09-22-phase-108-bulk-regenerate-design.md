@@ -49,7 +49,14 @@ Phase 90-94 already shipped single-asset `PUT /api/illustrations/{asset_id}/rege
 - 404 asset-not-found → helper returns `"not_found"` → `record_success(slug, event_type="regeneration")` (no-op success — defensive counter reset, symmetric with Phase 107)
 - `UnknownModelError` on `pipeline.regenerate_illustration` → helper returns `"unknown_model"` → caller maps to 422; NO counter increment (user input error, same as Phase 107 cleanup_route 422)
 - `IllustrationError` on pipeline → helper returns `"stage_error"` → `record_failure(slug, e, project_root=root, ...)` (counter increments, threshold-cross possible)
-- Success → helper returns `"ok"` → `record_success(slug, event_type="regeneration")` + `audit_log.record_event` + `notifications.publish` (same ULID, I091 double-write)
+- Success → helper returns `"ok"` → `record_success(slug, event_type="regeneration")` (counter reset)
+
+**CRITICAL — emit responsibility**: pipeline.regenerate_illustration (pipeline.py:585-607) ALREADY emits `record_event + publish` internally on success. To avoid double-emission (which would break I091 "shared ULID between audit_log + publish"), the helper does NOT emit. The `mode` parameter is kept for API symmetry with `_delete_asset_inner` but is not interpolated into audit_log + NotificationEvent (pipeline emits its own `extra={"attempts":[...]}` on success).
+
+**Per-asset failure tracking semantics** (Phase 108):
+- Helper manages `(slug, "regeneration")` counter via `record_failure` / `record_success` only
+- Pipeline manages `audit_log` JSONL + `publish` SSE on success (existing Phase 99/101 contract)
+- I090 / I091 invariant coverage: pipeline.regenerate_illustration is the single emit point for both single and bulk paths. The helper is a counter-tracking shim, NOT a second emit point.
 
 ### 4.2 Backend — bulk route
 
@@ -165,21 +172,23 @@ export async function bulkRegenerateAssets(
 - `failed[]` with `status === 'unknown_model'` or `'stage_error'` → RETAIN in `assets[]` for retry
 - 2 vitest tests: BulkRegenHappy + BulkRegenPartial
 
-## 5. Failure tracking semantics (mirror Phase 107)
+## 5. Failure tracking semantics (Phase 108 NEW — split responsibility)
 
-| Per-asset outcome | `record_failure` | `record_success` | `audit_log` | `publish` | Counter effect |
+| Per-asset outcome | `record_failure` (helper) | `record_success` (helper) | `audit_log` (pipeline) | `publish` (pipeline) | Counter effect |
 |---|---|---|---|---|---|
 | `LoadError` (slug not found) | — | — | — | — | none (caller raises 404 before helper) |
 | 404 asset-not-found | — | YES (no-op success) | — | — | reset to 0 |
 | `UnknownModelError` (422) | — | — | — | — | none (user input error) |
-| `IllustrationError` (stage error) | YES | — | YES | YES | increment, may cross threshold |
-| Success | — | YES | YES | YES | reset to 0 |
+| `IllustrationError` (stage error) | YES | — | YES (pipeline) | YES (pipeline) | increment, may cross threshold |
+| Success | — | YES | YES (pipeline) | YES (pipeline) | reset to 0 |
+
+**Phase 108 architectural decision**: helper is a counter-tracking shim. Pipeline owns emit (Phase 99/101 contract). This avoids double-emission which would break I091 "shared ULID" invariant.
 
 `counter key = (slug, "regeneration")` — tuple-keyed, isolated from `(slug, "deletion")` etc.
 
 Threshold crossing per `(slug, "regeneration")` pair → exactly one `severity="warning"` notification (I095 invariant).
 
-`mode='bulk'` parameter is interpolated into `audit_log.record_event(extra=...)` and `NotificationEvent.extra` for downstream analytics but does NOT affect counter state.
+**Trade-off accepted**: per-asset `mode='bulk'` discriminator is NOT in `audit_log` JSONL `extra` field (pipeline emits `{"attempts":[...]}` only). Downstream analytics can distinguish single vs bulk via separate query patterns.
 
 ## 6. Limits & validation
 

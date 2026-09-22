@@ -198,11 +198,20 @@ async def _regenerate_asset_inner(
     fallback_chain_list: Optional[list[str]],
     threshold,
     mode: Literal["single", "bulk"],
-) -> Literal["ok", "not_found", "unknown_model", "stage_error"]:
+) -> tuple[Literal["ok", "not_found", "unknown_model", "stage_error"], "IllustrationMetadata | None"]:
     """Phase 108: per-asset regenerate helper extracted from regenerate_illustration.
 
-    Symmetric with _delete_asset_inner (Phase 107). Returns status string; caller
-    maps to HTTP. All failure-tracking semantics inherited verbatim.
+    Symmetric with _delete_asset_inner (Phase 107). Returns (status, new_meta) tuple;
+    caller maps status to HTTP and uses new_meta for response shape.
+
+    IMPORTANT — emit responsibility: pipeline.regenerate_illustration (pipeline.py:585-607)
+    ALREADY emits record_event + publish internally on success. To avoid double-emission
+    (which would break I091 invariant "shared ULID between audit_log + publish"), this
+    helper does NOT emit. Helper only manages failure-tracking counter:
+      - record_success on success path (counter reset)
+      - record_success on not_found (defensive counter reset, Phase 107 symmetric)
+      - record_failure on stage_error (counter increment, may cross threshold)
+      - NO emit on unknown_model (user input error, no counter)
 
     Args:
         project_slug: project slug (for record_failure/record_success key)
@@ -215,32 +224,28 @@ async def _regenerate_asset_inner(
         mode: 'single' (regenerate_illustration caller) or 'bulk' (bulk_regenerate_assets caller)
 
     Returns:
-        "ok" — asset regenerated, record_success + audit_log + publish (same ULID)
-        "not_found" — asset id not in storage; record_success (no-op success — defensive counter reset)
-        "unknown_model" — pipeline raises UnknownModelError; caller maps to 422; NO counter
-        "stage_error" — pipeline raises IllustrationError; record_failure + audit + publish
+        ("ok", new_meta) — asset regenerated, counter reset
+        ("not_found", None) — asset id not in storage; counter reset (defensive)
+        ("unknown_model", None) — pipeline raises UnknownModelError; caller maps to 422; NO counter
+        ("stage_error", None) — pipeline raises IllustrationError; counter increment
     """
     from lingwen_illustrations.pipeline import regenerate_illustration as run_regen
     from lingwen_illustrations.exceptions import UnknownModelError
-    from lingwen_illustrations.notifications import (
-        record_failure, record_success, publish,
-    )
-    from lingwen_illustrations.audit_log import record_event
-    from lingwen_illustrations.metadata import IllustrationMeta
+    from lingwen_illustrations.notifications import record_failure, record_success
 
-    # Find existing asset
+    # Find existing asset — caller has already pre-resolved meta_by_id if bulk
     all_assets = storage.list_assets(project_root)
     meta = next((a for a in all_assets if a.id == asset_id), None)
     if meta is None:
         # 404 asset-not-found → defensive counter reset (Phase 107 symmetric)
         record_success(project_slug, event_type="regeneration")
-        return "not_found"
+        return ("not_found", None)
 
     effective_provider = provider if provider is not None else meta.provider
     api_key, api_host = _api_credentials_for(effective_provider)
 
     try:
-        new_meta: IllustrationMeta = await run_regen(
+        new_meta = await run_regen(
             project_root=project_root,
             existing_meta=meta,
             api_key=api_key,
@@ -251,47 +256,20 @@ async def _regenerate_asset_inner(
         )
     except UnknownModelError:
         # 422 — user input error; NO counter increment (Phase 107 cleanup_route 422 pattern)
-        return "unknown_model"
-    except IllustrationError as e:
-        # Stage error → counter increment + audit + publish
+        return ("unknown_model", None)
+    except IllustrationError:
+        # Stage error → counter increment (pipeline emits record_event + publish internally)
         record_failure(project_slug, e, project_root=project_root, threshold=threshold, event_type="regeneration")
-        # Even on failure, emit audit + publish (with extra={"trigger": "manual", "mode": mode})
-        event_id = new_event_id()
-        record_event(
-            slug=project_slug,
-            event="regeneration_failed",
-            asset_id=asset_id,
-            event_id=event_id,
-            extra={"trigger": "manual", "mode": mode, "stage": e.stage if hasattr(e, "stage") else "unknown"},
-        )
-        publish(
-            slug=project_slug,
-            event="regeneration_failed",
-            asset_id=asset_id,
-            event_id=event_id,
-            extra={"trigger": "manual", "mode": mode},
-        )
-        return "stage_error"
+        return ("stage_error", None)
 
-    # Success path — record_success + audit + publish (same ULID, I091 double-write)
+    # Success — counter reset (pipeline emits record_event + publish internally)
     record_success(project_slug, event_type="regeneration")
-    event_id = new_event_id()
-    record_event(
-        slug=project_slug,
-        event="regenerated",
-        asset_id=asset_id,
-        event_id=event_id,
-        extra={"trigger": "manual", "mode": mode, "provider": effective_provider, "model": new_meta.model},
-    )
-    publish(
-        slug=project_slug,
-        event="regenerated",
-        asset_id=asset_id,
-        event_id=event_id,
-        extra={"trigger": "manual", "mode": mode},
-    )
-    return "ok"
+    return ("ok", new_meta)
 ```
+
+**Note**: The `mode` parameter is accepted but currently NOT interpolated into audit_log + publish (pipeline handles emit internally). It's kept for:
+1. API symmetry with `_delete_asset_inner(mode="single"|"bulk")`
+2. Future migration if pipeline emit is restructured (then helper can take over)
 
 - [ ] **Step 3: Verify helper compiles**
 
