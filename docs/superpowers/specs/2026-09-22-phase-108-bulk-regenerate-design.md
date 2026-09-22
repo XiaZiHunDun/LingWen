@@ -73,7 +73,7 @@ Per-asset status:
 - `"unknown_model"` → appended to `failed[]` with `{id, status: "unknown_model", detail: {...}}`
 - `"stage_error"` → appended to `failed[]` with `{id, status: "stage_error", stage: "...", error: "..."}`
 
-Returns `200 OK` always (after 404 slug LoadError → 422/404 first).
+Returns `200 OK` always (after 404 slug LoadError raised before loop).
 
 ### 4.3 Frontend — IllustrationGallery.vue additions
 
@@ -160,7 +160,7 @@ export async function bulkRegenerateAssets(
 
 `useIllustrationStore.bulkRegenerateAssets(slug, assetIds, opts)` — mirror `bulkDeleteAssets`:
 - Lazy-imports `api.bulkRegenerateAssets`
-- On success: reactively REPLACES `result.regenerated[].*` in local `assets[]` (same id, new scene_json + url + bytes — atomic update from server)
+- On success: reactively UPDATES each `result.regenerated[]` entry in local `assets[]` by id (same id, new scene_json + url + bytes — atomic update from server; use `assets[idx] = regenerated_item` per match)
 - `failed[]` with `status === 'not_found'` → REMOVE from `assets[]` (defensive; should never happen in healthy state)
 - `failed[]` with `status === 'unknown_model'` or `'stage_error'` → RETAIN in `assets[]` for retry
 - 2 vitest tests: BulkRegenHappy + BulkRegenPartial
@@ -169,7 +169,7 @@ export async function bulkRegenerateAssets(
 
 | Per-asset outcome | `record_failure` | `record_success` | `audit_log` | `publish` | Counter effect |
 |---|---|---|---|---|---|
-| `LoadError` (slug not found) | caller pre-check, 422 | — | — | — | none (404 before helper) |
+| `LoadError` (slug not found) | — | — | — | — | none (caller raises 404 before helper) |
 | 404 asset-not-found | — | YES (no-op success) | — | — | reset to 0 |
 | `UnknownModelError` (422) | — | — | — | — | none (user input error) |
 | `IllustrationError` (stage error) | YES | — | YES | YES | increment, may cross threshold |
@@ -264,7 +264,7 @@ In-flight guard: while `bulkRegenerateInFlight === true`, both bulk buttons are 
 
 | Risk | Mitigation |
 |---|---|
-| 10×~10s serial API call = 100s+ total (worse than Phase 107 since LLM calls not file deletes) | limit=10 (per user clarification); client-side 120s timeout; NPopconfirm sets user expectation; in-flight guard prevents stacking |
+| 10×5-30s serial API call = 50-300s total (worse than Phase 107 since LLM calls not file deletes) | limit=10 (per user clarification); client-side AbortController timeout (default 180s, configurable); NPopconfirm sets user expectation; in-flight guard prevents stacking |
 | `mode='bulk'` parameter collides with future `mode='parallel'` if user later wants parallel | mode literal `Literal["single", "bulk"]` allows extension via union |
 | Per-asset failure tracking inflates `audit_log.jsonl` size (10×) | acceptable; same as Phase 107 pattern; phase-report-v2 (Phase 110+ deferred) can aggregate |
 | Frontend timeout 60s default may not cover 10×10s | switch to `Promise.race` with explicit AbortController 180s |
