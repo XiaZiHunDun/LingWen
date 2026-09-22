@@ -266,16 +266,20 @@ invariants:
       for full audit_log + publish double-write. 404 asset-not-found is treated as a
       no-op success via record_success to defensively reset the (slug, "deletion")
       counter — same pattern as cleanup_route's else-branch reset. Phase 107 EXTENDED via
-      docstring: apps/studio_api/routes/illustrations.py (bulk_delete_assets) is the 4th
-      caller of record_failure / record_success. bulk_delete_assets routes per-asset
-      processing through _delete_asset_inner (a shared helper extracted from delete_asset in
-      Phase 107) which inherits the record_failure / record_success semantics verbatim;
-      the bulk iteration does NOT change I095 invariants — counter keys are still
-      (slug, "deletion") and the threshold crossing per (slug, "deletion") pair still
-      emits exactly one severity: "warning" notification regardless of how many assets
-      are in the bulk request. The mode='bulk' parameter is interpolated into the
-      audit_log + NotificationEvent extra dict for downstream analytics but does NOT
-      affect counter state. infra.notifications.* paths are illegal; any path bypassing
+      docstring: apps/studio_api/routes/illustrations.py (bulk_delete_assets) shares the
+      _delete_asset_inner helper extracted from delete_asset in Phase 107 — same per-asset
+      record_failure/record_success semantics. Adding bulk_delete_assets to delete_asset is
+      not a 5th independent caller of record_failure/record_success; delete_asset +
+      bulk_delete_assets are one route pair funnelling through a single helper call site
+      (_delete_asset_inner). Total record_failure/record_success callers are 4 entry
+      points across 3 files: pipeline.generate_illustration + pipeline.regenerate_illustration
+      (pipeline.py) + cleanup_route (cleanup_route.py) + delete_asset/bulk_delete_assets
+      pair (illustrations.py, via shared _delete_asset_inner). The bulk iteration does NOT
+      change I095 invariants — counter keys are still (slug, "deletion") and the threshold
+      crossing per (slug, "deletion") pair still emits exactly one severity: "warning"
+      notification regardless of how many assets are in the bulk request. The mode='bulk'
+      parameter is interpolated into the audit_log + NotificationEvent extra dict for
+      downstream analytics but does NOT affect counter state. infra.notifications.* paths are illegal; any path bypassing
       record_failure / record_success for consecutive-failure tracking, or any path
       using bare project_slug keys instead of (slug, event_type) tuples, is illegal.
     severity: error
