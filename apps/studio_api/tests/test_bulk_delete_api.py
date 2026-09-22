@@ -40,27 +40,6 @@ def _make_meta(asset_id: str, project_slug: str = "test-slug") -> "IllustrationM
     )
 
 
-@pytest.fixture
-def client(tmp_path, monkeypatch):
-    """Create FastAPI test client with project_root_for patched to tmp_path.
-
-    The patch is scoped to the `illus_module` binding, which is what the
-    route handler uses (per Phase 106 tests at line 907).
-    """
-    from lingwen_illustrations import storage
-
-    # Pre-create the assets directory so list_assets works on a real project.
-    (tmp_path / "assets").mkdir(parents=True, exist_ok=True)
-    monkeypatch.setattr(
-        illus_module,
-        "project_root_for",
-        lambda slug: tmp_path if slug == "test-slug" else (_ for _ in ()).throw(
-            LoadError(f"project {slug} not found")
-        ),
-    )
-    return TestClient(create_app())
-
-
 # ---------- T1: Happy path ----------
 def test_bulk_delete_happy_path_records_per_asset(monkeypatch, tmp_path):
     """T1: 5 assets all in storage; expect 5× record_success + 5× audit + 5× publish."""
@@ -129,6 +108,9 @@ def test_bulk_delete_happy_path_records_per_asset(monkeypatch, tmp_path):
     # I091: same ULID for audit + publish pair
     for i in range(5):
         assert captured_audit[i][1]["id"] == captured_publish[i].id
+
+    # Phase 107 M3: verify 5 distinct ULIDs (per-asset semantics, not single batched)
+    assert len({a[1]["id"] for a in captured_audit}) == 5
 
 
 # ---------- T2: Partial failure ----------
@@ -436,3 +418,54 @@ def test_bulk_delete_threshold_crossing_emits_one_warning(monkeypatch, tmp_path)
         if e.event_type == "deletion" and e.severity == "warning"
     ]
     assert len(warnings) == 1
+
+
+# ---------- T11: I1 perf — bulk pre-resolves meta_by_id ONCE ----------
+def test_bulk_delete_calls_list_assets_once_per_request(monkeypatch, tmp_path):
+    """T11 (Phase 107 I1): bulk_delete_assets resolves storage.list_assets ONCE,
+    not once per asset. O(M+N) reads, not O(N*M).
+
+    Spy on storage.list_assets call count; assert it equals 1 for a 5-asset
+    bulk request. Regression guard against the old per-asset pattern that did
+    5×M filesystem reads.
+    """
+    from lingwen_illustrations import storage
+
+    # Pre-populate 5 assets so the per-asset loop has work to do.
+    asset_ids = []
+    for i in range(5):
+        meta = _make_meta(f"asset-{i}")
+        storage.save_asset(tmp_path, b"\xff\xd8\xff\xe0fake-jpeg", meta)
+        asset_ids.append(meta.id)
+
+    # Spy on list_assets via monkeypatch wrapping.
+    list_assets_calls: list[int] = []
+    real_list_assets = storage.list_assets
+
+    def spy_list_assets(pr):
+        list_assets_calls.append(1)
+        return real_list_assets(pr)
+
+    monkeypatch.setattr(storage, "list_assets", spy_list_assets)
+    monkeypatch.setattr(storage, "delete_asset", lambda pr, m: None)
+    monkeypatch.setattr(notifications, "record_success", lambda *a, **kw: None)
+    monkeypatch.setattr(notifications, "publish", lambda ev: None)
+    monkeypatch.setattr(audit_log, "record_event", lambda *a, **kw: None)
+    monkeypatch.setattr(
+        illus_module,
+        "project_root_for",
+        lambda slug: tmp_path if slug == "test-slug" else (_ for _ in ()).throw(
+            LoadError(f"project {slug} not found")
+        ),
+    )
+
+    client = TestClient(create_app())
+    ids_csv = ",".join(asset_ids)
+    resp = client.delete(f"/api/illustrations?slug=test-slug&ids={ids_csv}")
+
+    assert resp.status_code == 200
+    # Phase 107 I1: exactly 1 list_assets call (not 5 from per-asset helper).
+    assert len(list_assets_calls) == 1, (
+        f"Expected 1 list_assets call for 5-asset bulk, got {len(list_assets_calls)} "
+        f"(regression to O(N*M) per-asset lookup)"
+    )

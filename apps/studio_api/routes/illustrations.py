@@ -12,7 +12,10 @@ Errors map to specific HTTP statuses per stage (see STAGE_HTTP_CODES).
 from __future__ import annotations
 
 from pathlib import Path  # Phase 106: for _load_deletion_settings
-from typing import Literal, Optional
+from typing import TYPE_CHECKING, Literal, Optional
+
+if TYPE_CHECKING:
+    from lingwen_illustrations.metadata import IllustrationMetadata  # Phase 107: meta_by_id annotation
 
 import yaml  # Phase 106: for _load_deletion_settings
 from fastapi import FastAPI, HTTPException, Query, Request
@@ -223,18 +226,19 @@ async def _delete_asset_inner(
     project_root: Path | None,
     threshold: int | float,
     mode: Literal["single", "bulk"] = "single",
+    meta_by_id: dict[str, "IllustrationMetadata"] | None = None,
 ) -> Literal["ok", "not_found", "load_error", "store_error"]:
     """Phase 107: shared per-asset delete + failure tracking.
 
     Used by BOTH:
-      - delete_asset route (DELETE /{asset_id}, Phase 106 5-path) — mode="single"
+      - delete_asset route (DELETE /{asset_id}, Phase 106 4-path) — mode="single"
       - bulk_delete_assets route (DELETE ?ids=...&slug=..., Phase 107 sequential loop) — mode="bulk"
 
     Returns one of: "ok" | "not_found" | "load_error" | "store_error".
     The caller maps status → HTTPException (single-delete) or accumulates into
     a partial-failure response (bulk-delete).
 
-    Phase 106 5-path lives here verbatim:
+    Phase 106 4-path state machine lives here verbatim:
       1. project_root is None (LoadError upstream) → record_failure(project_root=None)
          → return "load_error"
       2. asset not found (no storage entry) → record_success (no-op success, defensive reset)
@@ -246,6 +250,11 @@ async def _delete_asset_inner(
 
     ``extra={"trigger": "manual", "mode": mode}`` records single vs bulk in
     audit_log and NotificationEvent for downstream analytics.
+
+    ``meta_by_id`` (Phase 107 perf): pre-resolved {id: IllustrationMetadata}
+    dict the caller can pass to avoid N×M filesystem reads in bulk-delete.
+    When None (single-delete path), falls back to ``storage.list_assets`` +
+    linear search (matches Phase 106 delete_asset behavior exactly).
     """
     # LoadError precheck (project_root already known to caller; None implies upstream LoadError)
     if project_root is None:
@@ -260,10 +269,14 @@ async def _delete_asset_inner(
             )
             return "load_error"
 
-    # Existence check via storage.list_assets (matches Phase 106 delete_asset pattern;
-    # storage.load_asset does not exist in lingwen_illustrations.storage).
-    all_assets = storage.list_assets(project_root)
-    meta = next((a for a in all_assets if a.id == asset_id), None)
+    # Existence check: prefer pre-resolved meta_by_id (bulk path) to avoid
+    # N×M filesystem reads; fall back to list_assets for single-delete.
+    # Phase 107 I1: bulk pre-resolves once, helper reuses the dict per asset.
+    if meta_by_id is not None:
+        meta = meta_by_id.get(asset_id)
+    else:
+        all_assets = storage.list_assets(project_root)
+        meta = next((a for a in all_assets if a.id == asset_id), None)
     if meta is None:
         # 404 asset-not-found = no-op success (matches Phase 106 + Phase 105 cleanup_route).
         notifications.record_success(slug, event_type="deletion")
@@ -482,11 +495,20 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
         settings = _load_deletion_settings(project_root)
         threshold = notifications.resolve_threshold(settings, "deletion")
 
+        # Phase 107 I1 perf: pre-resolve {id: meta} dict once before the loop so
+        # each _delete_asset_inner call does O(1) dict lookup instead of an
+        # O(M) list_assets + linear search (was 50×M filesystem reads worst case).
+        meta_by_id: dict = {a.id: a for a in storage.list_assets(project_root)}
+
         deleted: list[str] = []
         failed: list[dict] = []
         for aid in asset_ids:
             status = await _delete_asset_inner(
-                slug, aid, project_root=project_root, threshold=threshold, mode="bulk",
+                slug, aid,
+                project_root=project_root,
+                threshold=threshold,
+                mode="bulk",
+                meta_by_id=meta_by_id,
             )
             if status == "ok":
                 deleted.append(aid)
@@ -516,6 +538,15 @@ def register_illustrations(app: FastAPI, ctx: RoutesContext) -> None:
         try:
             project_root = project_root_for(project_slug)
         except LoadError as e:
+            # Phase 107 I2: invoke helper even though result is discarded.
+            # Intentional Phase 105 cleanup_route.py:104-118 precedent — when
+            # the project itself is missing, we still want the (slug, "deletion")
+            # failure tracker counter to increment for observability of sustained
+            # request failures. ``threshold=resolve_threshold({}, "deletion")``
+            # returns INFINITY (empty settings dict → no configured key → opt-out),
+            # so warnings never fire on this path; only the counter increments.
+            # Counter state-machine symmetry with the bulk path's hypothetical
+            # "load_error" iteration (Phase 106 invariant).
             status = await _delete_asset_inner(
                 project_slug, asset_id,
                 project_root=None,
