@@ -120,13 +120,17 @@ def test_bulk_regenerate_happy_path_records_per_asset(monkeypatch, tmp_path):
         asset_ids.append(meta.id)
 
     # Mock pipeline.regenerate_illustration to always succeed (return new_meta).
+    # Phase 108 Option A architecture: helper is counter-only; pipeline emits
+    # record_event + publish internally on success (pipeline.py:585-607).
+    # fake_regenerate MUST mimic pipeline emit so the test verifies the
+    # same ULID-share invariant (I091) that production enforces.
     async def fake_regenerate(*args, **kwargs):
         existing_meta = kwargs.get("existing_meta")
         # Mutate timestamp to mirror real pipeline (new created_at); return
         # new metadata instance.
         from datetime import datetime, timezone
 
-        return IllustrationMetadata(
+        new_meta = IllustrationMetadata(
             id=existing_meta.id,
             type=existing_meta.type,
             project_slug=existing_meta.project_slug,
@@ -141,6 +145,30 @@ def test_bulk_regenerate_happy_path_records_per_asset(monkeypatch, tmp_path):
             used_reference_image=False,
             created_at=datetime.now(timezone.utc).isoformat(),
         )
+        # Mimic pipeline.py:585-607 internal emit (Option A architecture).
+        from lingwen_illustrations import audit_log, notifications
+        _event_id = notifications.new_event_id()
+        _attempts_dicts: list[dict] = []
+        audit_log.record_event(
+            kwargs["project_root"],
+            event="regeneration",  # singular (NOT "regenerated")
+            asset_meta=new_meta,
+            extra={"attempts": _attempts_dicts},
+            id=_event_id,
+        )
+        notifications.publish(notifications.NotificationEvent(
+            id=_event_id,
+            project_slug=existing_meta.project_slug,
+            event_type="regeneration",
+            asset_id=new_meta.id,
+            asset_type=new_meta.type,
+            chapter_num=new_meta.chapter_num,
+            style_preset=new_meta.style_preset,
+            provider=existing_meta.provider,
+            ts=notifications.now_iso(),
+            extra={"attempts": _attempts_dicts},
+        ))
+        return new_meta
 
     # The route lazy-imports `regenerate_illustration as run_regen` inside the
     # handler — so the canonical patch target is the source module attribute,
@@ -160,17 +188,21 @@ def test_bulk_regenerate_happy_path_records_per_asset(monkeypatch, tmp_path):
     assert body["failed"] == []
     assert body["summary"] == {"total": 5, "ok": 5, "fail": 0}
 
-    # 5 record_success calls
+    # 5 record_success calls (helper-side counter)
     assert len(captured_success) == 5
     assert all(s == ("test-slug", "regeneration") for s in captured_success)
 
-    # 5 audit_log.record_event + 5 notifications.publish
+    # 5 audit_log.record_event + 5 notifications.publish (pipeline-side emit via fake)
     assert len(captured_audit) == 5
     assert len(captured_publish) == 5
 
-    # Audit extra={"trigger":"manual","mode":"bulk"} — same ULID between audit and publish.
+    # Phase 108 Option A: pipeline emits extra={"attempts": []} (no mode discriminator).
+    # Delete helper in Phase 107 used {"trigger":"manual","mode":"bulk"}; regenerate
+    # does NOT carry mode discriminator because pipeline emits verbatim with its own
+    # format (downstream analytics can distinguish single vs bulk via query patterns).
     for _, kwargs in captured_audit:
-        assert kwargs.get("extra") == {"trigger": "manual", "mode": "bulk"}
+        assert kwargs.get("event") == "regeneration"
+        assert kwargs.get("extra") == {"attempts": []}
 
     # I091: same ULID for audit + publish pair
     for i in range(5):
@@ -438,9 +470,17 @@ def test_bulk_regenerate_cross_project_asset_marks_not_found(monkeypatch, tmp_pa
     assert captured_success == [("test-slug", "regeneration")]
 
 
-# ---------- T9: Audit mode discriminator ----------
-def test_bulk_regenerate_audit_log_includes_mode_bulk(monkeypatch, tmp_path):
-    """T9: audit_log.record_event extra={'trigger':'manual','mode':'bulk'}."""
+# ---------- T9: Pipeline emits regeneration event with pipeline-owned format ----------
+def test_t9_pipeline_emits_regen_event(monkeypatch, tmp_path):
+    """T9: pipeline.regenerate_illustration emits record_event with pipeline's own format
+    (extra={"attempts": []}, event="regeneration", id=<ULID>).
+
+    Phase 108 Option A architecture: pipeline owns emit (pipeline.py:585-607).
+    The mode discriminator that DELETE carries ("manual"/"bulk") is NOT applied
+    to regenerate's audit_log + NotificationEvent extra — pipeline emits its
+    own attempts list instead. Downstream analytics distinguish single vs
+    bulk via query patterns, not via the per-event extra dict.
+    """
     from lingwen_illustrations import storage
 
     captured = []
@@ -454,7 +494,7 @@ def test_bulk_regenerate_audit_log_includes_mode_bulk(monkeypatch, tmp_path):
 
     async def fake_regenerate(*args, **kwargs):
         existing_meta = kwargs.get("existing_meta")
-        return IllustrationMetadata(
+        new_meta = IllustrationMetadata(
             id=existing_meta.id,
             type=existing_meta.type,
             project_slug=existing_meta.project_slug,
@@ -469,6 +509,30 @@ def test_bulk_regenerate_audit_log_includes_mode_bulk(monkeypatch, tmp_path):
             used_reference_image=False,
             created_at="2026-09-22T10:00:00Z",
         )
+        # Mimic pipeline.py:585-607 emit (Option A architecture).
+        from lingwen_illustrations import audit_log, notifications
+        _event_id = notifications.new_event_id()
+        _attempts_dicts: list[dict] = []
+        audit_log.record_event(
+            kwargs["project_root"],
+            event="regeneration",  # singular (NOT "regenerated")
+            asset_meta=new_meta,
+            extra={"attempts": _attempts_dicts},
+            id=_event_id,
+        )
+        notifications.publish(notifications.NotificationEvent(
+            id=_event_id,
+            project_slug=existing_meta.project_slug,
+            event_type="regeneration",
+            asset_id=new_meta.id,
+            asset_type=new_meta.type,
+            chapter_num=new_meta.chapter_num,
+            style_preset=new_meta.style_preset,
+            provider=existing_meta.provider,
+            ts=notifications.now_iso(),
+            extra={"attempts": _attempts_dicts},
+        ))
+        return new_meta
 
     monkeypatch.setattr(
         "lingwen_illustrations.pipeline.regenerate_illustration",
@@ -487,7 +551,10 @@ def test_bulk_regenerate_audit_log_includes_mode_bulk(monkeypatch, tmp_path):
     resp = client.put("/api/illustrations?slug=test-slug&ids=a")
     assert resp.status_code == 200, resp.text
     assert len(captured) == 1
-    assert captured[0].get("extra") == {"trigger": "manual", "mode": "bulk"}
+    # Phase 108 Option A: pipeline emits with its own format (no mode discriminator).
+    assert captured[0].get("event") == "regeneration"
+    assert captured[0].get("extra") == {"attempts": []}
+    assert captured[0].get("id") == "test-ulid"
 
 
 # ---------- T10: Threshold crossing ----------
