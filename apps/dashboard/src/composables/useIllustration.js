@@ -27,5 +27,10 @@ export function useIllustration(projectSlug) {
     generate: (params) => store.generate(projectSlug, params),
     regenerate: (assetId) => store.regenerate(projectSlug, assetId),
     deleteAsset: (assetId) => store.deleteAsset(projectSlug, assetId),
+    // Phase 107: bulkDeleteAssets — parallel to single deleteAsset wrapper so
+    // IllustrationGallery uses a single access layer (useIllustration). Lazy
+    // dynamic import is deferred to the store so we don't pull api/illustrations
+    // into the initial bundle.
+    bulkDeleteAssets: (assetIds) => store.bulkDeleteAssets(projectSlug, assetIds),
   }
 }

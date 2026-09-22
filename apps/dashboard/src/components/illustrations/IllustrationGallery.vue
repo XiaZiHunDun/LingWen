@@ -2,7 +2,6 @@
 import { computed, onMounted, ref } from 'vue'
 import { NCheckbox, NButton, NPopconfirm } from 'naive-ui'
 import { useIllustration } from '@/composables/useIllustration'
-import { useIllustrationStore } from '@/stores/useIllustrationStore'
 import { useBulkDeleteToast } from '@/composables/useBulkDeleteToast'
 import IllustrationCard from './IllustrationCard.vue'
 
@@ -16,8 +15,7 @@ const props = defineProps({
 
 const emit = defineEmits(['regenerate', 'delete', 'bulk-deleted'])
 
-const { assets, error, loadAssets, regenerate, deleteAsset } = useIllustration(props.projectSlug)
-const store = useIllustrationStore()
+const { assets, error, loadAssets, regenerate, deleteAsset, bulkDeleteAssets } = useIllustration(props.projectSlug)
 const toast = useBulkDeleteToast()
 
 onMounted(() => loadAssets())
@@ -56,12 +54,21 @@ async function confirmBulkDelete() {
   const ids = Array.from(selection.value)
   if (ids.length === 0) return
   bulkDeleteInFlight.value = true
+  // Phase 107 §3 "Concurrency / edge cases": if a single-delete is in flight
+  // for an asset also selected here, the store's `not_found` filter (Phase 107)
+  // silently skips assets already removed — no data corruption, but the
+  // result.deleted[] may be smaller than the user's request. This is
+  // intentional: idempotent deletes survive concurrent paths without UI
+  // jank (no error toast, selection cleared only on success).
   try {
-    const result = await store.bulkDeleteAssets(props.projectSlug, ids)
+    const result = await bulkDeleteAssets(ids)
     toast.showBulkDeleteResult(props.projectSlug, result)
     emit('bulk-deleted', result)
     clearSelection()
   } catch (e) {
+    // On error: show message, but keep selection so user can retry without
+    // re-selecting. The store's error has already been surfaced via the
+    // composable's `error` ref.
     toast.showValidationError(e.message || 'bulk delete failed')
   } finally {
     bulkDeleteInFlight.value = false
