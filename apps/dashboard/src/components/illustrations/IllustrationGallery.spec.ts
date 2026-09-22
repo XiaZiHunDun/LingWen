@@ -68,14 +68,20 @@ vi.mock('./IllustrationCard.vue', () => ({
 // ---------------------------------------------------------------------------
 
 /**
- * Find the NPopconfirm component that wraps the given element. NPopconfirm
- * renders its #trigger slot inline, so the button is a descendant of the
- * NPopconfirm's root element. This avoids order-dependent indexing when
- * multiple NPopconfirms exist in the tree (e.g., 1 per IllustrationCard +
- * 2 in the bulk action bar).
+ * Find the NPopconfirm component that wraps the bulk-regenerate button.
+ * NPopconfirm uses a Teleport for its popper, so `pc.$el` may be undefined.
+ * Scoping to the bulk action bar (which only contains the 2 bulk NPopconfirms)
+ * avoids per-card NPopconfirms from IllustrationCard. Identifies the regenerate
+ * NPopconfirm by checking which one contains the regenerate button in its trigger.
  */
-function findPopconfirmWrapping(wrapper, el) {
-  return wrapper.findAllComponents(NPopconfirm).find(pc => pc.$el.contains(el)) || null
+function findRegeneratePopconfirm(wrapper) {
+  const bulkBar = wrapper.find('[data-testid="bulk-action-bar"]')
+  const popconfirmsInBar = bulkBar.findAllComponents(NPopconfirm)
+  for (const pc of popconfirmsInBar) {
+    const triggerEl = pc.find('[data-testid="bulk-regenerate-btn"]')
+    if (triggerEl.exists()) return pc
+  }
+  return null
 }
 
 // ---------------------------------------------------------------------------
@@ -127,7 +133,7 @@ describe('IllustrationGallery — bulk regenerate (Phase 108)', () => {
     expect(regenBtn.exists()).toBe(true)
     // The button must be the trigger of an NPopconfirm so the user can
     // confirm before running the (potentially slow) bulk regenerate.
-    const popconfirm = findPopconfirmWrapping(wrapper, regenBtn.element)
+    const popconfirm = findRegeneratePopconfirm(wrapper)
     expect(popconfirm).not.toBeNull()
   })
 
@@ -142,8 +148,7 @@ describe('IllustrationGallery — bulk regenerate (Phase 108)', () => {
       summary: { total: 1, ok: 1, fail: 0 },
     })
 
-    const regenBtn = wrapper.find('[data-testid="bulk-regenerate-btn"]')
-    const popconfirm = findPopconfirmWrapping(wrapper, regenBtn.element)
+    const popconfirm = findRegeneratePopconfirm(wrapper)
     popconfirm.vm.$emit('positive-click')
     await flushPromises()
 
@@ -166,8 +171,7 @@ describe('IllustrationGallery — bulk regenerate (Phase 108)', () => {
       summary: { total: 2, ok: 2, fail: 0 },
     })
 
-    const regenBtn = wrapper.find('[data-testid="bulk-regenerate-btn"]')
-    const popconfirm = findPopconfirmWrapping(wrapper, regenBtn.element)
+    const popconfirm = findRegeneratePopconfirm(wrapper)
     popconfirm.vm.$emit('positive-click')
     await flushPromises()
 
@@ -187,8 +191,7 @@ describe('IllustrationGallery — bulk regenerate (Phase 108)', () => {
     }
     mockBulkRegenerateAssets.mockResolvedValueOnce(result)
 
-    const regenBtn = wrapper.find('[data-testid="bulk-regenerate-btn"]')
-    const popconfirm = findPopconfirmWrapping(wrapper, regenBtn.element)
+    const popconfirm = findRegeneratePopconfirm(wrapper)
     popconfirm.vm.$emit('positive-click')
     await flushPromises()
 
@@ -212,8 +215,7 @@ describe('IllustrationGallery — bulk regenerate (Phase 108)', () => {
     }
     mockBulkRegenerateAssets.mockResolvedValueOnce(result)
 
-    const regenBtn = wrapper.find('[data-testid="bulk-regenerate-btn"]')
-    const popconfirm = findPopconfirmWrapping(wrapper, regenBtn.element)
+    const popconfirm = findRegeneratePopconfirm(wrapper)
     popconfirm.vm.$emit('positive-click')
     await flushPromises()
 
@@ -224,8 +226,8 @@ describe('IllustrationGallery — bulk regenerate (Phase 108)', () => {
     // Component emitted bulk-regenerated with the API result.
     expect(wrapper.emitted('bulk-regenerated')).toBeTruthy()
     expect(wrapper.emitted('bulk-regenerated')[0][0]).toEqual(result)
-    // Selection cleared so the user can pick again.
-    expect(wrapper.vm.selection.value.size).toBe(0)
+    // Selection cleared so the user can pick again — bulk action bar hidden.
+    expect(wrapper.find('[data-testid="bulk-action-bar"]').exists()).toBe(false)
   })
 
   it('F8: end-to-end error path — API throws → toast error → selection retained', async () => {
@@ -236,8 +238,7 @@ describe('IllustrationGallery — bulk regenerate (Phase 108)', () => {
 
     mockBulkRegenerateAssets.mockRejectedValueOnce(new Error('bulk regenerate failed: 500'))
 
-    const regenBtn = wrapper.find('[data-testid="bulk-regenerate-btn"]')
-    const popconfirm = findPopconfirmWrapping(wrapper, regenBtn.element)
+    const popconfirm = findRegeneratePopconfirm(wrapper)
     popconfirm.vm.$emit('positive-click')
     await flushPromises()
 
