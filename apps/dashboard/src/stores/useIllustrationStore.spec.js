@@ -72,3 +72,59 @@ describe('useIllustrationStore.generate — multipart dispatch (Phase 97)', () =
     expect(body.per_call_reference).toBeUndefined()
   })
 })
+
+// Phase 107: useIllustrationStore.bulkDeleteAssets — reactive local removal
+// of deleted + not_found assets. Lazy-imports api/illustrations.
+describe('useIllustrationStore.bulkDeleteAssets — Phase 107', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    globalThis.$fetch = vi.fn()
+    // Reset module registry so vi.mock from prior describe doesn't leak.
+    vi.resetModules()
+  })
+
+  it('BulkHappy: removes deleted assets from local state and returns result', async () => {
+    // Lazy-import the store fresh inside the test so vi.mock takes effect.
+    vi.doMock('@/api/illustrations', () => ({
+      bulkDeleteAssets: vi.fn().mockResolvedValue({
+        deleted: ['a'],
+        failed: [],
+        summary: { total: 1, ok: 1, fail: 0 },
+      }),
+    }))
+    const { useIllustrationStore: freshStore } = await import('./useIllustrationStore.js')
+    const store = freshStore()
+    store.assets = [
+      { id: 'a', type: 'chapter', chapter_num: 1 },
+      { id: 'b', type: 'chapter', chapter_num: 1 },
+    ]
+
+    const result = await store.bulkDeleteAssets('test-slug', ['a'])
+    expect(result.deleted).toEqual(['a'])
+    expect(store.assets.map(a => a.id)).toEqual(['b'])
+  })
+
+  it('BulkPartial: keeps store_error failures in local state; removes not_found', async () => {
+    vi.doMock('@/api/illustrations', () => ({
+      bulkDeleteAssets: vi.fn().mockResolvedValue({
+        deleted: ['a'],
+        failed: [
+          { id: 'b', status: 'store_error' },
+          { id: 'c', status: 'not_found' },
+        ],
+        summary: { total: 3, ok: 1, fail: 2 },
+      }),
+    }))
+    const { useIllustrationStore: freshStore } = await import('./useIllustrationStore.js')
+    const store = freshStore()
+    store.assets = [
+      { id: 'a', type: 'chapter', chapter_num: 1 },
+      { id: 'b', type: 'chapter', chapter_num: 1 },
+      { id: 'c', type: 'chapter', chapter_num: 1 },
+    ]
+
+    await store.bulkDeleteAssets('test-slug', ['a', 'b', 'c'])
+    // store_error failure stays (may retry); not_found is removed (asset gone)
+    expect(store.assets.map(a => a.id)).toEqual(['b'])
+  })
+})

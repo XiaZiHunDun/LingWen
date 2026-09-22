@@ -96,6 +96,26 @@ export const useIllustrationStore = defineStore('illustrations', () => {
     assets.value = assets.value.filter(a => a.id !== assetId)
   }
 
+  // Phase 107: bulk delete (1 method).
+  // Delegates to api.bulkDeleteAssets and reactively removes
+  // deleted + not_found assets from local assets[] (store_error failures
+  // retained for potential retry). Uses lazy dynamic import to keep the
+  // initial bundle small (the bulk delete code path is only used when the
+  // user opens the multi-select UI).
+  async function bulkDeleteAssets(slug, assetIds) {
+    if (!Array.isArray(assetIds) || assetIds.length === 0) {
+      throw new Error('assetIds must be non-empty array')
+    }
+    const { bulkDeleteAssets: apiBulkDelete } = await import('@/api/illustrations')
+    const result = await apiBulkDelete(slug, assetIds)
+    const removedIds = new Set([
+      ...result.deleted,
+      ...result.failed.filter(f => f.status === 'not_found').map(f => f.id),
+    ])
+    assets.value = assets.value.filter(a => !removedIds.has(a.id))
+    return result
+  }
+
   // v55.4 Phase 94 — atomic regenerate via PUT /{id}/regenerate.
   // Replaces v1's DELETE+POST pattern (which left a window where the asset
   // didn't exist and could lose the old asset if POST failed). Backend now
@@ -132,6 +152,6 @@ export const useIllustrationStore = defineStore('illustrations', () => {
 
   return {
     assets, loading, error, projectSlug,
-    loadAssets, generate, regenerate, deleteAsset,
+    loadAssets, generate, regenerate, deleteAsset, bulkDeleteAssets,
   }
 })
