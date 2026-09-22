@@ -172,3 +172,44 @@ export async function fetchProviderModels(
   }
   return res as ProviderModelCatalog
 }
+
+// Phase 107: bulk delete illustration endpoint
+export interface BulkDeleteFailedItem {
+  id: string
+  status: 'not_found' | 'load_error' | 'store_error'
+}
+
+export interface BulkDeleteResult {
+  deleted: string[]
+  failed: BulkDeleteFailedItem[]
+  summary: {
+    total: number
+    ok: number
+    fail: number
+  }
+}
+
+export async function bulkDeleteAssets(
+  slug: string,
+  assetIds: string[],
+): Promise<BulkDeleteResult> {
+  if (!Array.isArray(assetIds) || assetIds.length === 0) {
+    throw new Error('assetIds must be non-empty array')
+  }
+  if (assetIds.length > 50) {
+    throw new Error('max 50 ids per request')
+  }
+  // Mirror Phase 100 fetchProviderModels pattern: plain fetch with local
+  // BASE_URL resolution (typed wrappers elsewhere use $fetch auto-import
+  // which is undefined at type-check time — pre-existing noise).
+  const baseUrl = (import.meta.env.VITE_API_BASE as string | undefined) || '/api'
+  const response = await fetch(
+    `${baseUrl}/illustrations?slug=${encodeURIComponent(slug)}&ids=${assetIds.map(encodeURIComponent).join(',')}`,
+    { method: 'DELETE', headers: { 'Content-Type': 'application/json' } },
+  )
+  if (!response.ok) {
+    const detail = await response.text()
+    throw new Error(`bulk delete failed: ${response.status} ${detail}`)
+  }
+  return response.json()
+}
