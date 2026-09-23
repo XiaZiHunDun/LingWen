@@ -12,7 +12,8 @@ import { saveWriteResume } from '../../src/utils/writeResumeStorage.js';
 describe('dashboardNavByMode (human-first)', () => {
   it('companion shows ask/write/library/pilot/more/settings', () => {
     const ids = buildVisibleNavGroups('companion').flatMap((g) => g.items.map((i) => i.id));
-    expect(ids).toEqual(['ask', 'write', 'library', 'pilot', 'more', 'settings']);
+    // Phase 110 fix: Phase 99 added 'notifications' between 'more' and 'settings'.
+    expect(ids).toEqual(['ask', 'write', 'library', 'pilot', 'more', 'notifications', 'settings']);
   });
 
   it('studio hides write', () => {
