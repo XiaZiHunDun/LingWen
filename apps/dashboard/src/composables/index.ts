@@ -23,6 +23,9 @@
  * - 数据/导航: useDashboardNav, useRippleSocket, useRippleStore,
  *   useEffectiveCreationMode, useDecisionStore, useOverviewStore, usePageLeadDismiss,
  *   useTodayHub, useTierBudgetAlerts, useWorkflowListStore, useDashboardWidgets
+ * - 通知/批量: useBulkDeleteToast (Phase 107), useBulkRegenerateToast (Phase 108),
+ *   useDeleteFromNotificationToast (Phase 109), useNotificationStream (Phase 99),
+ *   useBatchEventStream, BATCH_EVENT_BUFFER
  * - 事件总线: useEventBus
  * - 工作流 socket: useWorkflowSocket
  * - 业务工具: useAskPageTab, useStudioProject, useBootState, useFilteredPageError,
@@ -76,6 +79,14 @@ export { usePilotBatch } from './usePilotBatch.js';
 export type { ChapterProgressEvent } from './usePilotBatch.js';
 export { useBatchEventStream, BATCH_EVENT_BUFFER } from './useBatchEventStream.js';
 export type { BatchEvent, BatchEventStream } from './useBatchEventStream.js';
+// Phase 107: bulk delete illustration toast composable
+export { useBulkDeleteToast } from './useBulkDeleteToast.js';
+// Phase 108: bulk regenerate illustration toast composable
+export { useBulkRegenerateToast } from './useBulkRegenerateToast.js';
+// Phase 109: delete-from-notification toast composable
+export { useDeleteFromNotificationToast } from './useDeleteFromNotificationToast.js';
+// Phase 99: SSE notification stream composable
+export { useNotificationStream } from './useNotificationStream.js';
 export { useRippleSocket } from './useRippleSocket.js';
 export { useRippleStore } from './useRippleStore.js';
 export { useStudioProject } from './useStudioProject.js';
