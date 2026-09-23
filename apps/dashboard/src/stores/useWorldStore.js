@@ -4,7 +4,7 @@ import { ref } from 'vue'
 export const useWorldStore = defineStore('world', () => {
   const activeTab = ref('characters')  // 'characters' | 'factions' | 'timeline' | 'lore'
   const canonLevelFilter = ref(null)    // null | 'Draft' | 'Provisional' | 'Established'
-  const selectedCharacterId = ref(null)
+  const selectedCharacterId = ref(/** @type {number | null} */ (null))  // reused for both character + faction selection (Phase 117 cross-component nav)
   const proposalInboxOpen = ref(false)
 
   function switchTab(tab) {

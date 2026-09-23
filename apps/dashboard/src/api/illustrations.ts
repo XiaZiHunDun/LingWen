@@ -20,7 +20,6 @@ export interface ReferenceImageNotFound {
 async function rawFetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   const fetcher: typeof globalThis.fetch | ((u: string, i?: RequestInit) => Promise<unknown>) =
     (globalThis as { $fetch?: typeof globalThis.fetch }).$fetch ?? globalThis.fetch
-  // @ts-expect-error - $fetch vs fetch signature variance
   const res = await fetcher(url, init)
   if (res && typeof (res as { ok?: unknown }).ok === 'boolean') {
     const r = res as Response
@@ -41,7 +40,6 @@ async function rawFetchJson<T>(url: string, init?: RequestInit): Promise<T> {
 async function rawFetchVoid(url: string, init?: RequestInit): Promise<void> {
   const fetcher: typeof globalThis.fetch | ((u: string, i?: RequestInit) => Promise<unknown>) =
     (globalThis as { $fetch?: typeof globalThis.fetch }).$fetch ?? globalThis.fetch
-  // @ts-expect-error - $fetch vs fetch signature variance
   const res = await fetcher(url, init)
   if (res && typeof (res as { ok?: unknown }).ok === 'boolean') {
     const r = res as Response
@@ -62,7 +60,6 @@ async function rawFetchVoid(url: string, init?: RequestInit): Promise<void> {
 async function rawFetchBlob(url: string): Promise<Blob> {
   const fetcher: typeof globalThis.fetch | ((u: string) => Promise<unknown>) =
     (globalThis as { $fetch?: typeof globalThis.fetch }).$fetch ?? globalThis.fetch
-  // @ts-expect-error - $fetch vs fetch signature variance
   const res = await fetcher(url)
   if (res && typeof (res as { ok?: unknown }).ok === 'boolean') {
     const r = res as Response

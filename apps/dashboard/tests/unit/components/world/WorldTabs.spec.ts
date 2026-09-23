@@ -76,7 +76,10 @@ describe('WorldTabs — active tab', () => {
     expect(activeBtn.classes()).toContain('world-tab--active');
 
     // Switch to lore.
-    await wrapper.setProps({ activeTab: 'lore' });
+    // Phase 110 fix: cast — component declares activeTab only via runtime
+    // defineProps so vue-tsc cannot infer the prop type. Cast keeps test
+    // body identical to runtime behavior.
+    await wrapper.setProps({ activeTab: 'lore' } as Record<string, unknown>);
     activeBtn = wrapper.find('[data-testid="world-tab-lore"]');
     expect(activeBtn.classes()).toContain('world-tab--active');
 

@@ -62,7 +62,13 @@ describe('FactionGraphCanvas — mount', () => {
     await flushPromises();
     expect(NetworkMock).toHaveBeenCalledTimes(1);
     // Network receives the container DOM element + data + options.
-    const callArgs = NetworkMock.mock.calls[0];
+    // Phase 110 fix: cast — vi.fn() with no explicit signature gives `Mock<[], []>`,
+    // so indexed access returns `never`. Cast keeps the test body intact.
+    const callArgs = NetworkMock.mock.calls[0] as unknown as [
+      HTMLElement,
+      { nodes: unknown[]; edges: unknown[] },
+      { physics: unknown },
+    ];
     expect(callArgs[0]).toBeTruthy(); // container DOM element
     expect(callArgs[1]).toHaveProperty('nodes');
     expect(callArgs[1]).toHaveProperty('edges');
@@ -74,7 +80,7 @@ describe('FactionGraphCanvas — mount', () => {
       props: { factions: sampleFactions, relationships: [] },
     });
     await flushPromises();
-    const nodes = NetworkMock.mock.calls[0][1].nodes;
+    const nodes = (NetworkMock.mock.calls[0] as unknown as [unknown, { nodes: unknown[] }])[1].nodes;
     expect(nodes).toHaveLength(3);
     expect(nodes[0]).toMatchObject({
       id: 'faction-10',
@@ -97,7 +103,7 @@ describe('FactionGraphCanvas — data updates', () => {
     setDataMock.mockClear();
 
     const newFactions = [...sampleFactions, { id: 13, slug: 'new', name: '新' }];
-    await wrapper.setProps({ factions: newFactions });
+    await wrapper.setProps({ factions: newFactions } as Record<string, unknown>);
     await flushPromises();
 
     expect(setDataMock).toHaveBeenCalledTimes(1);
@@ -116,10 +122,10 @@ describe('FactionGraphCanvas — data updates', () => {
     });
     await flushPromises();
 
-    const edges = NetworkMock.mock.calls[0][1].edges;
+    const edges = (NetworkMock.mock.calls[0] as unknown as [unknown, { edges: { color: string }[] }])[1].edges;
     // 4 relationships provided, but only enemy + ally = 2 edges.
     expect(edges).toHaveLength(2);
-    expect(edges.map((e) => e.color)).toEqual(
+    expect(edges.map((e: { color: string }) => e.color)).toEqual(
       expect.arrayContaining(['#ef4444', '#10b981']),
     );
   });
@@ -134,15 +140,15 @@ describe('FactionGraphCanvas — data updates', () => {
     });
     await flushPromises();
 
-    const edges = NetworkMock.mock.calls[0][1].edges;
+    const edges = (NetworkMock.mock.calls[0] as unknown as [unknown, { edges: { color: string; from: string; to: string }[] }])[1].edges;
     const enemyEdge = edges.find((e) => e.color === '#ef4444');
     const allyEdge = edges.find((e) => e.color === '#10b981');
     expect(enemyEdge).toBeDefined();
-    expect(enemyEdge.from).toBe('faction-10');
-    expect(enemyEdge.to).toBe('faction-11');
+    expect(enemyEdge!.from).toBe('faction-10');
+    expect(enemyEdge!.to).toBe('faction-11');
     expect(allyEdge).toBeDefined();
-    expect(allyEdge.from).toBe('faction-11');
-    expect(allyEdge.to).toBe('faction-12');
+    expect(allyEdge!.from).toBe('faction-11');
+    expect(allyEdge!.to).toBe('faction-12');
   });
 });
 

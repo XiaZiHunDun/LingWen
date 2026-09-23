@@ -108,7 +108,9 @@ describe('CharacterRelationships — reload', () => {
     expect(listRelationshipsMock).toHaveBeenCalledTimes(1);
     expect(listRelationshipsMock).toHaveBeenLastCalledWith('character', 1);
 
-    await wrapper.setProps({ characterId: 2 });
+    // Phase 110 fix: cast — component declares characterId only via runtime
+    // defineProps so vue-tsc cannot infer the prop type.
+    await wrapper.setProps({ characterId: 2 } as Record<string, unknown>);
     await flushPromises();
     expect(listRelationshipsMock).toHaveBeenCalledTimes(2);
     expect(listRelationshipsMock).toHaveBeenLastCalledWith('character', 2);

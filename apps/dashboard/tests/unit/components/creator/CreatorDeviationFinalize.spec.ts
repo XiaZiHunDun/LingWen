@@ -13,10 +13,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { ref } from 'vue';
+import type { StudioBatchJobResponseDTO } from '@/api/studio';
+import type { BatchEvent } from '@/composables/useBatchEventStream';
 
 // Stub usePilotBatch — return refs (so component can do .value).
-const activeJobRef = ref(null);
-const chapterEventsRef = ref([]);
+// Phase 110 fix: type refs explicitly to match usePilotBatch's actual
+// `activeJob: ref<StudioBatchJobResponseDTO | null>(null)` shape.
+// Bare `ref(null)` would give `Ref<null>` and tsc would reject object assignments.
+// chapterEventsRef uses a permissive test-local shape because the component
+// only reads .chapter_num + .status from the events; real BatchEvent has
+// { type, data, receivedAt } but the test fixture here is a denormalized
+// view (the real composable derives chapter_num from BatchEvent.data).
+type TestChapterEvent = { chapter_num: number; status: string };
+const activeJobRef = ref<StudioBatchJobResponseDTO | null>(null);
+const chapterEventsRef = ref<TestChapterEvent[]>([]);
 
 vi.mock('@/composables/usePilotBatch', () => ({
   usePilotBatch: () => ({
@@ -46,7 +56,7 @@ describe('CreatorDeviationFinalize — render states', () => {
   });
 
   it('renders clean state when batch exists but no deviations', async () => {
-    activeJobRef.value = { job_id: 'job-1', status: 'running', start_chapter: 1, end_chapter: 5 };
+    activeJobRef.value = { job_id: 'job-1', status: 'running', start_chapter: 1, end_chapter: 5 } as unknown as StudioBatchJobResponseDTO;
     chapterEventsRef.value = [
       { chapter_num: 1, status: 'completed' },
       { chapter_num: 2, status: 'completed' },
@@ -60,7 +70,7 @@ describe('CreatorDeviationFinalize — render states', () => {
 
   it('renders list when there are deviations', async () => {
     // ch3 completed but ch1, ch2 not — deviations on ch3.
-    activeJobRef.value = { job_id: 'job-1', status: 'running', start_chapter: 1, end_chapter: 5 };
+    activeJobRef.value = { job_id: 'job-1', status: 'running', start_chapter: 1, end_chapter: 5 } as unknown as StudioBatchJobResponseDTO;
     chapterEventsRef.value = [{ chapter_num: 3, status: 'completed' }];
     const wrapper = mount(CreatorDeviationFinalize);
     await flushPromises();
@@ -77,7 +87,7 @@ describe('CreatorDeviationFinalize — render states', () => {
 
 describe('CreatorDeviationFinalize — toggle', () => {
   it('toggles a deviation from unreviewed to reviewed', async () => {
-    activeJobRef.value = { job_id: 'job-1', status: 'running', start_chapter: 1, end_chapter: 5 };
+    activeJobRef.value = { job_id: 'job-1', status: 'running', start_chapter: 1, end_chapter: 5 } as unknown as StudioBatchJobResponseDTO;
     chapterEventsRef.value = [{ chapter_num: 3, status: 'completed' }];
     const wrapper = mount(CreatorDeviationFinalize);
     await flushPromises();
@@ -91,7 +101,7 @@ describe('CreatorDeviationFinalize — toggle', () => {
   });
 
   it('updates progress counter when toggling', async () => {
-    activeJobRef.value = { job_id: 'job-1', status: 'running', start_chapter: 1, end_chapter: 5 };
+    activeJobRef.value = { job_id: 'job-1', status: 'running', start_chapter: 1, end_chapter: 5 } as unknown as StudioBatchJobResponseDTO;
     chapterEventsRef.value = [
       { chapter_num: 3, status: 'completed' },
       { chapter_num: 5, status: 'completed' },
@@ -105,7 +115,7 @@ describe('CreatorDeviationFinalize — toggle', () => {
   });
 
   it('shows "全部差异已收尾" when all deviations reviewed', async () => {
-    activeJobRef.value = { job_id: 'job-1', status: 'running', start_chapter: 1, end_chapter: 5 };
+    activeJobRef.value = { job_id: 'job-1', status: 'running', start_chapter: 1, end_chapter: 5 } as unknown as StudioBatchJobResponseDTO;
     chapterEventsRef.value = [{ chapter_num: 3, status: 'completed' }];
     const wrapper = mount(CreatorDeviationFinalize);
     await flushPromises();
@@ -122,7 +132,7 @@ describe('CreatorDeviationFinalize — toggle', () => {
 
 describe('CreatorDeviationFinalize — reset', () => {
   it('clears all reviewed state when reset is clicked', async () => {
-    activeJobRef.value = { job_id: 'job-1', status: 'running', start_chapter: 1, end_chapter: 5 };
+    activeJobRef.value = { job_id: 'job-1', status: 'running', start_chapter: 1, end_chapter: 5 } as unknown as StudioBatchJobResponseDTO;
     chapterEventsRef.value = [
       { chapter_num: 3, status: 'completed' },
       { chapter_num: 5, status: 'completed' },
@@ -152,7 +162,7 @@ describe('CreatorDeviationFinalize — localStorage persistence', () => {
       'creator-deviation-review:job-1',
       JSON.stringify([3]),
     );
-    activeJobRef.value = { job_id: 'job-1', status: 'running', start_chapter: 1, end_chapter: 5 };
+    activeJobRef.value = { job_id: 'job-1', status: 'running', start_chapter: 1, end_chapter: 5 } as unknown as StudioBatchJobResponseDTO;
     chapterEventsRef.value = [{ chapter_num: 3, status: 'completed' }];
     const wrapper = mount(CreatorDeviationFinalize);
     await flushPromises();

@@ -13,10 +13,15 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
+import { ref } from 'vue';
+import type { StudioBatchJobResponseDTO } from '@/api/studio';
 
 // Stub composable — return refs directly so component can do `.value`.
-const activeJobRef = ref(null);
-const chapterEventsRef = ref([]);
+// Phase 110 fix: type refs explicitly to match usePilotBatch's actual
+// `activeJob: ref<StudioBatchJobResponseDTO | null>(null)` shape.
+type TestChapterEvent = { chapter_num: number; status: string };
+const activeJobRef = ref<StudioBatchJobResponseDTO | null>(null);
+const chapterEventsRef = ref<TestChapterEvent[]>([]);
 const isJobActiveRef = ref(false);
 const refreshActiveMock = vi.fn();
 
@@ -30,7 +35,6 @@ vi.mock('@/composables/usePilotBatch', () => ({
 }));
 
 // Import after vi.mock so mocks are in place.
-import { ref } from 'vue';
 import CreatorBatchRhythm from '@/components/creator/CreatorBatchRhythm.vue';
 
 beforeEach(() => {
@@ -65,7 +69,7 @@ describe('CreatorBatchRhythm — mount + empty state', () => {
 
 describe('CreatorBatchRhythm — loaded state (no deviations)', () => {
   it('renders status label + range + progress for running batch', async () => {
-    activeJobRef.value = { status: 'running', start_chapter: 1, end_chapter: 5 };
+    activeJobRef.value = { status: 'running', start_chapter: 1, end_chapter: 5 } as unknown as StudioBatchJobResponseDTO;
     chapterEventsRef.value = [
       { chapter_num: 1, status: 'completed' },
       { chapter_num: 2, status: 'completed' },
@@ -84,7 +88,7 @@ describe('CreatorBatchRhythm — loaded state (no deviations)', () => {
   });
 
   it('renders 5 band cells (one per chapter in range)', async () => {
-    activeJobRef.value = { status: 'running', start_chapter: 1, end_chapter: 5 };
+    activeJobRef.value = { status: 'running', start_chapter: 1, end_chapter: 5 } as unknown as StudioBatchJobResponseDTO;
     chapterEventsRef.value = [];
     const wrapper = mount(CreatorBatchRhythm);
     await flushPromises();
@@ -103,7 +107,7 @@ describe('CreatorBatchRhythm — loaded state (no deviations)', () => {
 describe('CreatorBatchRhythm — deviations', () => {
   it('marks cells as deviating when completed before prior chapters', async () => {
     // Chapter 3 completed but ch1 and ch2 not — deviation.
-    activeJobRef.value = { status: 'running', start_chapter: 1, end_chapter: 5 };
+    activeJobRef.value = { status: 'running', start_chapter: 1, end_chapter: 5 } as unknown as StudioBatchJobResponseDTO;
     chapterEventsRef.value = [{ chapter_num: 3, status: 'completed' }];
     const wrapper = mount(CreatorBatchRhythm);
     await flushPromises();
@@ -112,7 +116,7 @@ describe('CreatorBatchRhythm — deviations', () => {
   });
 
   it('renders deviations section listing each deviation', async () => {
-    activeJobRef.value = { status: 'running', start_chapter: 1, end_chapter: 5 };
+    activeJobRef.value = { status: 'running', start_chapter: 1, end_chapter: 5 } as unknown as StudioBatchJobResponseDTO;
     chapterEventsRef.value = [
       { chapter_num: 3, status: 'completed' },
       { chapter_num: 5, status: 'completed' },
@@ -135,7 +139,7 @@ describe('CreatorBatchRhythm — deviations', () => {
 
 describe('CreatorBatchRhythm — status mapping', () => {
   it('renders "已完成" label for completed batch', async () => {
-    activeJobRef.value = { status: 'completed', start_chapter: 1, end_chapter: 3 };
+    activeJobRef.value = { status: 'completed', start_chapter: 1, end_chapter: 3 } as unknown as StudioBatchJobResponseDTO;
     isJobActiveRef.value = false;
     const wrapper = mount(CreatorBatchRhythm);
     await flushPromises();
@@ -143,7 +147,7 @@ describe('CreatorBatchRhythm — status mapping', () => {
   });
 
   it('shows the "ended batch" hint when job is not active', async () => {
-    activeJobRef.value = { status: 'completed', start_chapter: 1, end_chapter: 3 };
+    activeJobRef.value = { status: 'completed', start_chapter: 1, end_chapter: 3 } as unknown as StudioBatchJobResponseDTO;
     isJobActiveRef.value = false;
     const wrapper = mount(CreatorBatchRhythm);
     await flushPromises();
