@@ -70,7 +70,11 @@ describe('GenerateIllustrationDialog (Phase 96: provider picker)', () => {
   })
 
   it('preselects provider from project default', async () => {
-    globalThis.fetch.mockResolvedValueOnce({
+    // Phase 110 fix: use mockResolvedValue (default) instead of
+    // mockResolvedValueOnce. The component makes TWO fetch calls on mount
+    // (fetchProviderModels + store.fetch); once-mock is consumed by the
+    // first call and the second call falls through to no-mock.
+    globalThis.fetch.mockResolvedValue({
       ok: true,
       json: async () => ({ default_provider: 'openai' }),
     })
@@ -98,7 +102,9 @@ describe('GenerateIllustrationDialog (Phase 96: provider picker)', () => {
   })
 
   it('user can override provider per call', async () => {
-    globalThis.fetch.mockResolvedValueOnce({
+    // Phase 110 fix: same as above — use mockResolvedValue (default) so
+    // both fetch calls (model catalog + settings) return the openai shape.
+    globalThis.fetch.mockResolvedValue({
       ok: true,
       json: async () => ({ default_provider: 'openai' }),
     })
