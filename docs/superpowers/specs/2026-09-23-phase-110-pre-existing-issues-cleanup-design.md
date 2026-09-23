@@ -14,7 +14,7 @@ During this 20-phase sprint, four orthogonal risks accumulated silently:
 1. **Production code type errors in `src/api/illustrations.ts`** — the central frontend wrapper for all Phase 102-109 endpoints. 9 unresolved tsc errors including 8 `$fetch` global references and 1 unsafe type cast. `$fetch` is a Nuxt-style auto-import not available in this Vite + Vue 3 stack. The code has been "working" only because vitest test setup provides a stub global; real browser behavior at runtime is unverified.
 2. **Unregistered composables** — Phase 107/108/109 introduced `useBulkDeleteToast`, `useBulkRegenerateToast`, `useDeleteFromNotificationToast`, `useNotificationStream` but none were added to `src/composables/index.ts`. The architecture-guard test correctly flags them as missing exports.
 3. **Stale test expectations** — Phase 96 default-provider assumptions and Phase 117-118 nav assumptions drifted; 2 vitest tests in `GenerateIllustrationDialog.spec.js` and 1 in `human-first-nav.spec.ts` now fail.
-4. **Test-file type drift** — 43 `tsc` errors across 4 spec files (`CreatorDeviationFinalize`, `CreatorBatchRhythm`, `FactionGraphCanvas`, 3 small files). These compile-time failures block `tsc` from running clean and may mask future test additions.
+4. **Test-file type drift** — 43 `tsc` errors across 7 spec files (4 main: `CreatorDeviationFinalize` 18, `CreatorBatchRhythm` 11, `FactionGraphCanvas` 14; 3 minor: `FactionGraph.spec.ts`, `CharacterRelationships.spec.ts`, `WorldTabs.spec.ts` — 1 error each). These compile-time failures block `tsc` from running clean and may mask future test additions.
 
 ## 2. Goal
 
@@ -85,7 +85,7 @@ Close the gap before the next orthogonal feature phase. Target:
 
 **Root cause**: Project default provider changed to `minimax` (per Phase 96/100 provider catalog update), but the test was hardcoded to expect `openai`. The test assertions reflect outdated pre-Phase-96 expectations.
 
-**Fix**: Change `'minimax'` → `'openai'` in 2 assertions (or use the actual default from `ProviderModelCatalog` constant). Whichever matches current ProjectSettings default.
+**Fix**: Change the two test assertions from `'minimax'` → `'openai'`. The test was written for the pre-Phase-96 default. The current default per `ProjectSettingsIllustration.vue` Phase 96 hardcoded default is `openai`; Phase 100 updated the model catalog but did not change the default provider. Verified during plan execution by reading `useProjectSettings` store default.
 
 ### 5.5 `tests/unit/human-first-nav.spec.ts` — 1 vitest failure
 
@@ -96,7 +96,7 @@ companion shows ask/write/library/pilot/more/settings: expected [...4 elements] 
 
 **Root cause**: Phase 109 may have added or rearranged sidebar nav. Test snapshot needs update to reflect current nav structure (4 elements if Phase 109 added one).
 
-**Fix**: Inspect the current nav array in `humanFirstNav` (or equivalent source) and update the expected array to match. Document what changed (e.g., "Phase 109 added Notifications link").
+**Fix**: Inspect the current nav array in `humanFirstNav` (or equivalent source) and update the expected array to match. The 4th element was added during Phase 99 (`Notifications` link in sidebar) — the spec predates Phase 99. Update test to include the 4th element.
 
 ### 5.6 Test tsc errors (43 errors across 4 files)
 
@@ -128,7 +128,7 @@ companion shows ask/write/library/pilot/more/settings: expected [...4 elements] 
 
 ## 7. Commit Sequence
 
-8 atomic commits, ordered to keep `master` working at each step:
+9 atomic commits, ordered to keep `master` working at each step:
 
 ```
 C0  docs(phase-110): spec + plan
@@ -136,8 +136,8 @@ C1  fix(phase-110): illustrations.ts $fetch → fetch (9 prod errors)         �
 C2  fix(phase-110): composables/index.ts + 4 new exports + docstring         → guard G2
 C3  fix(phase-110): architecture-guards.spec.ts (.spec.ts exclusion)         → guards G3
 C4  fix(phase-110): GenerateIllustrationDialog.spec.js provider assertion     → guards G4
-C5  fix(phase-110): human-first-nav.spec.ts expected array (Phase 109 add)  → guards G4
-C6  fix(phase-110): 43 test tsc errors across 6 files                         → guards G5
+C5  fix(phase-110): human-first-nav.spec.ts expected array (Phase 99 add)   → guards G4
+C6  fix(phase-110): 43 test tsc errors across 7 files                         → guards G5
 C7  test(phase-110): 6 regression guards G1-G6
 C8  docs(phase-110): CLAUDE.md v60.7 → v60.8 + handoff
 ```
