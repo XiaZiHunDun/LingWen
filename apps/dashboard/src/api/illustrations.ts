@@ -8,27 +8,93 @@ export interface ReferenceImageNotFound {
   exists: false
 }
 
+/**
+ * Native fetch helper that mirrors `$fetch` semantics for JSON responses.
+ *
+ * Phase 110: prefer native `fetch` (production browser path); fall back to
+ * `$fetch` global if present (legacy Nuxt test mocks use `$fetch = vi.fn()`).
+ * Mirrors the dual-mode pattern in `notifications.ts:49-52`.
+ *
+ * @internal — not exported
+ */
+async function rawFetchJson<T>(url: string, init?: RequestInit): Promise<T> {
+  const fetcher: typeof globalThis.fetch | ((u: string, i?: RequestInit) => Promise<unknown>) =
+    (globalThis as { $fetch?: typeof globalThis.fetch }).$fetch ?? globalThis.fetch
+  // @ts-expect-error - $fetch vs fetch signature variance
+  const res = await fetcher(url, init)
+  if (res && typeof (res as { ok?: unknown }).ok === 'boolean') {
+    const r = res as Response
+    if (!r.ok) {
+      throw new Error(`fetch ${url} failed: ${r.status} ${r.statusText}`)
+    }
+    return r.json() as Promise<T>
+  }
+  return res as unknown as T
+}
+
+/**
+ * Native fetch helper for void responses (e.g. POST/DELETE without body).
+ * Throws on non-2xx status; returns undefined.
+ *
+ * @internal — not exported
+ */
+async function rawFetchVoid(url: string, init?: RequestInit): Promise<void> {
+  const fetcher: typeof globalThis.fetch | ((u: string, i?: RequestInit) => Promise<unknown>) =
+    (globalThis as { $fetch?: typeof globalThis.fetch }).$fetch ?? globalThis.fetch
+  // @ts-expect-error - $fetch vs fetch signature variance
+  const res = await fetcher(url, init)
+  if (res && typeof (res as { ok?: unknown }).ok === 'boolean') {
+    const r = res as Response
+    if (!r.ok) {
+      throw new Error(`fetch ${url} failed: ${r.status} ${r.statusText}`)
+    }
+    return
+  }
+  return
+}
+
+/**
+ * Native fetch helper for Blob responses (e.g. reference image download).
+ * Throws on non-2xx status; returns the parsed Blob.
+ *
+ * @internal — not exported
+ */
+async function rawFetchBlob(url: string): Promise<Blob> {
+  const fetcher: typeof globalThis.fetch | ((u: string) => Promise<unknown>) =
+    (globalThis as { $fetch?: typeof globalThis.fetch }).$fetch ?? globalThis.fetch
+  // @ts-expect-error - $fetch vs fetch signature variance
+  const res = await fetcher(url)
+  if (res && typeof (res as { ok?: unknown }).ok === 'boolean') {
+    const r = res as Response
+    if (!r.ok) {
+      throw new Error(`fetch ${url} failed: ${r.status} ${r.statusText}`)
+    }
+    return r.blob()
+  }
+  return res as unknown as Blob
+}
+
 export function fetchReferenceImageInfo(
   slug: string
 ): Promise<ReferenceImageInfo | ReferenceImageNotFound> {
-  return $fetch(`/api/projects/${slug}/reference-image`)
+  return rawFetchJson(`/api/projects/${slug}/reference-image`)
 }
 
 export function fetchReferenceImageBlob(slug: string): Promise<Blob> {
-  return $fetch(`/api/projects/${slug}/reference-image`, { responseType: 'blob' })
+  return rawFetchBlob(`/api/projects/${slug}/reference-image`)
 }
 
-export function uploadReferenceImage(slug: string, file: File): Promise<void> {
+export async function uploadReferenceImage(slug: string, file: File): Promise<void> {
   const formData = new FormData()
   formData.append('file', file)
-  return $fetch(`/api/projects/${slug}/reference-image`, {
+  await rawFetchVoid(`/api/projects/${slug}/reference-image`, {
     method: 'POST',
     body: formData,
   })
 }
 
-export function deleteReferenceImage(slug: string): Promise<void> {
-  return $fetch(`/api/projects/${slug}/reference-image`, { method: 'DELETE' })
+export async function deleteReferenceImage(slug: string): Promise<void> {
+  await rawFetchVoid(`/api/projects/${slug}/reference-image`, { method: 'DELETE' })
 }
 
 // Phase 100: typed wrappers for illustration generation/regeneration + model catalog.
@@ -124,10 +190,14 @@ export function generateIllustration(
     fallback_chain?: string[] | null
   }
 ): Promise<IllustrationMetadata> {
-  return $fetch(`/api/illustrations/generate?project_slug=${slug}`, {
-    method: 'POST',
-    body,
-  })
+  return rawFetchJson<IllustrationMetadata>(
+    `/api/illustrations/generate?project_slug=${slug}`,
+    {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers: { 'Content-Type': 'application/json' },
+    }
+  )
 }
 
 export function regenerateIllustration(
@@ -151,9 +221,13 @@ export function regenerateIllustration(
   if (body.fallback_chain) {
     params.set('fallback_chain', body.fallback_chain)
   }
-  return $fetch(
+  return rawFetchJson<IllustrationMetadata>(
     `/api/illustrations/${assetId}/regenerate?${params.toString()}`,
-    { method: 'PUT', body },
+    {
+      method: 'PUT',
+      body: JSON.stringify(body),
+      headers: { 'Content-Type': 'application/json' },
+    }
   )
 }
 
@@ -170,7 +244,7 @@ export async function fetchProviderModels(
     }
     return r.json()
   }
-  return res as ProviderModelCatalog
+  return res as unknown as ProviderModelCatalog
 }
 
 // Phase 107: bulk delete illustration endpoint
@@ -262,7 +336,7 @@ export async function bulkRegenerateAssets(
   if (opts.model) params.set('model', opts.model)
   if (opts.fallbackChain) params.set('fallback_chain', opts.fallbackChain)
 
-  const response = await $fetch<BulkRegenerateResult>(
+  const response = await rawFetchJson<BulkRegenerateResult>(
     `/api/illustrations?${params.toString()}`,
     { method: 'PUT' },
   )
@@ -276,7 +350,7 @@ export async function deleteAsset(
   projectSlug: string,
   assetId: string
 ): Promise<{ deleted: string }> {
-  return $fetch(
+  return rawFetchJson<{ deleted: string }>(
     `/api/illustrations/${assetId}?project_slug=${projectSlug}`,
     { method: 'DELETE' }
   )
