@@ -25,6 +25,8 @@ describe('Guard: 架构不变量', () => {
         (f.endsWith('.js') || f.endsWith('.ts'))
         && f !== 'index.js' && f !== 'index.ts'
         && !f.endsWith('.d.ts')
+        && !f.endsWith('.spec.ts')
+        && !f.endsWith('.spec.js')
       );
 
     const missingExports: string[] = [];
