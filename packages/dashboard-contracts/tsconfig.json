@@ -1,9 +1,0 @@
-{
-  "extends": "../../tooling/tsconfig/base.json",
-  "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "../..",
-    "noEmit": true
-  },
-  "include": ["src/**/*.ts", "../../lingwen-shared/src/lingwen_shared/contracts/ts/**/*.ts"]
-}

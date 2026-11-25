@@ -1,1 +1,0 @@
-{"chapter": 11, "checker": "llm_character", "content_hash": "b3bcd12fe1ee", "timestamp": 1779787514.314604, "ttl": 604800, "result": {"chapter": 11, "checker": "CharacterConsistencyLLMChecker", "issues": [], "score": 1.0, "llm_calls": 1, "timestamp": "2026-05-26T17:24:44.198486"}}

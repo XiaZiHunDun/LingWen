@@ -1,1 +1,0 @@
-{"chapter": 147, "checker": "llm_foreshadow", "content_hash": "2adef4528b3a", "timestamp": 1779793532.1660213, "ttl": 604800, "result": {"chapter": 147, "checker": "ForeshadowRecoveryChecker", "issues": [], "score": 1.0, "llm_calls": 1, "timestamp": "2026-05-26T19:04:57.244974"}}

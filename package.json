@@ -1,25 +1,33 @@
 {
-  "name": "lingwen-monorepo",
+  "name": "lingwen",
+  "version": "1.0.0",
   "private": true,
-  "version": "10.0.0",
-  "description": "墨灵 Studio (产品) + 灵文引擎 (框架) monorepo",
-  "license": "MIT",
+  "description": "灵文 LingWen · AI-assisted long-form novel writing studio",
+  "type": "module",
   "engines": {
-    "node": ">=20",
-    "pnpm": ">=9"
+    "node": ">=20.9.0"
   },
-  "packageManager": "pnpm@9.0.0",
   "scripts": {
-    "build": "turbo run build",
-    "lint": "turbo run lint",
-    "test": "turbo run test",
-    "typecheck": "turbo run typecheck",
-    "knip": "pnpm -C apps/dashboard exec knip"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test tests/*.test.mjs",
+    "check": "pnpm run typecheck && pnpm run test"
+  },
+  "dependencies": {
+    "next": "15.5.29",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "better-sqlite3": "^11.7.0"
   },
   "devDependencies": {
-    "knip": "^6.32.2",
-    "openapi-typescript": "^7.13.0",
-    "turbo": "^2.10.12",
-    "zod": "^3.23.0"
-  }
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "22.10.2",
+    "@types/react": "19.0.2",
+    "@types/react-dom": "19.0.2",
+    "typescript": "5.7.2"
+  },
+  "packageManager": "pnpm@8.15.9+sha512.499434c9d8fdd1a2794ebf4552b3b25c0a633abcee5bb15e7b5de90f32f47b513aca98cd5cfd001c31f0db454bc3804edccd578501e4ca293a6816166bbd9f81"
 }
