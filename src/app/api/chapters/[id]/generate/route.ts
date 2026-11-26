@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { initDb } from '@/lib/db.js';
-import { getBook, getChapter, listBible, listChapters, logLlm, updateChapter } from '@/lib/repo.js';
+import { getBook, getChapter, listBible, listChapters, listOutlines, logLlm, updateChapter } from '@/lib/repo.js';
 import { countWords } from '@/lib/wordcount.js';
 import { chatStream, isLlmConfigured, LlmError } from '@/lib/llm.js';
 
@@ -13,8 +13,10 @@ const MAX_TARGET_WORDS = 4000;
 const MAX_PREVIOUS_CHAPTERS = 3;
 /** 单条设定 / 摘要注入 prompt 的最大长度（字符）。 */
 const MAX_SNIPPET = 300;
-/** 已写正文回灌 prompt 时最多取末尾多少字符。 */
-const MAX_EXISTING_CONTENT = 1200;
+/** 本章大纲摘要注入 prompt 的最大长度（字符）。 */
+const MAX_OUTLINE_SUMMARY = 300;
+/** 本章已有正文回灌 prompt 时只取末尾多少字符（用于衔接上文）。 */
+const MAX_EXISTING_CONTENT = 600;
 
 type Mode = 'append' | 'replace';
 
@@ -70,6 +72,20 @@ function pickPreviousChapters(
 }
 
 /**
+ * 按 outlineId 在本书大纲里找对应条目；找不到返回 undefined。
+ * 只取 title / summary 两项，summary 由调用方截断。
+ */
+function pickChapterOutline(
+  outlines: Array<Record<string, unknown>>,
+  outlineId: number | null,
+): { title: string; summary: string } | undefined {
+  if (outlineId === null) return undefined;
+  const matched = outlines.find((item) => toNumber(item.id) === outlineId);
+  if (matched === undefined) return undefined;
+  return { title: toText(matched.title), summary: toText(matched.summary) };
+}
+
+/**
  * POST /api/chapters/[id]/generate —— 流式续写 / 重写章节正文。
  *
  * body: { instruction?: string, targetWords?: number, mode?: 'append' | 'replace' }
@@ -102,6 +118,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const book = bookId === null ? undefined : getBook(bookId);
     const bible = bookId === null ? [] : listBible(bookId);
     const previous = bookId === null ? [] : pickPreviousChapters(listChapters(bookId), chapterId);
+    const outlineRows: Array<Record<string, unknown>> =
+      bookId === null ? [] : listOutlines(bookId);
+    const outline = pickChapterOutline(outlineRows, toNumber(chapter.outlineId));
 
     const existingContent = toText(chapter.content);
     const chapterTitle = toText(chapter.title) || `第 ${chapterId} 章`;
@@ -134,6 +153,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       .map((item) => `- ${item.title || '（无题）'}：${clip(item.summary) || '（无摘要）'}`)
       .filter((line) => line !== '');
 
+    // 本章大纲：title / summary 来自 outlines 表，summary 最多 300 字。
+    const outlineLines: string[] = [];
+    if (outline !== undefined) {
+      if (outline.title !== '') outlineLines.push(`标题：${outline.title}`);
+      const outlineSummary = clip(outline.summary, MAX_OUTLINE_SUMMARY);
+      if (outlineSummary !== '') outlineLines.push(`摘要：${outlineSummary}`);
+    }
+
     const systemPrompt = [
       '你是一位中文小说作家，负责续写或重写章节正文。',
       '硬性要求：',
@@ -153,12 +180,20 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (previousLines.length > 0) {
       userLines.push(`【前情提要（更早章节，仅摘要）】\n${previousLines.join('\n')}`);
     }
+    if (outlineLines.length > 0) {
+      userLines.push(`【本章大纲】\n${outlineLines.join('\n')}`);
+      userLines.push('【大纲要求】本章情节须围绕上面的大纲展开，不要偏移主线。');
+    }
     userLines.push(`【本章标题】${chapterTitle}`);
     if (existingContent.trim() !== '') {
-      const tail = existingContent.length > MAX_EXISTING_CONTENT
-        ? existingContent.slice(-MAX_EXISTING_CONTENT)
-        : existingContent;
-      userLines.push(`【本章已有正文（末尾片段）】\n${tail}`);
+      // 只取末尾 600 字，明确标注用途是「衔接上文」，避免模型整段复述。
+      const tail =
+        existingContent.length > MAX_EXISTING_CONTENT
+          ? existingContent.slice(-MAX_EXISTING_CONTENT)
+          : existingContent;
+      userLines.push(
+        `【衔接上文（本章已有正文的最后 ${MAX_EXISTING_CONTENT} 字，仅用于保持语气、人物与情节衔接，不要照抄这些句子）】\n${tail}`,
+      );
     }
     userLines.push(`【目标字数】约 ${programTargetWords} 字（中文汉字计）。`);
     userLines.push(

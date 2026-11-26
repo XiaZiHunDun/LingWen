@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { initDb } from '@/lib/db.js';
+import { getDb, initDb } from '@/lib/db.js';
 import { getChapter, updateChapter } from '@/lib/repo.js';
 import { countWords } from '@/lib/wordcount.js';
 
@@ -86,6 +86,28 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       return NextResponse.json({ error: '章节不存在' }, { status: 404 });
     }
     return NextResponse.json({ chapter: updated });
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : String(err) },
+      { status: 500 },
+    );
+  }
+}
+
+/** DELETE /api/chapters/[id] —— 删除一个章节。 */
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    initDb();
+    const { id } = await params;
+    const chapterId = parseId(id);
+    if (chapterId === null) {
+      return NextResponse.json({ error: 'id 非法：必须是数字' }, { status: 400 });
+    }
+    if (getChapter(chapterId) === undefined) {
+      return NextResponse.json({ error: '章节不存在' }, { status: 404 });
+    }
+    getDb().prepare('DELETE FROM chapters WHERE id = ?').run(chapterId);
+    return NextResponse.json({ ok: true });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : String(err) },

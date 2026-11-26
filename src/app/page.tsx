@@ -12,6 +12,15 @@ interface Book {
   updatedAt: string | null;
 }
 
+/** 全站统计结构。 */
+interface Stats {
+  bookCount: number;
+  chapterCount: number;
+  totalWords: number;
+  outlineCount: number;
+  bibleCount: number;
+}
+
 /** 从任意 JSON 值里安全取出错误文案。 */
 function readError(payload: unknown, fallback: string): string {
   if (payload !== null && typeof payload === 'object' && 'error' in payload) {
@@ -21,10 +30,30 @@ function readError(payload: unknown, fallback: string): string {
   return fallback;
 }
 
+/** 从任意 JSON 值里安全取出统计数字，缺失或类型不符时返回 null。 */
+function readStats(payload: unknown): Stats | null {
+  if (payload === null || typeof payload !== 'object' || !('stats' in payload)) return null;
+  const raw = (payload as { stats?: unknown }).stats;
+  if (raw === null || typeof raw !== 'object') return null;
+  const source = raw as Record<string, unknown>;
+  const { bookCount, chapterCount, totalWords, outlineCount, bibleCount } = source;
+  if (
+    typeof bookCount !== 'number' ||
+    typeof chapterCount !== 'number' ||
+    typeof totalWords !== 'number' ||
+    typeof outlineCount !== 'number' ||
+    typeof bibleCount !== 'number'
+  ) {
+    return null;
+  }
+  return { bookCount, chapterCount, totalWords, outlineCount, bibleCount };
+}
+
 export default function BookshelfPage() {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<Stats | null>(null);
 
   const [title, setTitle] = useState('');
   const [genre, setGenre] = useState('');
@@ -57,6 +86,26 @@ export default function BookshelfPage() {
   useEffect(() => {
     void loadBooks();
   }, [loadBooks]);
+
+  useEffect(() => {
+    let active = true;
+    void (async (): Promise<void> => {
+      try {
+        const res = await fetch('/api/stats');
+        if (!res.ok) {
+          if (active) setStats(null);
+          return;
+        }
+        const data: unknown = await res.json();
+        if (active) setStats(readStats(data));
+      } catch {
+        if (active) setStats(null);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   async function handleCreate(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
@@ -119,6 +168,12 @@ export default function BookshelfPage() {
             <p className="muted">长篇连载从这里开始：新建一本作品，再进入工作台铺大纲、写章节。</p>
           </div>
         </div>
+        {stats !== null ? (
+          <p className="muted">
+            作品 {stats.bookCount} · 章节 {stats.chapterCount} · 总字数{' '}
+            {stats.totalWords.toLocaleString('zh-CN')}
+          </p>
+        ) : null}
       </section>
 
       <section className="card">

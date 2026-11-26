@@ -590,3 +590,54 @@ code {
 .generate-box .field {
   margin-bottom: 0.35rem;
 }
+
+/* 大纲条目：行内操作区（批次 A-2b） */
+.outline-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.outline-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.outline-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.outline-editor {
+  margin-top: 0.55rem;
+  padding-top: 0.55rem;
+  border-top: 1px dashed var(--border);
+}
+
+/* 单章 AI 检查：引用原文（批次 B-2） */
+.review-quote { margin: 0 0 0.25rem; opacity: 0.75; font-size: 0.9em; }
+
+
+.assistant-msg {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.55rem 0.75rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.assistant-msg.user {
+  background: rgba(124, 92, 255, 0.18);
+  border-color: rgba(124, 92, 255, 0.45);
+}
+
+.assistant-msg.bot {
+  background: var(--surface-soft);
+}
+
+.chapter-actions { display: flex; gap: 0.25rem; margin-left: auto; align-items: center; }
+.chapter-actions .btn-icon { padding: 0.15rem 0.45rem; line-height: 1.2; }
