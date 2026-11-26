@@ -641,3 +641,194 @@ code {
 
 .chapter-actions { display: flex; gap: 0.25rem; margin-left: auto; align-items: center; }
 .chapter-actions .btn-icon { padding: 0.15rem 0.45rem; line-height: 1.2; }
+
+
+/* —— 窄屏响应式 + 编辑器排版（追加段落，不改动上方既有规则） —— */
+
+/* 编辑器顶部排版控件 */
+.editor-prefs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding-bottom: 0.6rem;
+  margin-bottom: 0.6rem;
+  border-bottom: 1px dashed var(--border);
+}
+
+.editor-prefs-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.editor-prefs-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  min-width: 2.2rem;
+}
+
+.segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.seg-btn {
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 0.2rem 0.6rem;
+  font: inherit;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.seg-btn.active {
+  background: rgba(124, 92, 255, 0.24);
+  border-color: rgba(124, 92, 255, 0.6);
+}
+
+.editor-textarea {
+  min-height: 320px;
+  resize: vertical;
+}
+
+/* 面板切换按钮组：桌面端隐藏，窄屏才出现 */
+.panel-switch {
+  display: none;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+/* 专注模式：隐藏两侧面板，只留编辑器（任意宽度生效，可一键退出） */
+.workspace-grid.focus-mode {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.panel-focus-hidden {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .panel-switch {
+    display: flex;
+  }
+
+  /* 三栏纵向堆叠沿用既有 1024px 规则，这里只负责单面板显隐 */
+  .panel-hidden {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  /* 书架：书卡单列，卡片与按钮不再撑出横向滚动 */
+  .book-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+
+  .book-card {
+    min-width: 0;
+    padding: 0.85rem 0.9rem;
+  }
+
+  .book-card .toolbar {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .book-card .toolbar .btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: center;
+  }
+
+  .toolbar {
+    min-width: 0;
+  }
+
+  .card,
+  .panel {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* 搜索浮层占满容器宽度 */
+  .search-overlay {
+    left: 0;
+    right: 0;
+    width: auto;
+    max-width: 100%;
+    max-height: 60vh;
+  }
+
+  html,
+  body {
+    overflow-x: hidden;
+  }
+}
+
+/* —— 窄屏补充：面板切换条置顶、编辑器文本域高度自适应视口 —— */
+
+.workspace-grid .panel-focus-visible {
+  min-width: 0;
+}
+
+/* —— 工作台三列容器（追加）：右栏纵向堆叠 + 窄屏按列切换 —— */
+.workspace-grid > .workspace-column,
+.workspace-grid > .right-column {
+  min-width: 0;
+}
+
+.workspace-grid > .right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (max-width: 900px) {
+  /* 切换作用于列容器（.workspace-grid 的直接子元素），而不是单个面板 */
+  .workspace-grid > .panel-hidden,
+  .workspace-grid > .right-column.panel-hidden {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .panel-switch {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    padding: 0.4rem 0;
+    background: var(--bg);
+  }
+
+  .editor-textarea {
+    min-height: 240px;
+  }
+}
+
+@media (max-width: 600px) {
+  .editor-prefs-row {
+    gap: 0.3rem;
+  }
+
+  .seg-btn {
+    padding: 0.18rem 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  .app-main {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .editor-textarea {
+    min-height: 200px;
+  }
+}

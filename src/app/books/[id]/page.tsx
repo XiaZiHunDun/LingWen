@@ -307,6 +307,11 @@ export default function BookDetailPage() {
   // 章节排序 / 删除进行中：避免重复点击。
   const [orderBusy, setOrderBusy] = useState(false);
 
+  // 批量操作：勾选的章节 id / 用于建章的大纲 id / 批量请求进行中标记。
+  const [selectedChapterIds, setSelectedChapterIds] = useState<Set<number>>(new Set());
+  const [selectedOutlineIds, setSelectedOutlineIds] = useState<Set<number>>(new Set());
+  const [batchBusy, setBatchBusy] = useState(false);
+
   const selectedChapter = chapters.find((item) => item.id === selectedId) ?? null;
   const charCount = editContent.replace(/\s/g, '').length;
   const canReview = selectedChapter !== null && editContent.trim() !== '';
@@ -848,6 +853,120 @@ export default function BookDetailPage() {
     }
   };
 
+  // 已有章节引用到的 outlineId 集合：这些大纲已建章，批量建章时不可勾选。
+  const builtOutlineIdSet = new Set<number>();
+  for (const item of chapters) {
+    const raw = (item as unknown as { outlineId?: unknown }).outlineId;
+    if (typeof raw === 'number' && Number.isFinite(raw)) builtOutlineIdSet.add(raw);
+  }
+  const allChaptersSelected =
+    chapters.length > 0 && chapters.every((item) => selectedChapterIds.has(item.id));
+
+  // 勾选 / 取消勾选单个章节。
+  const toggleChapterSelected = (chapterId: number) => {
+    setSelectedChapterIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(chapterId)) next.delete(chapterId);
+      else next.add(chapterId);
+      return next;
+    });
+  };
+
+  // 全选 / 取消全选章节。
+  const toggleSelectAllChapters = () => {
+    setSelectedChapterIds(allChaptersSelected ? new Set<number>() : new Set(chapters.map((item) => item.id)));
+  };
+
+  // 勾选 / 取消勾选单条大纲（尚未落库或已建章的大纲不可勾选）。
+  const toggleOutlineSelected = (outlineId: number | null) => {
+    if (outlineId === null || builtOutlineIdSet.has(outlineId)) return;
+    setSelectedOutlineIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(outlineId)) next.delete(outlineId);
+      else next.add(outlineId);
+      return next;
+    });
+  };
+
+  // 批量删除章节：confirm 后 POST /api/books/[id]/chapters/batch（action='delete'）。
+  // 成功后清空勾选并刷新章节列表；失败时保留勾选便于重试。
+  const handleBatchDeleteChapters = async () => {
+    const ids = Array.from(selectedChapterIds);
+    if (ids.length === 0) {
+      setActionError('请先勾选要删除的章节');
+      return;
+    }
+    if (batchBusy || orderBusy) return;
+    if (!window.confirm(`确定删除选中的 ${ids.length} 个章节吗？该操作不可撤销。`)) return;
+    setBatchBusy(true);
+    setActionError(null);
+    try {
+      const res = await fetch(`/api/books/${bookId}/chapters/batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', chapterIds: ids }),
+      });
+      if (!res.ok) throw new Error(await readErrorMessage(res));
+      const payload = (await res.json().catch(() => ({}))) as {
+        deleted?: number;
+        skipped?: number;
+      };
+      const deleted = typeof payload.deleted === 'number' ? payload.deleted : 0;
+      const skipped = typeof payload.skipped === 'number' ? payload.skipped : 0;
+      // 当前编辑中的章节被删掉时清空编辑器（与单章删除口径一致）。
+      const currentId = selectedIdRef.current ?? selectedId;
+      if (currentId !== null && ids.includes(currentId)) {
+        setSelectedId(null);
+        setEditTitle('');
+        setEditContent('');
+        savedChapterRef.current = { title: '', content: '' };
+        syncedChapterIdRef.current = null;
+      }
+      setSelectedChapterIds(new Set());
+      await refreshChapters();
+      showNotice(skipped > 0 ? `已删除 ${deleted} 个章节，跳过 ${skipped} 个` : `已删除 ${deleted} 个章节`);
+    } catch (err) {
+      setActionError(toMessage(err));
+    } finally {
+      setBatchBusy(false);
+    }
+  };
+
+  // 批量建章：POST /api/books/[id]/chapters/batch（action='create-from-outline'）。
+  // 成功后刷新章节列表与大纲列表（大纲的「已建章」状态依赖章节数据）。
+  const handleBatchCreateFromOutline = async () => {
+    const ids = Array.from(selectedOutlineIds);
+    if (ids.length === 0) {
+      setActionError('请先勾选要建章的大纲');
+      return;
+    }
+    if (batchBusy) return;
+    setBatchBusy(true);
+    setActionError(null);
+    try {
+      const res = await fetch(`/api/books/${bookId}/chapters/batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create-from-outline', outlineIds: ids }),
+      });
+      if (!res.ok) throw new Error(await readErrorMessage(res));
+      const payload = (await res.json().catch(() => ({}))) as {
+        created?: number;
+        skipped?: number;
+      };
+      const created = typeof payload.created === 'number' ? payload.created : 0;
+      const skipped = typeof payload.skipped === 'number' ? payload.skipped : 0;
+      setSelectedOutlineIds(new Set());
+      await refreshChapters();
+      setReloadKey((key) => key + 1);
+      showNotice(skipped > 0 ? `已创建 ${created} 个章节，跳过 ${skipped} 个` : `已创建 ${created} 个章节`);
+    } catch (err) {
+      setActionError(toMessage(err));
+    } finally {
+      setBatchBusy(false);
+    }
+  };
+
   // 章节删除：confirm 后 DELETE /api/chapters/[id]；删的是当前选中章节则清空编辑器。
   const handleDeleteChapter = async (chapterId: number, chapterTitle: string) => {
     if (orderBusy) return;
@@ -1224,6 +1343,72 @@ export default function BookDetailPage() {
     }
   };
 
+  // —— 窄屏工作台：面板切换（仅 ≤900px 生效，桌面端三栏始终全显示） ——
+  type PanelKey = 'outline' | 'editor' | 'bible';
+  interface EditorPrefs {
+    fontSize: 14 | 16 | 18;
+    lineHeight: 1.6 | 1.8 | 2;
+    focusMode: boolean;
+  }
+
+  const EDITOR_PREFS_KEY = 'lingwen.editor.prefs';
+  const DEFAULT_EDITOR_PREFS: EditorPrefs = { fontSize: 16, lineHeight: 1.8, focusMode: false };
+  const FONT_SIZE_OPTIONS: Array<EditorPrefs['fontSize']> = [14, 16, 18];
+  const LINE_HEIGHT_OPTIONS: Array<EditorPrefs['lineHeight']> = [1.6, 1.8, 2];
+  const PANEL_TABS: Array<{ key: PanelKey; label: string }> = [
+    { key: 'outline', label: '大纲' },
+    { key: 'editor', label: '编辑' },
+    { key: 'bible', label: '设定' },
+  ];
+
+  const [activePanel, setActivePanel] = useState<PanelKey>('editor');
+  const [editorPrefs, setEditorPrefs] = useState<EditorPrefs>(DEFAULT_EDITOR_PREFS);
+
+  // 在 useEffect 中读取 localStorage：首屏渲染默认排版，避免 SSR 与客户端水合不一致。
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(EDITOR_PREFS_KEY);
+      if (raw === null) return;
+      const parsed: unknown = JSON.parse(raw);
+      if (parsed === null || typeof parsed !== 'object') return;
+      const source = parsed as Record<string, unknown>;
+      const fontSize = source.fontSize;
+      const lineHeight = source.lineHeight;
+      const focusMode = source.focusMode;
+      setEditorPrefs({
+        fontSize:
+          fontSize === 14 || fontSize === 16 || fontSize === 18
+            ? fontSize
+            : DEFAULT_EDITOR_PREFS.fontSize,
+        lineHeight:
+          lineHeight === 1.6 || lineHeight === 1.8 || lineHeight === 2
+            ? lineHeight
+            : DEFAULT_EDITOR_PREFS.lineHeight,
+        focusMode: typeof focusMode === 'boolean' ? focusMode : DEFAULT_EDITOR_PREFS.focusMode,
+      });
+    } catch {
+      // 读取失败（隐私模式 / 脏数据）时退回默认排版，不影响编辑。
+    }
+  }, []);
+
+  // 更新排版偏好并同步写入 localStorage（key 固定为 lingwen.editor.prefs）。
+  const updateEditorPrefs = useCallback((patch: Partial<EditorPrefs>): void => {
+    setEditorPrefs((prev) => {
+      const next: EditorPrefs = { ...prev, ...patch };
+      try {
+        window.localStorage.setItem(EDITOR_PREFS_KEY, JSON.stringify(next));
+      } catch {
+        // 忽略写入失败。
+      }
+      return next;
+    });
+  }, []);
+
+  // 面板显隐类：panel-hidden 只在 @media (max-width:900px) 中生效，桌面端三栏照常全显示。
+  function panelClassName(key: PanelKey): string {
+    return activePanel === key ? 'panel-visible' : 'panel-hidden';
+  }
+
   if (loadError !== null) {
     return (
       <div className="workspace">
@@ -1380,8 +1565,36 @@ export default function BookDetailPage() {
         </div>
       ) : null}
 
-      <div className="workspace-grid">
-        <div className="panel stack">
+      <div className="panel-switch" role="tablist" aria-label="工作台面板切换">
+        {PANEL_TABS.map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            role="tab"
+            aria-selected={activePanel === tab.key}
+            className={activePanel === tab.key ? 'seg-btn active' : 'seg-btn'}
+            onClick={() => setActivePanel(tab.key)}
+          >
+            {tab.label}
+          </button>
+        ))}
+        {editorPrefs.focusMode ? (
+          <button
+            type="button"
+            className="seg-btn active"
+            onClick={() => updateEditorPrefs({ focusMode: false })}
+          >
+            退出专注
+          </button>
+        ) : null}
+      </div>
+
+      <div className={editorPrefs.focusMode ? 'workspace-grid focus-mode' : 'workspace-grid'}>
+        <div
+          className={`panel stack workspace-column ${panelClassName('outline')}${
+            editorPrefs.focusMode ? ' panel-focus-hidden' : ''
+          }`}
+        >
           <h2>大纲</h2>
           {outlineRows.length === 0 ? (
             <p className="empty">还没有大纲</p>
@@ -1389,6 +1602,29 @@ export default function BookDetailPage() {
             <div className="stack">
               {outlineRows.map((row) => (
                 <div className="outline-item" key={row.key}>
+                  <div className="toolbar" style={{ justifyContent: 'flex-start' }}>
+                    <input
+                      type="checkbox"
+                      aria-label={`选择大纲 ${row.title === '' ? UNTITLED : row.title}`}
+                      title={
+                        row.id === null
+                          ? '未落库的大纲不能批量建章'
+                          : builtOutlineIdSet.has(row.id)
+                            ? '该大纲已建章'
+                            : '勾选后可批量建章'
+                      }
+                      checked={row.id !== null && selectedOutlineIds.has(row.id)}
+                      disabled={row.id === null || builtOutlineIdSet.has(row.id) || batchBusy}
+                      onChange={() => toggleOutlineSelected(row.id)}
+                    />
+                    <span className="muted">
+                      {row.id === null
+                        ? '未保存'
+                        : builtOutlineIdSet.has(row.id)
+                          ? '已建章'
+                          : '选择'}
+                    </span>
+                  </div>
                   <div className="outline-row">
                     <div className="outline-main">
                       {seqLabel(row.seq)}. {row.title === '' ? UNTITLED : row.title}
@@ -1481,8 +1717,40 @@ export default function BookDetailPage() {
           >
             {generating ? '生成中…' : 'AI 生成大纲'}
           </button>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => {
+              void handleBatchCreateFromOutline();
+            }}
+            disabled={selectedOutlineIds.size === 0 || batchBusy}
+          >
+            {batchBusy ? '处理中…' : `批量建章（已选 ${selectedOutlineIds.size}）`}
+          </button>
 
           <h2>章节</h2>
+          <div className="toolbar" style={{ justifyContent: 'flex-start' }}>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={toggleSelectAllChapters}
+              disabled={chapters.length === 0 || batchBusy}
+            >
+              {allChaptersSelected
+                ? `取消全选（已选 ${selectedChapterIds.size}）`
+                : `全选（已选 ${selectedChapterIds.size}）`}
+            </button>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => {
+                void handleBatchDeleteChapters();
+              }}
+              disabled={selectedChapterIds.size === 0 || batchBusy}
+            >
+              {batchBusy ? '处理中…' : `批量删除（已选 ${selectedChapterIds.size}）`}
+            </button>
+          </div>
           {chapters.length === 0 ? (
             <p className="empty">还没有章节</p>
           ) : (
@@ -1503,6 +1771,15 @@ export default function BookDetailPage() {
                       }
                     }}
                   >
+                    <input
+                      type="checkbox"
+                      aria-label={`选择章节 ${item.title}`}
+                      title="勾选后可批量删除"
+                      checked={selectedChapterIds.has(item.id)}
+                      disabled={batchBusy}
+                      onClick={(event) => event.stopPropagation()}
+                      onChange={() => toggleChapterSelected(item.id)}
+                    />
                     <div>
                       {seqLabel(item.seq)}. {item.title}
                     </div>
@@ -1565,7 +1842,56 @@ export default function BookDetailPage() {
           </button>
         </div>
 
-        <div className="panel stack">
+        <div
+          className={`panel stack workspace-column ${
+            editorPrefs.focusMode ? 'panel-focus-visible' : panelClassName('editor')
+          }`}
+        >
+          <div className="editor-prefs" role="group" aria-label="排版">
+            <div className="editor-prefs-row">
+              <span className="editor-prefs-label">字号</span>
+              <div className="segmented">
+                {FONT_SIZE_OPTIONS.map((size) => (
+                  <button
+                    key={size}
+                    type="button"
+                    className={editorPrefs.fontSize === size ? 'seg-btn active' : 'seg-btn'}
+                    aria-pressed={editorPrefs.fontSize === size}
+                    onClick={() => updateEditorPrefs({ fontSize: size })}
+                  >
+                    {size}px
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="editor-prefs-row">
+              <span className="editor-prefs-label">行距</span>
+              <div className="segmented">
+                {LINE_HEIGHT_OPTIONS.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className={editorPrefs.lineHeight === option ? 'seg-btn active' : 'seg-btn'}
+                    aria-pressed={editorPrefs.lineHeight === option}
+                    onClick={() => updateEditorPrefs({ lineHeight: option })}
+                  >
+                    {option.toFixed(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="editor-prefs-row">
+              <span className="editor-prefs-label">专注</span>
+              <button
+                type="button"
+                className={editorPrefs.focusMode ? 'seg-btn active' : 'seg-btn'}
+                aria-pressed={editorPrefs.focusMode}
+                onClick={() => updateEditorPrefs({ focusMode: !editorPrefs.focusMode })}
+              >
+                {editorPrefs.focusMode ? '专注模式：开（点击退出）' : '专注模式：关'}
+              </button>
+            </div>
+          </div>
           {selectedChapter === null ? (
             <p className="empty">从左侧选择或新建章节</p>
           ) : (
@@ -1580,8 +1906,9 @@ export default function BookDetailPage() {
                 />
               </div>
               <textarea
-                className="textarea"
+                className="textarea editor-textarea"
                 rows={18}
+                style={{ fontSize: `${editorPrefs.fontSize}px`, lineHeight: editorPrefs.lineHeight }}
                 value={editContent}
                 onChange={(event) => setEditContent(event.target.value)}
                 aria-label="章节正文"
@@ -1795,7 +2122,12 @@ export default function BookDetailPage() {
           )}
         </div>
 
-        <div className="panel stack">
+        <div className={`right-column stack ${panelClassName('bible')}`}>
+        <div
+          className={`panel stack ${
+            editorPrefs.focusMode ? 'panel-focus-hidden' : ''
+          }`}
+        >
           <h2>润色</h2>
           <div className="field">
             <label htmlFor="polish-mode">润色方式</label>
@@ -2059,6 +2391,7 @@ export default function BookDetailPage() {
               </button>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>

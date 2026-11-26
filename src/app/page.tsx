@@ -496,7 +496,7 @@ export default function BookshelfPage() {
           />
           {searchOpen ? (
             <div
-              className="card"
+              className="card search-overlay"
               style={{
                 position: 'absolute',
                 top: '100%',
