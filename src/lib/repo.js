@@ -374,6 +374,62 @@ export function dailyWordCounts(days = 14) {
 }
 
 /**
+ * 按自然月聚合写作字数：覆盖该月每一天，无记录或净删（负值）的日期按 0 处理。
+ * @param {string} month 形如 YYYY-MM 的月份字符串（调用方需先校验）
+ * @returns {{ month: string, days: Array<{ date: string, words: number }>, total: number,
+ *   activeDays: number, bestDay: { date: string, words: number } | null }}
+ */
+export function monthlyWordCounts(month) {
+  const [yearText, monthText] = String(month).split('-');
+  const year = Number(yearText);
+  const monthIndex = Number(monthText) - 1; // 0-based
+  const db = getDb();
+
+  // 用本地时间构造月首与月末，避免时区偏移导致跨月。
+  const monthStart = new Date(year, monthIndex, 1);
+  const monthEnd = new Date(year, monthIndex + 1, 0);
+  const dayCount = monthEnd.getDate();
+
+  const rows = db
+    .prepare(
+      `SELECT date(created_at, 'localtime') AS day, COALESCE(SUM(delta_words), 0) AS words
+         FROM writing_sessions
+        WHERE date(created_at, 'localtime') >= ?
+          AND date(created_at, 'localtime') <= ?
+        GROUP BY day`,
+    )
+    .all(formatLocalDate(monthStart), formatLocalDate(monthEnd));
+
+  /** @type {Map<string, number>} */
+  const byDate = new Map();
+  for (const row of rows) {
+    const key = row && typeof row.day === 'string' ? row.day : '';
+    if (key === '') continue;
+    const words = Number(row.words);
+    // 展示口径：负数（净删字）按 0 处理，与 dailyWordCounts 保持一致。
+    byDate.set(key, Number.isFinite(words) ? Math.max(0, words) : 0);
+  }
+
+  const days = [];
+  let total = 0;
+  let activeDays = 0;
+  /** @type {{ date: string, words: number } | null} */
+  let bestDay = null;
+  for (let i = 1; i <= dayCount; i += 1) {
+    const key = formatLocalDate(new Date(year, monthIndex, i));
+    const words = byDate.get(key) ?? 0;
+    days.push({ date: key, words });
+    total += words;
+    if (words > 0) {
+      activeDays += 1;
+      if (bestDay === null || words > bestDay.words) bestDay = { date: key, words };
+    }
+  }
+
+  return { month: `${yearText}-${monthText}`, days, total, activeDays, bestDay };
+}
+
+/**
  * 读取每日目标字数；未设置或存的脏值时回落到默认 1000。
  * @returns {number}
  */

@@ -813,6 +813,134 @@ code {
   }
 }
 
+/* ------------------------------------------------------------------ *
+ * 写作日历增强段（今日目标状态 / 连续写作 / 月视图网格）
+ * 只新增类，不改变既有类语义。
+ * ------------------------------------------------------------------ */
+.cal-goal {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: #b45309;
+}
+
+.cal-goal.is-done {
+  color: #15803d;
+  font-weight: 600;
+}
+
+.cal-streak {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: var(--muted, #6b7280);
+}
+
+.cal-streak.is-active {
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.cal-month {
+  margin-top: 12px;
+  border-top: 1px solid rgba(148, 163, 184, 0.35);
+  padding-top: 10px;
+}
+
+.cal-month-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.cal-month-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.cal-month-head .cal-month-toggle,
+.cal-month-head .cal-month-nav {
+  padding: 0.15rem 0.5rem;
+  font-size: 0.8rem;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.cal-weekday {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--muted, #6b7280);
+  padding-bottom: 2px;
+}
+
+.cal-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  min-height: 46px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  font-size: 0.75rem;
+}
+
+.cal-cell.is-empty {
+  border-color: transparent;
+  background: transparent;
+}
+
+.cal-day-num {
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.cal-day-words {
+  font-size: 0.7rem;
+  opacity: 0.85;
+}
+
+/* 四级着色：0 / 1-499 / 500-999 / >=1000 */
+.cal-cell.cal-level-0 {
+  background: rgba(148, 163, 184, 0.12);
+  color: #6b7280;
+}
+
+.cal-cell.cal-level-1 {
+  background: rgba(96, 165, 250, 0.28);
+  color: #1e3a8a;
+}
+
+.cal-cell.cal-level-2 {
+  background: rgba(59, 130, 246, 0.55);
+  color: #0b1e46;
+}
+
+.cal-cell.cal-level-3 {
+  background: rgba(22, 163, 74, 0.72);
+  color: #ffffff;
+}
+
+.cal-month-sum {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 600px) {
+  .cal-cell {
+    min-height: 38px;
+    padding: 3px 4px;
+  }
+
+  .cal-day-words {
+    font-size: 0.65rem;
+  }
+}
+
 @media (max-width: 600px) {
   .editor-prefs-row {
     gap: 0.3rem;

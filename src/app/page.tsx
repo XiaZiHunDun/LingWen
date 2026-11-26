@@ -99,6 +99,13 @@ function readStats(payload: unknown): Stats | null {
   return { bookCount, chapterCount, totalWords, outlineCount, bibleCount };
 }
 
+/** 把 YYYY-MM 平移 offset 个月，返回同格式的月份字符串。 */
+function shiftMonthKey(month: string, offset: number): string {
+  const [yearText, monthText] = month.split('-');
+  const base = new Date(Number(yearText), Number(monthText) - 1 + offset, 1);
+  return `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}`;
+}
+
 export default function BookshelfPage() {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,10 +116,25 @@ export default function BookshelfPage() {
   const [dailyDays, setDailyDays] = useState<Array<{ date: string; words: number }>>([]);
   const [todayWords, setTodayWords] = useState(0);
   const [dailyGoal, setDailyGoalValue] = useState(1000);
+  // 连续写作天数使用 90 天窗口（dailyDays 只保留最近 14 天用于柱图）。
+  const [streakDays, setStreakDays] = useState<Array<{ date: string; words: number }>>([]);
+
+  // 月视图：是否展开、当前查看月份（YYYY-MM）、当月每日字数与汇总。
+  const [monthOpen, setMonthOpen] = useState(false);
+  const [month, setMonth] = useState<string>(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
+  const [monthDays, setMonthDays] = useState<Array<{ date: string; words: number }>>([]);
+  const [monthSummary, setMonthSummary] = useState<{
+    total: number;
+    activeDays: number;
+    bestDay: { date: string; words: number } | null;
+  } | null>(null);
 
   const loadDaily = useCallback(async (): Promise<void> => {
     try {
-      const res = await fetch('/api/stats/daily?days=14');
+      const res = await fetch('/api/stats/daily?days=90');
       if (!res.ok) return;
       const data: unknown = await res.json();
       if (data === null || typeof data !== 'object') return;
@@ -129,7 +151,8 @@ export default function BookshelfPage() {
           if (date !== '') parsed.push({ date, words });
         }
       }
-      setDailyDays(parsed);
+      setDailyDays(parsed.slice(-14));
+      setStreakDays(parsed);
       setTodayWords(
         typeof source.todayWords === 'number' && Number.isFinite(source.todayWords)
           ? source.todayWords
@@ -146,6 +169,60 @@ export default function BookshelfPage() {
   useEffect(() => {
     void loadDaily();
   }, [loadDaily]);
+
+  /** 拉取指定月份的每日字数（GET /api/stats/month?month=YYYY-MM）。 */
+  const loadMonth = useCallback(async (target: string): Promise<void> => {
+    try {
+      const res = await fetch(`/api/stats/month?month=${encodeURIComponent(target)}`);
+      if (!res.ok) {
+        setMonthDays([]);
+        setMonthSummary(null);
+        return;
+      }
+      const data: unknown = await res.json();
+      if (data === null || typeof data !== 'object') return;
+      const source = data as Record<string, unknown>;
+
+      const parsed: Array<{ date: string; words: number }> = [];
+      if (Array.isArray(source.days)) {
+        for (const item of source.days) {
+          if (item === null || typeof item !== 'object') continue;
+          const row = item as Record<string, unknown>;
+          const date = typeof row.date === 'string' ? row.date : '';
+          const words =
+            typeof row.words === 'number' && Number.isFinite(row.words) ? row.words : 0;
+          if (date !== '') parsed.push({ date, words });
+        }
+      }
+
+      let bestDay: { date: string; words: number } | null = null;
+      if (source.bestDay !== null && typeof source.bestDay === 'object') {
+        const row = source.bestDay as Record<string, unknown>;
+        const date = typeof row.date === 'string' ? row.date : '';
+        const words = typeof row.words === 'number' && Number.isFinite(row.words) ? row.words : 0;
+        if (date !== '') bestDay = { date, words };
+      }
+
+      setMonthDays(parsed);
+      setMonthSummary({
+        total: typeof source.total === 'number' && Number.isFinite(source.total) ? source.total : 0,
+        activeDays:
+          typeof source.activeDays === 'number' && Number.isFinite(source.activeDays)
+            ? source.activeDays
+            : 0,
+        bestDay,
+      });
+    } catch {
+      setMonthDays([]);
+      setMonthSummary(null);
+    }
+  }, []);
+
+  // 只有展开月视图时才请求当月数据，避免多余请求。
+  useEffect(() => {
+    if (!monthOpen) return;
+    void loadMonth(month);
+  }, [monthOpen, month, loadMonth]);
 
   // 点击「今日 / 目标」设置每日目标，成功后重新拉取日历数据。
   const handleSetGoal = useCallback(async (): Promise<void> => {
@@ -580,6 +657,22 @@ export default function BookshelfPage() {
             dailyGoal > 0
               ? Math.min(100, Math.max(0, Math.round((todayWords / dailyGoal) * 100)))
               : 0;
+          const goalReached = dailyGoal > 0 && todayWords >= dailyGoal;
+          const remaining = Math.max(0, dailyGoal - todayWords);
+          // 连续写作天数：今天为 0 则从昨天往前数，遇到 0 字那天即停止。
+          const streak = (() => {
+            let index = streakDays.length - 1;
+            if (index < 0) return 0;
+            if (streakDays[index].words <= 0) index -= 1;
+            let count = 0;
+            while (index >= 0 && streakDays[index].words > 0) {
+              count += 1;
+              index -= 1;
+            }
+            return count;
+          })();
+          // 月视图 7 列网格：按周一为一周起点补齐月初空格。
+          const monthLead = monthDays.length > 0 ? (new Date(`${month}-01T00:00:00`).getDay() + 6) % 7 : 0;
           return (
             <div style={{ marginTop: 10 }}>
               <button
@@ -617,6 +710,14 @@ export default function BookshelfPage() {
                   }}
                 />
               </div>
+              <p className={goalReached ? 'cal-goal is-done' : 'cal-goal'}>
+                {goalReached
+                  ? '今日目标已达成'
+                  : `还差 ${remaining.toLocaleString('zh-CN')} 字`}
+              </p>
+              <p className={streak > 0 ? 'cal-streak is-active' : 'cal-streak'}>
+                {streak > 0 ? `连续写作 ${streak} 天` : '今天还没动笔'}
+              </p>
               <div
                 style={{
                   display: 'flex',
@@ -647,6 +748,73 @@ export default function BookshelfPage() {
                     />
                   </div>
                 ))}
+              </div>
+              <div className="cal-month">
+                <div className="cal-month-head">
+                  <span className="cal-month-title">{month} 月视图</span>
+                  <button
+                    type="button"
+                    className="btn btn-ghost cal-month-toggle"
+                    onClick={() => setMonthOpen((prev) => !prev)}
+                  >
+                    {monthOpen ? '收起月视图' : '展开月视图'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost cal-month-nav"
+                    aria-label="上一月"
+                    onClick={() => setMonth((prev) => shiftMonthKey(prev, -1))}
+                  >
+                    ← 上一月
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost cal-month-nav"
+                    aria-label="下一月"
+                    onClick={() => setMonth((prev) => shiftMonthKey(prev, 1))}
+                  >
+                    下一月 →
+                  </button>
+                </div>
+                {monthOpen ? (
+                  <>
+                    <div className="cal-grid">
+                      {['一', '二', '三', '四', '五', '六', '日'].map((label) => (
+                        <div key={label} className="cal-weekday">
+                          周{label}
+                        </div>
+                      ))}
+                      {Array.from({ length: monthLead }, (_, i) => (
+                        <div key={`lead-${i}`} className="cal-cell is-empty" aria-hidden />
+                      ))}
+                      {monthDays.map((day) => {
+                        const level =
+                          day.words <= 0 ? 0 : day.words < 500 ? 1 : day.words < 1000 ? 2 : 3;
+                        return (
+                          <div
+                            key={day.date}
+                            className={`cal-cell cal-level-${level}`}
+                            title={`${day.date}：${day.words.toLocaleString('zh-CN')} 字`}
+                          >
+                            <span className="cal-day-num">{Number(day.date.slice(-2))}</span>
+                            <span className="cal-day-words">
+                              {day.words.toLocaleString('zh-CN')}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {monthSummary !== null ? (
+                      <p className="muted cal-month-sum">
+                        本月合计 {monthSummary.total.toLocaleString('zh-CN')} 字 · 写作{' '}
+                        {monthSummary.activeDays} 天
+                        {monthSummary.bestDay !== null
+                          ? ` · 最佳 ${monthSummary.bestDay.date.slice(5)}（${monthSummary.bestDay.words.toLocaleString('zh-CN')} 字）`
+                          : ''}
+                      </p>
+                    ) : null}
+                  </>
+                ) : null}
               </div>
             </div>
           );
