@@ -274,6 +274,13 @@ export default function BookDetailPage() {
   const [mode, setMode] = useState<GenerateMode>('append');
   const [genRunning, setGenRunning] = useState(false);
 
+  // 一键续写接下来 N 章：章节数输入、运行中标记、当前章节进度、错误、中止句柄。
+  const [batchCount, setBatchCount] = useState('1');
+  const [batchRunning, setBatchRunning] = useState(false);
+  const [batchProgress, setBatchProgress] = useState<{ title: string; chars: number } | null>(null);
+  const [batchError, setBatchError] = useState<string | null>(null);
+  const batchAbort = useRef<AbortController | null>(null);
+
   // 章节润色（流式预览 → 应用 → 撤销）
   const [polishMode, setPolishMode] = useState<'polish' | 'condense' | 'expand'>('polish');
   const [polishInstruction, setPolishInstruction] = useState('');
@@ -337,6 +344,7 @@ export default function BookDetailPage() {
     () => () => {
       if (noticeTimer.current !== null) window.clearTimeout(noticeTimer.current);
       generateAbort.current?.abort();
+      batchAbort.current?.abort();
     },
     [],
   );
@@ -1036,9 +1044,131 @@ export default function BookDetailPage() {
     generateAbort.current?.abort();
   };
 
+  // 一键续写的 NDJSON 事件（与 generate-batch 路由输出一一对应）。
+  type BatchEvent =
+    | { type: 'start'; chapterId: number; title: string }
+    | { type: 'delta'; chapterId: number; text: string }
+    | { type: 'chapter-done'; chapterId: number; wordCount: number }
+    | { type: 'done'; created: number; reason?: string }
+    | { type: 'error'; message: string };
+
+  /** 取消一键续写：中止流读取，已生成并落库的章节保留。 */
+  const handleCancelBatch = () => {
+    batchAbort.current?.abort();
+  };
+
+  // 一键续写接下来 N 章：POST /api/books/[id]/chapters/generate-batch，按 NDJSON 行解析事件。
+  const handleGenerateBatch = async () => {
+    if (batchRunning) return;
+    const parsedCount = Number(batchCount);
+    const count =
+      Number.isFinite(parsedCount) && parsedCount > 0
+        ? Math.min(5, Math.max(1, Math.round(parsedCount)))
+        : 1;
+
+    const controller = new AbortController();
+    batchAbort.current = controller;
+    setBatchRunning(true);
+    setBatchError(null);
+    setBatchProgress(null);
+
+    let buffer = '';
+    let createdTotal = 0;
+    // abort 后 reader.read() 往往以 { done: true } 正常结束而不抛错，
+    // 因此额外记录“取消已提示”标记，保证取消提示只出现一次。
+    let cancelNotified = false;
+
+    try {
+      const res = await fetch(`/api/books/${bookId}/chapters/generate-batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ count }),
+        signal: controller.signal,
+      });
+      if (!res.ok) throw new Error(await readErrorMessage(res));
+
+      const reader = res.body?.getReader();
+      if (reader !== undefined) {
+        const decoder = new TextDecoder();
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          if (value === undefined) continue;
+          buffer += decoder.decode(value, { stream: true });
+          const parts = buffer.split('\n');
+          buffer = parts.pop() ?? '';
+          for (const part of parts) {
+            const line = part.trim();
+            if (line === '') continue;
+            let event: BatchEvent;
+            try {
+              event = JSON.parse(line) as BatchEvent;
+            } catch {
+              continue;
+            }
+            if (event.type === 'start') {
+              setBatchProgress({ title: event.title, chars: 0 });
+            } else if (event.type === 'delta') {
+              const chars = event.text.replace(/\s/g, '').length;
+              setBatchProgress((prev) =>
+                prev === null ? prev : { ...prev, chars: prev.chars + chars },
+              );
+            } else if (event.type === 'chapter-done') {
+              createdTotal += 1;
+              setBatchProgress((prev) =>
+                prev === null ? prev : { ...prev, chars: event.wordCount },
+              );
+            } else if (event.type === 'error') {
+              // 用户已主动取消时不要再写入错误态，统一由取消提示兜底。
+              if (!controller.signal.aborted) setBatchError(event.message);
+            } else if (event.type === 'done') {
+              createdTotal = event.created;
+              if (event.created === 0 && event.reason !== undefined) {
+                showNotice(event.reason);
+              }
+            }
+          }
+        }
+      }
+
+      if (controller.signal.aborted) {
+        // 用户主动取消：abort 后读取循环通常会以 { done: true } 正常结束（不抛错），
+        // 所以必须在循环结束后显式判断取消状态，否则取消提示永远不会出现。
+        // 用 cancelNotified 去重，保证同一轮取消只弹一次提示。
+        if (!cancelNotified) {
+          cancelNotified = true;
+          await refreshChapters();
+          showNotice('已取消续写（已生成的章节已保存）');
+        }
+        return;
+      }
+
+      await refreshChapters();
+      if (createdTotal > 0) showNotice(`一键续写完成，共 ${createdTotal} 章`);
+    } catch (err) {
+      if (controller.signal.aborted || isAbortError(err)) {
+        // 兜底：取消时 reader.read()/fetch 可能抛 TypeError: Failed to fetch（并非 AbortError），
+        // 因此以 signal.aborted 作为主判据；cancelNotified 保证同一轮取消只提示一次。
+        if (!cancelNotified) {
+          cancelNotified = true;
+          // 用户主动取消：已生成的章节已在服务端落库，刷新列表即可看到。
+          await refreshChapters();
+          showNotice('已取消续写（已生成的章节已保存）');
+        }
+      } else {
+        setBatchError(toMessage(err));
+      }
+    } finally {
+      if (batchAbort.current === controller) batchAbort.current = null;
+      setBatchRunning(false);
+      setBatchProgress(null);
+    }
+  };
+
   // AI 生成正文：流式读取，边收边写进编辑区；结束后回读章节同步字数与列表。
   const handleGenerateChapter = async () => {
-    if (selectedChapter === null) return;
+    // 一键续写进行中时禁止单章生成，避免并发写同一本书。
+    if (selectedChapter === null || batchRunning) return;
     const chapterId = selectedChapter.id;
     const parsedWords = Number(targetWords);
     const body = {
@@ -1446,6 +1576,7 @@ export default function BookDetailPage() {
 
   return (
     <div className="workspace">
+      {notice !== null ? <div className="notice">{notice}</div> : null}
       <div className="toolbar">
         <div className="stack" style={{ gap: '0.35rem' }}>
           <Link href="/">我的书架</Link>
@@ -1596,6 +1727,49 @@ export default function BookDetailPage() {
           }`}
         >
           <h2>大纲</h2>
+          <div className="outline-item stack">
+            <div className="outline-row">
+              <div className="outline-main">一键续写接下来</div>
+              <div className="outline-actions">
+                <input
+                  type="number"
+                  className="input"
+                  style={{ maxWidth: '80px' }}
+                  min={1}
+                  max={5}
+                  step={1}
+                  aria-label="一键续写的章节数（1-5）"
+                  value={batchCount}
+                  disabled={batchRunning}
+                  onChange={(event) => setBatchCount(event.target.value)}
+                />
+                <span className="muted">章</span>
+                {batchRunning ? (
+                  <button type="button" className="btn btn-ghost" onClick={handleCancelBatch}>
+                    取消
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => {
+                      void handleGenerateBatch();
+                    }}
+                  >
+                    开始续写
+                  </button>
+                )}
+              </div>
+            </div>
+            {batchRunning ? (
+              <p className="muted">
+                {batchProgress === null || batchProgress.title === ''
+                  ? '续写中…'
+                  : `正在续写：${batchProgress.title}（已生成约 ${batchProgress.chars} 字）`}
+              </p>
+            ) : null}
+            {batchError !== null ? <p className="muted">续写出错：{batchError}</p> : null}
+          </div>
           {outlineRows.length === 0 ? (
             <p className="empty">还没有大纲</p>
           ) : (
@@ -1723,7 +1897,7 @@ export default function BookDetailPage() {
             onClick={() => {
               void handleBatchCreateFromOutline();
             }}
-            disabled={selectedOutlineIds.size === 0 || batchBusy}
+            disabled={selectedOutlineIds.size === 0 || batchBusy || batchRunning}
           >
             {batchBusy ? '处理中…' : `批量建章（已选 ${selectedOutlineIds.size}）`}
           </button>
@@ -1746,7 +1920,7 @@ export default function BookDetailPage() {
               onClick={() => {
                 void handleBatchDeleteChapters();
               }}
-              disabled={selectedChapterIds.size === 0 || batchBusy}
+              disabled={selectedChapterIds.size === 0 || batchBusy || batchRunning}
             >
               {batchBusy ? '处理中…' : `批量删除（已选 ${selectedChapterIds.size}）`}
             </button>
@@ -1933,8 +2107,6 @@ export default function BookDetailPage() {
                   {saving ? '保存中…' : '保存'}
                 </button>
               </div>
-              {notice !== null ? <div className="notice">{notice}</div> : null}
-
               <div className="stack">
                 <div className="toolbar" style={{ justifyContent: 'flex-start' }}>
                   <button
@@ -2113,7 +2285,7 @@ export default function BookDetailPage() {
                       void handleGenerateChapter();
                     }
                   }}
-                  disabled={reviewing}
+                  disabled={reviewing || batchRunning}
                 >
                   {genRunning ? '停止' : '生成'}
                 </button>
