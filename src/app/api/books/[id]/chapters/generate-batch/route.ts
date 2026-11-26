@@ -76,6 +76,19 @@ function clampCount(value: unknown): number {
   return Math.min(MAX_BATCH_COUNT, Math.max(MIN_BATCH_COUNT, rounded));
 }
 
+/**
+ * 判断是否为「响应流已关闭 / 已中止」类异常。
+ * 客户端断开后往流里写会抛这些（Next/Node 侧文案不统一），一律视为正常断开、静默吞掉。
+ */
+function isStreamClosedError(err: unknown): boolean {
+  if (err === null || err === undefined) return false;
+  if (typeof err === 'object' && (err as { name?: unknown }).name === 'AbortError') return true;
+  const message = err instanceof Error ? err.message : String(err);
+  return /ERR_INVALID_STATE|ERR_STREAM_WRITE_AFTER_END|Controller is already closed|already closed/i.test(
+    message,
+  );
+}
+
 /** 取已有章节里最大的 seq（没有则 0），用于自动生成新 seq。 */
 function maxSeq(rows: Array<Record<string, unknown>>): number {
   let max = 0;
@@ -244,11 +257,43 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const encoder = new TextEncoder();
     const encodeLine = (event: Record<string, unknown>): Uint8Array =>
       encoder.encode(`${JSON.stringify(event)}\n`);
-    const abortSignal = req.signal;
+
+    // 断开信号汇聚：req.signal abort 或响应流被 cancel，任一发生即视为客户端已走。
+    // 用内部 AbortController，既能同步给上游 LLM 流式请求，也能被 cancel() 触发。
+    const goneController = new AbortController();
+    const goneSignal = goneController.signal;
+    const markGone = (): void => {
+      if (!goneSignal.aborted) goneController.abort();
+    };
+    if (req.signal.aborted) {
+      markGone();
+    } else {
+      req.signal.addEventListener('abort', markGone, { once: true });
+    }
 
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
         let created = 0;
+        // 客户端已断开（signal abort 或写流失败）：此后不写任何事件、不再开新章。
+        let clientGone = false;
+
+        /** 写一条事件：断开 / 流已关闭时静默返回 false，绝不抛出。 */
+        const send = (event: Record<string, unknown>): boolean => {
+          // 每次写事件前先查断开信号（req.signal 或响应流被 cancel），断开后不再写任何事件。
+          if (clientGone || req.signal.aborted || goneSignal.aborted) {
+            clientGone = true;
+            return false;
+          }
+          try {
+            controller.enqueue(encodeLine(event));
+            return true;
+          } catch {
+            // 例如 Controller is already closed / ERR_INVALID_STATE / ERR_STREAM_WRITE_AFTER_END。
+            clientGone = true;
+            return false;
+          }
+        };
+
         try {
           const pending = pickPendingOutlines(
             listOutlines(bookId) as Array<Record<string, unknown>>,
@@ -257,16 +302,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
           );
 
           if (pending.length === 0) {
-            controller.enqueue(encodeLine({ type: 'done', created: 0, reason: '没有待续写的大纲' }));
-            controller.close();
+            send({ type: 'done', created: 0, reason: '没有待续写的大纲' });
             return;
           }
 
           const bible = listBible(bookId) as Array<Record<string, unknown>>;
 
           for (const outline of pending) {
-            // 客户端已断开：不再开新章。
-            if (abortSignal.aborted) break;
+            // 客户端已断开：不再开新章，直接结束整批。
+            if (clientGone || goneSignal.aborted) {
+              clientGone = true;
+              break;
+            }
 
             // 1) 按 createChapter 语义建空章（seq 递增，正文空串，wordCount 由表默认 0 兜底）。
             const chaptersNow = listChapters(bookId) as Array<Record<string, unknown>>;
@@ -285,14 +332,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
               chapterId = null;
             }
             if (chapterId === null) {
-              controller.enqueue(encodeLine({ type: 'error', message: '创建章节失败' }));
+              if (!send({ type: 'error', message: '创建章节失败' })) break;
               continue;
             }
 
             const chapterTitle = outline.title !== '' ? outline.title : `第 ${chapterId} 章`;
-            controller.enqueue(
-              encodeLine({ type: 'start', chapterId, title: chapterTitle }),
-            );
+            if (!send({ type: 'start', chapterId, title: chapterTitle })) break;
 
             // 2) 组装 prompt（提示词口径与单章 generate 路由一致）。
             const afterCreate = listChapters(bookId) as Array<Record<string, unknown>>;
@@ -317,20 +362,27 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
                 ],
                 temperature: 0.9,
                 maxTokens: estimateMaxTokens(targetWords),
+                // 客户端断开（goneSignal abort）时尽快中止上游 LLM 请求。
+                signal: goneSignal,
               })) {
                 if (delta === '') continue;
                 accumulated += delta;
-                controller.enqueue(encodeLine({ type: 'delta', chapterId, text: delta }));
-                // 用户取消：停止本章剩余生成（已生成部分照常落库）。
-                if (abortSignal.aborted) break;
+                // 用户取消 / 写流失败：立刻停止本章剩余生成（已生成部分照常落库）。
+                if (!send({ type: 'delta', chapterId, text: delta })) break;
+                if (goneSignal.aborted) break;
               }
             } catch (err) {
-              llmError =
-                err instanceof LlmError
-                  ? err.message
-                  : err instanceof Error
+              if (goneSignal.aborted || isStreamClosedError(err)) {
+                // 客户端断开导致的中止 / 流已关闭：静默处理，不算 LLM 失败、不写事件。
+                clientGone = true;
+              } else {
+                llmError =
+                  err instanceof LlmError
                     ? err.message
-                    : String(err);
+                    : err instanceof Error
+                      ? err.message
+                      : String(err);
+              }
             }
 
             // 4) 落库：content + wordCount（失败也不影响已发出的流）。
@@ -357,28 +409,38 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
               }
             }
 
-            controller.enqueue(encodeLine({ type: 'chapter-done', chapterId, wordCount }));
+            // 本章已落库：即使随后发现客户端已断开，也保留已写入内容（不删章）。
             created += 1;
+            if (!send({ type: 'chapter-done', chapterId, wordCount })) break;
 
             if (llmError !== null) {
-              controller.enqueue(encodeLine({ type: 'error', message: llmError }));
+              send({ type: 'error', message: llmError });
               break;
             }
-            if (abortSignal.aborted) break;
+            if (clientGone || goneSignal.aborted) {
+              clientGone = true;
+              break;
+            }
           }
 
-          controller.enqueue(encodeLine({ type: 'done', created }));
+          send({ type: 'done', created });
         } catch (err) {
-          controller.enqueue(
-            encodeLine({
-              type: 'error',
-              message: err instanceof Error ? err.message : String(err),
-            }),
-          );
-          controller.enqueue(encodeLine({ type: 'done', created }));
+          // 兜底：流已关闭类异常静默吞掉；其它异常仍尽量上报一条 error + done。
+          if (!isStreamClosedError(err)) {
+            send({ type: 'error', message: err instanceof Error ? err.message : String(err) });
+            send({ type: 'done', created });
+          }
         } finally {
-          controller.close();
+          try {
+            controller.close();
+          } catch {
+            // 客户端已断开（Controller is already closed / ERR_INVALID_STATE）：忽略。
+          }
         }
+      },
+      cancel() {
+        // 消费端（客户端）断开：立刻中止当前章生成，不再创建后续章节。
+        markGone();
       },
     });
 

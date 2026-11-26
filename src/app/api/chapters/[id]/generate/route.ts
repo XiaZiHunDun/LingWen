@@ -224,6 +224,25 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
+        // 客户端断开（req.signal abort）或流已关闭：此后不再写任何一段，直接结束。
+        let clientGone = req.signal.aborted;
+
+        /** 写一段正文：断开 / 流已关闭时静默返回 false，绝不抛出。 */
+        const write = (text: string): boolean => {
+          if (clientGone || req.signal.aborted) {
+            clientGone = true;
+            return false;
+          }
+          try {
+            controller.enqueue(encoder.encode(text));
+            return true;
+          } catch {
+            // Controller is already closed / ERR_INVALID_STATE / ERR_STREAM_WRITE_AFTER_END。
+            clientGone = true;
+            return false;
+          }
+        };
+
         try {
           for await (const delta of chatStream({
             messages: [
@@ -232,10 +251,16 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             ],
             temperature: 0.9,
             maxTokens: estimateMaxTokens(programTargetWords),
+            // 客户端断开时尽快中止上游 LLM 请求。
+            signal: req.signal,
           })) {
             if (delta === '') continue;
             accumulated += delta;
-            controller.enqueue(encoder.encode(delta));
+            if (!write(delta)) break;
+            if (req.signal.aborted) {
+              clientGone = true;
+              break;
+            }
           }
 
           // 落库 + 记日志：任何失败都吞掉，不影响已经发出的流。
@@ -273,9 +298,26 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
               : err instanceof Error
                 ? err.message
                 : String(err);
-          controller.enqueue(encoder.encode(`\n[生成中断] ${message}`));
+          // 客户端断开 / 流已关闭类异常：静默吞掉，不算生成失败、也不再往流里写。
+          const aborted =
+            req.signal.aborted ||
+            (typeof err === 'object' &&
+              err !== null &&
+              (err as { name?: unknown }).name === 'AbortError') ||
+            /ERR_INVALID_STATE|ERR_STREAM_WRITE_AFTER_END|Controller is already closed|already closed/i.test(
+              message,
+            );
+          if (aborted) {
+            clientGone = true;
+          } else {
+            write(`\n[生成中断] ${message}`);
+          }
         } finally {
-          controller.close();
+          try {
+            controller.close();
+          } catch {
+            // 客户端已断开（Controller is already closed / ERR_INVALID_STATE）：忽略。
+          }
         }
       },
     });

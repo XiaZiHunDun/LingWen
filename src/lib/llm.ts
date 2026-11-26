@@ -128,28 +128,54 @@ export async function* chatStream(options: ChatOptions): AsyncGenerator<string, 
   const decoder = new TextDecoder();
   let buffer = '';
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
+  // 客户端断开（signal abort）时尽快释放上游连接：cancel 掉 body 读取，别继续消耗 token。
+  let onAbort: (() => void) | undefined;
+  if (signal !== undefined) {
+    if (signal.aborted) {
+      await reader.cancel().catch(() => {});
+      return;
+    }
+    onAbort = (): void => {
+      void reader.cancel().catch(() => {});
+    };
+    signal.addEventListener('abort', onAbort, { once: true });
+  }
 
-    const lines = buffer.split('\n');
-    buffer = lines.pop() ?? '';
+  try {
+    while (true) {
+      // 兜底：调用方没传 signal（或运行时未透传）时，每个 chunk 前也检查一次，断开即提前返回。
+      if (signal?.aborted === true) return;
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
 
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed.startsWith('data:')) continue;
-      const payload = trimmed.slice(5).trim();
-      if (payload === '[DONE]') return;
-      try {
-        const json = JSON.parse(payload) as {
-          choices?: Array<{ delta?: { content?: string | null } }>;
-        };
-        const delta = json.choices?.[0]?.delta?.content;
-        if (delta) yield delta;
-      } catch {
-        // 忽略不完整的片段
+      const lines = buffer.split('\n');
+      buffer = lines.pop() ?? '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith('data:')) continue;
+        const payload = trimmed.slice(5).trim();
+        if (payload === '[DONE]') return;
+        try {
+          const json = JSON.parse(payload) as {
+            choices?: Array<{ delta?: { content?: string | null } }>;
+          };
+          const delta = json.choices?.[0]?.delta?.content;
+          if (delta) yield delta;
+        } catch {
+          // 忽略不完整的片段
+        }
       }
+    }
+  } finally {
+    if (signal !== undefined && onAbort !== undefined) {
+      signal.removeEventListener('abort', onAbort);
+    }
+    try {
+      reader.releaseLock();
+    } catch {
+      // 读取器已释放 / 已取消：忽略。
     }
   }
 }
