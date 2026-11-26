@@ -960,3 +960,65 @@ code {
     min-height: 200px;
   }
 }
+
+/* ===== 编辑器状态栏 ===== */
+.editor-statusbar {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-top: 0.25rem;
+  padding: 0.45rem 0.6rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.02);
+  font-size: 0.8rem;
+  color: var(--muted, #64748b);
+}
+
+.editor-statusbar-item {
+  white-space: nowrap;
+}
+
+.editor-statusbar-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.editor-statusbar-dot {
+  flex-shrink: 0;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.editor-statusbar-save-saved {
+  color: #15803d;
+}
+
+.editor-statusbar-save-unsaved {
+  color: #b45309;
+}
+
+.editor-statusbar-save-saving {
+  color: #1d4ed8;
+}
+
+.editor-statusbar-save-error {
+  color: #b91c1c;
+}
+
+@media (max-width: 600px) {
+  .editor-statusbar {
+    gap: 0.35rem 0.5rem;
+    font-size: 0.78rem;
+  }
+
+  .editor-statusbar-save {
+    margin-left: 0;
+  }
+}

@@ -240,6 +240,30 @@ export default function BookDetailPage() {
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const selectedIdRef = useRef<number | null>(null);
   const [autoSave, setAutoSave] = useState<AutoSaveState>({ status: 'idle' });
+  // 底部状态栏：保存状态埋点（与现有自动保存 / 手动保存共用同一入口）+ 选区字数。
+  const [saveState, setSaveState] = useState<'saved' | 'unsaved' | 'saving' | 'error'>('saved');
+  /** 最近一次章节保存成功的时间（HH:MM:SS），null 表示本次会话尚未保存过。独立于 autoSave，仅用于编辑器顶部只读小字。 */
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  const [selectionCount, setSelectionCount] = useState(0);
+  const editorTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const saveStateLabel =
+    saveState === 'saved'
+      ? '已保存'
+      : saveState === 'unsaved'
+        ? '未保存'
+        : saveState === 'saving'
+          ? '保存中'
+          : '保存失败';
+  // 选区字数与 charCount 同一口径：去掉空白后按字符计数。
+  const syncSelectionCount = (textarea: HTMLTextAreaElement): void => {
+    const start = textarea.selectionStart ?? 0;
+    const end = textarea.selectionEnd ?? 0;
+    if (end <= start) {
+      setSelectionCount(0);
+      return;
+    }
+    setSelectionCount(textarea.value.slice(start, end).replace(/\s/g, '').length);
+  };
 
   // 章节历史版本：面板展开状态、版本列表、当前预览详情、加载/恢复进行中。
   const [showRevisions, setShowRevisions] = useState(false);
@@ -468,6 +492,7 @@ export default function BookDetailPage() {
       const content = editContent;
 
       const run = async (): Promise<void> => {
+        setSaveState('saving');
         if (silent) {
           setAutoSave({ status: 'saving' });
         } else {
@@ -481,6 +506,9 @@ export default function BookDetailPage() {
             body: JSON.stringify({ title, content }),
           });
           if (!res.ok) throw new Error(await readErrorMessage(res));
+          setSaveState('saved');
+          // 手动保存与静默自动保存共用此成功分支，两条路径都要刷新「最后保存」时间。
+          setLastSavedAt(formatClockTime(new Date()));
           await refreshChapters();
           if (selectedIdRef.current !== chapterId) return;
           savedChapterRef.current = { title, content };
@@ -491,6 +519,7 @@ export default function BookDetailPage() {
           }
         } catch (err) {
           const message = toMessage(err);
+          setSaveState('error');
           if (silent) {
             setAutoSave({ status: 'error', message });
           } else {
@@ -2021,6 +2050,10 @@ export default function BookDetailPage() {
             editorPrefs.focusMode ? 'panel-focus-visible' : panelClassName('editor')
           }`}
         >
+          {/* 编辑器区域最顶部：最近一次保存成功的只读小字（未保存过时不显示「最后保存」前缀）。 */}
+          <p className="text-xs text-gray-500" aria-live="polite">
+            {lastSavedAt === null ? '尚未保存' : `最后保存：${lastSavedAt}`}
+          </p>
           <div className="editor-prefs" role="group" aria-label="排版">
             <div className="editor-prefs-row">
               <span className="editor-prefs-label">字号</span>
@@ -2083,8 +2116,17 @@ export default function BookDetailPage() {
                 className="textarea editor-textarea"
                 rows={18}
                 style={{ fontSize: `${editorPrefs.fontSize}px`, lineHeight: editorPrefs.lineHeight }}
+                ref={editorTextareaRef}
                 value={editContent}
-                onChange={(event) => setEditContent(event.target.value)}
+                onChange={(event) => {
+                  setEditContent(event.target.value);
+                  setSaveState('unsaved');
+                  // 受控 textarea：onChange 后立刻读一次 selection，避免选区字数滞后。
+                  syncSelectionCount(event.currentTarget);
+                }}
+                onSelect={(event) => syncSelectionCount(event.currentTarget)}
+                onKeyUp={(event) => syncSelectionCount(event.currentTarget)}
+                onMouseUp={(event) => syncSelectionCount(event.currentTarget)}
                 aria-label="章节正文"
               />
               <div className="toolbar">
@@ -2289,6 +2331,16 @@ export default function BookDetailPage() {
                 >
                   {genRunning ? '停止' : '生成'}
                 </button>
+              </div>
+              <div className="editor-statusbar" role="status" aria-live="polite">
+                <span className="editor-statusbar-item">本章 {charCount} 字</span>
+                {selectionCount > 0 ? (
+                  <span className="editor-statusbar-item">已选 {selectionCount} 字</span>
+                ) : null}
+                <span className={`editor-statusbar-save editor-statusbar-save-${saveState}`}>
+                  <span className="editor-statusbar-dot" aria-hidden="true" />
+                  {saveStateLabel}
+                </span>
               </div>
             </>
           )}

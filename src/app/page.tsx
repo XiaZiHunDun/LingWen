@@ -922,6 +922,10 @@ export default function BookshelfPage() {
           </div>
         )}
       </section>
+
+      <p className="muted" style={{ marginTop: 16, textAlign: 'center', fontSize: 12 }}>
+        LingWen v0.1.0
+      </p>
     </>
   );
 }
