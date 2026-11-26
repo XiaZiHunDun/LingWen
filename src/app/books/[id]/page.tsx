@@ -194,6 +194,86 @@ function revisionSourceLabel(source: string): string {
   return REVISION_SOURCE_LABELS[source] ?? source;
 }
 
+/** 对比时单侧最多比较的行数（超出只对比前 N 行并提示）。 */
+const DIFF_LINE_LIMIT = 2000;
+
+/** 对齐后的单行：left/right 为 null 表示该侧渲染占位行（保证左右行严格对齐）。 */
+interface DiffAlignRow {
+  left: string | null;
+  right: string | null;
+  kind: 'same' | 'del' | 'add';
+}
+
+/** 正文 → 行数组：统一换行符，丢掉末尾多余的空行。 */
+function splitDiffLines(text: string): string[] {
+  const normalized = text.replace(/\r\n?/g, '\n');
+  if (normalized === '') return [];
+  const lines = normalized.split('\n');
+  if (lines.length > 1 && lines[lines.length - 1] === '') lines.pop();
+  return lines;
+}
+
+/**
+ * 手写行级 LCS diff（不引第三方库）：
+ * dp[i][j] = left[i:] 与 right[j:] 的最长公共子序列长度，
+ * 再从左上回溯产出对齐行序列：删除行只出左边、新增行只出右边，另一侧为 null 占位。
+ * 任一版本超过 limit 行时只比较前 limit 行，并回传 truncated 供 UI 提示。
+ */
+function diffLines(
+  leftText: string,
+  rightText: string,
+  limit: number = DIFF_LINE_LIMIT,
+): { rows: DiffAlignRow[]; added: number; removed: number; truncated: boolean } {
+  const leftAll = splitDiffLines(leftText);
+  const rightAll = splitDiffLines(rightText);
+  const truncated = leftAll.length > limit || rightAll.length > limit;
+  const left = truncated ? leftAll.slice(0, limit) : leftAll;
+  const right = truncated ? rightAll.slice(0, limit) : rightAll;
+  const n = left.length;
+  const m = right.length;
+  const width = m + 1;
+  const dp = new Uint32Array((n + 1) * width);
+  for (let i = n - 1; i >= 0; i -= 1) {
+    for (let j = m - 1; j >= 0; j -= 1) {
+      dp[i * width + j] =
+        left[i] === right[j]
+          ? dp[(i + 1) * width + j + 1] + 1
+          : Math.max(dp[(i + 1) * width + j], dp[i * width + j + 1]);
+    }
+  }
+  const rows: DiffAlignRow[] = [];
+  let added = 0;
+  let removed = 0;
+  let i = 0;
+  let j = 0;
+  while (i < n && j < m) {
+    if (left[i] === right[j]) {
+      rows.push({ left: left[i], right: right[j], kind: 'same' });
+      i += 1;
+      j += 1;
+    } else if (dp[(i + 1) * width + j] >= dp[i * width + j + 1]) {
+      rows.push({ left: left[i], right: null, kind: 'del' });
+      removed += 1;
+      i += 1;
+    } else {
+      rows.push({ left: null, right: right[j], kind: 'add' });
+      added += 1;
+      j += 1;
+    }
+  }
+  while (i < n) {
+    rows.push({ left: left[i], right: null, kind: 'del' });
+    removed += 1;
+    i += 1;
+  }
+  while (j < m) {
+    rows.push({ left: null, right: right[j], kind: 'add' });
+    added += 1;
+    j += 1;
+  }
+  return { rows, added, removed, truncated };
+}
+
 /** 版本时间：库里存 UTC 'YYYY-MM-DD HH:MM:SS'，展示成本地 MM-DD HH:mm。 */
 function formatRevisionTime(value: string): string {
   const matched = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/.exec(value.trim());
@@ -271,6 +351,8 @@ export default function BookDetailPage() {
   const [revisionPreview, setRevisionPreview] = useState<ChapterRevisionDetail | null>(null);
   const [revisionsLoading, setRevisionsLoading] = useState(false);
   const [restoringRevisionId, setRestoringRevisionId] = useState<string | null>(null);
+  // 是否处于「与当前正文对比」并排视图（仅前端口径，不落库）。
+  const [revisionCompare, setRevisionCompare] = useState(false);
 
   // 大纲：可编辑行 + 当前展开编辑的行 key 与草稿
   const [outlineRows, setOutlineRows] = useState<OutlineRow[]>([]);
@@ -1401,6 +1483,7 @@ export default function BookDetailPage() {
       );
       if (selectedIdRef.current !== chapterId) return;
       setRevisionPreview(data.revision);
+      setRevisionCompare(false);
     } catch (err) {
       setActionError(toMessage(err));
     }
@@ -1434,6 +1517,7 @@ export default function BookDetailPage() {
       savedChapterRef.current = { title: nextTitle, content: nextContent };
       setAutoSave({ status: 'saved', at: formatClockTime(new Date()) });
       setRevisionPreview(null);
+      setRevisionCompare(false);
       showNotice('已恢复历史版本');
       await loadRevisions();
       await refreshChapters();
@@ -2250,18 +2334,84 @@ export default function BookDetailPage() {
                         <button
                           type="button"
                           className="btn"
-                          onClick={() => setRevisionPreview(null)}
+                          onClick={() => {
+                            setRevisionCompare(false);
+                            setRevisionPreview(null);
+                          }}
                         >
                           关闭预览
                         </button>
                       </div>
-                      <textarea
-                        className="textarea"
-                        rows={12}
-                        readOnly
-                        value={revisionPreview.content ?? ''}
-                        aria-label="历史版本正文预览"
-                      />
+                      {revisionCompare ? (
+                        (() => {
+                          // 右栏取编辑器当前 content state（含未保存改动）。
+                          const diff = diffLines(revisionPreview.content ?? '', editContent);
+                          return (
+                            <div className="stack diff-compare">
+                              <div className="toolbar diff-compare-head">
+                                <span className="muted">左：历史版本 · 右：当前正文</span>
+                                <span className="diff-stats">
+                                  <span className="diff-stat-add">+{diff.added} 行</span>
+                                  <span className="diff-stat-del">-{diff.removed} 行</span>
+                                  {diff.truncated ? (
+                                    <span className="muted">仅对比前 {DIFF_LINE_LIMIT} 行</span>
+                                  ) : null}
+                                </span>
+                              </div>
+                              <div className="diff-columns">
+                                <div className="diff-col" aria-label="历史版本正文对比栏">
+                                  {diff.rows.map((row, index) => (
+                                    <div
+                                      key={`diff-left-${index}`}
+                                      className={
+                                        row.kind === 'del'
+                                          ? 'diff-line diff-del'
+                                          : row.left === null
+                                            ? 'diff-line diff-line-empty'
+                                            : 'diff-line'
+                                      }
+                                    >
+                                      {row.left === null
+                                        ? '\u00a0'
+                                        : row.left === ''
+                                          ? '\u00a0'
+                                          : row.left}
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className="diff-col" aria-label="当前正文对比栏">
+                                  {diff.rows.map((row, index) => (
+                                    <div
+                                      key={`diff-right-${index}`}
+                                      className={
+                                        row.kind === 'add'
+                                          ? 'diff-line diff-add'
+                                          : row.right === null
+                                            ? 'diff-line diff-line-empty'
+                                            : 'diff-line'
+                                      }
+                                    >
+                                      {row.right === null
+                                        ? '\u00a0'
+                                        : row.right === ''
+                                          ? '\u00a0'
+                                          : row.right}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()
+                      ) : (
+                        <textarea
+                          className="textarea"
+                          rows={12}
+                          readOnly
+                          value={revisionPreview.content ?? ''}
+                          aria-label="历史版本正文预览"
+                        />
+                      )}
                       <div className="toolbar" style={{ justifyContent: 'flex-start' }}>
                         <button
                           type="button"
@@ -2272,6 +2422,14 @@ export default function BookDetailPage() {
                           disabled={restoringRevisionId !== null}
                         >
                           {restoringRevisionId === revisionPreview.id ? '恢复中…' : '恢复此版本'}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn"
+                          aria-pressed={revisionCompare}
+                          onClick={() => setRevisionCompare((prev) => !prev)}
+                        >
+                          {revisionCompare ? '退出对比' : '对比当前'}
                         </button>
                       </div>
                     </div>

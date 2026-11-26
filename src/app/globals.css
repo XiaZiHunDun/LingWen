@@ -961,6 +961,94 @@ code {
   }
 }
 
+/* ===== 历史版本 ↔ 当前正文 行级对比 ===== */
+.diff-compare {
+  gap: 0.5rem;
+}
+
+.diff-compare-head {
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem 0.75rem;
+}
+
+.diff-stats {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.diff-stat-add {
+  color: #15803d;
+}
+
+.diff-stat-del {
+  color: #b91c1c;
+}
+
+/* 左右两栏等高、各自纵向滚动 */
+.diff-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+.diff-col {
+  height: 24rem;
+  max-height: 24rem;
+  overflow: auto;
+  padding: 0.35rem 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+/* 每一行高度固定，占位行与内容行同高 */
+.diff-line {
+  min-height: 1.5em;
+  padding: 0 0.55rem;
+  line-height: 1.5;
+  color: var(--text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* 历史版本中被删除的行（只在左栏出现） */
+.diff-del {
+  background: rgba(185, 28, 28, 0.18);
+  box-shadow: inset 3px 0 0 #b91c1c;
+}
+
+/* 当前正文新增的行（只在右栏出现） */
+.diff-add {
+  background: rgba(21, 128, 61, 0.2);
+  box-shadow: inset 3px 0 0 #15803d;
+}
+
+/* 另一侧的对齐占位行 */
+.diff-line-empty {
+  background: rgba(148, 163, 184, 0.08);
+}
+
+@media (max-width: 600px) {
+  .diff-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .diff-col {
+    height: 16rem;
+    max-height: 16rem;
+  }
+}
+
 /* ===== 编辑器状态栏 ===== */
 .editor-statusbar {
   display: flex;
