@@ -96,6 +96,24 @@ CREATE TABLE IF NOT EXISTS chapter_revisions (
   source      TEXT NOT NULL,
   created_at  TEXT NOT NULL
 );
+
+-- 写作会话：每次章节正文净增删一条（book_id / chapter_id 仅作冗余索引，不做外键约束，
+-- 以便历史统计在书/章节删除后仍然保留）。
+CREATE TABLE IF NOT EXISTS writing_sessions (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  book_id     INTEGER,
+  chapter_id  INTEGER,
+  delta_words INTEGER,
+  created_at  TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_writing_sessions_created ON writing_sessions (created_at);
+CREATE INDEX IF NOT EXISTS idx_writing_sessions_book ON writing_sessions (book_id);
+
+-- 应用级键值配置（如每日目标 daily_goal），无需预插数据，读取时给默认值。
+CREATE TABLE IF NOT EXISTS app_settings (
+  key    TEXT PRIMARY KEY,
+  value  TEXT
+);
 `;
 
 /** 当前连接（单例）。@type {import('better-sqlite3').Database | null} */

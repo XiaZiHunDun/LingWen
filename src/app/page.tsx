@@ -1,6 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from 'react';
 import { useRouter } from 'next/navigation';
 
 /** 全局搜索结果条目（与 /api/search 返回结构一致）。 */
@@ -98,11 +105,83 @@ export default function BookshelfPage() {
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
 
+  // 写作日历：近 14 天每日字数、今日字数、每日目标。
+  const [dailyDays, setDailyDays] = useState<Array<{ date: string; words: number }>>([]);
+  const [todayWords, setTodayWords] = useState(0);
+  const [dailyGoal, setDailyGoalValue] = useState(1000);
+
+  const loadDaily = useCallback(async (): Promise<void> => {
+    try {
+      const res = await fetch('/api/stats/daily?days=14');
+      if (!res.ok) return;
+      const data: unknown = await res.json();
+      if (data === null || typeof data !== 'object') return;
+      const source = data as Record<string, unknown>;
+
+      const parsed: Array<{ date: string; words: number }> = [];
+      if (Array.isArray(source.days)) {
+        for (const item of source.days) {
+          if (item === null || typeof item !== 'object') continue;
+          const row = item as Record<string, unknown>;
+          const date = typeof row.date === 'string' ? row.date : '';
+          const words =
+            typeof row.words === 'number' && Number.isFinite(row.words) ? row.words : 0;
+          if (date !== '') parsed.push({ date, words });
+        }
+      }
+      setDailyDays(parsed);
+      setTodayWords(
+        typeof source.todayWords === 'number' && Number.isFinite(source.todayWords)
+          ? source.todayWords
+          : 0,
+      );
+      setDailyGoalValue(
+        typeof source.goal === 'number' && Number.isFinite(source.goal) ? source.goal : 1000,
+      );
+    } catch {
+      // 写作日历属于增强信息，加载失败不影响书架主体。
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadDaily();
+  }, [loadDaily]);
+
+  // 点击「今日 / 目标」设置每日目标，成功后重新拉取日历数据。
+  const handleSetGoal = useCallback(async (): Promise<void> => {
+    const input = window.prompt('设置每日目标字数（1 - 20000）', String(dailyGoal));
+    if (input === null) return;
+    const goal = Number(input.trim());
+    if (!Number.isInteger(goal) || goal < 1 || goal > 20000) {
+      window.alert('请输入 1 - 20000 之间的整数');
+      return;
+    }
+    try {
+      const res = await fetch('/api/settings/daily-goal', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ goal }),
+      });
+      if (!res.ok) {
+        window.alert('设置每日目标失败');
+        return;
+      }
+      await loadDaily();
+    } catch {
+      window.alert('设置每日目标失败');
+    }
+  }, [dailyGoal, loadDaily]);
+
   const [title, setTitle] = useState('');
   const [genre, setGenre] = useState('');
   const [summary, setSummary] = useState('');
   const [style, setStyle] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // 导入 JSON 快照：进行中状态、成功提示、隐藏的文件选择框。
+  const [importing, setImporting] = useState(false);
+  const [importMessage, setImportMessage] = useState<string | null>(null);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
 
   const loadBooks = useCallback(async (): Promise<void> => {
     setLoading(true);
@@ -159,6 +238,9 @@ export default function BookshelfPage() {
   const [searchDone, setSearchDone] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const searchBoxRef = useRef<HTMLDivElement | null>(null);
+  // 键盘导航：高亮下标（-1 表示无高亮）与结果按钮 ref（用于滚动到可视区）。
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const resultRefs = useRef<Array<HTMLButtonElement | null>>([]);
   // 递增请求序号，丢弃过期响应，避免旧结果覆盖新结果。
   const searchSeqRef = useRef(0);
 
@@ -204,6 +286,18 @@ export default function BookshelfPage() {
     };
   }, [searchQuery]);
 
+  // 结果变化时重置高亮：有新结果高亮第一项，无结果清除高亮。
+  useEffect(() => {
+    setActiveIndex(searchItems.length > 0 ? 0 : -1);
+  }, [searchItems]);
+
+  // 高亮项变化时滚动到可视区（就近滚动，不跳动整页）。
+  useEffect(() => {
+    if (activeIndex < 0) return;
+    const node = resultRefs.current[activeIndex];
+    if (node !== undefined && node !== null) node.scrollIntoView({ block: 'nearest' });
+  }, [activeIndex]);
+
   // Esc 关闭浮层；点击浮层外（不在搜索框容器内）关闭。
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {
@@ -227,6 +321,58 @@ export default function BookshelfPage() {
     router.push(
       item.type === 'chapter' ? `/books/${item.bookId}?chapter=${item.id}` : `/books/${item.bookId}`,
     );
+  }
+
+  /** 选择 JSON 快照文件后导入：本地先解析校验，再把原文整段提交给导入接口。 */
+  async function handleImportFile(event: ChangeEvent<HTMLInputElement>): Promise<void> {
+    const input = event.target;
+    const file = input.files?.[0];
+    if (file === undefined || file === null) return;
+    setImportMessage(null);
+    setImporting(true);
+    try {
+      const text = await file.text();
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(text) as unknown;
+      } catch (err) {
+        setError(`JSON 解析失败：${err instanceof Error ? err.message : String(err)}`);
+        return;
+      }
+      // 导入接口成功时只返回新建书籍 id（{ id }），书名取自快照自身的 book.title。
+      let snapshotTitle = '';
+      if (parsed !== null && typeof parsed === 'object' && 'book' in parsed) {
+        const bookRaw = (parsed as { book?: unknown }).book;
+        if (bookRaw !== null && typeof bookRaw === 'object' && 'title' in bookRaw) {
+          const raw = (bookRaw as { title?: unknown }).title;
+          if (typeof raw === 'string') snapshotTitle = raw.trim();
+        }
+      }
+      const res = await fetch('/api/books/import/json', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: text,
+      });
+      let data: unknown = null;
+      try {
+        data = (await res.json()) as unknown;
+      } catch {
+        data = null;
+      }
+      if (!res.ok) {
+        setError(readError(data, '导入失败'));
+        return;
+      }
+      setError(null);
+      setImportMessage(snapshotTitle === '' ? '已导入新的作品' : `已导入《${snapshotTitle}》`);
+      await loadBooks();
+    } catch {
+      setError('导入失败');
+    } finally {
+      setImporting(false);
+      // 清空 value，允许重复选择同一个文件。
+      input.value = '';
+    }
   }
 
   async function handleCreate(event: FormEvent<HTMLFormElement>): Promise<void> {
@@ -289,7 +435,25 @@ export default function BookshelfPage() {
             <h1>我的书架</h1>
             <p className="muted">长篇连载从这里开始：新建一本作品，再进入工作台铺大纲、写章节。</p>
           </div>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            disabled={importing}
+            onClick={() => importInputRef.current?.click()}
+          >
+            {importing ? '导入中…' : '导入 JSON'}
+          </button>
+          <input
+            type="file"
+            accept=".json,application/json"
+            ref={importInputRef}
+            onChange={(e) => {
+              void handleImportFile(e);
+            }}
+            style={{ display: 'none' }}
+          />
         </div>
+        {importMessage !== null ? <p className="muted">{importMessage}</p> : null}
         <div className="field" ref={searchBoxRef} style={{ position: 'relative' }}>
           <label htmlFor="global-search">全局搜索</label>
           <input
@@ -302,6 +466,33 @@ export default function BookshelfPage() {
             }}
             placeholder="搜索章节标题 / 正文 / 大纲 / 设定…"
             autoComplete="off"
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (searchItems.length === 0) return;
+                setSearchOpen(true);
+                setActiveIndex((prev) => (prev + 1) % searchItems.length);
+                return;
+              }
+              if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (searchItems.length === 0) return;
+                setSearchOpen(true);
+                setActiveIndex((prev) => (prev <= 0 ? searchItems.length - 1 : prev - 1));
+                return;
+              }
+              if (e.key === 'Enter') {
+                if (activeIndex >= 0 && activeIndex < searchItems.length) {
+                  e.preventDefault();
+                  handleOpenResult(searchItems[activeIndex]);
+                }
+                return;
+              }
+              if (e.key === 'Escape') {
+                e.preventDefault();
+                setSearchOpen(false);
+              }
+            }}
           />
           {searchOpen ? (
             <div
@@ -326,20 +517,25 @@ export default function BookshelfPage() {
                 )
               ) : (
                 <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-                  {searchItems.map((item) => (
+                  {searchItems.map((item, index) => (
                     <li key={`${item.type}-${item.id}`}>
                       <button
+                        ref={(node) => {
+                          resultRefs.current[index] = node;
+                        }}
                         type="button"
                         style={{
                           display: 'block',
                           width: '100%',
                           textAlign: 'left',
-                          background: 'transparent',
+                          background:
+                            activeIndex === index ? 'rgba(59,130,246,0.18)' : 'transparent',
                           border: 'none',
                           cursor: 'pointer',
                           color: 'inherit',
                           padding: '8px 10px',
                         }}
+                        onMouseEnter={() => setActiveIndex(index)}
                         onClick={() => handleOpenResult(item)}
                       >
                         <div>
@@ -377,6 +573,84 @@ export default function BookshelfPage() {
             {stats.totalWords.toLocaleString('zh-CN')}
           </p>
         ) : null}
+        {(() => {
+          const peak = Math.max(dailyGoal, 1, ...dailyDays.map((d) => d.words));
+          // 写作日历展示口径：今日字数可能为负（净删），百分比限定在 0..100。
+          const percent =
+            dailyGoal > 0
+              ? Math.min(100, Math.max(0, Math.round((todayWords / dailyGoal) * 100)))
+              : 0;
+          return (
+            <div style={{ marginTop: 10 }}>
+              <button
+                type="button"
+                onClick={() => void handleSetGoal()}
+                title="点击设置每日目标"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                  font: 'inherit',
+                  color: 'inherit',
+                  opacity: 0.85,
+                }}
+              >
+                今日 {todayWords.toLocaleString('zh-CN')} / 目标{' '}
+                {dailyGoal.toLocaleString('zh-CN')} 字（{percent}%）
+              </button>
+              <div
+                style={{
+                  height: 8,
+                  marginTop: 6,
+                  borderRadius: 999,
+                  background: 'rgba(148, 163, 184, 0.35)',
+                  overflow: 'hidden',
+                }}
+              >
+                <div
+                  style={{
+                    height: '100%',
+                    width: `${percent}%`,
+                    background: todayWords >= dailyGoal ? '#16a34a' : '#2563eb',
+                    transition: 'width .3s ease',
+                  }}
+                />
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  gap: 3,
+                  height: 44,
+                  marginTop: 10,
+                }}
+              >
+                {dailyDays.map((day) => (
+                  <div
+                    key={day.date}
+                    title={`${day.date}：${day.words} 字`}
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'flex-end',
+                      height: '100%',
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: `${Math.max(2, Math.round((day.words / peak) * 40))}px`,
+                        borderRadius: 2,
+                        background: day.words > 0 ? '#60a5fa' : 'rgba(148, 163, 184, 0.35)',
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
       </section>
 
       <section className="card">
@@ -457,6 +731,13 @@ export default function BookshelfPage() {
                 <div className="toolbar">
                   <a className="btn btn-ghost" href={`/books/${book.id}`}>
                     进入工作台
+                  </a>
+                  <a
+                    className="btn btn-ghost"
+                    href={`/api/books/${book.id}/export/json`}
+                    download
+                  >
+                    导出 JSON
                   </a>
                   <button
                     type="button"

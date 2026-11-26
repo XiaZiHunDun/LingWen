@@ -4,6 +4,7 @@ import {
   createChapterRevision,
   getChapter,
   pruneChapterRevisions,
+  recordWritingDelta,
   updateChapter,
 } from '@/lib/repo.js';
 import { countWords } from '@/lib/wordcount.js';
@@ -92,6 +93,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     // 自动快照：新正文与旧正文不同、且旧正文非空时，先把旧正文存为 manual 版本。
     const oldContent = typeof existing.content === 'string' ? existing.content : '';
+    // 写作日历：新旧正文的字数净差（差为 0 时不写 writing_sessions）。
+    const wordDelta =
+      typeof body.content === 'string' ? (patch.wordCount ?? 0) - countWords(oldContent) : 0;
     if (
       typeof body.content === 'string' &&
       body.content !== oldContent &&
@@ -103,6 +107,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const updated = updateChapter(chapterId, patch);
     if (updated === undefined) {
       return NextResponse.json({ error: '章节不存在' }, { status: 404 });
+    }
+
+    // 保存成功后把字数净增量写入写作会话（差为 0 时 recordWritingDelta 自动忽略）。
+    if (wordDelta !== 0) {
+      recordWritingDelta({
+        bookId: typeof existing.bookId === 'number' ? existing.bookId : null,
+        chapterId,
+        deltaWords: wordDelta,
+      });
     }
 
     // 更新成功后再裁剪历史，每个章节只保留最近 KEEP_REVISIONS 条。
@@ -128,8 +141,18 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     if (chapterId === null) {
       return NextResponse.json({ error: 'id 非法：必须是数字' }, { status: 400 });
     }
-    if (getChapter(chapterId) === undefined) {
+    const chapter = getChapter(chapterId);
+    if (chapter === undefined) {
       return NextResponse.json({ error: '章节不存在' }, { status: 404 });
+    }
+    // 写作日历：删除章节按现有正文字数记一次负增量（为 0 时 recordWritingDelta 自动忽略）。
+    const removedWords = countWords(typeof chapter.content === 'string' ? chapter.content : '');
+    if (removedWords !== 0) {
+      recordWritingDelta({
+        bookId: typeof chapter.bookId === 'number' ? chapter.bookId : null,
+        chapterId,
+        deltaWords: -removedWords,
+      });
     }
     getDb().prepare('DELETE FROM chapters WHERE id = ?').run(chapterId);
     return NextResponse.json({ ok: true });

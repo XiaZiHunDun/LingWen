@@ -288,6 +288,125 @@ export function updateChapter(id, patch) {
   return mapRow(db.prepare('SELECT * FROM chapters WHERE id = ?').get(id));
 }
 
+/* ------------------------------------------------------------------ *
+ * 写作日历 / 每日目标（writing_sessions + app_settings）
+ * ------------------------------------------------------------------ */
+
+/** 默认每日目标字数。 */
+export const DEFAULT_DAILY_GOAL = 1000;
+/** 每日目标允许范围。 */
+export const DAILY_GOAL_MIN = 1;
+export const DAILY_GOAL_MAX = 20000;
+
+/**
+ * 记录一次正文字数净增量（写作日历数据源）。
+ * deltaWords 必须是有限整数且非 0，否则直接忽略、不写库。
+ * @param {{ bookId?: number|null, chapterId?: number|null, deltaWords?: number }} input
+ * @returns {{ id: number | null }} 插入行 id；被忽略时 id 为 null
+ */
+export function recordWritingDelta({ bookId = null, chapterId = null, deltaWords = 0 } = {}) {
+  const delta = Number(deltaWords);
+  if (!Number.isInteger(delta) || delta === 0) return { id: null };
+  const db = getDb();
+  const info = db
+    .prepare(
+      `INSERT INTO writing_sessions (book_id, chapter_id, delta_words, created_at)
+       VALUES (?, ?, ?, datetime('now'))`,
+    )
+    .run(bookId, chapterId, delta);
+  return { id: Number(info.lastInsertRowid) };
+}
+
+/**
+ * 把 Date 格式化为本地日期字符串 YYYY-MM-DD。
+ * @param {Date} date
+ * @returns {string}
+ */
+function formatLocalDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * 按本地日期聚合最近 days 天的写作字数，缺数据的日期补 0。
+ * 返回值按日期升序，最后一项是今天。
+ * @param {number} [days] 天数，非 1..365 的整数时按 14 处理
+ * @returns {Array<{ date: string, words: number }>}
+ */
+export function dailyWordCounts(days = 14) {
+  const span = Number.isInteger(days) && days > 0 && days <= 365 ? days : 14;
+  const db = getDb();
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const start = new Date(today);
+  start.setDate(start.getDate() - (span - 1));
+
+  const rows = db
+    .prepare(
+      `SELECT date(created_at, 'localtime') AS day, COALESCE(SUM(delta_words), 0) AS words
+         FROM writing_sessions
+        WHERE date(created_at, 'localtime') >= ?
+        GROUP BY day`,
+    )
+    .all(formatLocalDate(start));
+
+  /** @type {Map<string, number>} */
+  const byDate = new Map();
+  for (const row of rows) {
+    const key = row && typeof row.day === 'string' ? row.day : '';
+    if (key === '') continue;
+    const words = Number(row.words);
+    // 展示口径：表里保留负值（净删字数），聚合输出只呈现不小于 0 的值。
+    byDate.set(key, Number.isFinite(words) ? Math.max(0, words) : 0);
+  }
+
+  const result = [];
+  for (let i = 0; i < span; i += 1) {
+    const cursor = new Date(start);
+    cursor.setDate(cursor.getDate() + i);
+    const key = formatLocalDate(cursor);
+    result.push({ date: key, words: byDate.get(key) ?? 0 });
+  }
+  return result;
+}
+
+/**
+ * 读取每日目标字数；未设置或存的脏值时回落到默认 1000。
+ * @returns {number}
+ */
+export function getDailyGoal() {
+  const db = getDb();
+  const row = db.prepare("SELECT value FROM app_settings WHERE key = 'daily_goal'").get();
+  const raw = row && typeof row.value === 'string' ? Number(row.value) : NaN;
+  if (!Number.isInteger(raw) || raw < DAILY_GOAL_MIN || raw > DAILY_GOAL_MAX) {
+    return DEFAULT_DAILY_GOAL;
+  }
+  return raw;
+}
+
+/**
+ * 写入每日目标字数（upsert）。
+ * @param {number} n 必须是 1..20000 的整数
+ * @returns {number} 实际写入的目标值
+ * @throws {RangeError} n 非法时抛出
+ */
+export function setDailyGoal(n) {
+  const goal = Number(n);
+  if (!Number.isInteger(goal) || goal < DAILY_GOAL_MIN || goal > DAILY_GOAL_MAX) {
+    throw new RangeError(`每日目标必须是 ${DAILY_GOAL_MIN}..${DAILY_GOAL_MAX} 之间的整数`);
+  }
+  getDb()
+    .prepare(
+      `INSERT INTO app_settings (key, value) VALUES ('daily_goal', ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    )
+    .run(String(goal));
+  return goal;
+}
+
 /**
  * 记录一次大模型调用日志。created_at 用 datetime('now')。
  * @param {{ bookId?: number|null, kind?: string|null, prompt?: string|null,

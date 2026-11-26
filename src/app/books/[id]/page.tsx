@@ -274,6 +274,16 @@ export default function BookDetailPage() {
   const [mode, setMode] = useState<GenerateMode>('append');
   const [genRunning, setGenRunning] = useState(false);
 
+  // 章节润色（流式预览 → 应用 → 撤销）
+  const [polishMode, setPolishMode] = useState<'polish' | 'condense' | 'expand'>('polish');
+  const [polishInstruction, setPolishInstruction] = useState('');
+  const [polishRunning, setPolishRunning] = useState(false);
+  const [polishOutput, setPolishOutput] = useState('');
+  const [polishError, setPolishError] = useState<string | null>(null);
+  const [polishApplying, setPolishApplying] = useState(false);
+  const [polishApplied, setPolishApplied] = useState(false);
+  const polishAbort = useRef<AbortController | null>(null);
+
   // 单章 AI 检查
   const [reviewing, setReviewing] = useState(false);
   const [reviewIssues, setReviewIssues] = useState<ReviewIssue[]>([]);
@@ -972,7 +982,116 @@ export default function BookDetailPage() {
     }
   };
 
-  /** 拉取当前章节的历史版本列表：只在有选中章节时才发请求。 */
+  /** 拉取当前章节的历史版本列表：只在有选中章节时才发请求。 */  /** 取消润色：中止 fetch 并清空预览状态（不动正文）。 */
+  const handleCancelPolish = () => {
+    polishAbort.current?.abort();
+  };
+
+  // 章节润色：POST /api/chapters/[id]/polish，流式逐块追加到预览面板；不落库。
+  const handleStartPolish = async () => {
+    if (selectedChapter === null || polishRunning) return;
+    const chapterId = selectedChapter.id;
+    const controller = new AbortController();
+    polishAbort.current = controller;
+    setPolishRunning(true);
+    setPolishError(null);
+    setPolishOutput('');
+    setPolishApplied(false);
+
+    try {
+      const res = await fetch(`/api/chapters/${chapterId}/polish`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: polishMode, instruction: polishInstruction.trim() }),
+        signal: controller.signal,
+      });
+      if (!res.ok) throw new Error(await readErrorMessage(res));
+
+      const reader = res.body?.getReader();
+      if (reader !== undefined) {
+        const decoder = new TextDecoder();
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          if (value === undefined) continue;
+          const chunk = decoder.decode(value);
+          if (chunk === '') continue;
+          setPolishOutput((prev) => prev + chunk);
+        }
+      }
+    } catch (err) {
+      if (isAbortError(err)) {
+        setPolishOutput('');
+        showNotice('已取消润色');
+      } else {
+        setPolishError(toMessage(err));
+      }
+    } finally {
+      if (polishAbort.current === controller) polishAbort.current = null;
+      setPolishRunning(false);
+    }
+  };
+
+  // 应用润色结果：PATCH /api/chapters/[id]（服务端自动快照旧正文），成功后显示「撤销」。
+  const handleApplyPolish = async () => {
+    const chapterId = selectedId;
+    if (chapterId === null || polishRunning || polishApplying) return;
+    const nextContent = polishOutput;
+    if (nextContent.trim() === '') return;
+    setPolishApplying(true);
+    setPolishError(null);
+    try {
+      const res = await fetch(`/api/chapters/${chapterId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: nextContent }),
+      });
+      if (!res.ok) throw new Error(await readErrorMessage(res));
+      const data = (await res.json()) as { chapter: Chapter };
+      if (selectedIdRef.current !== chapterId) return;
+      const savedContent = data.chapter.content ?? nextContent;
+      setEditContent(savedContent);
+      savedChapterRef.current = { title: data.chapter.title, content: savedContent };
+      setAutoSave({ status: 'saved', at: formatClockTime(new Date()) });
+      setPolishOutput(savedContent);
+      setPolishApplied(true);
+      showNotice(`润色结果已应用，字数 ${data.chapter.wordCount ?? savedContent.length}`);
+      await loadRevisions();
+      await refreshChapters();
+    } catch (err) {
+      setPolishError(toMessage(err));
+    } finally {
+      setPolishApplying(false);
+    }
+  };
+
+  // 撤销润色：恢复当前章节 revisions 最新一条（复用现有 handleRestoreRevision）。
+  const handleUndoPolish = async () => {
+    const chapterId = selectedId;
+    if (chapterId === null || polishApplying) return;
+    setPolishApplying(true);
+    setPolishError(null);
+    try {
+      const data = await getJson<{ revisions: ChapterRevisionSummary[] }>(
+        `/api/chapters/${chapterId}/revisions`,
+      );
+      if (selectedIdRef.current !== chapterId) return;
+      const latest = data.revisions[0];
+      if (latest === undefined) {
+        setPolishError('没有可撤销的历史版本');
+        return;
+      }
+      await handleRestoreRevision(latest);
+      setPolishApplied(false);
+      setPolishOutput('');
+    } catch (err) {
+      setPolishError(toMessage(err));
+    } finally {
+      setPolishApplying(false);
+    }
+  };
+
+
   const loadRevisions = useCallback(async () => {
     if (selectedId === null) {
       setRevisions([]);
@@ -1173,6 +1292,9 @@ export default function BookDetailPage() {
             rel="noreferrer"
           >
             导出 TXT
+          </a>
+          <a className="btn btn-ghost" href={`/api/books/${bookId}/export/json`} download>
+            导出 JSON
           </a>
           <button
             type="button"
@@ -1671,6 +1793,101 @@ export default function BookDetailPage() {
               </div>
             </>
           )}
+        </div>
+
+        <div className="panel stack">
+          <h2>润色</h2>
+          <div className="field">
+            <label htmlFor="polish-mode">润色方式</label>
+            <select
+              id="polish-mode"
+              className="input"
+              value={polishMode}
+              onChange={(event) => {
+                const next = event.target.value;
+                setPolishMode(next === 'condense' ? 'condense' : next === 'expand' ? 'expand' : 'polish');
+              }}
+              disabled={polishRunning}
+            >
+              <option value="polish">润色（优化措辞，不改情节）</option>
+              <option value="condense">精简（压缩篇幅，保留关键信息）</option>
+              <option value="expand">扩写（补充细节，情节不变）</option>
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="polish-instruction">额外要求</label>
+            <input
+              id="polish-instruction"
+              className="input"
+              placeholder="可选，例如：语气更冷峻，保留全部对话"
+              value={polishInstruction}
+              onChange={(event) => setPolishInstruction(event.target.value)}
+              disabled={polishRunning}
+            />
+          </div>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => {
+              if (polishRunning) {
+                handleCancelPolish();
+              } else {
+                void handleStartPolish();
+              }
+            }}
+            disabled={selectedId === null || polishApplying}
+          >
+            {polishRunning ? '取消润色' : '润色'}
+          </button>
+
+          {polishError !== null ? <div className="issue-error">{`润色失败：${polishError}`}</div> : null}
+
+          {polishOutput !== '' || polishRunning ? (
+            <div className="stack">
+              <p className="muted">
+                {polishRunning ? '正在生成润色预览…' : `润色预览（约 ${polishOutput.length} 字）`}
+              </p>
+              <textarea className="textarea" rows={14} readOnly value={polishOutput} />
+              {polishRunning ? null : (
+                <div className="stack">
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => {
+                      void handleApplyPolish();
+                    }}
+                    disabled={polishApplying || polishOutput.trim() === ''}
+                  >
+                    {polishApplying ? '应用中…' : '应用'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={() => {
+                      setPolishOutput('');
+                      setPolishError(null);
+                      setPolishApplied(false);
+                    }}
+                    disabled={polishApplying}
+                  >
+                    取消
+                  </button>
+                  {polishApplied ? (
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => {
+                        void handleUndoPolish();
+                      }}
+                      disabled={polishApplying}
+                    >
+                      撤销
+                    </button>
+                  ) : null}
+                </div>
+              )}
+            </div>
+          ) : null}
         </div>
 
         <div className="panel stack">

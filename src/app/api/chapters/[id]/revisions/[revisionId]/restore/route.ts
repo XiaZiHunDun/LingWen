@@ -5,8 +5,10 @@ import {
   getChapter,
   getChapterRevision,
   pruneChapterRevisions,
+  recordWritingDelta,
   restoreChapterRevision,
 } from '@/lib/repo.js';
+import { countWords } from '@/lib/wordcount.js';
 
 /** 每个章节保留的历史版本条数。 */
 const KEEP_REVISIONS = 20;
@@ -60,10 +62,24 @@ export async function POST(
       });
     }
 
+    // 写作日历：恢复前按正文实算一次字数，不信任 word_count 列。
+    const beforeWords = countWords(currentContent);
+
     // 2) 回填历史版本正文。
     const restored = restoreChapterRevision(revisionId);
     if (restored === undefined) {
       return NextResponse.json({ error: '版本不存在' }, { status: 404 });
+    }
+
+    // 写作日历：恢复带来的字数净增量（0 时 recordWritingDelta 自动忽略）。
+    const afterWords = countWords(typeof restored.content === 'string' ? restored.content : '');
+    const delta = afterWords - beforeWords;
+    if (delta !== 0) {
+      recordWritingDelta({
+        bookId: typeof chapter.bookId === 'number' ? chapter.bookId : null,
+        chapterId,
+        deltaWords: delta,
+      });
     }
 
     // 3) 裁剪历史。
