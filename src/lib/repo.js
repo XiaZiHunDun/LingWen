@@ -1,5 +1,5 @@
 /**
- * 数据访问层（repository）：对 SQLite 五张表做最小可用的 CRUD 封装。
+ * 数据访问层（repository）：对 SQLite 六张表做最小可用的 CRUD 封装。
  *
  * 设计要点：
  *   1. 连接惰性获取：模块顶层**不**调用 getDb()，因为导入本模块时数据库可能尚未
@@ -9,22 +9,26 @@
  *      走参数绑定；动态部分（如 UPDATE 的 SET 子句）只拼接「白名单列名」，绝不拼接值。
  *   3. 行对象统一转 camelCase 后返回：book_id→bookId、outline_id→outlineId、
  *      word_count→wordCount、elapsed_ms→elapsedMs、created_at→createdAt、
- *      updated_at→updatedAt。写入方向则做反向映射。
+ *      updated_at→updatedAt、chapter_id→chapterId。写入方向则做反向映射。
  *   4. 时间戳统一由 SQLite 的 datetime('now') 生成（UTC，'YYYY-MM-DD HH:MM:SS'）。
- *   5. 约定：getBook / getChapter 查不到时返回 undefined（即 Statement#get 的原始结果）。
+ *   5. 约定：getBook / getChapter / getChapterRevision 查不到时返回 undefined
+ *      （即 Statement#get 的原始结果）。
  */
 
+import { randomUUID } from 'node:crypto';
 import { getDb } from './db.js';
+import { countWords } from './wordcount.js';
 
 /**
  * snake_case → camelCase 的列名映射表。
  * 未列出的列名（id / title / genre / summary / style / content / status / seq /
- * category / kind / prompt / response）在两种风格下拼写一致，直接透传。
+ * category / kind / prompt / response / source）在两种风格下拼写一致，直接透传。
  * @type {Record<string, string>}
  */
 const COLUMN_TO_FIELD = {
   book_id: 'bookId',
   outline_id: 'outlineId',
+  chapter_id: 'chapterId',
   word_count: 'wordCount',
   elapsed_ms: 'elapsedMs',
   created_at: 'createdAt',
@@ -299,4 +303,141 @@ export function logLlm({ bookId = null, kind = null, prompt = null, response = n
     )
     .run(bookId, kind, prompt, response, elapsedMs);
   return { id: Number(info.lastInsertRowid) };
+}
+
+/* ------------------------------------------------------------------ *
+ * 章节版本快照（chapter_revisions）
+ * ------------------------------------------------------------------ */
+
+/** 版本来源白名单。 */
+export const CHAPTER_REVISION_SOURCES = ['manual', 'generate', 'restore', 'pre-restore'];
+
+/** 列表预览长度（字符）。 */
+const PREVIEW_LENGTH = 80;
+
+/**
+ * 校验版本来源，非法值直接抛错（避免脏数据入库）。
+ * @param {unknown} source
+ * @returns {string}
+ */
+function assertRevisionSource(source) {
+  if (typeof source !== 'string' || !CHAPTER_REVISION_SOURCES.includes(source)) {
+    throw new Error(
+      `非法的版本来源：${String(source)}（仅允许 ${CHAPTER_REVISION_SOURCES.join(' / ')}）`,
+    );
+  }
+  return source;
+}
+
+/**
+ * 生成正文预览：先压缩空白（含换行）为单个空格，再取前 80 字。
+ * @param {string} content
+ * @returns {string}
+ */
+function buildPreview(content) {
+  return content.replace(/\s+/g, ' ').trim().slice(0, PREVIEW_LENGTH);
+}
+
+/**
+ * 新增一条章节版本快照。
+ * word_count 由正文自动计算；created_at 用 datetime('now')；id 用 UUID。
+ * @param {{ chapterId: number|string, content: string, source: string }} input
+ * @returns {Record<string, unknown>} 新建的 camelCase 行（含全文 content）
+ */
+export function createChapterRevision({ chapterId, content, source }) {
+  const safeSource = assertRevisionSource(source);
+  const text = typeof content === 'string' ? content : '';
+  const db = getDb();
+  const id = randomUUID();
+  db.prepare(
+    `INSERT INTO chapter_revisions (id, chapter_id, content, word_count, source, created_at)
+     VALUES (?, ?, ?, ?, ?, datetime('now'))`,
+  ).run(id, chapterId, text, countWords(text), safeSource);
+  return mapRow(db.prepare('SELECT * FROM chapter_revisions WHERE id = ?').get(id));
+}
+
+/**
+ * 列出某章节的版本快照（按时间倒序，最新在前）。
+ * 只返回 id / source / wordCount / createdAt / preview，不带全文。
+ * @param {number|string} chapterId
+ * @returns {Array<{ id: string, source: string, wordCount: number, createdAt: string, preview: string }>}
+ */
+export function listChapterRevisions(chapterId) {
+  const db = getDb();
+  const rows = /** @type {Array<Record<string, unknown>>} */ (
+    db
+      .prepare(
+        `SELECT id, source, word_count, created_at, content
+           FROM chapter_revisions
+          WHERE chapter_id = ?
+          ORDER BY created_at DESC, rowid DESC`,
+      )
+      .all(chapterId)
+  );
+  return rows.map((row) => {
+    const content = typeof row.content === 'string' ? row.content : '';
+    return {
+      id: String(row.id),
+      source: String(row.source),
+      wordCount: Number(row.word_count ?? 0),
+      createdAt: String(row.created_at ?? ''),
+      preview: buildPreview(content),
+    };
+  });
+}
+
+/**
+ * 按 id 取单条版本快照（含全文）。
+ * @param {string} id
+ * @returns {Record<string, unknown> | undefined} 不存在时返回 undefined
+ */
+export function getChapterRevision(id) {
+  const db = getDb();
+  return mapRow(db.prepare('SELECT * FROM chapter_revisions WHERE id = ?').get(id));
+}
+
+/**
+ * 把某个历史版本写回章节正文。
+ * 注意：调用方应在此前先存一条 source='pre-restore' 的快照（本函数不做该步骤）。
+ * @param {string} id 版本快照 id
+ * @returns {Record<string, unknown> | undefined} 恢复后的 camelCase chapter 行；
+ *   版本不存在时返回 undefined
+ */
+export function restoreChapterRevision(id) {
+  const revision = getChapterRevision(id);
+  if (revision === undefined) return undefined;
+  const chapterId = revision.chapterId;
+  if (chapterId === undefined || chapterId === null) return undefined;
+  const content = typeof revision.content === 'string' ? revision.content : '';
+  const wordCount =
+    typeof revision.wordCount === 'number' ? revision.wordCount : countWords(content);
+  const db = getDb();
+  db.prepare(
+    `UPDATE chapters SET content = ?, word_count = ?, updated_at = datetime('now') WHERE id = ?`,
+  ).run(content, wordCount, chapterId);
+  return mapRow(db.prepare('SELECT * FROM chapters WHERE id = ?').get(chapterId));
+}
+
+/**
+ * 裁剪某章节的版本快照：按时间倒序只保留最近 keep 条，其余删除。
+ * @param {number|string} chapterId
+ * @param {number} [keep] 保留条数，默认 20（小于 1 时按 1 处理）
+ * @returns {number} 被删除的条数
+ */
+export function pruneChapterRevisions(chapterId, keep = 20) {
+  const limit = Number.isFinite(keep) ? Math.max(1, Math.floor(keep)) : 20;
+  const db = getDb();
+  const info = db
+    .prepare(
+      `DELETE FROM chapter_revisions
+        WHERE chapter_id = ?
+          AND id NOT IN (
+            SELECT id FROM chapter_revisions
+             WHERE chapter_id = ?
+             ORDER BY created_at DESC, rowid DESC
+             LIMIT ?
+          )`,
+    )
+    .run(chapterId, chapterId, limit);
+  return info.changes;
 }

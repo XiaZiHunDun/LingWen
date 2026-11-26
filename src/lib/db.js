@@ -8,8 +8,9 @@
  *   3. 每个连接都开启 PRAGMA journal_mode = WAL 与 PRAGMA foreign_keys = ON。
  *      内存库（:memory:）上 WAL 会自动回退为 memory 模式，属正常现象。
  *   4. schema 使用 CREATE TABLE IF NOT EXISTS，幂等可重复执行。
- *   5. 表结构围绕「书（books）」组织：books / bible / outlines / chapters / llm_logs，
- *      子表通过 book_id 外键 ON DELETE CASCADE 随书清理。
+ *   5. 表结构围绕「书（books）」组织：books / bible / outlines / chapters / llm_logs /
+ *      chapter_revisions，子表通过 book_id 外键 ON DELETE CASCADE 随书清理；
+ *      chapter_revisions 通过 chapter_id 外键随章节清理。
  */
 
 import { mkdirSync } from 'node:fs';
@@ -23,12 +24,13 @@ const DEFAULT_DB_PATH = 'data/lingwen.db';
 const MEMORY = ':memory:';
 
 /**
- * 建表语句。五张表：
- *   books    —— 书籍主表
- *   bible    —— 设定集（分类条目）
- *   outlines —— 大纲
- *   chapters —— 章节（含字数与摘要）
- *   llm_logs —— 大模型调用日志
+ * 建表语句。六张表：
+ *   books             —— 书籍主表
+ *   bible             —— 设定集（分类条目）
+ *   outlines          —— 大纲
+ *   chapters          —— 章节（含字数与摘要）
+ *   llm_logs          —— 大模型调用日志
+ *   chapter_revisions —— 章节版本快照（正文历史）
  */
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS books (
@@ -85,6 +87,15 @@ CREATE TABLE IF NOT EXISTS llm_logs (
   created_at  TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_llm_logs_book ON llm_logs (book_id);
+
+CREATE TABLE IF NOT EXISTS chapter_revisions (
+  id          TEXT PRIMARY KEY,
+  chapter_id  TEXT NOT NULL REFERENCES chapters(id) ON DELETE CASCADE,
+  content     TEXT NOT NULL,
+  word_count  INTEGER NOT NULL,
+  source      TEXT NOT NULL,
+  created_at  TEXT NOT NULL
+);
 `;
 
 /** 当前连接（单例）。@type {import('better-sqlite3').Database | null} */

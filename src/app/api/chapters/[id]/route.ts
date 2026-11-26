@@ -1,10 +1,18 @@
 import { NextResponse } from 'next/server';
 import { getDb, initDb } from '@/lib/db.js';
-import { getChapter, updateChapter } from '@/lib/repo.js';
+import {
+  createChapterRevision,
+  getChapter,
+  pruneChapterRevisions,
+  updateChapter,
+} from '@/lib/repo.js';
 import { countWords } from '@/lib/wordcount.js';
 
 /** PATCH 允许写入的字段白名单（其余字段一律忽略）。 */
 const PATCH_FIELDS = ['title', 'content', 'summary', 'status', 'outlineId', 'seq'] as const;
+
+/** 每个章节保留的历史版本条数。 */
+const KEEP_REVISIONS = 20;
 
 /** 解析路由段的 id：必须是有限整数，否则返回 null（调用方回 400）。 */
 function parseId(raw: string): number | null {
@@ -49,7 +57,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (chapterId === null) {
       return NextResponse.json({ error: 'id 非法：必须是数字' }, { status: 400 });
     }
-    if (getChapter(chapterId) === undefined) {
+    const existing = getChapter(chapterId);
+    if (existing === undefined) {
       return NextResponse.json({ error: '章节不存在' }, { status: 404 });
     }
 
@@ -81,10 +90,26 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       patch.wordCount = countWords(body.content);
     }
 
+    // 自动快照：新正文与旧正文不同、且旧正文非空时，先把旧正文存为 manual 版本。
+    const oldContent = typeof existing.content === 'string' ? existing.content : '';
+    if (
+      typeof body.content === 'string' &&
+      body.content !== oldContent &&
+      oldContent.trim() !== ''
+    ) {
+      createChapterRevision({ chapterId, content: oldContent, source: 'manual' });
+    }
+
     const updated = updateChapter(chapterId, patch);
     if (updated === undefined) {
       return NextResponse.json({ error: '章节不存在' }, { status: 404 });
     }
+
+    // 更新成功后再裁剪历史，每个章节只保留最近 KEEP_REVISIONS 条。
+    if (typeof body.content === 'string') {
+      pruneChapterRevisions(chapterId, KEEP_REVISIONS);
+    }
+
     return NextResponse.json({ chapter: updated });
   } catch (err) {
     return NextResponse.json(

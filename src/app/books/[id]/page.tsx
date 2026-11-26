@@ -162,6 +162,57 @@ function formatClockTime(date: Date): string {
   return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 }
 
+/** 章节历史版本列表项：后端只回元信息 + 80 字预览，不含全文。 */
+interface ChapterRevisionSummary {
+  id: string;
+  source: string;
+  wordCount: number;
+  createdAt: string;
+  preview: string;
+}
+
+/** 章节历史版本详情：含全文，用于只读预览与恢复。 */
+interface ChapterRevisionDetail {
+  id: string;
+  chapterId: number | string;
+  content: string | null;
+  wordCount: number | null;
+  source: string;
+  createdAt: string;
+}
+
+/** 版本来源 → 中文标签（manual / generate / restore / pre-restore）。 */
+const REVISION_SOURCE_LABELS: Record<string, string> = {
+  manual: '手动保存',
+  generate: 'AI 生成',
+  restore: '版本恢复',
+  'pre-restore': '恢复前备份',
+};
+
+/** 来源不在白名单内时原样回显，避免静默丢信息。 */
+function revisionSourceLabel(source: string): string {
+  return REVISION_SOURCE_LABELS[source] ?? source;
+}
+
+/** 版本时间：库里存 UTC 'YYYY-MM-DD HH:MM:SS'，展示成本地 MM-DD HH:mm。 */
+function formatRevisionTime(value: string): string {
+  const matched = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/.exec(value.trim());
+  if (matched === null) return value;
+  const date = new Date(
+    Date.UTC(
+      Number(matched[1]),
+      Number(matched[2]) - 1,
+      Number(matched[3]),
+      Number(matched[4]),
+      Number(matched[5]),
+      Number(matched[6]),
+    ),
+  );
+  if (Number.isNaN(date.getTime())) return value;
+  const pad = (value2: number): string => String(value2).padStart(2, '0');
+  return `${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 export default function BookDetailPage() {
   const params = useParams<{ id: string }>();
   const bookId = Number(params.id);
@@ -189,6 +240,13 @@ export default function BookDetailPage() {
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const selectedIdRef = useRef<number | null>(null);
   const [autoSave, setAutoSave] = useState<AutoSaveState>({ status: 'idle' });
+
+  // 章节历史版本：面板展开状态、版本列表、当前预览详情、加载/恢复进行中。
+  const [showRevisions, setShowRevisions] = useState(false);
+  const [revisions, setRevisions] = useState<ChapterRevisionSummary[]>([]);
+  const [revisionPreview, setRevisionPreview] = useState<ChapterRevisionDetail | null>(null);
+  const [revisionsLoading, setRevisionsLoading] = useState(false);
+  const [restoringRevisionId, setRestoringRevisionId] = useState<string | null>(null);
 
   // 大纲：可编辑行 + 当前展开编辑的行 key 与草稿
   const [outlineRows, setOutlineRows] = useState<OutlineRow[]>([]);
@@ -328,6 +386,14 @@ export default function BookDetailPage() {
     setReviewIssues([]);
     setReviewSummary(null);
     setReviewError(null);
+  }, [selectedId]);
+
+  // 切换章节时收起历史版本面板并清空旧章节的版本数据，避免串内容。
+  useEffect(() => {
+    setShowRevisions(false);
+    setRevisions([]);
+    setRevisionPreview(null);
+    setRestoringRevisionId(null);
   }, [selectedId]);
 
   const refreshOutlines = useCallback(async () => {
@@ -892,6 +958,81 @@ export default function BookDetailPage() {
     }
   };
 
+  /** 拉取当前章节的历史版本列表：只在有选中章节时才发请求。 */
+  const loadRevisions = useCallback(async () => {
+    if (selectedId === null) {
+      setRevisions([]);
+      return;
+    }
+    const chapterId = selectedId;
+    setRevisionsLoading(true);
+    try {
+      const data = await getJson<{ revisions: ChapterRevisionSummary[] }>(
+        `/api/chapters/${chapterId}/revisions`,
+      );
+      if (selectedIdRef.current !== chapterId) return;
+      setRevisions(data.revisions);
+    } catch (err) {
+      setActionError(toMessage(err));
+    } finally {
+      setRevisionsLoading(false);
+    }
+  }, [selectedId]);
+
+  /** 点开某条历史版本：GET 详情拿全文，放进只读预览。 */
+  const handleOpenRevision = async (revision: ChapterRevisionSummary) => {
+    const chapterId = selectedId;
+    if (chapterId === null) return;
+    setActionError(null);
+    try {
+      const data = await getJson<{ revision: ChapterRevisionDetail }>(
+        `/api/chapters/${chapterId}/revisions/${revision.id}`,
+      );
+      if (selectedIdRef.current !== chapterId) return;
+      setRevisionPreview(data.revision);
+    } catch (err) {
+      setActionError(toMessage(err));
+    }
+  };
+
+  /**
+   * 恢复历史版本：window.confirm 二次确认 → POST .../restore
+   * → 用返回的 chapter.content/title 回填编辑器，并同步「已保存基线」（与 saveChapter 同一机制，
+   *   因此不会触发自动保存，也不会被未保存拦截误伤）→ 清空预览、刷新版本列表与章节列表。
+   */
+  const handleRestoreRevision = async (revision: { id: string; createdAt: string }) => {
+    const chapterId = selectedId;
+    if (chapterId === null) return;
+    const confirmed = window.confirm(
+      `确定恢复到 ${formatRevisionTime(revision.createdAt)} 的版本？当前正文会先备份为历史版本。`,
+    );
+    if (!confirmed) return;
+    setRestoringRevisionId(revision.id);
+    setActionError(null);
+    try {
+      const res = await fetch(`/api/chapters/${chapterId}/revisions/${revision.id}/restore`, {
+        method: 'POST',
+      });
+      if (!res.ok) throw new Error(await readErrorMessage(res));
+      const data = (await res.json()) as { chapter: Chapter };
+      if (selectedIdRef.current !== chapterId) return;
+      const nextTitle = data.chapter.title;
+      const nextContent = data.chapter.content ?? '';
+      setEditTitle(nextTitle);
+      setEditContent(nextContent);
+      savedChapterRef.current = { title: nextTitle, content: nextContent };
+      setAutoSave({ status: 'saved', at: formatClockTime(new Date()) });
+      setRevisionPreview(null);
+      showNotice('已恢复历史版本');
+      await loadRevisions();
+      await refreshChapters();
+    } catch (err) {
+      setActionError(toMessage(err));
+    } finally {
+      setRestoringRevisionId(null);
+    }
+  };
+
   // 创作助手：POST /api/books/[id]/assist，流式 text/plain 累加到末尾的助手消息。
   const handleAssistSend = async () => {
     const question = assistInput.trim();
@@ -1343,6 +1484,18 @@ export default function BookDetailPage() {
                   >
                     {reviewing ? '检查中…' : 'AI 检查'}
                   </button>
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={() => {
+                      const next = !showRevisions;
+                      setShowRevisions(next);
+                      if (next) void loadRevisions();
+                    }}
+                    disabled={selectedId === null || revisionsLoading}
+                  >
+                    {showRevisions ? '收起历史版本' : '历史版本'}
+                  </button>
                 </div>
                 {reviewing ? <p className="muted">检查中…</p> : null}
                 {reviewError !== null ? <div className="issue-error">{reviewError}</div> : null}
@@ -1367,6 +1520,87 @@ export default function BookDetailPage() {
                   </>
                 ) : null}
               </div>
+
+              {showRevisions ? (
+                <div className="panel stack">
+                  <div className="toolbar" style={{ justifyContent: 'space-between' }}>
+                    <h2 style={{ margin: 0 }}>历史版本</h2>
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => {
+                        void loadRevisions();
+                      }}
+                      disabled={revisionsLoading}
+                    >
+                      {revisionsLoading ? '刷新中…' : '刷新'}
+                    </button>
+                  </div>
+                  {revisions.length === 0 ? (
+                    <p className="muted">{revisionsLoading ? '加载中…' : '暂无历史版本'}</p>
+                  ) : (
+                    revisions.map((revision) => (
+                      <button
+                        key={`revision-${revision.id}`}
+                        type="button"
+                        className="btn"
+                        onClick={() => {
+                          void handleOpenRevision(revision);
+                        }}
+                        style={{ display: 'block', width: '100%', textAlign: 'left' }}
+                      >
+                        <span className="muted">{formatRevisionTime(revision.createdAt)}</span>
+                        <span className="badge">{revisionSourceLabel(revision.source)}</span>
+                        <span className="muted">{revision.wordCount} 字</span>
+                        {revision.preview !== '' ? (
+                          <span className="muted" style={{ display: 'block' }}>
+                            {revision.preview}
+                          </span>
+                        ) : null}
+                      </button>
+                    ))
+                  )}
+                  {revisionPreview !== null ? (
+                    <div className="stack">
+                      <div className="toolbar" style={{ justifyContent: 'space-between' }}>
+                        <span className="muted">
+                          {formatRevisionTime(revisionPreview.createdAt)} ·{' '}
+                          {revisionSourceLabel(revisionPreview.source)}
+                          {revisionPreview.wordCount !== null
+                            ? ` · ${revisionPreview.wordCount} 字`
+                            : ''}
+                        </span>
+                        <button
+                          type="button"
+                          className="btn"
+                          onClick={() => setRevisionPreview(null)}
+                        >
+                          关闭预览
+                        </button>
+                      </div>
+                      <textarea
+                        className="textarea"
+                        rows={12}
+                        readOnly
+                        value={revisionPreview.content ?? ''}
+                        aria-label="历史版本正文预览"
+                      />
+                      <div className="toolbar" style={{ justifyContent: 'flex-start' }}>
+                        <button
+                          type="button"
+                          className="btn btn-primary"
+                          onClick={() => {
+                            void handleRestoreRevision(revisionPreview);
+                          }}
+                          disabled={restoringRevisionId !== null}
+                        >
+                          {restoringRevisionId === revisionPreview.id ? '恢复中…' : '恢复此版本'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
 
               <div className="generate-box">
                 <h2>AI 生成</h2>

@@ -1,6 +1,16 @@
 import { NextResponse } from 'next/server';
 import { initDb } from '@/lib/db.js';
-import { getBook, getChapter, listBible, listChapters, listOutlines, logLlm, updateChapter } from '@/lib/repo.js';
+import {
+  createChapterRevision,
+  getBook,
+  getChapter,
+  listBible,
+  listChapters,
+  listOutlines,
+  logLlm,
+  pruneChapterRevisions,
+  updateChapter,
+} from '@/lib/repo.js';
 import { countWords } from '@/lib/wordcount.js';
 import { chatStream, isLlmConfigured, LlmError } from '@/lib/llm.js';
 
@@ -17,6 +27,8 @@ const MAX_SNIPPET = 300;
 const MAX_OUTLINE_SUMMARY = 300;
 /** 本章已有正文回灌 prompt 时只取末尾多少字符（用于衔接上文）。 */
 const MAX_EXISTING_CONTENT = 600;
+/** 每个章节保留的历史版本条数。 */
+const KEEP_REVISIONS = 20;
 
 type Mode = 'append' | 'replace';
 
@@ -247,9 +259,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
                 response: accumulated,
                 elapsedMs: Date.now() - startedAt,
               });
+              // 自动快照：落库成功后把生成结果存为 generate 版本，并裁剪历史。
+              createChapterRevision({ chapterId, content, source: 'generate' });
+              pruneChapterRevisions(chapterId, KEEP_REVISIONS);
             }
           } catch {
-            // 保存 / 日志失败一律忽略（例如磁盘只读），流仍按正常结束。
+            // 保存 / 日志 / 快照失败一律忽略（例如磁盘只读），流仍按正常结束。
           }
         } catch (err) {
           const message =
