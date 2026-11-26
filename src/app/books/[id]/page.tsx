@@ -356,6 +356,20 @@ export default function BookDetailPage() {
     };
   }, [bookId, reloadKey]);
 
+  // 从全局搜索跳转过来时（?chapter=<id>）：首屏数据就绪后一次性选中目标章节。
+  // 用 ref 标记「已处理」，之后章节数据刷新不会再覆盖用户的手动选择。
+  const chapterDeepLinkDone = useRef(false);
+  useEffect(() => {
+    if (chapterDeepLinkDone.current) return;
+    if (loading || chapters.length === 0) return;
+    chapterDeepLinkDone.current = true;
+    const matched = /[?&]chapter=(\d+)/.exec(window.location.search);
+    if (matched === null) return;
+    const targetId = Number(matched[1]);
+    if (!Number.isFinite(targetId)) return;
+    if (chapters.some((item) => item.id === targetId)) setSelectedId(targetId);
+  }, [loading, chapters]);
+
   // 服务端大纲变化时重建可编辑行（本地新增的空白草稿随刷新丢弃）。
   useEffect(() => {
     setOutlineRows(outlineRowsFromItems(outlines));
