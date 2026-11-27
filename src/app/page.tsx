@@ -515,6 +515,13 @@ export default function BookshelfPage() {
           <button
             type="button"
             className="btn btn-ghost"
+            onClick={() => router.push('/stats')}
+          >
+            写作统计
+          </button>
+          <button
+            type="button"
+            className="btn btn-ghost"
             disabled={importing}
             onClick={() => importInputRef.current?.click()}
           >
