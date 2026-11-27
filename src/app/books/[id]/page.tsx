@@ -35,6 +35,8 @@ interface Chapter {
   title: string;
   content: string | null;
   wordCount: number | null;
+  /** 章节摘要：接口返回，未生成时为 null。 */
+  summary: string | null;
   /** 章节状态：'final' 定稿 / 'draft' 草稿（后端缺省按草稿展示）。 */
   status?: string | null;
 }
@@ -381,6 +383,39 @@ export default function BookDetailPage() {
   const [targetWords, setTargetWords] = useState(String(DEFAULT_TARGET_WORDS));
   const [mode, setMode] = useState<GenerateMode>('append');
   const [genRunning, setGenRunning] = useState(false);
+  // 章节摘要（手动生成 / 生成后自动补）与「本次上下文」预览
+  const [summaryRunning, setSummaryRunning] = useState(false);
+  const [contextOpen, setContextOpen] = useState(false);
+  const [contextLoading, setContextLoading] = useState(false);
+  const [contextError, setContextError] = useState<string | null>(null);
+  const [contextPreview, setContextPreview] = useState<{
+    totalChars: number;
+    blocks: Array<{ key: string; label: string; chars: number }>;
+    promptText: string;
+  } | null>(null);
+  const genRunningRef = useRef(false);
+  const lastAutoSummaryRef = useRef<number | null>(null);
+
+  // 生成结束（流结束、正文落库后）自动补一次摘要：fire-and-forget，失败静默，不阻塞正文与保存。
+  useEffect(() => {
+    const wasRunning = genRunningRef.current;
+    genRunningRef.current = genRunning;
+    if (!wasRunning || genRunning) return;
+    const chapterId = selectedId;
+    if (chapterId === null || lastAutoSummaryRef.current === chapterId) return;
+    lastAutoSummaryRef.current = chapterId;
+    void fetch(`/api/chapters/${chapterId}/summary`, { method: 'POST' })
+      .then(async (res) => (res.ok ? ((await res.json()) as { summary?: string }) : null))
+      .then((data) => {
+        const summary = typeof data?.summary === 'string' ? data.summary : '';
+        if (summary === '') return;
+        // 成功后把本地章节列表里的 summary 刷新掉。
+        setChapters((prev) =>
+          prev.map((item) => (item.id === chapterId ? { ...item, summary } : item)),
+        );
+      })
+      .catch(() => undefined);
+  }, [genRunning, selectedId]);
 
   // 一键续写接下来 N 章：章节数输入、运行中标记、当前章节进度、错误、中止句柄。
   const [batchCount, setBatchCount] = useState('1');
@@ -2516,7 +2551,14 @@ export default function BookDetailPage() {
                     <div>
                       {seqLabel(item.seq)}. {item.title}
                     </div>
-                    <p className="muted">字数 {item.wordCount ?? 0}</p>
+                    <p className="muted">
+                      字数 {item.wordCount ?? 0}
+                      {item.summary === null || item.summary === '' ? (
+                        <span className="badge" style={{ marginLeft: 6, fontSize: 12 }}>
+                          无摘要
+                        </span>
+                      ) : null}
+                    </p>
                     {/* 状态徽章：点击在 定稿/草稿 间切换；stopPropagation 避免触发切换章节。 */}
                     <button
                       type="button"
@@ -2929,6 +2971,105 @@ export default function BookDetailPage() {
 
               <div className="generate-box">
                 <h2>AI 生成</h2>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8, flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    disabled={summaryRunning || selectedId === null || editContent.trim() === ''}
+                    onClick={() => {
+                      const chapterId = selectedId;
+                      if (chapterId === null) return;
+                      setSummaryRunning(true);
+                      void fetch(`/api/chapters/${chapterId}/summary`, { method: 'POST' })
+                        .then(async (res) => ({
+                          ok: res.ok,
+                          data: (await res.json().catch(() => ({}))) as {
+                            summary?: string;
+                            error?: string;
+                          },
+                        }))
+                        .then(({ ok, data }) => {
+                          if (!ok || typeof data.summary !== 'string') {
+                            showNotice(`摘要生成失败：${data.error ?? '未知错误'}`);
+                            return;
+                          }
+                          const summary = data.summary;
+                          // 更新本地章节 summary 并刷新列表。
+                          setChapters((prev) =>
+                            prev.map((item) => (item.id === chapterId ? { ...item, summary } : item)),
+                          );
+                          showNotice(`已生成摘要（${summary.length} 字）`);
+                        })
+                        .catch(() => showNotice('摘要生成失败，请稍后重试'))
+                        .finally(() => setSummaryRunning(false));
+                    }}
+                  >
+                    {summaryRunning ? '摘要生成中…' : '生成摘要'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const chapterId = selectedId;
+                      const next = !contextOpen;
+                      setContextOpen(next);
+                      if (!next || chapterId === null) return;
+                      setContextLoading(true);
+                      setContextError(null);
+                      const params = new URLSearchParams();
+                      params.set('targetWords', targetWords);
+                      params.set('mode', mode);
+                      if (instruction.trim() !== '') params.set('instruction', instruction.trim());
+                      void fetch(`/api/chapters/${chapterId}/context?${params.toString()}`)
+                        .then(async (res) => {
+                          if (!res.ok) throw new Error('加载失败');
+                          return (await res.json()) as {
+                            blocks?: Array<{ key: string; label: string; chars: number }>;
+                            totalChars?: number;
+                            promptText?: string;
+                          };
+                        })
+                        .then((data) =>
+                          setContextPreview({
+                            totalChars: typeof data.totalChars === 'number' ? data.totalChars : 0,
+                            blocks: Array.isArray(data.blocks) ? data.blocks : [],
+                            promptText: typeof data.promptText === 'string' ? data.promptText : '',
+                          }),
+                        )
+                        .catch(() => setContextError('上下文加载失败，请稍后重试'))
+                        .finally(() => setContextLoading(false));
+                    }}
+                  >
+                    {contextOpen ? '收起本次上下文' : '本次上下文'}
+                  </button>
+                  {contextPreview !== null ? (
+                    <span className="muted">共 {contextPreview.totalChars} 字</span>
+                  ) : null}
+                </div>
+                {contextOpen ? (
+                  <div className="field">
+                    {contextLoading ? <p className="muted">正在加载本次上下文…</p> : null}
+                    {contextError !== null ? <p className="muted">{contextError}</p> : null}
+                    {contextPreview !== null ? (
+                      <>
+                        <p className="muted">
+                          {contextPreview.blocks
+                            .map((block) => `${block.label}（${block.chars} 字）`)
+                            .join(' · ')}
+                        </p>
+                        <pre
+                          style={{
+                            maxHeight: 260,
+                            overflow: 'auto',
+                            whiteSpace: 'pre-wrap',
+                            fontSize: 12,
+                            margin: 0,
+                          }}
+                        >
+                          {contextPreview.promptText}
+                        </pre>
+                      </>
+                    ) : null}
+                  </div>
+                ) : null}
                 <div className="field">
                   <label htmlFor="generate-instruction">写作要求</label>
                   <input
