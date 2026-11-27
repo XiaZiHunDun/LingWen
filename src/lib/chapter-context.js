@@ -216,11 +216,50 @@ function buildBookBlock(book, limits) {
   return makeBlock('book', '书籍信息', lines.join('\n'));
 }
 
-/** 设定集 / 人物块：最多 MAX_BIBLE_ITEMS 条，每条内容截 300 字。 */
-function buildBibleBlock(bible, limits) {
-  const items = bible.slice(0, limits.maxBibleItems);
+/** 在 haystack 中统计 needle 的非重叠出现次数。 */
+function countOccurrences(haystack, needle) {
+  if (haystack === '' || needle === '') return 0;
+  let count = 0;
+  let from = 0;
+  for (;;) {
+    const at = haystack.indexOf(needle, from);
+    if (at < 0) break;
+    count += 1;
+    from = at + needle.length;
+  }
+  return count;
+}
+
+/**
+ * 设定相关性排序：标题在本章相关文本里出现次数越多越靠前。
+ * 标题 trim 后长度 < 2 不参与评分（避免单字噪声）；同分保持原有数组顺序（稳定排序）。
+ *
+ * @param {object[]} bible
+ * @param {string} relevanceText
+ * @returns {Array<{ item: object, score: number, index: number }>}
+ */
+function rankBibleItems(bible, relevanceText) {
+  const scored = bible.map((item, index) => {
+    const title = toText(item?.title).trim();
+    const score = title.length >= 2 ? countOccurrences(relevanceText, title) : 0;
+    return { item, score, index };
+  });
+  scored.sort((a, b) => b.score - a.score || a.index - b.index);
+  return scored;
+}
+
+/**
+ * 设定集 / 人物块：按相关性排序后最多 limits.maxBibleItems 条，每条内容截 bibleSnippetChars 字。
+ *
+ * @param {Array<{ item: object, score: number, index: number }>} ranked
+ * @param {object} limits
+ * @returns {{ block: object | null, included: number, mentioned: number }}
+ */
+function buildBibleBlock(ranked, limits) {
   const lines = [];
-  for (const item of items) {
+  let mentioned = 0;
+  for (const entry of ranked.slice(0, limits.maxBibleItems)) {
+    const item = entry.item;
     const category = toText(item?.category).trim();
     const title = toText(item?.title).trim();
     const content = toText(item?.content).trim();
@@ -228,9 +267,14 @@ function buildBibleBlock(bible, limits) {
     if (head === '' && content === '') continue;
     const snippet = clipText(content, limits.bibleSnippetChars);
     lines.push(`- ${head === '' ? '设定' : head}：${snippet === '' ? '（暂无内容）' : snippet}`);
+    if (entry.score > 0) mentioned += 1;
   }
-  if (lines.length === 0) return null;
-  return makeBlock('bible', '设定集/人物', lines.join('\n'));
+  if (lines.length === 0) return { block: null, included: 0, mentioned: 0 };
+  return {
+    block: makeBlock('bible', '设定集/人物', lines.join('\n')),
+    included: lines.length,
+    mentioned,
+  };
 }
 
 /**
@@ -269,12 +313,31 @@ function buildPreviousBlock(previousChapter, earlier, limits, stats) {
   return makeBlock('previous', '前情提要', lines.join('\n'));
 }
 
-/** 本章大纲块：按 currentChapter.outlineId 在 outlines 里匹配。 */
-function buildOutlineBlock(outlines, current, limits) {
+/**
+ * 定位本章对应的大纲（唯一查找实现，大纲块与设定相关性评分共用，不写第二份）：
+ * 先按 currentChapter.outlineId 精确匹配；没有 outlineId 时回落「章节 seq → 大纲 order / seq」。
+ */
+function findOutlineForChapter(outlines, current) {
+  if (current === null || current === undefined) return null;
   const outlineId = toNumber(current?.outlineId);
-  if (outlineId === null) return null;
-  const matched = outlines.find((item) => toNumber(item?.id) === outlineId);
-  if (matched === undefined || matched === null) return null;
+  if (outlineId !== null) {
+    const matched = outlines.find((item) => toNumber(item?.id) === outlineId);
+    return matched === undefined || matched === null ? null : matched;
+  }
+  const seq = toNumber(current?.seq);
+  if (seq === null) return null;
+  const fallback = outlines.find((item) => {
+    const order = toNumber(item?.order);
+    const itemSeq = toNumber(item?.seq);
+    return order === seq || itemSeq === seq;
+  });
+  return fallback === undefined || fallback === null ? null : fallback;
+}
+
+/** 本章大纲块：复用 findOutlineForChapter 的查找逻辑。 */
+function buildOutlineBlock(outlines, current, limits) {
+  const matched = findOutlineForChapter(outlines, current);
+  if (matched === null) return null;
   const lines = [];
   const title = toText(matched.title).trim();
   const summary = clipText(toText(matched.summary).trim(), limits.outlineSummaryChars);
@@ -283,6 +346,25 @@ function buildOutlineBlock(outlines, current, limits) {
   if (lines.length === 0) return null;
   lines.push('要求：本章情节须围绕上面的大纲展开，不要偏移主线。');
   return makeBlock('outline', '本章大纲', lines.join('\n'));
+}
+
+/**
+ * 设定相关性评分用的文本：本章标题 + 本章大纲（标题/摘要）+ 上一章标题与摘要 + 额外要求。
+ * 只在评分内部使用，不进入 prompt。
+ */
+function buildRelevanceText(current, outline, previousChapter, instruction) {
+  const parts = [];
+  if (current !== null) parts.push(chapterLabel(current));
+  if (outline !== null) {
+    parts.push(toText(outline.title).trim());
+    parts.push(toText(outline.summary).trim());
+  }
+  if (previousChapter !== null) {
+    parts.push(chapterLabel(previousChapter));
+    parts.push(toText(previousChapter.summary).trim());
+  }
+  parts.push(toText(instruction).trim());
+  return parts.filter((part) => part !== '').join('\n');
 }
 
 /** 任务块文案：append / replace 两种。 */
@@ -354,9 +436,20 @@ export function selectChapterContext(input = {}) {
     droppedEarlierCount: allEarlier.length - earlier.length,
   };
 
+  // 设定相关性排序后截断：命中的设定前移，未命中保持原有顺序（稳定排序）。
+  const currentOutline = findOutlineForChapter(outlines, current);
+  const relevanceText = buildRelevanceText(current, currentOutline, previousChapter, instruction);
+  const bibleResult = buildBibleBlock(rankBibleItems(bible, relevanceText), limits);
+  // bible 被 exclude（或整块为空）时注入数 / 命中数记 0，总数与省略数仍按全量口径统计。
+  const bibleInjected = !excludedKeys.has('bible') && bibleResult.included > 0;
+  stats.bibleTotal = bible.length;
+  stats.bibleIncluded = bibleInjected ? bibleResult.included : 0;
+  stats.bibleMentioned = bibleInjected ? bibleResult.mentioned : 0;
+  stats.bibleOmitted = bible.length - stats.bibleIncluded;
+
   const candidates = [
     buildBookBlock(book, limits),
-    buildBibleBlock(bible, limits),
+    bibleResult.block,
     buildPreviousBlock(previousChapter, earlier, limits, stats),
     buildOutlineBlock(outlines, current, limits),
     makeBlock('title', '本章标题', current === null ? '（未命名章节）' : chapterLabel(current)),

@@ -463,6 +463,7 @@ export default function BookDetailPage() {
     totalChars: number;
     blocks: Array<{ key: string; label: string; chars: number }>;
     promptText: string;
+    bibleStats: { bibleTotal: number; bibleIncluded: number; bibleMentioned: number };
   } | null>(null);
   // 可排除块固定选项（key 与 chapter-context 的 EXCLUDABLE_BLOCK_KEYS 一致）。
   // 勾选框语义是「包含」：未勾选的 key 进 contextExclude，随预览 / 生成一起提交。
@@ -505,14 +506,25 @@ export default function BookDetailPage() {
           blocks?: Array<{ key: string; label: string; chars: number }>;
           totalChars?: number;
           promptText?: string;
+          stats?: {
+            bibleTotal?: number;
+            bibleIncluded?: number;
+            bibleMentioned?: number;
+          };
         };
       })
       .then((data) => {
         if (contextSeqRef.current !== seq) return;
+        const num = (value: unknown) => (typeof value === 'number' && Number.isFinite(value) ? value : 0);
         setContextPreview({
           totalChars: typeof data.totalChars === 'number' ? data.totalChars : 0,
           blocks: Array.isArray(data.blocks) ? data.blocks : [],
           promptText: typeof data.promptText === 'string' ? data.promptText : '',
+          bibleStats: {
+            bibleTotal: num(data.stats?.bibleTotal),
+            bibleIncluded: num(data.stats?.bibleIncluded),
+            bibleMentioned: num(data.stats?.bibleMentioned),
+          },
         });
       })
       .catch(() => {
@@ -3302,6 +3314,21 @@ export default function BookDetailPage() {
                             .map((block) => `${block.label}（${block.chars} 字）`)
                             .join(' · ')}
                         </p>
+                        {contextPreview.bibleStats.bibleTotal > 0 ? (
+                          <p
+                            className="muted"
+                            style={{
+                              margin: '0 0 6px',
+                              minWidth: 0,
+                              maxWidth: '100%',
+                              whiteSpace: 'normal',
+                              overflowWrap: 'anywhere',
+                              wordBreak: 'break-word',
+                            }}
+                          >
+                            {`设定 ${contextPreview.bibleStats.bibleIncluded}/${contextPreview.bibleStats.bibleTotal} 条 · 其中 ${contextPreview.bibleStats.bibleMentioned} 条与本章相关`}
+                          </p>
+                        ) : null}
                         <pre
                           style={{
                             maxHeight: 260,
