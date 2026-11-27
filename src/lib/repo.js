@@ -100,38 +100,76 @@ export function createBook({ title, genre = null, summary = null, style = null }
   return mapRow(row);
 }
 
+/** 书架排序白名单（顺序即前端选项顺序）。 */
+export const BOOK_SORTS = ['updated', 'created', 'title', 'words'];
+
+/** 默认排序：最近编辑。 */
+export const DEFAULT_BOOK_SORT = 'updated';
+
 /**
- * 列出全部书籍，按 id 升序。
- *
- * 在 books 原有字段全部保留的前提下，额外聚合两个「定稿进度」字段：
- *   - chapterCount：该书的章节总数；
- *   - doneChapterCount：status = 'final' 的章节数。
- * 用 LEFT JOIN + COUNT/SUM 聚合，无章节的书两个值都是 0（COALESCE 兜底）。
- * 别名直接取 camelCase，mapRow 对未在映射表中的键原样透传。
- * @returns {Array<{ chapterCount: number, doneChapterCount: number } & Record<string, unknown>>}
+ * 排序键 → ORDER BY 片段。
+ * 这些是模块内固定常量（白名单），因此可以安全地拼进 SQL；
+ * 用户传入的字符串只用于查表，绝不直接拼接。
+ * @type {Record<string, string>}
  */
-export function listBooks() {
+const BOOK_SORT_ORDER_BY = {
+  updated: 'lastEditedAt DESC, b.id DESC',
+  created: 'b.created_at DESC, b.id DESC',
+  title: 'b.title COLLATE NOCASE ASC, b.id ASC',
+  words: 'wordCount DESC, b.id ASC',
+};
+
+/**
+ * 列出全部书籍，支持排序。
+ *
+ * 在 books 原有字段全部保留的前提下，额外聚合四个计算字段：
+ *   - chapterCount：该书的章节总数；
+ *   - doneChapterCount：status = 'final' 的章节数；
+ *   - wordCount：全部章节 word_count 之和（无章节时为 0）；
+ *   - lastEditedAt：章节 updated_at 的最大值，无章节时回落到书的 b.updated_at。
+ * 用 LEFT JOIN + COUNT/SUM/MAX 聚合，无章节的书数值列都是 0（COALESCE 兜底）。
+ * 别名直接取 camelCase，mapRow 对未在映射表中的键原样透传。
+ *
+ * @param {{ sort?: 'updated'|'created'|'title'|'words' }} [options] 不传默认 'updated'
+ * @returns {Array<{ chapterCount: number, doneChapterCount: number, wordCount: number,
+ *   lastEditedAt: string|null } & Record<string, unknown>>}
+ * @throws {Error} sort 不在白名单内时抛出（路由层会先校验并返回 400）
+ */
+export function listBooks({ sort } = {}) {
+  const key = sort === undefined || sort === null ? DEFAULT_BOOK_SORT : String(sort);
+  const orderBy = Object.prototype.hasOwnProperty.call(BOOK_SORT_ORDER_BY, key)
+    ? BOOK_SORT_ORDER_BY[key]
+    : null;
+  if (orderBy === null) {
+    throw new Error(`非法的排序方式：${key}（仅允许 ${BOOK_SORTS.join(' / ')}）`);
+  }
+
   const db = getDb();
   const rows = /** @type {Array<Record<string, unknown>>} */ (
     db
       .prepare(
         `SELECT b.*,
                 COUNT(c.id) AS chapterCount,
-                COALESCE(SUM(CASE WHEN c.status = 'final' THEN 1 ELSE 0 END), 0) AS doneChapterCount
+                COALESCE(SUM(CASE WHEN c.status = 'final' THEN 1 ELSE 0 END), 0) AS doneChapterCount,
+                COALESCE(SUM(c.word_count), 0) AS wordCount,
+                COALESCE(MAX(c.updated_at), b.updated_at) AS lastEditedAt
            FROM books b
            LEFT JOIN chapters c ON c.book_id = b.id
           GROUP BY b.id
-          ORDER BY b.id ASC`,
+          ORDER BY ${orderBy}`,
       )
       .all()
   );
   return rows.map((row) => {
     /** @type {Record<string, unknown>} */
     const mapped = mapRow(row) ?? {};
+    const lastEditedAt = mapped.lastEditedAt;
     return {
       ...mapped,
       chapterCount: Number(mapped.chapterCount ?? 0),
       doneChapterCount: Number(mapped.doneChapterCount ?? 0),
+      wordCount: Number(mapped.wordCount ?? 0),
+      lastEditedAt: typeof lastEditedAt === 'string' ? lastEditedAt : null,
     };
   });
 }

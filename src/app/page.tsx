@@ -64,6 +64,44 @@ interface Book {
   chapterCount: number;
   /** 定稿章节数（status = 'final'）。 */
   doneChapterCount: number;
+  /** 全书正文字数合计（/api/books 内置的聚合字段）。 */
+  wordCount: number;
+  /** 最近编辑时间：章节 updated_at 最大值，无章节时回落到书的 updated_at。 */
+  lastEditedAt: string | null;
+}
+
+/** 书架排序键（与 /api/books?sort= 的白名单一致）。 */
+type BookSortKey = 'updated' | 'created' | 'title' | 'words';
+
+/** 排序下拉选项。 */
+const BOOK_SORT_OPTIONS: Array<{ value: BookSortKey; label: string }> = [
+  { value: 'updated', label: '最近编辑' },
+  { value: 'created', label: '最近创建' },
+  { value: 'title', label: '书名' },
+  { value: 'words', label: '字数' },
+];
+
+/** 书架排序偏好的 localStorage key。 */
+const SORT_STORAGE_KEY = 'lingwen.shelf.sort';
+
+/** 校验任意值是否为合法排序键。 */
+function isBookSortKey(value: unknown): value is BookSortKey {
+  return typeof value === 'string' && BOOK_SORT_OPTIONS.some((option) => option.value === value);
+}
+
+/**
+ * 把 SQLite 的 'YYYY-MM-DD HH:MM:SS'（UTC）渲染成书架用的「MM-DD HH:mm」。
+ * 非法/空值回落为 '—'。
+ */
+function formatLastEdited(value: string | null | undefined): string {
+  if (typeof value !== 'string' || value.trim() === '') return '—';
+  const iso = value.includes('T') ? value : `${value.replace(' ', 'T')}Z`;
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return value;
+  const pad = (n: number): string => String(n).padStart(2, '0');
+  return `${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(
+    date.getMinutes(),
+  )}`;
 }
 
 /** 全站统计结构。 */
@@ -264,10 +302,32 @@ export default function BookshelfPage() {
   const [importMessage, setImportMessage] = useState<string | null>(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
 
+  // 书架排序：默认「最近编辑」，挂载后读取 localStorage 里的偏好。
+  const [sort, setSort] = useState<BookSortKey>('updated');
+
+  const handleSortChange = useCallback((next: BookSortKey): void => {
+    setSort(next);
+    try {
+      window.localStorage.setItem(SORT_STORAGE_KEY, next);
+    } catch {
+      // 隐私模式下 localStorage 可能不可用，忽略即可（仅影响偏好记忆）。
+    }
+  }, []);
+
+  // 刷新后沿用上次的排序选择；非法值忽略，保持默认。
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(SORT_STORAGE_KEY);
+      if (isBookSortKey(saved)) setSort(saved);
+    } catch {
+      // 读取失败时保持默认排序。
+    }
+  }, []);
+
   const loadBooks = useCallback(async (): Promise<void> => {
     setLoading(true);
     try {
-      const res = await fetch('/api/books');
+      const res = await fetch(`/api/books?sort=${encodeURIComponent(sort)}`);
       const data: unknown = await res.json();
       if (!res.ok) {
         setError(readError(data, '加载作品列表失败'));
@@ -284,7 +344,7 @@ export default function BookshelfPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [sort]);
 
   useEffect(() => {
     void loadBooks();
@@ -887,6 +947,36 @@ export default function BookshelfPage() {
         <div className="toolbar">
           <h2>作品列表</h2>
           <span className="muted">共 {books.length} 本</span>
+          <label
+            className="muted"
+            htmlFor="shelf-sort"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              minWidth: 0,
+              maxWidth: '100%',
+              flexWrap: 'wrap',
+            }}
+          >
+            排序
+            <select
+              id="shelf-sort"
+              className="input"
+              value={sort}
+              style={{ width: 'auto', maxWidth: '100%' }}
+              onChange={(e) => {
+                const next = e.target.value;
+                if (isBookSortKey(next)) handleSortChange(next);
+              }}
+            >
+              {BOOK_SORT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
 
         {error !== null ? (
@@ -906,7 +996,13 @@ export default function BookshelfPage() {
                   <span className="badge">{book.genre ?? '未分类'}</span>
                 </div>
                 <p className="muted">{book.summary ?? '暂无简介'}</p>
-                <p className="muted">更新于 {book.updatedAt ?? '未知'}</p>
+                <p className="muted" style={{ margin: 0 }}>
+                  最近编辑 {formatLastEdited(book.lastEditedAt ?? book.updatedAt)}
+                </p>
+                <p className="muted" style={{ margin: '2px 0 8px' }}>
+                  {Math.max(0, Number(book.chapterCount ?? 0) || 0)} 篇 ·{' '}
+                  {Math.max(0, Number(book.wordCount ?? 0) || 0).toLocaleString('zh-CN')} 字
+                </p>
                 {(() => {
                   // 定稿进度：x = 已定稿章节数，y = 章节总数；y = 0 时宽度 0%，不除零。
                   const total = Math.max(0, Number(book.chapterCount ?? 0) || 0);
