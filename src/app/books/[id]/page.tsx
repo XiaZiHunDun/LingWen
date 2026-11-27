@@ -373,6 +373,77 @@ export default function BookDetailPage() {
   const [bibleContent, setBibleContent] = useState('');
   const [addingBible, setAddingBible] = useState(false);
 
+  // 设定集：从本章提取的候选（默认全选，逐条确认后写入）
+  type BibleCandidate = { category: string; title: string; content: string };
+  const [bibleCandidates, setBibleCandidates] = useState<BibleCandidate[]>([]);
+  const [candidatePicked, setCandidatePicked] = useState<boolean[]>([]);
+  const [extractingBible, setExtractingBible] = useState(false);
+  const [addingCandidates, setAddingCandidates] = useState(false);
+
+  // 从本章提取设定候选：POST /api/chapters/[id]/extract-bible（只返回候选，不落库）
+  const handleExtractBible = async () => {
+    if (selectedId === null) {
+      setActionError('请先选择章节');
+      return;
+    }
+    setActionError(null);
+    setExtractingBible(true);
+    try {
+      const res = await fetch(`/api/chapters/${selectedId}/extract-bible`, { method: 'POST' });
+      if (!res.ok) throw new Error(await readErrorMessage(res));
+      const data = (await res.json()) as { candidates?: BibleCandidate[] };
+      const list = Array.isArray(data.candidates) ? data.candidates : [];
+      setBibleCandidates(list);
+      setCandidatePicked(list.map(() => true));
+      if (list.length === 0) showNotice('本章没有新的设定');
+    } catch (err) {
+      setBibleCandidates([]);
+      setCandidatePicked([]);
+      setActionError(toMessage(err));
+    } finally {
+      setExtractingBible(false);
+    }
+  };
+
+  const toggleCandidate = (index: number) => {
+    setCandidatePicked((prev) => prev.map((picked, i) => (i === index ? !picked : picked)));
+  };
+
+  // 逐条写入设定集：POST /api/books/[id]/bible，全部成功后刷新列表并清空候选
+  const handleAddCandidates = async () => {
+    const picked = bibleCandidates.filter((_, index) => candidatePicked[index] === true);
+    if (picked.length === 0) return;
+    setActionError(null);
+    setAddingCandidates(true);
+    let added = 0;
+    try {
+      for (const candidate of picked) {
+        const res = await fetch(`/api/books/${bookId}/bible`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            category: candidate.category,
+            title: candidate.title,
+            content: candidate.content,
+          }),
+        });
+        if (!res.ok) throw new Error(await readErrorMessage(res));
+        added += 1;
+      }
+      await refreshBible();
+      setBibleCandidates([]);
+      setCandidatePicked([]);
+      showNotice(`已加入 ${added} 条`);
+    } catch (err) {
+      setActionError(toMessage(err));
+      if (added > 0) {
+        await refreshBible().catch(() => {});
+      }
+    } finally {
+      setAddingCandidates(false);
+    }
+  };
+
   // 体检
   const [checkStats, setCheckStats] = useState<CheckStats | null>(null);
   const [checkIssues, setCheckIssues] = useState<CheckIssue[]>([]);
@@ -3370,6 +3441,66 @@ export default function BookDetailPage() {
 
         <div className="panel stack">
           <h2>设定集</h2>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => {
+              void handleExtractBible();
+            }}
+            disabled={extractingBible || selectedId === null}
+          >
+            {extractingBible ? '提取中…' : '从本章提取设定'}
+          </button>
+          {bibleCandidates.length > 0 ? (
+            <ul className="list-clean stack" style={{ maxWidth: '100%', minWidth: 0 }}>
+              {bibleCandidates.map((candidate, index) => (
+                <li
+                  key={`${candidate.category}-${candidate.title}-${index}`}
+                  className="bible-list-item"
+                  style={{ maxWidth: '100%', minWidth: 0, overflowWrap: 'anywhere' }}
+                >
+                  <label
+                    style={{
+                      display: 'flex',
+                      gap: 6,
+                      alignItems: 'flex-start',
+                      maxWidth: '100%',
+                      minWidth: 0,
+                      overflowWrap: 'anywhere',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={candidatePicked[index] === true}
+                      onChange={() => toggleCandidate(index)}
+                      style={{ flex: '0 0 auto', marginTop: 4 }}
+                    />
+                    <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>
+                      {candidate.category} · {candidate.title}
+                    </span>
+                  </label>
+                  <p className="muted" style={{ maxWidth: '100%', overflowWrap: 'anywhere' }}>
+                    {candidate.content}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {bibleCandidates.length > 0 ? (
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => {
+                void handleAddCandidates();
+              }}
+              disabled={addingCandidates}
+              style={{ maxWidth: '100%', overflowWrap: 'anywhere' }}
+            >
+              {addingCandidates
+                ? '加入中…'
+                : `加入设定集（${bibleCandidates.filter((_, index) => candidatePicked[index] === true).length}）`}
+            </button>
+          ) : null}
           {bible.length === 0 ? (
             <p className="empty">还没有设定</p>
           ) : (
