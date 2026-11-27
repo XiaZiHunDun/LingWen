@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 
 interface Book {
   id: number;
@@ -1719,6 +1719,262 @@ export default function BookDetailPage() {
     return activePanel === key ? 'panel-visible' : 'panel-hidden';
   }
 
+  // 全局命令面板：显隐、搜索词、选中项索引、搜索框 ref（⌘/Ctrl+K 开关，Esc 关闭）。
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [paletteQuery, setPaletteQuery] = useState('');
+  const [paletteIndex, setPaletteIndex] = useState(0);
+  const paletteInputRef = useRef<HTMLInputElement | null>(null);
+  const router = useRouter();
+
+  /** 命令项：label 展示；keywords 参与过滤；run 一律复用页面已有处理函数（不新增请求）。 */
+  type PaletteCommand = {
+    id: string;
+    label: string;
+    keywords: string;
+    disabled: boolean;
+    run: () => void;
+  };
+
+  // 无选中章节时，依赖章节的命令统一置灰。
+  const paletteHasChapter = selectedChapter !== null;
+  // 有选区时润色只针对选中文本，否则整章（决策文案给命令项标题用）。
+  const palettePolishLabel = selectionCount > 0 ? '润色（仅选中）' : '润色（全文）';
+
+  // 命令面板里用到的处理函数多为「非 useCallback 的普通闭包」（每渲染一个新身份），
+  // 全部塞进同一个 ref，每次渲染刷新，useMemo 只依赖这个稳定 ref，避免每渲染重算命令数组。
+  const paletteHandlersRef = useRef({
+    createChapter: handleCreateChapter,
+    saveChapter,
+    review: handleReview,
+    startPolish: handleStartPolish,
+    openReader: handleOpenReader,
+    openBookSettings,
+    cancelBookSettings,
+  });
+  paletteHandlersRef.current = {
+    createChapter: handleCreateChapter,
+    saveChapter,
+    review: handleReview,
+    startPolish: handleStartPolish,
+    openReader: handleOpenReader,
+    openBookSettings,
+    cancelBookSettings,
+  };
+
+  const paletteCommands = useMemo<PaletteCommand[]>(() => {
+    const noChapter = !paletteHasChapter;
+    // 通过 ref 读取最新处理函数，命令数组只依赖下面这些真正影响内容的稳定值。
+    const handlers = paletteHandlersRef.current;
+    return [
+      {
+        id: 'create-chapter',
+        label: '新建章节',
+        keywords: '新建 章节 添加 create new chapter',
+        disabled: false,
+        run: () => {
+          void handlers.createChapter();
+        },
+      },
+      {
+        id: 'save-chapter',
+        label: '保存当前章',
+        keywords: '保存 chapter save 存档',
+        disabled: noChapter,
+        run: () => {
+          void handlers.saveChapter();
+        },
+      },
+      {
+        id: 'revisions',
+        label: '历史版本',
+        keywords: '历史 版本 快照 revision history',
+        disabled: noChapter,
+        run: () => {
+          setShowRevisions(true);
+        },
+      },
+      {
+        id: 'review',
+        label: 'AI 检查',
+        keywords: 'ai 检查 审阅 review 质检',
+        disabled: noChapter,
+        run: () => {
+          void handlers.review();
+        },
+      },
+      {
+        id: 'polish',
+        label: palettePolishLabel,
+        keywords: '润色 优化 polish 改写',
+        disabled: noChapter,
+        run: () => {
+          void handlers.startPolish();
+        },
+      },
+      {
+        id: 'export-chapter',
+        label: '导出本章',
+        keywords: '导出 章节 下载 export chapter markdown',
+        disabled: noChapter,
+        run: () => {
+          if (selectedChapter === null) return;
+          window.open(`/api/chapters/${selectedChapter.id}/export?format=md`, '_blank', 'noopener');
+        },
+      },
+      {
+        id: 'export-book-json',
+        label: '导出作品 JSON',
+        keywords: '导出 作品 json 备份 export book',
+        disabled: false,
+        run: () => {
+          window.location.href = `/api/books/${bookId}/export/json`;
+        },
+      },
+      {
+        id: 'reader',
+        label: '阅读模式',
+        keywords: '阅读 reader 只读 全屏',
+        disabled: noChapter,
+        run: () => {
+          handlers.openReader();
+        },
+      },
+      {
+        id: 'focus-mode',
+        label: editorPrefs.focusMode ? '专注模式：关闭' : '专注模式：开启',
+        keywords: '专注 focus 排版 模式',
+        disabled: false,
+        run: () => {
+          updateEditorPrefs({ focusMode: !editorPrefs.focusMode });
+        },
+      },
+      {
+        id: 'book-settings',
+        label: '书籍设置',
+        keywords: '设置 书籍 settings 书名 简介',
+        disabled: false,
+        run: () => {
+          if (settingsOpen) {
+            handlers.cancelBookSettings();
+            return;
+          }
+          handlers.openBookSettings();
+        },
+      },
+      {
+        id: 'stats',
+        label: '写作统计页',
+        keywords: '统计 写作 stats 数据',
+        disabled: false,
+        run: () => {
+          router.push('/stats');
+        },
+      },
+      {
+        id: 'back-to-shelf',
+        label: '返回书架',
+        keywords: '返回 书架 列表 home shelf',
+        disabled: false,
+        run: () => {
+          router.push('/');
+        },
+      },
+    ];
+  }, [
+    // 只保留真正影响命令内容/置灰状态的稳定值；处理函数统一走 paletteHandlersRef，不再作为依赖。
+    // 依赖数组收敛后，输入搜索词不会导致整份命令数组重新构建。
+    bookId,
+    editorPrefs.focusMode,
+    paletteHasChapter,
+    palettePolishLabel,
+    router,
+    selectedChapter,
+    settingsOpen,
+    updateEditorPrefs,
+  ]);
+
+  // 按名称 / 关键词实时过滤命令。
+  const paletteFiltered = useMemo<PaletteCommand[]>(() => {
+    const keyword = paletteQuery.trim().toLowerCase();
+    if (keyword === '') return paletteCommands;
+    return paletteCommands.filter((item) =>
+      `${item.label} ${item.keywords}`.toLowerCase().includes(keyword),
+    );
+  }, [paletteCommands, paletteQuery]);
+
+  const openPalette = () => {
+    setPaletteQuery('');
+    setPaletteIndex(0);
+    setPaletteOpen(true);
+  };
+
+  const closePalette = () => {
+    setPaletteOpen(false);
+  };
+
+  /** 执行命令：先关浮层再跑处理函数，避免遮罩挡住后续交互；置灰项直接忽略。 */
+  const runPaletteCommand = (command: PaletteCommand): void => {
+    if (command.disabled) return;
+    setPaletteOpen(false);
+    command.run();
+  };
+
+  /** 命令面板键位：Esc 关闭、↑↓ 移动选中项（不越界）、Enter 执行选中项。 */
+  const handlePaletteKey = (key: string): void => {
+    if (key === 'Escape') {
+      setPaletteOpen(false);
+      return;
+    }
+    if (key === 'ArrowDown' || key === 'ArrowUp') {
+      if (paletteFiltered.length === 0) return;
+      const step = key === 'ArrowDown' ? 1 : -1;
+      setPaletteIndex((prev) => Math.min(Math.max(prev + step, 0), paletteFiltered.length - 1));
+      return;
+    }
+    if (key === 'Enter') {
+      const command = paletteFiltered[paletteIndex];
+      if (command !== undefined) runPaletteCommand(command);
+    }
+  };
+
+  /** Cmd/Ctrl + K 打开 / 关闭命令面板；面板打开时 Esc 也关闭（不影响既有 ⌘S 保存、阅读模式 Esc）。 */
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        if (paletteOpen) {
+          closePalette();
+          return;
+        }
+        openPalette();
+        return;
+      }
+      if (event.key === 'Escape' && paletteOpen) {
+        event.preventDefault();
+        closePalette();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [paletteOpen]);
+
+  // 打开后把焦点放到搜索框。
+  useEffect(() => {
+    if (!paletteOpen) return undefined;
+    paletteInputRef.current?.focus();
+    return undefined;
+  }, [paletteOpen]);
+
+  // 仅当面板打开或搜索词变化时，把选中项重置为第一个可执行项（没有可执行项时归零）。
+  // 注意：依赖里不能放 paletteFiltered —— 它每次渲染都可能是新数组，会让 ↑↓ 刚设置的索引被立刻覆盖。
+  useEffect(() => {
+    if (!paletteOpen) return undefined;
+    const firstEnabled = paletteFiltered.findIndex((item) => !item.disabled);
+    setPaletteIndex(firstEnabled >= 0 ? firstEnabled : 0);
+    return undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paletteOpen, paletteQuery]);
+
   if (loadError !== null) {
     return (
       <div className="workspace">
@@ -1763,6 +2019,17 @@ export default function BookDetailPage() {
           <h1 className="page-title">{book === null ? '书籍' : book.title}</h1>
         </div>
         <div className="toolbar-actions">
+          <button
+            type="button"
+            className="btn btn-ghost"
+            aria-expanded={paletteOpen}
+            title="命令面板（⌘/Ctrl + K）"
+            onClick={() => {
+              openPalette();
+            }}
+          >
+            命令
+          </button>
           <button
             type="button"
             className="btn"
@@ -1811,6 +2078,95 @@ export default function BookDetailPage() {
       </div>
 
       {actionError !== null ? <div className="issue-error">{actionError}</div> : null}
+
+      {/* 全局命令面板：半透明遮罩 + 浮层，点击遮罩关闭，点击面板本体不关闭。 */}
+      {paletteOpen ? (
+        <div
+          className="palette-overlay"
+          role="presentation"
+          onClick={() => {
+            closePalette();
+          }}
+        >
+          <div
+            className="palette"
+            role="dialog"
+            aria-modal="true"
+            aria-label="命令面板"
+            onClick={(event) => {
+              // 面板本体上的点击不再冒泡到遮罩，避免误关。
+              event.stopPropagation();
+            }}
+            onKeyDown={(event) => {
+              // 面板内按键不冒泡到编辑器 / 全局快捷键。
+              event.stopPropagation();
+              if (
+                event.key === 'Escape' ||
+                event.key === 'ArrowDown' ||
+                event.key === 'ArrowUp' ||
+                event.key === 'Enter'
+              ) {
+                event.preventDefault();
+              }
+              handlePaletteKey(event.key);
+            }}
+          >
+            <input
+              ref={paletteInputRef}
+              className="palette-search"
+              type="text"
+              value={paletteQuery}
+              aria-label="搜索命令"
+              placeholder="搜索命令…（↑↓ 选择，Enter 执行，Esc 关闭）"
+              onChange={(event) => {
+                setPaletteQuery(event.target.value);
+              }}
+              onKeyDown={(event) => {
+                // 搜索框内按键全部就地处理，不冒泡触发编辑器 / 全局快捷键。
+                event.stopPropagation();
+                if (
+                  event.key === 'Escape' ||
+                  event.key === 'ArrowDown' ||
+                  event.key === 'ArrowUp' ||
+                  event.key === 'Enter'
+                ) {
+                  event.preventDefault();
+                }
+                handlePaletteKey(event.key);
+              }}
+            />
+            {paletteFiltered.length === 0 ? (
+              <p className="palette-empty">未找到命令</p>
+            ) : (
+              <ul className="palette-list" role="listbox" aria-label="命令列表">
+                {paletteFiltered.map((command, index) => (
+                  <li key={command.id}>
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={index === paletteIndex}
+                      className={index === paletteIndex ? 'palette-item active' : 'palette-item'}
+                      disabled={command.disabled}
+                      onMouseDown={(event) => {
+                        // 鼠标点击不抢走搜索框焦点，Enter 始终作用于选中项。
+                        event.preventDefault();
+                      }}
+                      onMouseEnter={() => {
+                        setPaletteIndex(index);
+                      }}
+                      onClick={() => {
+                        runPaletteCommand(command);
+                      }}
+                    >
+                      {command.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      ) : null}
 
       {settingsOpen ? (
         <div className="panel stack">

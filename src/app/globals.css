@@ -1442,3 +1442,106 @@ code {
     line-height: 1.9;
   }
 }
+
+/* 全局命令面板：浮层 + 半透明遮罩（⌘/Ctrl+K 开关，Esc / 点击遮罩关闭）。 */
+.palette-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 10vh 12px 12px;
+  background: rgba(15, 23, 42, 0.72);
+  overflow-y: auto;
+}
+
+.palette {
+  width: min(560px, calc(100vw - 24px));
+  max-width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid #374151;
+  border-radius: 0.75rem;
+  background: #111827;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
+  overflow-x: hidden;
+}
+
+.palette-search {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid #374151;
+  border-radius: 0.5rem;
+  background: #0b1220;
+  color: #e5e7eb;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.palette-search:focus {
+  border-color: #6366f1;
+}
+
+.palette-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: min(52vh, 26rem);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.palette-item {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid transparent;
+  border-radius: 0.45rem;
+  background: transparent;
+  color: #e5e7eb;
+  font-size: 0.92rem;
+  text-align: left;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.palette-item.active {
+  border-color: #6366f1;
+  background: rgba(99, 102, 241, 0.16);
+  color: #f9fafb;
+}
+
+.palette-item:disabled {
+  color: #6b7280;
+  cursor: not-allowed;
+  background: transparent;
+  border-color: transparent;
+}
+
+.palette-empty {
+  margin: 0;
+  padding: 0.6rem 0.7rem;
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 600px) {
+  .palette-overlay {
+    padding: 6vh 6px 6px;
+  }
+
+  .palette {
+    width: min(560px, calc(100vw - 12px));
+    max-width: 100%;
+    padding: 0.55rem;
+  }
+}
+
