@@ -102,6 +102,9 @@ export default function StatsPage() {
   const [month, setMonth] = useState<MonthSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // CSV 导出：下载进行中禁用按钮防连点；失败时给出可见提示。
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const load = useCallback(async (): Promise<void> => {
     setLoading(true);
@@ -217,6 +220,30 @@ export default function StatsPage() {
     void load();
   }, [load]);
 
+  /** 导出近 30 天写作统计 CSV：取接口 blob，再用临时 <a> 触发下载。 */
+  const handleExport = useCallback(async (): Promise<void> => {
+    if (exporting) return;
+    setExporting(true);
+    setExportError(null);
+    try {
+      const res = await fetch('/api/stats/export?days=30');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'lingwen-stats-30days.csv';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      setExportError('导出 CSV 失败，请稍后重试');
+    } finally {
+      setExporting(false);
+    }
+  }, [exporting]);
+
   // 概览卡：今日字数 / 日目标，百分比封顶 100% 且不出现除零。
   const goalPercent =
     goal > 0 ? Math.min(100, Math.max(0, Math.round((todayWords / goal) * 100))) : 0;
@@ -231,11 +258,27 @@ export default function StatsPage() {
             <h1>写作统计</h1>
             <p className="muted">概览、近 14 天节奏、作品对比与本月小结，全部来自本地写作记录。</p>
           </div>
-          <Link className="btn btn-ghost" href="/">
-            返回书架
-          </Link>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <button
+              className="btn"
+              type="button"
+              onClick={() => void handleExport()}
+              disabled={exporting}
+              aria-busy={exporting}
+            >
+              {exporting ? '导出中…' : '导出 CSV'}
+            </button>
+            <Link className="btn btn-ghost" href="/">
+              返回书架
+            </Link>
+          </div>
         </div>
         {error !== null ? <p className="muted">{error}</p> : null}
+        {exportError !== null ? (
+          <p role="alert" style={{ color: '#f87171', margin: 0 }} className="muted">
+            {exportError}
+          </p>
+        ) : null}
         {loading ? <p className="muted">加载中…</p> : null}
 
         <section className="stats-section">
