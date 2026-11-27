@@ -2059,6 +2059,17 @@ export default function BookDetailPage() {
           <a className="btn btn-ghost" href={`/api/books/${bookId}/export/json`} download>
             导出 JSON
           </a>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            title="导出整本书为 Markdown，文件名由服务端给出（含书名）"
+            onClick={() => {
+              // 直接触发浏览器下载；Content-Disposition 由服务端设置，文件名含书名。
+              window.location.href = `/api/books/${bookId}/export?format=md`;
+            }}
+          >
+            导出整书
+          </button>
           <Link className="btn btn-ghost" href={`/books/${bookId}/find-replace`}>
             查找替换
           </Link>

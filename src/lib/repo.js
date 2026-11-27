@@ -185,6 +185,27 @@ export function getBook(id) {
 }
 
 /**
+ * 整书导出所需的聚合数据：书籍 + 章节（工作台显示顺序）+ 章数 + 总字数。
+ *
+ * 顺序口径与工作台一致（listChapters 的 seq ASC, id ASC）；
+ * wordCount 用 countWords 累加正文，与统计页 / 单章导出同口径。
+ *
+ * @param {number} bookId
+ * @returns {{ book: Record<string, unknown>, chapters: Array<Record<string, unknown>>,
+ *   chapterCount: number, wordCount: number } | undefined} 查不到书时返回 undefined
+ */
+export function getBookExport(bookId) {
+  const book = getBook(bookId);
+  if (book === undefined) return undefined;
+  const chapters = listChapters(bookId);
+  let wordCount = 0;
+  for (const chapter of chapters) {
+    wordCount += countWords(chapter.content);
+  }
+  return { book, chapters, chapterCount: chapters.length, wordCount };
+}
+
+/**
  * 局部更新一本书：只更新 patch 中出现的 title/genre/summary/style，
  * 并始终刷新 updated_at = datetime('now')。
  * @param {number} id
