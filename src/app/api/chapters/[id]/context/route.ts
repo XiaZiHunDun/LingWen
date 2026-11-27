@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { initDb } from '@/lib/db.js';
 import { getBook, getChapter, listBible, listChapters, listOutlines } from '@/lib/repo.js';
-import { selectChapterContext } from '@/lib/chapter-context.js';
+import { normalizeExcludeKeys, selectChapterContext } from '@/lib/chapter-context.js';
 
 /** 解析路由段的 id：必须是整数，否则返回 null（调用方回 400）。 */
 function parseId(raw: string): number | null {
@@ -13,7 +13,9 @@ function parseId(raw: string): number | null {
 /**
  * GET /api/chapters/[id]/context —— 预览本章生成时会注入的上下文。
  *
- * query：targetWords / mode / instruction（均可选，与 generate 请求体同义）。
+ * query：targetWords / mode / instruction / exclude（均可选，与 generate 请求体同义）。
+ * exclude：逗号分隔的可排除块 key（book / bible / previous / outline / existing），
+ *          兼容 ?exclude=book&exclude=bible 这种重复参数写法。
  * 返回 { blocks: [{ key, label, chars }], totalChars, promptText, stats }。
  * 只读：不写库、不调 LLM，上下文完全由 selectChapterContext 组装，保证「预览 = 实际注入」。
  */
@@ -44,6 +46,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const rawMode = url.searchParams.get('mode');
     const mode = rawMode === 'replace' ? 'replace' : rawMode === 'append' ? 'append' : undefined;
     const instruction = url.searchParams.get('instruction') ?? '';
+    // getAll 保留重复参数，normalizeExcludeKeys 自己处理逗号与去重、非法 key 静默忽略。
+    const excludeKeys = normalizeExcludeKeys(url.searchParams.getAll('exclude'));
 
     const context = selectChapterContext({
       book,
@@ -55,6 +59,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       targetWords,
       mode,
       instruction,
+      excludeKeys,
     });
 
     return NextResponse.json({

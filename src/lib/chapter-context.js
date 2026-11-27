@@ -29,8 +29,46 @@ export const EXISTING_TAIL_CHARS = 600;
 /** 额外要求最大字符数。 */
 export const INSTRUCTION_CHARS = 800;
 
+/**
+ * 可手动排除的上下文块 key（固定集合，顺序即前端勾选框顺序）。
+ * title / task / target / instruction 永远不可排除：传了也忽略。
+ */
+export const EXCLUDABLE_BLOCK_KEYS = ['book', 'bible', 'previous', 'outline', 'existing'];
+
 /** 截断标记。 */
 const ELLIPSIS = '…';
+
+/**
+ * 归一化「要排除的块 key」。
+ *
+ * 接受字符串数组（可含重复、可含 "a,b" 这种逗号串，用于 query 重复参数场景）
+ * 或逗号分隔字符串；只保留 {@link EXCLUDABLE_BLOCK_KEYS} 内的合法 key 并去重。
+ * 非法输入（非数组 / 非字符串 / 未知 key / 非字符串元素）一律静默忽略，不抛错。
+ *
+ * @param {unknown} value
+ * @returns {string[]} 去重后的合法 key 数组（无法识别时返回 []）
+ */
+export function normalizeExcludeKeys(value) {
+  const pieces = [];
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      if (typeof item !== 'string') continue;
+      pieces.push(...item.split(','));
+    }
+  } else if (typeof value === 'string') {
+    pieces.push(...value.split(','));
+  } else {
+    return [];
+  }
+  const keys = [];
+  for (const piece of pieces) {
+    const key = piece.trim();
+    if (!EXCLUDABLE_BLOCK_KEYS.includes(key)) continue;
+    if (keys.includes(key)) continue;
+    keys.push(key);
+  }
+  return keys;
+}
 
 /** 字符串归一：非字符串一律空串，避免 prompt 里出现 [object Object]。 */
 function toText(value) {
@@ -267,6 +305,7 @@ function taskText(mode) {
  *   targetWords?: number,
  *   mode?: 'append' | 'replace',
  *   instruction?: string,
+ *   excludeKeys?: string[],
  *   limits?: object,
  * }} [input]
  * @returns {{
@@ -290,6 +329,9 @@ export function selectChapterContext(input = {}) {
   const instruction = toText(source.instruction).trim();
   const mode = source.mode === 'replace' ? 'replace' : 'append';
   const limits = resolveLimits(source.limits);
+  // 手动排除的块：只影响 blocks / promptText；stats 口径保持不变。
+  // 未知 key、非字符串元素、整体非数组都静默忽略（title/task/target/instruction 永不可排除）。
+  const excludedKeys = new Set(normalizeExcludeKeys(source.excludeKeys));
 
   // 复制后排序，绝不动入参。
   const sorted = chapters.slice().sort((a, b) => {
@@ -338,7 +380,11 @@ export function selectChapterContext(input = {}) {
   ];
 
   const blocks = candidates.filter(
-    (block) => block !== null && block !== undefined && toText(block.content).trim() !== '',
+    (block) =>
+      block !== null &&
+      block !== undefined &&
+      toText(block.content).trim() !== '' &&
+      !excludedKeys.has(block.key),
   );
   const promptText = blocks.map((block) => block.content).join('\n\n');
   return { blocks, promptText, totalChars: promptText.length, stats };

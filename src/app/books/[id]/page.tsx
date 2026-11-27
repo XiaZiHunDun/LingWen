@@ -393,6 +393,65 @@ export default function BookDetailPage() {
     blocks: Array<{ key: string; label: string; chars: number }>;
     promptText: string;
   } | null>(null);
+  // 可排除块固定选项（key 与 chapter-context 的 EXCLUDABLE_BLOCK_KEYS 一致）。
+  // 勾选框语义是「包含」：未勾选的 key 进 contextExclude，随预览 / 生成一起提交。
+  const contextExcludeOptions: Array<{ key: string; label: string }> = [
+    { key: 'book', label: '书籍信息' },
+    { key: 'bible', label: '设定集' },
+    { key: 'previous', label: '前情提要' },
+    { key: 'outline', label: '本章大纲' },
+    { key: 'existing', label: '衔接正文' },
+  ];
+  const [contextExclude, setContextExclude] = useState<string[]>([]);
+  const contextAbortRef = useRef<AbortController | null>(null);
+  const contextSeqRef = useRef(0);
+
+  /**
+   * 拉一次上下文预览（带当前排除列表）。
+   * 请求期间再次触发会中止上一次请求并让旧响应失效（seq 校验），避免旧响应覆盖新响应。
+   */
+  const loadContextPreview = (exclude: string[]) => {
+    const chapterId = selectedId;
+    if (chapterId === null) return;
+    contextAbortRef.current?.abort();
+    const controller = new AbortController();
+    contextAbortRef.current = controller;
+    const seq = contextSeqRef.current + 1;
+    contextSeqRef.current = seq;
+    setContextLoading(true);
+    setContextError(null);
+    const params = new URLSearchParams();
+    params.set('targetWords', targetWords);
+    params.set('mode', mode);
+    if (instruction.trim() !== '') params.set('instruction', instruction.trim());
+    if (exclude.length > 0) params.set('exclude', exclude.join(','));
+    void fetch(`/api/chapters/${chapterId}/context?${params.toString()}`, {
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error('加载失败');
+        return (await res.json()) as {
+          blocks?: Array<{ key: string; label: string; chars: number }>;
+          totalChars?: number;
+          promptText?: string;
+        };
+      })
+      .then((data) => {
+        if (contextSeqRef.current !== seq) return;
+        setContextPreview({
+          totalChars: typeof data.totalChars === 'number' ? data.totalChars : 0,
+          blocks: Array.isArray(data.blocks) ? data.blocks : [],
+          promptText: typeof data.promptText === 'string' ? data.promptText : '',
+        });
+      })
+      .catch(() => {
+        if (contextSeqRef.current !== seq || controller.signal.aborted) return;
+        setContextError('上下文加载失败，请稍后重试');
+      })
+      .finally(() => {
+        if (contextSeqRef.current === seq) setContextLoading(false);
+      });
+  };
   const genRunningRef = useRef(false);
   const lastAutoSummaryRef = useRef<number | null>(null);
 
@@ -1404,7 +1463,7 @@ export default function BookDetailPage() {
       const res = await fetch(`/api/chapters/${chapterId}/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ...body, exclude: contextExclude }),
         signal: controller.signal,
       });
       if (!res.ok) throw new Error(await readErrorMessage(res));
@@ -3008,44 +3067,69 @@ export default function BookDetailPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      const chapterId = selectedId;
                       const next = !contextOpen;
                       setContextOpen(next);
-                      if (!next || chapterId === null) return;
-                      setContextLoading(true);
-                      setContextError(null);
-                      const params = new URLSearchParams();
-                      params.set('targetWords', targetWords);
-                      params.set('mode', mode);
-                      if (instruction.trim() !== '') params.set('instruction', instruction.trim());
-                      void fetch(`/api/chapters/${chapterId}/context?${params.toString()}`)
-                        .then(async (res) => {
-                          if (!res.ok) throw new Error('加载失败');
-                          return (await res.json()) as {
-                            blocks?: Array<{ key: string; label: string; chars: number }>;
-                            totalChars?: number;
-                            promptText?: string;
-                          };
-                        })
-                        .then((data) =>
-                          setContextPreview({
-                            totalChars: typeof data.totalChars === 'number' ? data.totalChars : 0,
-                            blocks: Array.isArray(data.blocks) ? data.blocks : [],
-                            promptText: typeof data.promptText === 'string' ? data.promptText : '',
-                          }),
-                        )
-                        .catch(() => setContextError('上下文加载失败，请稍后重试'))
-                        .finally(() => setContextLoading(false));
+                      if (next) loadContextPreview(contextExclude);
                     }}
                   >
                     {contextOpen ? '收起本次上下文' : '本次上下文'}
                   </button>
                   {contextPreview !== null ? (
-                    <span className="muted">共 {contextPreview.totalChars} 字</span>
+                    <span className="muted">
+                      已排除 {contextExclude.length} 块 · 当前 {contextPreview.totalChars} 字
+                    </span>
                   ) : null}
                 </div>
                 {contextOpen ? (
                   <div className="field">
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '6px 12px',
+                        marginBottom: 6,
+                        maxWidth: '100%',
+                        minWidth: 0,
+                      }}
+                    >
+                      {contextExcludeOptions.map((option) => {
+                        const checked = !contextExclude.includes(option.key);
+                        return (
+                          <label
+                            key={option.key}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              fontSize: 12,
+                              maxWidth: '100%',
+                              minWidth: 0,
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              style={{ margin: 0, flex: '0 0 auto' }}
+                              onChange={() => {
+                                // 取消勾选立刻重拉预览；请求期间重复触发由 loadContextPreview 内部拦截。
+                                const nextExclude = checked
+                                  ? [...contextExclude, option.key]
+                                  : contextExclude.filter((key) => key !== option.key);
+                                setContextExclude(nextExclude);
+                                loadContextPreview(nextExclude);
+                              }}
+                            />
+                            <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {option.label}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    <p className="muted" style={{ margin: '0 0 6px' }}>
+                      已排除 {contextExclude.length} 块 · 当前 {contextPreview?.totalChars ?? 0} 字
+                    </p>
                     {contextLoading ? <p className="muted">正在加载本次上下文…</p> : null}
                     {contextError !== null ? <p className="muted">{contextError}</p> : null}
                     {contextPreview !== null ? (

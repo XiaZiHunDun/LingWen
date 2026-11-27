@@ -13,7 +13,7 @@ import {
 } from '@/lib/repo.js';
 import { countWords } from '@/lib/wordcount.js';
 import { chatStream, isLlmConfigured, LlmError } from '@/lib/llm.js';
-import { selectChapterContext } from '@/lib/chapter-context.js';
+import { normalizeExcludeKeys, selectChapterContext } from '@/lib/chapter-context.js';
 
 /** 默认目标字数。 */
 const DEFAULT_TARGET_WORDS = 1200;
@@ -116,6 +116,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       targetWords: programTargetWords,
       mode,
       instruction,
+      // exclude：数组或逗号分隔字符串（兼容 query 风格写法），非法值静默忽略。
+      excludeKeys: normalizeExcludeKeys(body.exclude),
     });
     const userPrompt = context.promptText;
 
