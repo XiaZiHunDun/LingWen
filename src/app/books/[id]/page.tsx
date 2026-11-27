@@ -2282,6 +2282,14 @@ export default function BookDetailPage() {
                 >
                   {saving ? '保存中…' : '保存'}
                 </button>
+                {/* 仅选中章节时渲染（处于 selectedChapter !== null 分支内）。 */}
+                <a
+                  className="btn btn-ghost"
+                  href={`/api/chapters/${selectedChapter.id}/export?format=md`}
+                  download
+                >
+                  导出本章 MD
+                </a>
               </div>
               <div className="stack">
                 <div className="toolbar" style={{ justifyContent: 'flex-start' }}>
