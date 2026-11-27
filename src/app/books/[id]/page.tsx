@@ -1523,7 +1523,30 @@ export default function BookDetailPage() {
       const res = await fetch(`/api/chapters/${chapterId}/polish`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode: polishMode, instruction: polishInstruction.trim() }),
+        body: JSON.stringify(
+          (() => {
+            // 有选区 → 片段模式：带上选中文本与前后各 500 字上下文；无选区仍走整章。
+            const editor = document.querySelector<HTMLTextAreaElement>('textarea.editor-textarea');
+            const value = editor?.value ?? '';
+            const start = editor?.selectionStart ?? 0;
+            const end = editor?.selectionEnd ?? 0;
+            const picked = start < end ? value.slice(start, end) : '';
+            const base = { mode: polishMode, instruction: polishInstruction.trim() };
+            if (picked.trim() === '') return base;
+            // 记住区间，供「应用」时替换回当前正文。
+            if (editor) {
+              editor.dataset.polishStart = String(start);
+              editor.dataset.polishEnd = String(end);
+              editor.dataset.polishText = picked;
+            }
+            return {
+              ...base,
+              selection: picked,
+              before: value.slice(Math.max(0, start - 500), start),
+              after: value.slice(end, end + 500),
+            };
+          })(),
+        ),
         signal: controller.signal,
       });
       if (!res.ok) throw new Error(await readErrorMessage(res));
@@ -1557,7 +1580,28 @@ export default function BookDetailPage() {
   const handleApplyPolish = async () => {
     const chapterId = selectedId;
     if (chapterId === null || polishRunning || polishApplying) return;
-    const nextContent = polishOutput;
+    // 片段模式：把预览结果替换回记住的区间，区间外一个字不动；区间失效则拒绝应用。
+    let nextContent = polishOutput;
+    const polishEditor = document.querySelector<HTMLTextAreaElement>('textarea.editor-textarea');
+    const selStart = Number(polishEditor?.dataset.polishStart);
+    const selEnd = Number(polishEditor?.dataset.polishEnd);
+    const selText = polishEditor?.dataset.polishText ?? '';
+    if (Number.isInteger(selStart) && Number.isInteger(selEnd) && selText !== '') {
+      if (selStart < 0 || selEnd > editContent.length || selStart >= selEnd) {
+        showNotice('正文已变化，请重新选择后再试');
+        return;
+      }
+      if (editContent.slice(selStart, selEnd) !== selText) {
+        showNotice('正文已变化，请重新选择后再试');
+        return;
+      }
+      nextContent = editContent.slice(0, selStart) + polishOutput.trim() + editContent.slice(selEnd);
+      if (polishEditor) {
+        delete polishEditor.dataset.polishStart;
+        delete polishEditor.dataset.polishEnd;
+        delete polishEditor.dataset.polishText;
+      }
+    }
     if (nextContent.trim() === '') return;
     setPolishApplying(true);
     setPolishError(null);
@@ -3074,11 +3118,6 @@ export default function BookDetailPage() {
                   >
                     {contextOpen ? '收起本次上下文' : '本次上下文'}
                   </button>
-                  {contextPreview !== null ? (
-                    <span className="muted">
-                      已排除 {contextExclude.length} 块 · 当前 {contextPreview.totalChars} 字
-                    </span>
-                  ) : null}
                 </div>
                 {contextOpen ? (
                   <div className="field">
@@ -3128,7 +3167,8 @@ export default function BookDetailPage() {
                       })}
                     </div>
                     <p className="muted" style={{ margin: '0 0 6px' }}>
-                      已排除 {contextExclude.length} 块 · 当前 {contextPreview?.totalChars ?? 0} 字
+                      已排除 {contextExclude.length} 块 · 当前{' '}
+                      {contextLoading ? '更新中…' : `${contextPreview?.totalChars ?? 0} 字`}
                     </p>
                     {contextLoading ? <p className="muted">正在加载本次上下文…</p> : null}
                     {contextError !== null ? <p className="muted">{contextError}</p> : null}
@@ -3266,7 +3306,12 @@ export default function BookDetailPage() {
             }}
             disabled={selectedId === null || polishApplying}
           >
-            {polishRunning ? '取消润色' : '润色'}
+            {polishRunning ? '取消润色' : selectionCount > 0 ? '润色选中' : '润色'}
+          {selectionCount > 0 && !polishRunning ? (
+            <span className="muted" style={{ display: 'block' }}>
+              将只改写选中的 {selectionCount} 字
+            </span>
+          ) : null}
           </button>
 
           {polishError !== null ? <div className="issue-error">{`润色失败：${polishError}`}</div> : null}
@@ -3274,7 +3319,11 @@ export default function BookDetailPage() {
           {polishOutput !== '' || polishRunning ? (
             <div className="stack">
               <p className="muted">
-                {polishRunning ? '正在生成润色预览…' : `润色预览（约 ${polishOutput.length} 字）`}
+                {polishRunning
+                  ? '正在生成润色预览…'
+                  : selectionCount > 0
+                    ? `润色预览（选中 ${selectionCount} 字 → 约 ${polishOutput.length} 字）`
+                    : `润色预览（约 ${polishOutput.length} 字）`}
               </p>
               <textarea className="textarea" rows={14} readOnly value={polishOutput} />
               {polishRunning ? null : (
