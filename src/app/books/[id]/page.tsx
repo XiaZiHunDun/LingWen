@@ -2059,6 +2059,9 @@ export default function BookDetailPage() {
           <a className="btn btn-ghost" href={`/api/books/${bookId}/export/json`} download>
             导出 JSON
           </a>
+          <Link className="btn btn-ghost" href={`/books/${bookId}/find-replace`}>
+            查找替换
+          </Link>
           <button
             type="button"
             className="btn btn-ghost"

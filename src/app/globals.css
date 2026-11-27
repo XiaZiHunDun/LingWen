@@ -1545,3 +1545,230 @@ code {
   }
 }
 
+/* === shelf-sort === */
+/* 书架排序选择器：宽度自适应，永不超出容器。 */
+#shelf-sort {
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* 书卡元信息（最近编辑 / N 篇 · M 字）：沿用书卡排版，长内容换行不撑破卡片。 */
+.book-card .book-meta {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+  /* 排序工具栏与书卡在窄屏换行，避免出现横向滚动。 */
+  .book-card {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .book-card .toolbar {
+    min-width: 0;
+  }
+
+  #shelf-sort {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .book-card .book-meta {
+    font-size: 0.82rem;
+  }
+}
+/* === /shelf-sort === */
+
+/* === book-find-replace === */
+/* 全书查找替换面板：沿用既有 CSS 变量与 .btn / .badge / .toolbar / .notice 风格，
+   只新增前缀 find-replace-* 的类，不重复定义任何已有类。 */
+.find-replace-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.find-replace-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.find-replace-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+  font-size: 0.9rem;
+  color: var(--muted, #666);
+}
+
+.find-replace-input {
+  width: 15rem;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--border, rgba(128, 128, 128, 0.35));
+  background: var(--input-bg, transparent);
+  color: inherit;
+  font: inherit;
+}
+
+.find-replace-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.find-replace-summary {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--muted, #666);
+  overflow-wrap: anywhere;
+}
+
+.find-replace-empty {
+  margin: 0;
+  color: var(--muted, #666);
+  overflow-wrap: anywhere;
+}
+
+.find-replace-result {
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border, rgba(128, 128, 128, 0.35));
+  background: var(--panel, rgba(128, 128, 128, 0.08));
+  font-size: 0.92rem;
+  overflow-wrap: anywhere;
+}
+
+.find-replace-list,
+.find-replace-snippets {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.find-replace-chapter {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--border, rgba(128, 128, 128, 0.35));
+  background: var(--panel, rgba(128, 128, 128, 0.06));
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.find-replace-chapter-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.find-replace-snippet {
+  min-width: 0;
+  max-width: 100%;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--muted, #666);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.find-replace-snippet mark {
+  padding: 0 0.15em;
+  border-radius: 3px;
+  background: var(--accent-soft, rgba(255, 196, 0, 0.35));
+  color: inherit;
+  font-weight: 600;
+}
+
+.find-replace-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0.65rem 0.8rem;
+  border-radius: 10px;
+  border: 1px dashed var(--border, rgba(128, 128, 128, 0.45));
+  background: var(--panel, rgba(128, 128, 128, 0.08));
+}
+
+.find-replace-confirm p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+  /* 窄屏：输入框与按钮整行铺满，任何块都不允许横向溢出。 */
+  .find-replace-panel,
+  .find-replace-form,
+  .find-replace-preview,
+  .find-replace-list,
+  .find-replace-chapter,
+  .find-replace-confirm {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .find-replace-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .find-replace-field {
+    width: 100%;
+  }
+
+  .find-replace-input {
+    width: 100%;
+  }
+
+  .find-replace-form .btn,
+  .find-replace-confirm .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .find-replace-confirm .toolbar {
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+}
+/* === /book-find-replace === */
+

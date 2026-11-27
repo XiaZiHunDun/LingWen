@@ -996,10 +996,10 @@ export default function BookshelfPage() {
                   <span className="badge">{book.genre ?? '未分类'}</span>
                 </div>
                 <p className="muted">{book.summary ?? '暂无简介'}</p>
-                <p className="muted" style={{ margin: 0 }}>
+                <p className="muted book-meta" style={{ margin: 0 }}>
                   最近编辑 {formatLastEdited(book.lastEditedAt ?? book.updatedAt)}
                 </p>
-                <p className="muted" style={{ margin: '2px 0 8px' }}>
+                <p className="muted book-meta" style={{ margin: '2px 0 8px' }}>
                   {Math.max(0, Number(book.chapterCount ?? 0) || 0)} 篇 ·{' '}
                   {Math.max(0, Number(book.wordCount ?? 0) || 0).toLocaleString('zh-CN')} 字
                 </p>
