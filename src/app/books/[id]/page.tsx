@@ -35,6 +35,8 @@ interface Chapter {
   title: string;
   content: string | null;
   wordCount: number | null;
+  /** 章节状态：'final' 定稿 / 'draft' 草稿（后端缺省按草稿展示）。 */
+  status?: string | null;
 }
 
 interface BibleItem {
@@ -425,6 +427,13 @@ export default function BookDetailPage() {
   const [selectedOutlineIds, setSelectedOutlineIds] = useState<Set<number>>(new Set());
   const [batchBusy, setBatchBusy] = useState(false);
 
+  // 章节状态筛选：只看未定稿（status !== 'final'）的章节。
+  const [onlyUnfinished, setOnlyUnfinished] = useState(false);
+  const visibleChapters = onlyUnfinished
+    ? chapters.filter((item) => item.status !== 'final')
+    : chapters;
+
+  // 当前章节始终从完整 chapters 里取：被筛掉时也保留选中态与编辑器内容。
   const selectedChapter = chapters.find((item) => item.id === selectedId) ?? null;
   const charCount = editContent.replace(/\s/g, '').length;
   const canReview = selectedChapter !== null && editContent.trim() !== '';
@@ -2037,12 +2046,21 @@ export default function BookDetailPage() {
             >
               {batchBusy ? '处理中…' : `批量删除（已选 ${selectedChapterIds.size}）`}
             </button>
+            <button
+              type="button"
+              className={onlyUnfinished ? 'btn' : 'btn btn-ghost'}
+              aria-pressed={onlyUnfinished}
+              onClick={() => setOnlyUnfinished((prev) => !prev)}
+              title="只显示尚未定稿的章节"
+            >
+              只看未定稿
+            </button>
           </div>
           {chapters.length === 0 ? (
             <p className="empty">还没有章节</p>
           ) : (
             <ul className="list-clean stack">
-              {chapters.map((item, index) => (
+              {visibleChapters.map((item, index) => (
                 <li key={item.id}>
                   <div
                     className={
@@ -2071,6 +2089,38 @@ export default function BookDetailPage() {
                       {seqLabel(item.seq)}. {item.title}
                     </div>
                     <p className="muted">字数 {item.wordCount ?? 0}</p>
+                    {/* 状态徽章：点击在 定稿/草稿 间切换；stopPropagation 避免触发切换章节。 */}
+                    <button
+                      type="button"
+                      className="badge"
+                      aria-label={`章节状态：${item.status === 'final' ? '定稿' : '草稿'}，点击切换`}
+                      title="点击切换 定稿 / 草稿"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        const next = item.status === 'final' ? 'draft' : 'final';
+                        void (async () => {
+                          try {
+                            const res = await fetch(`/api/chapters/${item.id}`, {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ status: next }),
+                            });
+                            if (!res.ok) throw new Error(await readErrorMessage(res));
+                            // 就地替换该章 status；selectedChapter 由 chapters 派生，当前章节状态随之同步。
+                            setChapters((prev) =>
+                              prev.map((chapter) =>
+                                chapter.id === item.id ? { ...chapter, status: next } : chapter,
+                              ),
+                            );
+                            showNotice(next === 'final' ? '已标记为定稿' : '已标记为草稿');
+                          } catch (err) {
+                            showNotice(`状态切换失败：${toMessage(err)}`);
+                          }
+                        })();
+                      }}
+                    >
+                      {item.status === 'final' ? '定稿' : '草稿'}
+                    </button>
                     <div className="chapter-actions">
                       <button
                         type="button"
@@ -2090,7 +2140,7 @@ export default function BookDetailPage() {
                         className="btn btn-ghost btn-icon"
                         aria-label={`下移 ${item.title}`}
                         title="下移"
-                        disabled={index === chapters.length - 1 || orderBusy}
+                        disabled={index === visibleChapters.length - 1 || orderBusy}
                         onClick={(event) => {
                           event.stopPropagation();
                           void handleMoveChapter(item.id, 1);

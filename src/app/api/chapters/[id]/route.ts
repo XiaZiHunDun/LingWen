@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getDb, initDb } from '@/lib/db.js';
+import { normalizeChapterStatus } from '@/lib/chapter-status.js';
 import {
   createChapterRevision,
   getChapter,
@@ -9,8 +10,8 @@ import {
 } from '@/lib/repo.js';
 import { countWords } from '@/lib/wordcount.js';
 
-/** PATCH 允许写入的字段白名单（其余字段一律忽略）。 */
-const PATCH_FIELDS = ['title', 'content', 'summary', 'status', 'outlineId', 'seq'] as const;
+/** PATCH 允许写入的字段白名单（其余字段一律忽略）；status 单独校验后写入。 */
+const PATCH_FIELDS = ['title', 'content', 'summary', 'outlineId', 'seq'] as const;
 
 /** 每个章节保留的历史版本条数。 */
 const KEEP_REVISIONS = 20;
@@ -27,6 +28,11 @@ function optionalNumber(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
+/** 输出用的 status：空值/非法值统一按 'draft' 输出（不改库）。 */
+function outStatus(value: unknown): 'draft' | 'final' {
+  return normalizeChapterStatus(value) ?? 'draft';
+}
+
 /** GET /api/chapters/[id] —— 读取单个章节。 */
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -36,11 +42,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     if (chapterId === null) {
       return NextResponse.json({ error: 'id 非法：必须是数字' }, { status: 400 });
     }
-    const chapter = getChapter(chapterId);
+    const chapter = getChapter(chapterId) as Record<string, unknown> | undefined;
     if (chapter === undefined) {
       return NextResponse.json({ error: '章节不存在' }, { status: 404 });
     }
-    return NextResponse.json({ chapter });
+    return NextResponse.json({ chapter: { ...chapter, status: outStatus(chapter.status) } });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : String(err) },
@@ -86,6 +92,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       }
     }
 
+    // status：只有显式传了该字段才校验，非法值直接 400 且不落库；未传则完全不动。
+    if (Object.prototype.hasOwnProperty.call(body, 'status')) {
+      const normalized = normalizeChapterStatus(body.status);
+      if (normalized === null) {
+        return NextResponse.json(
+          { error: "status 非法：仅支持 'draft' / 'final'" },
+          { status: 400 },
+        );
+      }
+      patch.status = normalized;
+    }
+
     // 正文变化时重算字数；客户端传入的 wordCount 一律忽略（不在白名单内）。
     if (typeof body.content === 'string') {
       patch.wordCount = countWords(body.content);
@@ -123,7 +141,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       pruneChapterRevisions(chapterId, KEEP_REVISIONS);
     }
 
-    return NextResponse.json({ chapter: updated });
+    const updatedRow = updated as Record<string, unknown>;
+    return NextResponse.json({
+      chapter: { ...updatedRow, status: outStatus(updatedRow.status) },
+    });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : String(err) },

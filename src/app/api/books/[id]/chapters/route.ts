@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { initDb } from '@/lib/db.js';
+import { normalizeChapterStatus } from '@/lib/chapter-status.js';
 import { getBook, listChapters, createChapter, updateChapter } from '@/lib/repo.js';
 import { countWords } from '@/lib/wordcount.js';
 
@@ -11,6 +12,16 @@ function optionalString(value: unknown): string | null {
 /** 可选的有限数字字段：非有限数 / 非数字 / NaN 一律按 null 处理。 */
 function optionalNumber(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+/** 输出用的 status：空值/非法值统一按 'draft' 输出（不改库）。 */
+function outStatus(value: unknown): 'draft' | 'final' {
+  return normalizeChapterStatus(value) ?? 'draft';
+}
+
+/** 行数据统一补一个合法的 status 字段（不改库，只影响响应）。 */
+function withStatus<T extends Record<string, unknown>>(row: T): T & { status: 'draft' | 'final' } {
+  return { ...row, status: outStatus(row.status) };
 }
 
 /** 解析路由段的 id：必须是有限整数，否则返回 null（调用方回 400）。 */
@@ -44,7 +55,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     if (getBook(bookId) === undefined) {
       return NextResponse.json({ error: '书籍不存在' }, { status: 404 });
     }
-    return NextResponse.json({ chapters: listChapters(bookId) });
+    const rows = listChapters(bookId) as Array<Record<string, unknown>>;
+    // status 为空（历史数据）统一按 'draft' 输出，不写库。
+    return NextResponse.json({ chapters: rows.map((row) => withStatus(row)) });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : String(err) },
@@ -85,7 +98,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       title: optionalString(body.title),
       summary: optionalString(body.summary),
       content,
-      status: optionalString(body.status),
+      // 新建章节默认草稿；客户端传了合法状态则沿用，非法值同样回落到 'draft'。
+      status: normalizeChapterStatus(body.status) ?? 'draft',
     });
 
     if (created === undefined) {
@@ -100,7 +114,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const updated = updateChapter(createdId, { wordCount });
     const chapter = updated === undefined ? created : updated;
 
-    return NextResponse.json({ chapter }, { status: 201 });
+    return NextResponse.json({ chapter: withStatus(chapter as Record<string, unknown>) }, { status: 201 });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : String(err) },

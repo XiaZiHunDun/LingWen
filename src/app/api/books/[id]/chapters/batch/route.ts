@@ -192,7 +192,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         title: stringField(outline, 'title'),
         content: '',
         summary: stringField(outline, 'summary'),
-        status: stringField(outline, 'status'),
+        // 批量建章同样默认草稿（不沿用大纲里的 status）。
+        status: 'draft',
       }) as Record<string, unknown> | undefined;
       if (created === undefined) {
         seqCursor -= 1;
