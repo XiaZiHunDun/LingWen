@@ -6,15 +6,16 @@ import { createBookWithChapters } from '@/lib/repo.js';
 /**
  * POST /api/books/import/markdown —— 把一份 Markdown 按标题拆章后导入成一本新书。
  *
- * 请求体：{ markdown: string, filename?: string }
+ * 请求体：{ markdown: string, filename?: string, headingLevel?: 2 | 3 }
  *
  * 处理要点（与 /api/books/import/json 保持一致的错误码与响应形状）：
  *   1. 请求体必须是 JSON 对象，markdown 必须是字符串且去空白后非空，否则 400；
- *   2. 解析全部交给纯函数 parseMarkdownBook（本路由不做任何 Markdown 逻辑），
+ *   2. headingLevel 可选，只允许 2 / 3（缺省按 2），其它值 400；
+ *   3. 解析全部交给纯函数 parseMarkdownBook（本路由不做任何 Markdown 逻辑），
  *      解析抛错 → 400；
- *   3. 落库走 repo.createBookWithChapters（单事务，word_count 用 countWords 口径）；
- *   4. 成功返回 { id, chapterCount }，与书架前端现有取数形状对齐（201）；
- *   5. 其余异常（含 DB）→ 500。
+ *   4. 落库走 repo.createBookWithChapters（单事务，word_count 用 countWords 口径）；
+ *   5. 成功返回 { id, chapterCount }，与书架前端现有取数形状对齐（201）；
+ *   6. 其余异常（含 DB）→ 500。
  */
 
 /** 未知名 JSON 值的对象收窄。 */
@@ -54,10 +55,22 @@ export async function POST(req: Request) {
 
   const filename = typeof body.filename === 'string' ? body.filename : undefined;
 
+  // 拆章标题级别：缺省按默认 2，只允许 2 / 3，其它值 400。
+  const rawHeadingLevel = body.headingLevel;
+  if (
+    rawHeadingLevel !== undefined &&
+    rawHeadingLevel !== null &&
+    rawHeadingLevel !== 2 &&
+    rawHeadingLevel !== 3
+  ) {
+    return badRequest('headingLevel 只支持 2 或 3');
+  }
+  const headingLevel: 2 | 3 = rawHeadingLevel === 3 ? 3 : 2;
+
   /** @type {ReturnType<typeof parseMarkdownBook>} */
   let parsed: ReturnType<typeof parseMarkdownBook>;
   try {
-    parsed = parseMarkdownBook(markdown, { filename });
+    parsed = parseMarkdownBook(markdown, { filename, headingLevel });
   } catch (err) {
     return badRequest(`Markdown 解析失败：${err instanceof Error ? err.message : String(err)}`);
   }

@@ -204,3 +204,159 @@ test('导出 → 导入往返：0 章的书不产生章节', () => {
   assert.equal(parsed.book.title, '空书');
   assert.deepEqual(parsed.chapters, []);
 });
+
+// ---- 可选拆章标题级别（headingLevel）+ 导入预览纯函数 ----
+// import 声明在模块顶层会被提升，这里单独追加一条以保持既有断言块不动。
+import { previewMarkdownImport } from '../src/lib/book-import.js';
+
+test('headingLevel=3：三级标题拆章，`## ` 行保留在正文里', () => {
+  const source = md(
+    '# 三级书',
+    '',
+    '> 类型：玄幻',
+    '',
+    '## 卷一 卷首说明',
+    '',
+    '卷首说明正文。',
+    '',
+    '### 第 1 章 开端',
+    '',
+    '第一章正文。',
+    '',
+    '## 卷中过渡',
+    '',
+    '### 第 2 章 转折',
+    '',
+    '第二章正文。',
+  );
+
+  const { book, chapters } = parseMarkdownBook(source, { headingLevel: 3 });
+
+  assert.equal(book.title, '三级书');
+  assert.equal(book.genre, '玄幻');
+  assert.equal(chapters.length, 2);
+  assert.equal(chapters[0].title, '开端');
+  assert.equal(chapters[1].title, '转折');
+  // 首个 `### ` 之前的 `## ` 行与正文作为首章前置内容保留。
+  assert.equal(
+    chapters[0].content,
+    '## 卷一 卷首说明\n\n卷首说明正文。\n\n第一章正文。\n\n## 卷中过渡',
+  );
+  // 第二章之前没有 `## ` 行，正文只有它自己。
+  assert.equal(chapters[1].content, '第二章正文。');
+  assert.equal(chapters[0].wordCount, countWords(chapters[0].content));
+  assert.equal(chapters[1].wordCount, countWords(chapters[1].content));
+});
+
+test('headingLevel=3 且整篇没有三级标题：退回一章，章名用书名', () => {
+  const source = md(
+    '# 无三级',
+    '',
+    '## 看起来像章',
+    '',
+    '正文一。',
+    '',
+    '## 又一个',
+    '',
+    '正文二。',
+  );
+
+  const { book, chapters } = parseMarkdownBook(source, { headingLevel: 3 });
+  assert.equal(book.title, '无三级');
+  assert.equal(chapters.length, 1);
+  assert.equal(chapters[0].title, '无三级');
+  assert.equal(chapters[0].content, '## 看起来像章\n\n正文一。\n\n## 又一个\n\n正文二。');
+  assert.equal(chapters[0].wordCount, countWords(chapters[0].content));
+
+  // 空结构约定与 2 级一致：只有标题没正文 → 0 章。
+  const titleOnly = parseMarkdownBook(md('# 只有标题', '', '   '), { headingLevel: 3 });
+  assert.deepEqual(titleOnly.chapters, []);
+});
+
+test('headingLevel 只接受 2 / 3：缺省与显式 2 等价，其它值抛 TypeError', () => {
+  const source = md('# 书', '', '## 章', '', '正文。', '', '### 三级', '', '更多正文。');
+
+  assert.deepEqual(parseMarkdownBook(source), parseMarkdownBook(source, { headingLevel: 2 }));
+  assert.deepEqual(
+    parseMarkdownBook(source, { headingLevel: undefined }),
+    parseMarkdownBook(source),
+  );
+
+  assert.throws(() => parseMarkdownBook(source, { headingLevel: 1 }), TypeError);
+  assert.throws(() => parseMarkdownBook(source, { headingLevel: 4 }), TypeError);
+  assert.throws(() => parseMarkdownBook(source, { headingLevel: '3' }), TypeError);
+});
+
+test('默认（2 级）导入结果不受新参数影响：导出产物仍能往返', () => {
+  const book = { title: '默认二级', genre: null, summary: null };
+  const chapters = [
+    { seq: 1, title: '一', content: '正文一。' },
+    { seq: 2, title: '二', content: '### 三级标题留在正文\n\n正文二。' },
+  ];
+
+  const exported = buildBookExport({ book, chapters }, 'md');
+  const byDefault = parseMarkdownBook(exported.body, { filename: '默认二级.md' });
+  const byTwo = parseMarkdownBook(exported.body, { filename: '默认二级.md', headingLevel: 2 });
+
+  assert.deepEqual(byDefault, byTwo);
+  assert.equal(byDefault.book.title, '默认二级');
+  assert.equal(byDefault.chapters.length, 2);
+  assert.deepEqual(
+    byDefault.chapters.map((chapter) => chapter.title),
+    ['一', '二'],
+  );
+  assert.equal(byDefault.chapters[1].content, '### 三级标题留在正文\n\n正文二。');
+  assert.deepEqual(
+    byDefault.chapters.map((chapter) => chapter.wordCount),
+    chapters.map((chapter) => countWords(chapter.content)),
+  );
+});
+
+test('previewMarkdownImport：书名 / 章节数 / 前 3 章标题正确且无副作用', () => {
+  const source = md(
+    '# 预览之书',
+    '',
+    '> 类型：奇幻',
+    '> 简介：一段简介。',
+    '',
+    '## 第 1 章 开端',
+    '',
+    '正文一。',
+    '',
+    '## 第 2 章 发展',
+    '',
+    '正文二。',
+    '',
+    '## 第 3 章 高潮',
+    '',
+    '正文三。',
+    '',
+    '## 第 4 章 结局',
+    '',
+    '正文四。',
+  );
+
+  const before = JSON.stringify(source);
+  const preview = previewMarkdownImport(source, { filename: '预览之书.md' });
+
+  assert.deepEqual(preview, {
+    book: { title: '预览之书', genre: '奇幻', summary: '一段简介。' },
+    chapterCount: 4,
+    chapterTitles: ['开端', '发展', '高潮'],
+  });
+
+  // 不修改入参、不落库：原文不变，重复调用结果一致。
+  assert.equal(JSON.stringify(source), before);
+  assert.deepEqual(preview, previewMarkdownImport(source, { filename: '预览之书.md' }));
+
+  // 换 3 级：没有 `### ` → 退回一章（章名用书名），仍走同一份解析。
+  const three = previewMarkdownImport(source, { filename: '预览之书.md', headingLevel: 3 });
+  assert.equal(three.book.title, '预览之书');
+  assert.equal(three.chapterCount, 1);
+  assert.deepEqual(three.chapterTitles, ['预览之书']);
+
+  // 0 章的空结构也能预览。
+  const empty = previewMarkdownImport('', { filename: '空.md' });
+  assert.equal(empty.chapterCount, 0);
+  assert.deepEqual(empty.chapterTitles, []);
+});

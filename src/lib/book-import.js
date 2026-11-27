@@ -190,15 +190,47 @@ export function unescapeMarkdownBody(content) {
   return out;
 }
 
+/** 三级标题行：`###` + 空白 + 标题（`####` 不会命中，理由同上）。 */
+const HEADING_LEVEL_3 = /^###[ \t]+(.*)$/u;
+
+/** 预览结果里最多带出的章标题数量。 */
+const PREVIEW_TITLE_LIMIT = 3;
+
+/**
+ * 规范化拆章标题级别：只接受 2 或 3。
+ *
+ * 缺省（undefined / null）按默认 2 处理；其它值（1、4、字符串 `'3'` 等）一律抛
+ * TypeError，避免「静默按 2 级拆章」这种看不出来的错误口径。
+ *
+ * @param {unknown} value
+ * @returns {2 | 3}
+ */
+export function normalizeHeadingLevel(value) {
+  if (value === undefined || value === null) return 2;
+  if (value === 2 || value === 3) return value;
+  throw new TypeError('headingLevel 只支持 2 或 3');
+}
+
 /**
  * 把一份 Markdown 解析成「书 + 章节」结构（纯函数，不落库）。
  *
+ * headingLevel 决定按几级标题拆章（默认 2，行为与历史版本完全一致）：
+ *   - 2：`## 标题` 拆章，`### ` 及以下原样留在正文里；
+ *   - 3：`### 标题` 拆章，`# 书名` 仍是书名；第一个 `### ` 之前的内容（含 `## `
+ *     行本身）作为首章前置内容保留，文档中部出现的 `## ` 行留在它所属章节的正文里；
+ *     整篇没有 `### ` 时退回「整篇一章、章名用书名」，与 2 级口径一致。
+ *
  * @param {unknown} markdown Markdown 原文
- * @param {{ filename?: unknown }} [options] 无一级标题时用文件名（去掉 .md/.MD）作书名
+ * @param {{ filename?: unknown, headingLevel?: unknown }} [options]
+ *   filename：无一级标题时用文件名（去掉 .md/.MD）作书名；
+ *   headingLevel：拆章标题级别，只接受 2 或 3（缺省 2，其它值抛 TypeError）
  * @returns {{ book: { title: string, genre: string|null, summary: string|null },
  *   chapters: Array<{ title: string, content: string, wordCount: number }> }}
  */
-export function parseMarkdownBook(markdown, { filename } = {}) {
+export function parseMarkdownBook(markdown, { filename, headingLevel } = {}) {
+  const level = normalizeHeadingLevel(headingLevel);
+  /** 章标题行：2 级用 `## `，3 级用 `### `。 */
+  const chapterHeading = level === 3 ? HEADING_LEVEL_3 : HEADING_LEVEL_2;
   const lines = stripExportStats(toLines(markdown));
   const header = readHeader(lines);
 
@@ -212,14 +244,14 @@ export function parseMarkdownBook(markdown, { filename } = {}) {
 
   /** @type {Array<{ title: string, lines: string[] }>} */
   const rawChapters = [];
-  /** 首个二级标题之前的内容（导出格式里不会有，忽略）。 */
+  /** 第一个章标题之前的内容：2 级口径下按既有约定忽略（导出格式里不会有）。 */
   const preamble = [];
   /** @type {{ title: string, lines: string[] } | null} */
   let current = null;
 
   for (let i = header.bodyStart; i < lines.length; i += 1) {
     const line = lines[i];
-    const matched = HEADING_LEVEL_2.exec(line);
+    const matched = chapterHeading.exec(line);
     if (matched !== null) {
       if (current !== null) rawChapters.push(current);
       current = { title: normalizeChapterTitle(matched[1]), lines: [] };
@@ -233,25 +265,60 @@ export function parseMarkdownBook(markdown, { filename } = {}) {
   }
   if (current !== null) rawChapters.push(current);
 
+  // 3 级口径下，首个 `### ` 之前的内容（含 `## ` 行本身）要并进首章正文，不能丢。
+  const preambleText = level === 3 ? joinBody(preamble) : '';
+
   /** @type {Array<{ title: string, content: string, wordCount: number }>} */
   const chapters = [];
 
   if (rawChapters.length === 0) {
-    // 整篇没有二级标题：正文非空时只有一章（章标题用书名），否则视为空结构（0 章）。
+    // 整篇没有章标题（2 级没有 `## `；3 级没有 `### `）：正文非空时只有一章
+    // （章标题用书名），否则视为空结构（0 章）。
     const body = joinBody(lines.slice(header.bodyStart));
     if (body.trim() !== '') {
       const content = unescapeMarkdownBody(body);
       chapters.push({ title: bookTitle, content, wordCount: countWords(content) });
     }
   } else {
-    for (const item of rawChapters) {
-      const content = unescapeMarkdownBody(joinBody(item.lines));
+    rawChapters.forEach((item, index) => {
+      const body = joinBody(item.lines);
+      // 首章把前置内容接在最前面（用单个空行分隔，避免空行堆积）。
+      const merged =
+        index === 0 && preambleText !== ''
+          ? body === ''
+            ? preambleText
+            : `${preambleText}\n\n${body}`
+          : body;
+      const content = unescapeMarkdownBody(merged);
       chapters.push({ title: item.title, content, wordCount: countWords(content) });
-    }
+    });
   }
 
   return {
     book: { title: bookTitle, genre: header.genre, summary: header.summary },
     chapters,
+  };
+}
+
+/**
+ * 导入预览的纯函数（不落库、不读 DB、无文件 IO）：只从解析结果里取书籍信息与
+ * 前几章标题。解析规则完全复用 parseMarkdownBook，本函数不重复实现任何解析逻辑。
+ *
+ * @param {unknown} markdown Markdown 原文
+ * @param {{ filename?: unknown, headingLevel?: unknown }} [options]
+ *   与 parseMarkdownBook 完全一致的选项（headingLevel 只接受 2 或 3）
+ * @returns {{ book: { title: string, genre: string|null, summary: string|null },
+ *   chapterCount: number, chapterTitles: string[] }} chapterTitles 最多前 3 章标题
+ */
+export function previewMarkdownImport(markdown, { filename, headingLevel } = {}) {
+  const parsed = parseMarkdownBook(markdown, { filename, headingLevel });
+  return {
+    book: {
+      title: parsed.book.title,
+      genre: parsed.book.genre,
+      summary: parsed.book.summary,
+    },
+    chapterCount: parsed.chapters.length,
+    chapterTitles: parsed.chapters.slice(0, PREVIEW_TITLE_LIMIT).map((chapter) => chapter.title),
   };
 }

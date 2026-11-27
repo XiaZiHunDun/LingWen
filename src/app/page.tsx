@@ -306,19 +306,113 @@ export default function BookshelfPage() {
   const [importingMarkdown, setImportingMarkdown] = useState(false);
   const markdownInputRef = useRef<HTMLInputElement | null>(null);
 
-  /** 选择 .md 文件后导入：读出全文交给导入接口，成功后刷新书架列表。 */
-  async function handleImportMarkdownFile(event: ChangeEvent<HTMLInputElement>): Promise<void> {
-    const input = event.target;
-    const file = input.files?.[0];
-    if (file === undefined || file === null) return;
+  // Markdown 导入预览面板：选完文件先预览（纯读，不落库），确认后才真正入库。
+  const [preview, setPreview] = useState<{
+    filename: string;
+    markdown: string;
+    headingLevel: 2 | 3;
+    loading: boolean;
+    failed: boolean;
+    bookTitle: string;
+    bookGenre: string;
+    bookSummary: string;
+    chapterCount: number;
+    chapterTitles: string[];
+  } | null>(null);
+
+  /** 请求预览（POST /api/books/import/markdown/preview）：同一份已读文本可换级别重试。 */
+  async function requestPreview(
+    markdown: string,
+    filename: string,
+    headingLevel: 2 | 3,
+  ): Promise<void> {
+    setPreview({
+      filename,
+      markdown,
+      headingLevel,
+      loading: true,
+      failed: false,
+      bookTitle: '',
+      bookGenre: '',
+      bookSummary: '',
+      chapterCount: 0,
+      chapterTitles: [],
+    });
+    try {
+      const res = await fetch('/api/books/import/markdown/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ markdown, filename, headingLevel }),
+      });
+      let data: unknown = null;
+      try {
+        data = (await res.json()) as unknown;
+      } catch {
+        data = null;
+      }
+      if (!res.ok) {
+        setError(readError(data, '解析 Markdown 失败'));
+        setPreview((prev) => (prev === null ? prev : { ...prev, loading: false, failed: true }));
+        return;
+      }
+      const source =
+        data !== null && typeof data === 'object' ? (data as Record<string, unknown>) : {};
+      const bookRow =
+        source.book !== null && typeof source.book === 'object'
+          ? (source.book as Record<string, unknown>)
+          : {};
+      const titles: string[] = [];
+      if (Array.isArray(source.chapterTitles)) {
+        for (const item of source.chapterTitles) {
+          if (typeof item === 'string') titles.push(item);
+        }
+      }
+      setError(null);
+      setPreview({
+        filename,
+        markdown,
+        headingLevel,
+        loading: false,
+        failed: false,
+        bookTitle: typeof bookRow.title === 'string' ? bookRow.title : '',
+        bookGenre: typeof bookRow.genre === 'string' ? bookRow.genre : '',
+        bookSummary: typeof bookRow.summary === 'string' ? bookRow.summary : '',
+        chapterCount:
+          typeof source.chapterCount === 'number' && Number.isFinite(source.chapterCount)
+            ? source.chapterCount
+            : 0,
+        chapterTitles: titles.slice(0, 3),
+      });
+    } catch {
+      setError('解析 Markdown 失败');
+      setPreview((prev) => (prev === null ? prev : { ...prev, loading: false, failed: true }));
+    }
+  }
+
+  /** 切换拆章标题级别：用同一份已读文本重新请求预览。 */
+  function handleChangeHeadingLevel(next: 2 | 3): void {
+    if (preview === null) return;
+    if (preview.headingLevel === next && !preview.failed) return;
+    void requestPreview(preview.markdown, preview.filename, next);
+  }
+
+  /** 取消导入：关面板、不写任何数据；级别随面板关闭重置为默认 2 级。 */
+  function handleCancelMarkdownImport(): void {
+    setPreview(null);
+    setError(null);
+  }
+
+  /** 确认导入：带 headingLevel 调导入接口，成功后关面板、清状态、刷新列表。 */
+  async function handleConfirmMarkdownImport(): Promise<void> {
+    if (preview === null || preview.loading || preview.failed) return;
+    const { markdown, filename, headingLevel } = preview;
     setImportMessage(null);
     setImportingMarkdown(true);
     try {
-      const markdown = await file.text();
       const res = await fetch('/api/books/import/markdown', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ markdown, filename: file.name }),
+        body: JSON.stringify({ markdown, filename, headingLevel }),
       });
       let data: unknown = null;
       try {
@@ -336,12 +430,30 @@ export default function BookshelfPage() {
         if (typeof raw === 'number' && Number.isFinite(raw)) chapterCount = raw;
       }
       setError(null);
+      setPreview(null);
       setImportMessage(`已导入 Markdown，新建 ${chapterCount} 章`);
       await loadBooks();
     } catch {
       setError('导入 Markdown 失败');
     } finally {
       setImportingMarkdown(false);
+    }
+  }
+
+  /** 选择 .md 文件后先预览：读出全文请求预览接口，确认后才入库。 */
+  async function handleImportMarkdownFile(event: ChangeEvent<HTMLInputElement>): Promise<void> {
+    const input = event.target;
+    const file = input.files?.[0];
+    if (file === undefined || file === null) return;
+    setImportMessage(null);
+    setError(null);
+    try {
+      const markdown = await file.text();
+      // 每次新选文件都从默认 2 级重新预览。
+      await requestPreview(markdown, file.name, 2);
+    } catch {
+      setError('读取 Markdown 文件失败');
+    } finally {
       // 清空 value，允许重复选择同一个文件。
       input.value = '';
     }
@@ -664,6 +776,68 @@ export default function BookshelfPage() {
           />
         </div>
         {importMessage !== null ? <p className="muted">{importMessage}</p> : null}
+        {preview !== null ? (
+          <div className="card" style={{ marginTop: '0.75rem' }}>
+            <p className="muted">文件名：{preview.filename}</p>
+            <p className="muted">书名：{preview.loading ? '解析中…' : preview.bookTitle || '—'}</p>
+            {preview.loading ? (
+              <p className="muted">正在解析 Markdown…</p>
+            ) : preview.failed ? (
+              <p className="muted">预览失败，可点「重新预览」重试，或取消。</p>
+            ) : (
+              <>
+                <p className="muted">章节数量：{preview.chapterCount} 章</p>
+                <p className="muted">
+                  前 {preview.chapterTitles.length} 章标题：
+                  {preview.chapterTitles.length === 0 ? '—' : preview.chapterTitles.join('、')}
+                </p>
+              </>
+            )}
+            <div className="field">
+              <label htmlFor="import-heading-level">拆章标题级别</label>
+              <select
+                id="import-heading-level"
+                className="input"
+                value={preview.headingLevel}
+                disabled={preview.loading || importingMarkdown}
+                onChange={(e) => {
+                  handleChangeHeadingLevel(Number(e.target.value) === 3 ? 3 : 2);
+                }}
+              >
+                <option value={2}>二级标题（##）</option>
+                <option value={3}>三级标题（###）</option>
+              </select>
+            </div>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              disabled={preview.loading || importingMarkdown}
+              onClick={() => {
+                void requestPreview(preview.markdown, preview.filename, preview.headingLevel);
+              }}
+            >
+              重新预览
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={preview.loading || preview.failed || importingMarkdown}
+              onClick={() => {
+                void handleConfirmMarkdownImport();
+              }}
+            >
+              {importingMarkdown ? '导入中…' : '确认导入'}
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              disabled={importingMarkdown}
+              onClick={handleCancelMarkdownImport}
+            >
+              取消
+            </button>
+          </div>
+        ) : null}
         <div className="field" ref={searchBoxRef} style={{ position: 'relative' }}>
           <label htmlFor="global-search">全局搜索</label>
           <input
