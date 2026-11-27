@@ -51,8 +51,15 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     const outlines = listOutlines(bookId);
     const bible = listBible(bookId);
 
+    // 定稿进度：status = 'final' 的章节数，与 repo.listBooks() 的 doneChapterCount 同口径。
+    const doneChapterCount = chapters.filter((chapter) => {
+      const status = chapter.status;
+      return typeof status === 'string' && status === 'final';
+    }).length;
+
     const stats = {
       chapterCount: chapters.length,
+      doneChapterCount,
       totalWords: sumWords(chapters),
       outlineCount: outlines.length,
       bibleCount: bible.length,

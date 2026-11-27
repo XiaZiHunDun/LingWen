@@ -20,6 +20,7 @@ interface BookRow {
   id: number;
   title: string;
   chapterCount: number;
+  doneChapterCount: number;
   totalWords: number;
   outlineCount: number;
   bibleCount: number;
@@ -189,6 +190,7 @@ export default function StatsPage() {
                 id: brief.id,
                 title: brief.title,
                 chapterCount: num(stats.chapterCount),
+                doneChapterCount: num(stats.doneChapterCount),
                 totalWords: num(stats.totalWords),
                 outlineCount: num(stats.outlineCount),
                 bibleCount: num(stats.bibleCount),
@@ -330,7 +332,7 @@ export default function StatsPage() {
                   <div className="stats-compare-head">
                     <span className="stats-compare-title">{row.title}</span>
                     <span className="stats-compare-meta">
-                      章节 {fmt(row.chapterCount)} · 总字数 {fmt(row.totalWords)} · 大纲{' '}
+                      定稿 {fmt(row.doneChapterCount)} / {fmt(row.chapterCount)} · 章节 {fmt(row.chapterCount)} · 总字数 {fmt(row.totalWords)} · 大纲{' '}
                       {fmt(row.outlineCount)} · 设定 {fmt(row.bibleCount)}
                     </span>
                   </div>

@@ -60,6 +60,10 @@ interface Book {
   summary: string | null;
   style: string | null;
   updatedAt: string | null;
+  /** 章节总数（/api/books 内置的聚合字段）。 */
+  chapterCount: number;
+  /** 定稿章节数（status = 'final'）。 */
+  doneChapterCount: number;
 }
 
 /** 全站统计结构。 */
@@ -903,6 +907,40 @@ export default function BookshelfPage() {
                 </div>
                 <p className="muted">{book.summary ?? '暂无简介'}</p>
                 <p className="muted">更新于 {book.updatedAt ?? '未知'}</p>
+                {(() => {
+                  // 定稿进度：x = 已定稿章节数，y = 章节总数；y = 0 时宽度 0%，不除零。
+                  const total = Math.max(0, Number(book.chapterCount ?? 0) || 0);
+                  const done = Math.max(0, Number(book.doneChapterCount ?? 0) || 0);
+                  const percent =
+                    total > 0 ? Math.min(100, Math.max(0, (done / total) * 100)) : 0;
+                  return (
+                    <div style={{ marginBottom: 8 }}>
+                      <p className="muted" style={{ margin: 0 }}>
+                        定稿 {done} / {total} 章
+                      </p>
+                      <div
+                        role="img"
+                        aria-label={`定稿进度 ${done} / ${total} 章`}
+                        style={{
+                          height: 4,
+                          marginTop: 4,
+                          borderRadius: 999,
+                          background: 'rgba(148, 163, 184, 0.35)',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <div
+                          style={{
+                            height: '100%',
+                            width: `${percent}%`,
+                            background: '#16a34a',
+                            transition: 'width .3s ease',
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
                 <div className="toolbar">
                   <a className="btn btn-ghost" href={`/books/${book.id}`}>
                     进入工作台

@@ -102,11 +102,38 @@ export function createBook({ title, genre = null, summary = null, style = null }
 
 /**
  * 列出全部书籍，按 id 升序。
- * @returns {Array<Record<string, unknown>>}
+ *
+ * 在 books 原有字段全部保留的前提下，额外聚合两个「定稿进度」字段：
+ *   - chapterCount：该书的章节总数；
+ *   - doneChapterCount：status = 'final' 的章节数。
+ * 用 LEFT JOIN + COUNT/SUM 聚合，无章节的书两个值都是 0（COALESCE 兜底）。
+ * 别名直接取 camelCase，mapRow 对未在映射表中的键原样透传。
+ * @returns {Array<{ chapterCount: number, doneChapterCount: number } & Record<string, unknown>>}
  */
 export function listBooks() {
   const db = getDb();
-  return mapRows(db.prepare('SELECT * FROM books ORDER BY id ASC').all());
+  const rows = /** @type {Array<Record<string, unknown>>} */ (
+    db
+      .prepare(
+        `SELECT b.*,
+                COUNT(c.id) AS chapterCount,
+                COALESCE(SUM(CASE WHEN c.status = 'final' THEN 1 ELSE 0 END), 0) AS doneChapterCount
+           FROM books b
+           LEFT JOIN chapters c ON c.book_id = b.id
+          GROUP BY b.id
+          ORDER BY b.id ASC`,
+      )
+      .all()
+  );
+  return rows.map((row) => {
+    /** @type {Record<string, unknown>} */
+    const mapped = mapRow(row) ?? {};
+    return {
+      ...mapped,
+      chapterCount: Number(mapped.chapterCount ?? 0),
+      doneChapterCount: Number(mapped.doneChapterCount ?? 0),
+    };
+  });
 }
 
 /**
