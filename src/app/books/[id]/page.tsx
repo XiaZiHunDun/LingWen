@@ -427,6 +427,9 @@ export default function BookDetailPage() {
   const [selectedOutlineIds, setSelectedOutlineIds] = useState<Set<number>>(new Set());
   const [batchBusy, setBatchBusy] = useState(false);
 
+  // 阅读模式：全屏只读覆盖层开关（纯前端状态，不写库、不改动编辑态）。
+  const [readerOpen, setReaderOpen] = useState(false);
+
   // 章节状态筛选：只看未定稿（status !== 'final'）的章节。
   const [onlyUnfinished, setOnlyUnfinished] = useState(false);
   const visibleChapters = onlyUnfinished
@@ -678,13 +681,68 @@ export default function BookDetailPage() {
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
   }, [isDirty]);
 
-  /** 切换章节：有未保存正文时先确认，避免误丢草稿。 */
-  const handleSelectChapter = (chapterId: number) => {
-    if (chapterId === selectedId) return;
+  /**
+   * 切换章节：有未保存正文时先确认，避免误丢草稿。
+   * 返回是否真的切换了章节（false = 取消 / 同章），供阅读模式等调用方判断。
+   * 返回值可忽略，原有调用方（章节列表等）签名保持向后兼容。
+   */
+  const handleSelectChapter = (chapterId: number): boolean => {
+    if (chapterId === selectedId) return false;
     // 与自动保存共用同一份「已保存基线」，避免自动保存成功后仍被误判为未保存。
-    if (isDirty && !window.confirm('有未保存修改，切换将丢失，继续？')) return;
+    if (isDirty && !window.confirm('有未保存修改，切换将丢失，继续？')) return false;
     setSelectedId(chapterId);
+    return true;
   };
+
+  /** 阅读模式在「完整 chapters」（原始顺序，不经过 visibleChapters 筛选）里的位置。 */
+  const readerIndex =
+    selectedId === null ? -1 : chapters.findIndex((item) => item.id === selectedId);
+  const readerPrev = readerIndex > 0 ? chapters[readerIndex - 1] : null;
+  const readerNext =
+    readerIndex >= 0 && readerIndex < chapters.length - 1 ? chapters[readerIndex + 1] : null;
+
+  /** 进入阅读模式（覆盖层只在选中章节时渲染，按钮也只在选中章节时出现）。 */
+  const handleOpenReader = () => {
+    if (selectedChapter === null) return;
+    setReaderOpen(true);
+  };
+
+  /** 关闭阅读模式：只关开关，editContent / selectedId 等编辑态原样保留。 */
+  const handleCloseReader = () => {
+    setReaderOpen(false);
+  };
+
+  /**
+   * 阅读模式内上一章 / 下一章：复用统一入口 handleSelectChapter，
+   * 保留未保存草稿的 window.confirm 保护；用户点「取消」时完全不切换（selectedId 与编辑器内容都不变，阅读模式保持打开）。
+   * 切换成功后编辑器状态由「切换选中章节时同步编辑态」的既有 effect 同步为新章节内容，
+   * 阅读模式正文取 editContent，因此覆盖层会直接替换为新章正文，不会残留旧章文本。
+   */
+  const handleReaderGoTo = (chapterId: number) => {
+    handleSelectChapter(chapterId);
+  };
+
+  /**
+   * 阅读模式正文 / 标题：默认取编辑器状态（含未保存改动）。
+   * 切章瞬间编辑器态由 effect 在绘制后同步，此时若仍用 editContent 会短暂显示旧章残留文本，
+   * 因此在「已同步章节 id」尚未追上选中章节时回退到新章节的服务端内容，保证不串章。
+   */
+  const readerEditorSynced = selectedChapter !== null && syncedChapterIdRef.current === selectedChapter.id;
+  const readerContent = readerEditorSynced ? editContent : (selectedChapter?.content ?? '');
+  const readerTitle = readerEditorSynced ? editTitle : (selectedChapter?.title ?? '');
+
+  // 阅读模式：Esc 关闭。
+  useEffect(() => {
+    if (!readerOpen) return undefined;
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setReaderOpen(false);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [readerOpen]);
 
   const handleGenerateOutline = async () => {
     setGenerating(true);
@@ -2290,6 +2348,10 @@ export default function BookDetailPage() {
                 >
                   导出本章 MD
                 </a>
+                {/* 阅读模式：全屏只读预览当前编辑器正文（含未保存改动）。 */}
+                <button type="button" className="btn btn-ghost" onClick={handleOpenReader}>
+                  阅读模式
+                </button>
               </div>
               <div className="stack">
                 <div className="toolbar" style={{ justifyContent: 'flex-start' }}>
@@ -2834,6 +2896,46 @@ export default function BookDetailPage() {
         </div>
         </div>
       </div>
+      {/* 阅读模式覆盖层：fixed 全屏只读，正文取 editContent（含未保存改动），不渲染编辑框。 */}
+      {readerOpen && selectedChapter !== null ? (
+        <div className="rd-overlay" role="dialog" aria-modal="true" aria-label="阅读模式">
+          <div className="rd-bar">
+            <p className="rd-title">{`第 ${seqLabel(selectedChapter.seq)} 章 ${normalizeTitle(readerTitle)}`}</p>
+            <div className="rd-actions">
+              <button
+                type="button"
+                className="btn rd-btn"
+                onClick={() => {
+                  if (readerPrev !== null) handleReaderGoTo(readerPrev.id);
+                }}
+                disabled={readerPrev === null}
+              >
+                上一章
+              </button>
+              <button
+                type="button"
+                className="btn rd-btn"
+                onClick={() => {
+                  if (readerNext !== null) handleReaderGoTo(readerNext.id);
+                }}
+                disabled={readerNext === null}
+              >
+                下一章
+              </button>
+              <button type="button" className="btn rd-btn rd-btn-close" onClick={handleCloseReader}>
+                关闭
+              </button>
+            </div>
+          </div>
+          <div className="rd-body" tabIndex={0}>
+            {readerContent.trim() === '' ? (
+              <p className="rd-empty">本章暂无正文</p>
+            ) : (
+              <p className="rd-text">{readerContent}</p>
+            )}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -1316,3 +1316,129 @@ code {
     margin-left: 0;
   }
 }
+
+/* 阅读模式：全屏只读覆盖层（纯前端展示，不改动编辑器与任何数据） */
+.rd-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem clamp(1rem, 4vw, 3rem) 1.5rem;
+  background: #111827;
+  color: #e5e7eb;
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+.rd-bar {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.rd-title {
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 600;
+  color: #f9fafb;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.rd-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.rd-btn {
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  background: rgba(148, 163, 184, 0.16);
+  color: #e5e7eb;
+  white-space: nowrap;
+}
+
+.rd-btn:hover:not(:disabled) {
+  background: rgba(148, 163, 184, 0.3);
+}
+
+.rd-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.rd-btn-close {
+  border-color: rgba(248, 113, 113, 0.55);
+  color: #fca5a5;
+}
+
+.rd-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  max-width: 52rem;
+  margin: 0 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  outline: none;
+}
+
+.rd-text {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  font-size: 1.05rem;
+  line-height: 2;
+  color: #e5e7eb;
+}
+
+.rd-empty {
+  margin: 0;
+  color: #9ca3af;
+}
+
+@media (max-width: 600px) {
+  .rd-overlay {
+    padding: 0.75rem;
+    gap: 0.6rem;
+  }
+
+  /* 顶部一行放不下时按钮换行，标题独占一行。 */
+  .rd-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .rd-title {
+    font-size: 0.98rem;
+  }
+
+  .rd-actions {
+    flex-wrap: wrap;
+  }
+
+  .rd-actions .rd-btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  /* 正文不横向溢出。 */
+  .rd-body {
+    max-width: 100%;
+  }
+
+  .rd-text {
+    font-size: 1rem;
+    line-height: 1.9;
+  }
+}
