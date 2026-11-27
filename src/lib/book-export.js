@@ -65,10 +65,59 @@ function escapeLineStart(line) {
 }
 
 /**
+ * 判断是否为「围栏代码块」行：去掉前导空白后以 3 个及以上反引号或 3 个及以上 ~ 开头。
+ * 例如 ```、```js、~~~、````。
+ * @param {string} rest 已去掉行首缩进的剩余内容
+ * @returns {boolean}
+ */
+function isFenceLine(rest) {
+  return /^(?:`{3,}|~{3,})/u.test(rest);
+}
+
+/**
+ * 判断是否为「分割线 / setext 下划线」行：整行去掉空白后，只由 -、=、*、_ 组成，
+ * 且满足 Markdown 的结构条件（- 与 = 1 个及以上，* 与 _ 3 个及以上）。
+ * 例如 ---、===、***、___、- - -、= = =。
+ * @param {string} rest 已去掉行首缩进的剩余内容
+ * @returns {boolean}
+ */
+function isRuleLine(rest) {
+  const compact = rest.replace(/\s/gu, '');
+  return /^(?:-+|={1,}|\*{3,}|_{3,})$/u.test(compact);
+}
+
+/**
+ * 把「结构性整行」字面化：围栏代码块、分割线 / setext 下划线。
+ *
+ * 这些行不是靠行首单个字符生效的（`---`、`===`、```），只在行首加一个反斜杠
+ * 并不能完全挡住结构，所以对结构性字符逐个加反斜杠（``` → \`\`\`，
+ * `---` → \-\-\-，`- - -` → \- \- \-），渲染结果仍是原文。
+ * 行首原有缩进原样保留。
+ *
+ * @param {string} line 单行（不含换行符）
+ * @returns {string}
+ */
+function escapeStructuralLine(line) {
+  const matched = /^(\s*)([\s\S]*)$/u.exec(line);
+  if (matched === null) return line;
+  const [, indent, rest] = matched;
+  if (rest === '') return line;
+
+  if (isFenceLine(rest)) {
+    return indent + rest.replace(/[`~]/gu, '\\$&');
+  }
+  if (isRuleLine(rest)) {
+    return indent + rest.replace(/[-=*_]/gu, '\\$&');
+  }
+  return line;
+}
+
+/**
  * 把正文字面化，保证渲染后仍是原文而不是 Markdown 结构。
  *
- * 顺序很重要：先转义反斜杠（\ → \\），再逐行处理行首活性字符，
+ * 顺序很重要：先转义反斜杠（\ → \\），再逐行处理结构性整行与行首活性字符，
  * 否则新加出来的反斜杠会被二次转义。
+ * 结构性整行必须在行首转义之前判定（否则 `- - -` 会先被行首规则改写成 `\- - -`）。
  *
  * @param {unknown} content 章节正文
  * @returns {string} 转义后的正文（txt 格式不使用本函数）
@@ -77,7 +126,10 @@ export function escapeMarkdownBody(content) {
   const source = text(content).replace(/\r\n/gu, '\n');
   if (source === '') return '';
   const escaped = source.split('\\').join('\\\\');
-  return escaped.split('\n').map(escapeLineStart).join('\n');
+  return escaped
+    .split('\n')
+    .map((line) => escapeLineStart(escapeStructuralLine(line)))
+    .join('\n');
 }
 
 /**

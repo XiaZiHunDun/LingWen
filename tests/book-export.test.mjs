@@ -128,3 +128,112 @@ test('filename 含书名且已 encodeURIComponent', () => {
   // 缺书名兜底「未命名」。
   assert.equal(decodeURIComponent(buildBookExport({ chapters: [] }).filename), '未命名.md');
 });
+
+test('结构性整行（--- / === / ``` / ~~~ / *** / ___ / - - -）被字面化转义', () => {
+  // 单独一行就能生效的 Markdown 结构：分割线、setext 下划线、围栏代码块。
+  assert.equal(escapeMarkdownBody('---'), '\\-\\-\\-');
+  assert.equal(escapeMarkdownBody('=== '), '\\=\\=\\= ');
+  assert.equal(escapeMarkdownBody('***'), '\\*\\*\\*');
+  assert.equal(escapeMarkdownBody('___'), '\\_\\_\\_');
+  assert.equal(escapeMarkdownBody('- - -'), '\\- \\- \\-');
+  assert.equal(escapeMarkdownBody('```'), '\\`\\`\\`');
+  assert.equal(escapeMarkdownBody('```js'), '\\`\\`\\`js');
+  assert.equal(escapeMarkdownBody('~~~'), '\\~\\~\\~');
+  assert.equal(escapeMarkdownBody('~~~~'), '\\~\\~\\~\\~');
+  // 行首缩进原样保留。
+  assert.equal(escapeMarkdownBody('   ```js'), '   \\`\\`\\`js');
+  assert.equal(escapeMarkdownBody('  ===  '), '  \\=\\=\\=  ');
+  // 行数不变。
+  const body = '第一段。\n---\n第二段。';
+  assert.equal(escapeMarkdownBody(body).split('\n').length, body.split('\n').length);
+});
+
+test('导出正文中的结构行不再产生 Markdown 结构，字面内容与缩进保留', () => {
+  const content = [
+    '第一段正常文本。',
+    '---',
+    '===',
+    '```',
+    '```js',
+    '~~~',
+    '***',
+    '___',
+    '- - -',
+    '   ```js',
+    '   ---',
+    '     ===',
+    '末段正常文本。',
+  ].join('\n');
+
+  const escaped = escapeMarkdownBody(content);
+  assert.equal(escaped.split('\n').length, content.split('\n').length, '换行数量不变');
+  assert.ok(!/^[ \t]*`{3,}/mu.test(escaped), '不应残留未转义的围栏代码块行');
+  assert.ok(!/^[ \t]*~{3,}/mu.test(escaped), '不应残留 ~~~ 围栏行');
+  assert.ok(!/^[ \t]*={1,}[ \t]*$/mu.test(escaped), '不应残留 setext 下划线行');
+  assert.ok(!/^[ \t]*-{1,}[ \t]*$/mu.test(escaped), '不应残留分割线行');
+  assert.ok(!/^[ \t]*\*{3,}[ \t]*$/mu.test(escaped), '不应残留 *** 分割线行');
+  assert.ok(!/^[ \t]*_{3,}[ \t]*$/mu.test(escaped), '不应残留 ___ 分割线行');
+
+  const out = buildBookExport(
+    { book: { title: '结构行' }, chapters: [{ seq: 1, title: '章', content }] },
+    'md',
+  );
+  // 只断言章节正文部分，末尾统计段自身的 --- 分隔不在 escapeMarkdownBody 范围。
+  const bodyPart = out.body.split('\n\n---\n\n')[0];
+
+  assert.ok(!/^[ \t]*`{3,}/mu.test(bodyPart), '导出结果不应出现未转义的 ``` 行');
+  assert.ok(!/^[ \t]*~{3,}/mu.test(bodyPart), '导出结果不应出现未转义的 ~~~ 行');
+  assert.ok(!/^[ \t]*={1,}[ \t]*$/mu.test(bodyPart), '导出结果不应出现未转义的 === 行');
+  assert.ok(!/^[ \t]*-{1,}[ \t]*$/mu.test(bodyPart), '导出结果不应出现未转义的 --- 行');
+  assert.ok(!/^[ \t]*[-=*_][ \t]*[-=*_][ \t]*[-=*_]/mu.test(bodyPart), '不应出现未转义的组合分割线');
+
+  // 字面内容仍在（渲染后仍是原文）。
+  for (const literal of [
+    '\\-\\-\\-',
+    '\\=\\=\\=',
+    '\\`\\`\\`',
+    '\\`\\`\\`js',
+    '\\~\\~\\~',
+    '\\*\\*\\*',
+    '\\_\\_\\_',
+    '\\- \\- \\-',
+    '   \\`\\`\\`js',
+    '   \\-\\-\\-',
+    '     \\=\\=\\=',
+  ]) {
+    assert.ok(bodyPart.includes(literal), `应保留转义后的字面内容 ${literal}`);
+  }
+  assert.ok(bodyPart.includes('第一段正常文本。'));
+  assert.ok(bodyPart.includes('末段正常文本。'));
+
+  // 统计段自身的 --- 分隔仍必须保留，且全文中只剩这一条裸分割线。
+  assert.ok(out.body.includes('\n\n---\n\n共 1 章'), '统计段分隔符应保留');
+  const rawRules = out.body.split('\n').filter((line) => /^-{3,}$/u.test(line));
+  assert.deepEqual(rawRules, ['---'], '仅统计段分隔符保留为裸 ---');
+
+  // txt 完全不转义，结构行原样保留。
+  const txtOut = buildBookExport(
+    { book: { title: '结构行' }, chapters: [{ seq: 1, title: '章', content }] },
+    'txt',
+  );
+  assert.ok(txtOut.body.includes('\n---\n'), 'txt 保持原文，不转义 ---');
+  assert.ok(txtOut.body.includes('```js'), 'txt 保持原文，不转义 ```');
+});
+
+test('普通正文的换行与缩进不受结构行转义影响', () => {
+  const plain = '第一行正常文本。\n  第二行带两个空格缩进。\n\n说明 - 破折号 - 用法\n尾行。';
+
+  assert.equal(escapeMarkdownBody(plain), plain, '无活性字符的正文必须与原文完全一致');
+  assert.equal(escapeMarkdownBody(plain).split('\n').length, plain.split('\n').length);
+
+  const out = buildBookExport(
+    { book: { title: '普通文本' }, chapters: [{ seq: 1, title: '章', content: plain }] },
+    'md',
+  );
+  assert.ok(out.body.includes(`## 第 1 章 章\n\n${plain}`), '普通正文连缩进一起原样输出');
+
+  // 非结构行的既有行首行为不变。
+  assert.equal(escapeMarkdownBody('- 一项'), '\\- 一项');
+  assert.equal(escapeMarkdownBody('   - 一项'), '   \\- 一项');
+  assert.equal(escapeMarkdownBody('正文 - 中间连字符不变'), '正文 - 中间连字符不变');
+});
