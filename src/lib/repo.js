@@ -300,9 +300,11 @@ export function listOutlines(bookId) {
 }
 
 /**
- * 新建一个章节。word_count 由表定义默认 0；created_at / updated_at 用 datetime('now')。
+ * 新建一个章节。word_count 默认 0（与表定义一致，调用方也可显式传入）；
+ * created_at / updated_at 用 datetime('now')。
  * @param {{ bookId: number, outlineId?: number|null, seq?: number|null, title?: string|null,
- *   content?: string|null, summary?: string|null, status?: string|null }} input
+ *   content?: string|null, summary?: string|null, status?: string|null,
+ *   wordCount?: number|null }} input
  * @returns {Record<string, unknown>} 新建的 camelCase 行
  */
 export function createChapter({
@@ -313,16 +315,72 @@ export function createChapter({
   content = null,
   summary = null,
   status = null,
+  wordCount = null,
 }) {
   const db = getDb();
+  const words = typeof wordCount === 'number' && Number.isFinite(wordCount) ? wordCount : 0;
   const info = db
     .prepare(
       `INSERT INTO chapters
-         (book_id, outline_id, seq, title, content, summary, status, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+         (book_id, outline_id, seq, title, content, summary, status, word_count,
+          created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
     )
-    .run(bookId, outlineId, seq, title, content, summary, status);
+    .run(bookId, outlineId, seq, title, content, summary, status, words);
   return mapRow(db.prepare('SELECT * FROM chapters WHERE id = ?').get(info.lastInsertRowid));
+}
+
+/**
+ * 单事务新建「一本书 + 它的全部章节」（Markdown 导入 / 批量建章复用）。
+ *
+ * 事务体只调用现有的 createBook + createChapter，不写裸 SQL：
+ *   - 章节 seq 按数组顺序 1..N，title/content 原样写入；
+ *   - word_count 随 content 一起按 countWords(content) 落库，与统计页 / 导出同口径；
+ *   - 任一步失败整笔回滚（不会留下半本书）。
+ *
+ * @param {{ title: string, genre?: string|null, summary?: string|null, style?: string|null,
+ *   chapters?: Array<{ title?: string|null, content?: string|null, summary?: string|null,
+ *   status?: string|null }> }} input
+ * @returns {{ book: Record<string, unknown>, chapters: Array<Record<string, unknown>> }}
+ *   章节按 seq 升序
+ */
+export function createBookWithChapters({
+  title,
+  genre = null,
+  summary = null,
+  style = null,
+  chapters = [],
+}) {
+  const db = getDb();
+  const list = Array.isArray(chapters) ? chapters : [];
+  const run = db.transaction(() => {
+    const book = createBook({ title, genre, summary, style });
+    const bookId = Number(book.id);
+    /** @type {Array<Record<string, unknown>>} */
+    const created = [];
+    list.forEach((item, index) => {
+      const row = item !== null && typeof item === 'object' ? item : {};
+      const content = typeof row.content === 'string' ? row.content : '';
+      created.push(
+        createChapter({
+          bookId,
+          seq: index + 1,
+          title: typeof row.title === 'string' ? row.title : null,
+          content,
+          summary: typeof row.summary === 'string' ? row.summary : null,
+          status: typeof row.status === 'string' ? row.status : null,
+          wordCount: countWords(content),
+        }),
+      );
+    });
+    return { book, chapters: created };
+  });
+
+  const result = run();
+  const sorted = [...result.chapters].sort(
+    (a, b) => Number(a.seq ?? 0) - Number(b.seq ?? 0) || Number(a.id ?? 0) - Number(b.id ?? 0),
+  );
+  return { book: result.book, chapters: sorted };
 }
 
 /**

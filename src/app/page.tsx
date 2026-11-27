@@ -302,6 +302,51 @@ export default function BookshelfPage() {
   const [importMessage, setImportMessage] = useState<string | null>(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
 
+  // 导入 Markdown：进行中状态、隐藏的文件选择框（成功提示与 JSON 导入共用 importMessage）。
+  const [importingMarkdown, setImportingMarkdown] = useState(false);
+  const markdownInputRef = useRef<HTMLInputElement | null>(null);
+
+  /** 选择 .md 文件后导入：读出全文交给导入接口，成功后刷新书架列表。 */
+  async function handleImportMarkdownFile(event: ChangeEvent<HTMLInputElement>): Promise<void> {
+    const input = event.target;
+    const file = input.files?.[0];
+    if (file === undefined || file === null) return;
+    setImportMessage(null);
+    setImportingMarkdown(true);
+    try {
+      const markdown = await file.text();
+      const res = await fetch('/api/books/import/markdown', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ markdown, filename: file.name }),
+      });
+      let data: unknown = null;
+      try {
+        data = (await res.json()) as unknown;
+      } catch {
+        data = null;
+      }
+      if (!res.ok) {
+        setError(readError(data, '导入 Markdown 失败'));
+        return;
+      }
+      let chapterCount = 0;
+      if (data !== null && typeof data === 'object' && 'chapterCount' in data) {
+        const raw = (data as { chapterCount?: unknown }).chapterCount;
+        if (typeof raw === 'number' && Number.isFinite(raw)) chapterCount = raw;
+      }
+      setError(null);
+      setImportMessage(`已导入 Markdown，新建 ${chapterCount} 章`);
+      await loadBooks();
+    } catch {
+      setError('导入 Markdown 失败');
+    } finally {
+      setImportingMarkdown(false);
+      // 清空 value，允许重复选择同一个文件。
+      input.value = '';
+    }
+  }
+
   // 书架排序：默认「最近编辑」，挂载后读取 localStorage 里的偏好。
   const [sort, setSort] = useState<BookSortKey>('updated');
 
@@ -597,6 +642,23 @@ export default function BookshelfPage() {
             ref={importInputRef}
             onChange={(e) => {
               void handleImportFile(e);
+            }}
+            style={{ display: 'none' }}
+          />
+          <button
+            type="button"
+            className="btn btn-ghost"
+            disabled={importingMarkdown}
+            onClick={() => markdownInputRef.current?.click()}
+          >
+            {importingMarkdown ? '导入中…' : '导入 Markdown'}
+          </button>
+          <input
+            type="file"
+            accept=".md,text/markdown"
+            ref={markdownInputRef}
+            onChange={(e) => {
+              void handleImportMarkdownFile(e);
             }}
             style={{ display: 'none' }}
           />
