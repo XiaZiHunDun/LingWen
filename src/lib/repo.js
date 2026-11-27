@@ -251,6 +251,40 @@ export function addBible({ bookId, category = null, title = null, content = null
 }
 
 /**
+ * 按 id 读取一条设定集条目。
+ * @param {number} id
+ * @returns {Record<string, unknown> | undefined} camelCase 行；不存在时为 undefined
+ */
+export function getBible(id) {
+  const db = getDb();
+  const row = db.prepare('SELECT * FROM bible WHERE id = ?').get(id);
+  return row === undefined ? undefined : mapRow(row);
+}
+
+/**
+ * 部分更新一条设定集条目：只更新传入（非 undefined）的字段。
+ * @param {number} id
+ * @param {{ category?: string, title?: string, content?: string }} patch
+ * @returns {Record<string, unknown> | null} 更新后的行；id 不存在时为 null
+ */
+export function updateBible(id, patch = {}) {
+  const db = getDb();
+  const assignments = [];
+  const params = [];
+  for (const field of ['category', 'title', 'content']) {
+    if (patch[field] !== undefined) {
+      assignments.push(`${field} = ?`);
+      params.push(patch[field]);
+    }
+  }
+  if (assignments.length === 0) return null;
+  params.push(id);
+  db.prepare(`UPDATE bible SET ${assignments.join(', ')} WHERE id = ?`).run(...params);
+  const row = db.prepare('SELECT * FROM bible WHERE id = ?').get(id);
+  return row === undefined ? null : mapRow(row);
+}
+
+/**
  * 删除一条设定集条目。
  * @param {number} id
  * @returns {number} 被删除的行数（0 表示该 id 不存在）

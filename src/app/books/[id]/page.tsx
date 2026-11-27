@@ -1102,6 +1102,58 @@ export default function BookDetailPage() {
     }
   };
 
+  // 设定集条目就地编辑：编辑态、草稿与保存/取消。
+  const [editingBibleId, setEditingBibleId] = useState<number | null>(null);
+  const [bibleEditCategory, setBibleEditCategory] = useState('');
+  const [bibleEditTitle, setBibleEditTitle] = useState('');
+  const [bibleEditContent, setBibleEditContent] = useState('');
+  const [savingBibleEdit, setSavingBibleEdit] = useState(false);
+
+  const startBibleEdit = (item: BibleItem) => {
+    setActionError(null);
+    setEditingBibleId(item.id);
+    setBibleEditCategory(item.category ?? '');
+    setBibleEditTitle(item.title ?? '');
+    setBibleEditContent(item.content ?? '');
+  };
+
+  const cancelBibleEdit = () => {
+    setEditingBibleId(null);
+    setBibleEditCategory('');
+    setBibleEditTitle('');
+    setBibleEditContent('');
+  };
+
+  // 保存设定集条目：PATCH /api/bible/[id]，成功后刷新列表；标题为空时前端先拦一道。
+  const handleSaveBible = async (itemId: number) => {
+    setActionError(null);
+    const nextTitle = bibleEditTitle.trim();
+    if (nextTitle === '') {
+      setActionError('标题不能为空');
+      return;
+    }
+    setSavingBibleEdit(true);
+    try {
+      const res = await fetch(`/api/bible/${itemId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category: bibleEditCategory.trim(),
+          title: nextTitle,
+          content: bibleEditContent,
+        }),
+      });
+      if (!res.ok) throw new Error(await readErrorMessage(res));
+      await refreshBible();
+      setEditingBibleId(null);
+      showNotice('已保存');
+    } catch (err) {
+      setActionError(toMessage(err));
+    } finally {
+      setSavingBibleEdit(false);
+    }
+  };
+
   // 书籍设置：展开时用 book 当前值初始化编辑态。
   const openBookSettings = () => {
     setBookTitle(book?.title ?? '');
@@ -3507,21 +3559,101 @@ export default function BookDetailPage() {
             <ul className="list-clean stack">
               {bible.map((item) => (
                 <li key={item.id} className="bible-list-item">
-                  <div>{bibleHead(item)}</div>
-                  {item.content !== null && item.content.trim() !== '' ? (
-                    <p className="muted">{bibleSnippet(item.content)}</p>
-                  ) : null}
-                  <div>
-                    <button
-                      type="button"
-                      className="btn btn-danger"
-                      onClick={() => {
-                        void handleDeleteBible(item.id);
+                  {editingBibleId === item.id ? (
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: 8,
+                        minWidth: 0,
+                        width: '100%',
                       }}
                     >
-                      删除
-                    </button>
-                  </div>
+                      <input
+                        className="input"
+                        aria-label="设定分类"
+                        placeholder="分类"
+                        value={bibleEditCategory}
+                        onChange={(e) => setBibleEditCategory(e.target.value)}
+                        style={{ width: '100%', minWidth: 0, boxSizing: 'border-box' }}
+                      />
+                      <input
+                        className="input"
+                        aria-label="设定标题"
+                        placeholder="标题"
+                        value={bibleEditTitle}
+                        onChange={(e) => setBibleEditTitle(e.target.value)}
+                        style={{ width: '100%', minWidth: 0, boxSizing: 'border-box' }}
+                      />
+                      <textarea
+                        className="input"
+                        aria-label="设定内容"
+                        placeholder="内容"
+                        rows={2}
+                        value={bibleEditContent}
+                        onChange={(e) => setBibleEditContent(e.target.value)}
+                        style={{
+                          width: '100%',
+                          maxWidth: '100%',
+                          minWidth: 0,
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: 8,
+                          minWidth: 0,
+                          width: '100%',
+                        }}
+                      >
+                        <button
+                          type="button"
+                          className="btn"
+                          disabled={savingBibleEdit}
+                          onClick={() => {
+                            void handleSaveBible(item.id);
+                          }}
+                        >
+                          {savingBibleEdit ? '保存中…' : '保存'}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn"
+                          disabled={savingBibleEdit}
+                          onClick={cancelBibleEdit}
+                        >
+                          取消
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div>{bibleHead(item)}</div>
+                      {item.content !== null && item.content.trim() !== '' ? (
+                        <p className="muted">{bibleSnippet(item.content)}</p>
+                      ) : null}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, minWidth: 0 }}>
+                        <button
+                          type="button"
+                          className="btn btn-danger"
+                          onClick={() => {
+                            void handleDeleteBible(item.id);
+                          }}
+                        >
+                          删除
+                        </button>
+                        <button
+                          type="button"
+                          className="btn"
+                          onClick={() => startBibleEdit(item)}
+                        >
+                          编辑
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </li>
               ))}
             </ul>
