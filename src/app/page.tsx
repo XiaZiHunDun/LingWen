@@ -709,6 +709,58 @@ export default function BookshelfPage() {
     }
   }
 
+  /**
+   * 轻量 toast：不新增组件状态，直接在 body 上挂一个 3 秒后自动消失的提示条，
+   * 避免打断书架已有的渲染逻辑。
+   */
+  function showToast(message: string): void {
+    if (typeof document === 'undefined') return;
+    const el = document.createElement('div');
+    el.textContent = message;
+    el.setAttribute('role', 'status');
+    el.style.cssText = [
+      'position:fixed',
+      'left:50%',
+      'bottom:32px',
+      'transform:translateX(-50%)',
+      'max-width:80vw',
+      'padding:10px 18px',
+      'border-radius:999px',
+      'background:#16a34a',
+      'color:#fff',
+      'font-size:14px',
+      'line-height:1.4',
+      'box-shadow:0 8px 24px rgba(15,23,42,.25)',
+      'z-index:9999',
+    ].join(';');
+    document.body.appendChild(el);
+    window.setTimeout(() => {
+      el.remove();
+    }, 3000);
+  }
+
+  async function handleDuplicate(book: Book): Promise<void> {
+    if (!window.confirm(`确定复制《${book.title}》吗？将生成一本新的副本作品。`)) return;
+    try {
+      const res = await fetch(`/api/books/${book.id}/duplicate`, { method: 'POST' });
+      const data: unknown = await res.json();
+      if (!res.ok) {
+        setError(readError(data, '复制作品失败'));
+        return;
+      }
+      const created = data as { title?: string; chapters?: number; outlines?: number; bible?: number };
+      const newTitle = typeof created.title === 'string' ? created.title : '副本';
+      const chapters = Number(created.chapters ?? 0);
+      const outlines = Number(created.outlines ?? 0);
+      const bible = Number(created.bible ?? 0);
+      setError(null);
+      showToast(`已复制为《${newTitle}》：${chapters} 章 / ${outlines} 条大纲 / ${bible} 条设定`);
+      await loadBooks();
+    } catch {
+      setError('复制作品失败');
+    }
+  }
+
   async function handleDelete(book: Book): Promise<void> {
     if (!window.confirm(`确定删除《${book.title}》吗？该操作不可撤销。`)) return;
     try {
@@ -1284,6 +1336,15 @@ export default function BookshelfPage() {
                   >
                     导出 JSON
                   </a>
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={() => {
+                      void handleDuplicate(book);
+                    }}
+                  >
+                    复制
+                  </button>
                   <button
                     type="button"
                     className="btn btn-danger"
