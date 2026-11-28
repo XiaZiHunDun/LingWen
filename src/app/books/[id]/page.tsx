@@ -52,8 +52,25 @@ interface CheckStats {
   chapterCount: number;
   totalWords: number;
   outlineCoverage: number;
+  /** 至少在正文或大纲里出现过一次的设定条数（后端计算，前端不重算）。 */
+  bibleUsed: number;
+  /** 从未在正文和大纲里出现过的设定条数（后端计算）。 */
+  bibleUnused: number;
   llmCalls: number;
 }
+
+/** 单条设定覆盖明细（GET /api/books/[id]/check 的 bibleCoverage 元素）。 */
+interface BibleCoverageItem {
+  id: number | string | null;
+  title: string;
+  category: string;
+  occurrences: number;
+  chapterCount: number;
+  outlineCount: number;
+}
+
+/** 体检响应里设定覆盖明细最多回传多少条；超出说明后端截断过。 */
+const MAX_BIBLE_COVERAGE = 100;
 
 interface CheckIssue {
   level: string;
@@ -447,6 +464,8 @@ export default function BookDetailPage() {
   // 体检
   const [checkStats, setCheckStats] = useState<CheckStats | null>(null);
   const [checkIssues, setCheckIssues] = useState<CheckIssue[]>([]);
+  /** 体检返回的设定覆盖明细（已按未使用优先排序）；null 表示还没体检过。 */
+  const [bibleCoverage, setBibleCoverage] = useState<BibleCoverageItem[] | null>(null);
   const [checking, setChecking] = useState(false);
 
   // AI 生成
@@ -1120,6 +1139,9 @@ export default function BookDetailPage() {
   const [bibleEditTitle, setBibleEditTitle] = useState('');
   const [bibleEditContent, setBibleEditContent] = useState('');
   const [savingBibleEdit, setSavingBibleEdit] = useState(false);
+  // 改名同步：记住编辑开始时的原标题，并记录是否勾选「同时替换全书正文与大纲」。
+  const [bibleOriginalTitle, setBibleOriginalTitle] = useState('');
+  const [bibleReplaceInBook, setBibleReplaceInBook] = useState(false);
 
   const startBibleEdit = (item: BibleItem) => {
     setActionError(null);
@@ -1127,6 +1149,8 @@ export default function BookDetailPage() {
     setBibleEditCategory(item.category ?? '');
     setBibleEditTitle(item.title ?? '');
     setBibleEditContent(item.content ?? '');
+    setBibleOriginalTitle(item.title ?? '');
+    setBibleReplaceInBook(false);
   };
 
   const cancelBibleEdit = () => {
@@ -1134,6 +1158,8 @@ export default function BookDetailPage() {
     setBibleEditCategory('');
     setBibleEditTitle('');
     setBibleEditContent('');
+    setBibleOriginalTitle('');
+    setBibleReplaceInBook(false);
   };
 
   // 保存设定集条目：PATCH /api/bible/[id]，成功后刷新列表；标题为空时前端先拦一道。
@@ -1144,6 +1170,8 @@ export default function BookDetailPage() {
       setActionError('标题不能为空');
       return;
     }
+    // 只有标题确实变了才可能触发全书替换（勾选框也只在这种情况下出现）。
+    const titleChanged = nextTitle !== bibleOriginalTitle.trim();
     setSavingBibleEdit(true);
     try {
       const res = await fetch(`/api/bible/${itemId}`, {
@@ -1153,12 +1181,19 @@ export default function BookDetailPage() {
           category: bibleEditCategory.trim(),
           title: nextTitle,
           content: bibleEditContent,
+          replaceInBook: titleChanged && bibleReplaceInBook,
         }),
       });
       if (!res.ok) throw new Error(await readErrorMessage(res));
+      const data = (await res.json().catch(() => ({}))) as {
+        replaced?: { occurrences?: number };
+      };
+      const occurrences = Number(data.replaced?.occurrences ?? 0);
       await refreshBible();
       setEditingBibleId(null);
-      showNotice('已保存');
+      setBibleOriginalTitle('');
+      setBibleReplaceInBook(false);
+      showNotice(occurrences > 0 ? `已保存，替换 ${occurrences} 处` : '已保存');
     } catch (err) {
       setActionError(toMessage(err));
     } finally {
@@ -1408,16 +1443,20 @@ export default function BookDetailPage() {
     }
   };
 
-  // 体检：GET /api/books/[id]/check，返回 { stats, issues }。
+  // 体检：GET /api/books/[id]/check，返回 { stats, issues, bibleCoverage }。
   const handleCheck = async () => {
     setChecking(true);
     setActionError(null);
     try {
-      const data = await getJson<{ stats: CheckStats; issues: CheckIssue[] }>(
-        `/api/books/${bookId}/check`,
-      );
+      const data = await getJson<{
+        stats: CheckStats;
+        issues: CheckIssue[];
+        bibleCoverage?: BibleCoverageItem[];
+      }>(`/api/books/${bookId}/check`);
       setCheckStats(data.stats);
-      setCheckIssues(data.issues);
+      setCheckIssues(Array.isArray(data.issues) ? data.issues : []);
+      // 设定覆盖明细：后端最多回传 MAX_BIBLE_COVERAGE 条，超出部分前端不再渲染。
+      setBibleCoverage(Array.isArray(data.bibleCoverage) ? data.bibleCoverage : []);
     } catch (err) {
       setActionError(toMessage(err));
     } finally {
@@ -3626,6 +3665,30 @@ export default function BookDetailPage() {
                           boxSizing: 'border-box',
                         }}
                       />
+                      {bibleEditTitle.trim() !== '' &&
+                      bibleEditTitle.trim() !== bibleOriginalTitle.trim() ? (
+                        <label
+                          style={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            flexWrap: 'wrap',
+                            gap: 6,
+                            minWidth: 0,
+                            maxWidth: '100%',
+                            fontSize: 13,
+                            lineHeight: 1.5,
+                            wordBreak: 'break-word',
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={bibleReplaceInBook}
+                            onChange={(e) => setBibleReplaceInBook(e.target.checked)}
+                            style={{ flex: '0 0 auto', marginTop: 3 }}
+                          />
+                          <span style={{ minWidth: 0 }}>同时替换全书正文与大纲中的旧名字</span>
+                        </label>
+                      ) : null}
                       <div
                         style={{
                           display: 'flex',
@@ -3757,6 +3820,14 @@ export default function BookDetailPage() {
                 <dt>LLM 调用次数</dt>
                 <dd>{checkStats.llmCalls}</dd>
               </div>
+              <div style={{ minWidth: 0 }}>
+                <dt>设定覆盖</dt>
+                <dd style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
+                  {`共 ${checkStats.bibleUsed + checkStats.bibleUnused} 条，其中 ${
+                    checkStats.bibleUsed
+                  } 条在正文或大纲出现过`}
+                </dd>
+              </div>
             </dl>
           )}
           {checkIssues.length === 0 ? (
@@ -3775,6 +3846,59 @@ export default function BookDetailPage() {
               ))}
             </div>
           )}
+          {(() => {
+            if (checkStats === null) return null;
+            const total = checkStats.bibleUsed + checkStats.bibleUnused;
+            if (total === 0) return null;
+            if (checkStats.bibleUnused === 0) {
+              return (
+                <div className="stack" style={{ gap: '0.5rem' }}>
+                  <div className="muted">设定都在正文或大纲里出现过</div>
+                </div>
+              );
+            }
+            const unusedItems =
+              bibleCoverage === null
+                ? []
+                : bibleCoverage
+                    .slice(0, MAX_BIBLE_COVERAGE)
+                    .filter((item) => item.occurrences === 0);
+            const coverageTruncated =
+              bibleCoverage !== null && bibleCoverage.length > MAX_BIBLE_COVERAGE;
+            const shown = unusedItems.slice(0, 10);
+            const rest = checkStats.bibleUnused - shown.length;
+            return (
+              <div className="stack" style={{ gap: '0.5rem', minWidth: 0 }}>
+                <h3 style={{ margin: 0 }}>未使用的设定</h3>
+                <ul
+                  style={{
+                    listStyle: 'none',
+                    margin: 0,
+                    padding: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.25rem',
+                    minWidth: 0,
+                  }}
+                >
+                  {shown.map((item, index) => (
+                    <li
+                      key={`bible-unused-${String(item.id)}-${index}`}
+                      style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}
+                    >
+                      {`${item.category === '' ? '未分类' : item.category} · ${
+                        item.title === '' ? UNTITLED : item.title
+                      }`}
+                    </li>
+                  ))}
+                </ul>
+                {rest > 0 ? <div className="muted">{`还有 ${rest} 条`}</div> : null}
+                {coverageTruncated ? (
+                  <div className="muted">{`仅显示前 ${MAX_BIBLE_COVERAGE} 条`}</div>
+                ) : null}
+              </div>
+            );
+          })()}
           <h2>创作助手</h2>
           <div className="stack" style={{ gap: '0.5rem' }}>
             {assistMessages.length === 0 ? (

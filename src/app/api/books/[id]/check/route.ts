@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { initDb, getDb } from '@/lib/db.js';
 import { getBook, listBible, listOutlines, listChapters } from '@/lib/repo.js';
+import { summarizeBibleCoverage } from '@/lib/bible-coverage.js';
+
+/** 响应里最多回传多少条设定覆盖明细（超出截断，由前端自行提示）。 */
+const MAX_BIBLE_COVERAGE = 100;
 
 /** issue 级别。 */
 type IssueLevel = 'error' | 'warn';
@@ -19,6 +23,10 @@ interface CheckStats {
   outlineCount: number;
   outlineCoverage: number;
   bibleCount: number;
+  /** 至少在正文或大纲里出现过一次的设定条数。 */
+  bibleUsed: number;
+  /** 从未在正文和大纲里出现过的设定条数。 */
+  bibleUnused: number;
   llmCalls: number;
 }
 
@@ -97,6 +105,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       .get(bookId);
     const llmCalls = pickCount(countRow);
 
+    const coverage = summarizeBibleCoverage({ bible, chapters, outlines });
+
     const stats: CheckStats = {
       chapterCount: chapters.length,
       totalWords,
@@ -104,6 +114,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       outlineCount,
       outlineCoverage,
       bibleCount: bible.length,
+      bibleUsed: coverage.usedCount,
+      bibleUnused: coverage.unusedCount,
       llmCalls,
     };
 
@@ -120,8 +132,18 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     if (stats.bibleCount === 0) {
       issues.push({ level: 'warn', message: '设定集为空' });
     }
+    if (coverage.unusedCount > 0) {
+      issues.push({
+        level: 'warn',
+        message: `${coverage.unusedCount} 条设定还没在正文或大纲里出现`,
+      });
+    }
 
-    return NextResponse.json({ stats, issues });
+    return NextResponse.json({
+      stats,
+      issues,
+      bibleCoverage: coverage.items.slice(0, MAX_BIBLE_COVERAGE),
+    });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : String(err) },
