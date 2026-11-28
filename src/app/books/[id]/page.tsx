@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import { filterBibleItems, collectBibleCategories } from '../../../lib/bible-filter.js';
 
 interface Book {
   id: number;
@@ -388,6 +389,10 @@ export default function BookDetailPage() {
   const [bibleCategory, setBibleCategory] = useState('');
   const [bibleTitle, setBibleTitle] = useState('');
   const [bibleContent, setBibleContent] = useState('');
+
+  // 设定集：列表上方的搜索关键词与分类筛选（纯展示层过滤，不改数据）
+  const [bibleQuery, setBibleQuery] = useState('');
+  const [bibleFilterCategory, setBibleFilterCategory] = useState('');
   const [addingBible, setAddingBible] = useState(false);
 
   // 设定集：从本章提取的候选（默认全选，逐条确认后写入）
@@ -1142,6 +1147,19 @@ export default function BookDetailPage() {
   // 改名同步：记住编辑开始时的原标题，并记录是否勾选「同时替换全书正文与大纲」。
   const [bibleOriginalTitle, setBibleOriginalTitle] = useState('');
   const [bibleReplaceInBook, setBibleReplaceInBook] = useState(false);
+
+  // 设定集筛选：搜索 + 分类叠加，正在编辑的那条始终保留（只影响展示）
+  const bibleCategories = useMemo(() => collectBibleCategories(bible), [bible]);
+  const filteredBible = useMemo(() => {
+    const matched = filterBibleItems(bible, {
+      query: bibleQuery,
+      category: bibleFilterCategory,
+    });
+    if (editingBibleId === null) return matched;
+    if (matched.some((item) => item.id === editingBibleId)) return matched;
+    const editing = bible.find((item) => item.id === editingBibleId);
+    return editing === undefined ? matched : [...matched, editing];
+  }, [bible, bibleQuery, bibleFilterCategory, editingBibleId]);
 
   const startBibleEdit = (item: BibleItem) => {
     setActionError(null);
@@ -3619,11 +3637,64 @@ export default function BookDetailPage() {
                 : `加入设定集（${bibleCandidates.filter((_, index) => candidatePicked[index] === true).length}）`}
             </button>
           ) : null}
+          {bible.length > 0 ? (
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 8,
+                alignItems: 'center',
+                minWidth: 0,
+                maxWidth: '100%',
+              }}
+            >
+              <input
+                className="input"
+                type="search"
+                aria-label="搜索设定"
+                placeholder="搜索标题 / 内容 / 分类"
+                value={bibleQuery}
+                onChange={(e) => setBibleQuery(e.target.value)}
+                style={{ flex: '1 1 160px', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box' }}
+              />
+              <select
+                className="input"
+                aria-label="按分类筛选"
+                value={bibleFilterCategory}
+                onChange={(e) => setBibleFilterCategory(e.target.value)}
+                style={{ flex: '0 1 150px', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box' }}
+              >
+                <option value="">全部分类</option>
+                {bibleCategories.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+              <span className="muted" style={{ fontSize: 13 }}>
+                {`显示 ${filteredBible.length} / ${bible.length} 条`}
+              </span>
+            </div>
+          ) : null}
           {bible.length === 0 ? (
             <p className="empty">还没有设定</p>
+          ) : filteredBible.length === 0 ? (
+            <div className="stack">
+              <p className="empty">没有匹配的设定</p>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => {
+                  setBibleQuery('');
+                  setBibleFilterCategory('');
+                }}
+              >
+                清空筛选
+              </button>
+            </div>
           ) : (
             <ul className="list-clean stack">
-              {bible.map((item) => (
+              {filteredBible.map((item) => (
                 <li key={item.id} className="bible-list-item">
                   {editingBibleId === item.id ? (
                     <div
